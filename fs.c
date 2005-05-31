@@ -17,7 +17,7 @@
 
 #define ERROR_BUFFER_LEN 80
 
-static struct qid stat2qid(struct stat *info) {
+static inline struct qid stat2qid(struct stat *info) {
     struct qid qid;
 
     qid.type =
@@ -33,7 +33,7 @@ static struct qid stat2qid(struct stat *info) {
     return qid;
 }
 
-static char *u32tostr(u32 n) {
+static inline char *u32tostr(u32 n) {
     char *res = GC_MALLOC_ATOMIC(11);
     assert(res != NULL);
 
@@ -100,7 +100,7 @@ static int stat2p9stat(struct stat *info, struct p9stat **p9info, char *path) {
     return 0;
 }
 
-static int unixflags(u32 mode) {
+static inline int unixflags(u32 mode) {
     int flags;
     switch (mode & OMASK) {
         case OREAD:
