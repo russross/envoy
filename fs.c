@@ -129,6 +129,8 @@ static inline int unixflags(u32 mode) {
     return flags;
 }
 
+/*****************************************************************************/
+
 /* generate an error response with Unix errno errnum */
 static void rerror(struct message *m, u16 errnum, int line) {
     char buf[ERROR_BUFFER_LEN];

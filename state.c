@@ -14,7 +14,6 @@
 
 static struct hashtable *fd_2_conn = NULL;
 static struct hashtable *addr_2_conn = NULL;
-static struct hashtable *name_2_trans = NULL;
 
 /*
  * Constructors
@@ -56,6 +55,14 @@ static int u32_cmp(const u32 *a, const u32 *b) {
     return (int) *a - *b;
 }
 
+static u32 u16_hash(const u16 *key) {
+    return (u32) *key;
+}
+
+static int u16_cmp(const u16 *a, const u16 *b) {
+    return (int) *a - *b;
+}
+
 static u32 addr_hash(const struct sockaddr_in *addr) {
     u32 hash = 0;
     hash = generic_hash(&addr->sin_family, sizeof(addr->sin_family), hash);
@@ -71,21 +78,6 @@ static int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b) {
     if ((x = memcmp(&a->sin_port, &b->sin_port, sizeof(a->sin_port))))
         return x;
     return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
-}
-
-static u32 trans_name_hash(const struct transaction_name *elt) {
-    u32 hash = 0;
-    hash = generic_hash(&elt->conn, sizeof(elt->conn), hash);
-    hash = generic_hash(&elt->tag, sizeof(elt->tag), hash);
-    return hash;
-}
-
-static int trans_name_cmp(const struct transaction_name *a,
-                    const struct transaction_name *b)
-{
-    if (a->conn != b->conn)
-        return (int) a->conn - (int) b->conn;
-    return (int) a->tag - (int) b->tag;
 }
 
 /*
@@ -109,10 +101,14 @@ void conn_insert_new(int fd, enum conn_type type, struct sockaddr_in *addr,
     conn->type = type;
     conn->addr = addr;
     conn->maxSize = maxSize;
-    conn->fids = hash_create(
+    conn->fid_2_fid = hash_create(
             FID_HASHTABLE_SIZE,
             (u32 (*)(const void *)) u32_hash,
             (int (*)(const void *, const void *)) u32_cmp);
+    conn->tag_2_trans = hash_create(
+            TRANS_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) u16_hash,
+            (int (*)(const void *, const void *)) u16_cmp);
 
     hash_set(fd_2_conn, &conn->fd, conn);
     hash_set(addr_2_conn, conn->addr, conn);
@@ -137,26 +133,19 @@ void conn_remove(struct connection *conn) {
 
 /*
  * Transaction pool state
- * Active transactions that are waiting for a response are indexed by name.
+ * Active transactions that are waiting for a response are indexed by tag.
  */
 
 void trans_insert(struct transaction *trans) {
-    struct transaction_name *name;
-
     assert(trans != NULL);
+    assert(trans->conn != NULL);
     assert(trans->in == NULL);
     assert(trans->out != NULL);
 
-    name = GC_NEW(struct transaction_name);
-    assert(name != NULL);
-
-    name->conn = trans->conn;
-    name->tag = trans->out->tag;
-    hash_set(name_2_trans, name, trans);
+    hash_set(trans->conn->tag_2_trans, &trans->out->tag, trans);
 }
 
 struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
-    struct transaction_name name;
     struct transaction *trans;
 
     assert(conn != NULL);
@@ -164,11 +153,8 @@ struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
     if (tag == NOTAG)
         return NULL;
 
-    name.conn = conn;
-    name.tag = tag;
-
-    trans = hash_get(name_2_trans, &name);
-    hash_remove(name_2_trans, &name);
+    trans = hash_get(conn->tag_2_trans, &tag);
+    hash_remove(conn->tag_2_trans, &tag);
 
     return trans;
 }
@@ -186,7 +172,7 @@ int fid_insert_new(struct connection *conn, u32 fid, char *uname, char *path) {
     assert(path != NULL && *path);
 
     /* when multithreaded, this needs to be atomic with the hash_set call */
-    if (hash_get(conn->fids, &fid) != NULL)
+    if (hash_get(conn->fid_2_fid, &fid) != NULL)
         return -1;
 
     res = GC_NEW(struct fid);
@@ -198,7 +184,7 @@ int fid_insert_new(struct connection *conn, u32 fid, char *uname, char *path) {
     res->fd = -1;
     res->status = STATUS_CLOSED;
 
-    hash_set(conn->fids, &res->fid, res);
+    hash_set(conn->fid_2_fid, &res->fid, res);
 
     return 0;
 }
@@ -207,7 +193,7 @@ struct fid *fid_lookup(struct connection *conn, u32 fid) {
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    return hash_get(conn->fids, &fid);
+    return hash_get(conn->fid_2_fid, &fid);
 }
 
 struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
@@ -216,10 +202,10 @@ struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    res = hash_get(conn->fids, &fid);
+    res = hash_get(conn->fid_2_fid, &fid);
 
     if (res != NULL)
-        hash_remove(conn->fids, &fid);
+        hash_remove(conn->fid_2_fid, &fid);
 
     return res;
 }
@@ -227,68 +213,6 @@ struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
 /*
  * Debugging functions
  */
-
-void print_address(struct sockaddr_in *addr) {
-    fprintf(stderr, "{%d.%d.%d.%d:%d}",
-            (addr->sin_addr.s_addr >> 24) & 0xff,
-            (addr->sin_addr.s_addr >> 16) & 0xff,
-            (addr->sin_addr.s_addr >>  8) & 0xff,
-             addr->sin_addr.s_addr        & 0xff,
-            addr->sin_port);
-}
-
-static void print_connection_type(enum conn_type type) {
-    printf("%s",
-            type == CONN_CLIENT_IN ? "CONN_CLIENT_IN" :
-            type == CONN_ENVOY_IN ? "CONN_ENVOY_IN" :
-            type == CONN_ENVOY_OUT ? "CONN_ENVOY_OUT" :
-            type == CONN_STORAGE_OUT ? "CONN_STORAGE_OUT" :
-            "(unknown state)");
-}
-
-static void print_connection(struct connection *conn) {
-    printf("fd:%d ", conn->fd);
-    print_connection_type(conn->type);
-    printf(" ");
-    print_address(conn->addr);
-}
-
-static void print_fd_conn(int *fd, struct connection *conn) {
-    printf("  [%d -> ", *fd);
-    print_connection(conn);
-    printf("]\n");
-}
-
-static void print_addr_conn(struct sockaddr_in *addr, struct connection *conn) {
-    printf("  [");
-    print_address(addr);
-    printf(" -> ");
-    print_connection(conn);
-    printf("]\n");
-}
-
-static void print_transaction(struct transaction *trans) {
-    printf("\n  ");
-    print_connection(trans->conn);
-    if (trans->in != NULL) {
-        printf("\n  Request:\n   ");
-        printMessage(stdout, trans->in);
-    }
-    if (trans->out != NULL) {
-        printf("\n  Response:\n   ");
-        printMessage(stdout, trans->out);
-    }
-}
-
-static void print_name_trans(struct transaction_name *name,
-        struct transaction *trans)
-{
-    printf("  tag[%d] (", (int) name->tag);
-    print_connection(name->conn);
-    printf(") -> ");
-    print_transaction(trans);
-    printf("\n");
-}
 
 static void print_status(enum fd_status status) {
     printf("%s",
@@ -316,13 +240,63 @@ static void print_fid(struct fid *fid) {
     }
 }
 
+static void print_fid_fid(u32 *n, struct fid *fid) {
+    printf("   %-2u:\n", *n);
+    print_fid(fid);
+}
+
+void print_address(struct sockaddr_in *addr) {
+    printf("{%d.%d.%d.%d:%d}",
+            (addr->sin_addr.s_addr >> 24) & 0xff,
+            (addr->sin_addr.s_addr >> 16) & 0xff,
+            (addr->sin_addr.s_addr >>  8) & 0xff,
+             addr->sin_addr.s_addr        & 0xff,
+            addr->sin_port);
+}
+
+static void print_transaction(struct transaction *trans) {
+    if (trans->in != NULL) {
+        printf("    Req: ");
+        printMessage(stdout, trans->in);
+    }
+    if (trans->out != NULL) {
+        printf("    Res: ");
+        printMessage(stdout, trans->out);
+    }
+}
+
+static void print_tag_trans(u16 *tag, struct transaction *trans) {
+    printf("   %-2u:\n", (u32) *tag);
+    print_transaction(trans);
+}
+
+static void print_connection_type(enum conn_type type) {
+    printf("%s",
+            type == CONN_CLIENT_IN ? "CONN_CLIENT_IN" :
+            type == CONN_ENVOY_IN ? "CONN_ENVOY_IN" :
+            type == CONN_ENVOY_OUT ? "CONN_ENVOY_OUT" :
+            type == CONN_STORAGE_OUT ? "CONN_STORAGE_OUT" :
+            "(unknown state)");
+}
+
+static void print_connection(struct connection *conn) {
+    printf(" ");
+    print_address(conn->addr);
+    printf(" fd:%d ", conn->fd);
+    print_connection_type(conn->type);
+    printf("\n  fids:\n");
+    hash_apply(conn->fid_2_fid, (void (*)(void *, void *)) print_fid_fid);
+    printf("  transactions:\n");
+    hash_apply(conn->tag_2_trans, (void (*)(void *, void *)) print_tag_trans);
+}
+
+static void print_addr_conn(struct sockaddr_in *addr, struct connection *conn) {
+    print_connection(conn);
+}
+
 void state_dump(void) {
-    printf("Hashtable: fd -> connection:\n");
-    hash_apply(fd_2_conn, (void (*)(void *, void *)) print_fd_conn);
     printf("Hashtable: address -> connection\n");
     hash_apply(addr_2_conn, (void (*)(void *, void *)) print_addr_conn);
-    printf("Hashtable: name -> transaction\n");
-    hash_apply(name_2_trans, (void (*)(void *, void *)) print_name_trans);
 }
 
 /*
@@ -344,16 +318,6 @@ static void conn_init(void) {
             (int (*)(const void *, const void *)) addr_cmp);
 }
 
-static void trans_init(void) {
-    assert(name_2_trans == NULL);
-
-    name_2_trans = hash_create(
-            TRANS_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) trans_name_hash,
-            (int (*)(const void *, const void *)) trans_name_cmp);
-}
-
 void state_init(void) {
     conn_init();
-    trans_init();
 }

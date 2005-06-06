@@ -52,9 +52,9 @@ static void accept_connection(int sock) {
     conn_insert_new(fd, CONN_CLIENT_IN, addr, GLOBAL_MAX_SIZE);
 
     connections[connection_count++] = fd;
-    fprintf(stderr, "accepted connection from ");
+    printf("accepted connection from ");
     print_address(addr);
-    fprintf(stderr, "\n");
+    printf("\n");
 }
 
 static struct message *get_message_help(struct connection **conn) {
@@ -88,9 +88,9 @@ static struct message *get_message_help(struct connection **conn) {
             if (count == 0) {
                 /* close the socket */
                 struct connection *conn = conn_lookup_fd(connections[i]);
-                fprintf(stderr, "closing connection from  ");
+                printf("closing connection from  ");
                 print_address(conn->addr);
-                fprintf(stderr, "\n");
+                printf("\n");
                 conn_remove(conn);
                 close(connections[i]);
                 for (index = i; index + 1 < connection_count; index++)
@@ -128,7 +128,7 @@ struct transaction *get_transaction(void) {
         m = get_message_help(&conn);
     } while (m == NULL);
 
-    printMessage(stderr, m);
+    printMessage(stdout, m);
 
     trans = trans_lookup_remove(conn, m->tag);
 

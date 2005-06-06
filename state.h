@@ -27,7 +27,8 @@ struct connection {
     enum conn_type type;
     struct sockaddr_in *addr;
     int maxSize;
-    struct hashtable *fids;
+    struct hashtable *fid_2_fid;
+    struct hashtable *tag_2_trans;
 };
 
 void                    conn_insert_new(int fd,
@@ -46,11 +47,6 @@ struct transaction {
     struct message *out;
 
     struct transaction *prev;
-};
-
-struct transaction_name {
-    struct connection *conn;
-    u16 tag;
 };
 
 void                    trans_insert(struct transaction *trans);
