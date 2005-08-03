@@ -10,6 +10,7 @@
 #include "util.h"
 #include "transport.h"
 #include "dispatch.h"
+#include "map.h"
 
 void test_dump(void) {
     struct message m;
@@ -90,6 +91,25 @@ void test_dump(void) {
     dumpBytes(stdout, "    ", m.raw, m.size);
 }
 
+void test_map(void) {
+    struct map *root = GC_NEW(struct map);
+    struct cons *a, *b;
+    struct sockaddr_in *addr = GC_NEW(struct sockaddr_in);
+    assert(root != NULL);
+    root->prefix = NULL;
+    root->addr = addr;
+    root->nchildren = 0;
+    root->children = NULL;
+
+    a = cons("home", cons("rgr22", NULL));
+    map_insert(root, a, addr);
+    b = cons("usr", cons("bin", NULL));
+    map_insert(root, b, addr);
+    a = cons("home", NULL);
+    map_insert(root, a, addr);
+    dumpMap(root, "");
+}
+
 int main(int argc, char **argv) {
     char cwd[100];
     struct stat info;
@@ -115,6 +135,7 @@ int main(int argc, char **argv) {
     state_init();
     start_listening();
     /*test_dump();*/
+    test_map();
     printf("root directory = [%s]\n", rootdir);
 
     main_loop();

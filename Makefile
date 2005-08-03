@@ -1,9 +1,10 @@
 OCAMLC=ocamlc
 CC=gcc
-CCOPTS=-g -Wall -I $(HOME)/scratch/gc/include `getconf LFS_CFLAGS`
+# -D_FILE_OFFSET_BITS=64 comes from `getconf LFS_CFLAGS`
+CCOPTS=-g -Wall -I $(HOME)/scratch/gc/include -D_FILE_OFFSET_BITS=64
 LINKOPTS=-L $(HOME)/scratch/gc/lib -lgc
 
-SRC=9pstatic.c 9p.c util.c config.c state.c transport.c fs.c dispatch.c envoy.c
+SRC=9pstatic.c 9p.c util.c config.c state.c transport.c fs.c dispatch.c envoy.c map.c
 OBJ=$(SRC:.c=.o)
 
 all:	envoy

@@ -19,7 +19,8 @@ enum conn_type {
     CONN_CLIENT_IN,
     CONN_ENVOY_IN,
     CONN_ENVOY_OUT,
-    CONN_STORAGE_OUT
+    CONN_STORAGE_OUT,
+    CONN_UNKNOWN_IN
 };
 
 struct connection {

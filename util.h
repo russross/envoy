@@ -92,6 +92,10 @@ inline void hash_set(struct hashtable *table, void *key, void *value);
 inline void hash_remove(struct hashtable *table, const void *key);
 void hash_apply(struct hashtable *table, void (*fun)(void *, void *));
 
+/*
+ * General utility functions
+ */
+
 static inline int min(int x, int y) {
     return x < y ? x : y;
 }
@@ -116,6 +120,16 @@ static inline char *substring(char *s, int start, int len) {
     assert(res != NULL);
     strncpy(res, s + start, len);
     res[len] = 0;
+    return res;
+}
+
+static inline char *concatstrings(char *a, char *b) {
+    char *res;
+    assert(a != NULL && b != NULL);
+    res = GC_MALLOC_ATOMIC(strlen(a) + strlen(b) + 1);
+    assert(res != NULL);
+    strcpy(res, a);
+    strcat(res, b);
     return res;
 }
 

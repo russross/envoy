@@ -49,7 +49,7 @@ static void accept_connection(int sock) {
     fd = accept(sock, (struct sockaddr *) addr, &len);
     assert(fd >= 0);
 
-    conn_insert_new(fd, CONN_CLIENT_IN, addr, GLOBAL_MAX_SIZE);
+    conn_insert_new(fd, CONN_UNKNOWN_IN, addr, GLOBAL_MAX_SIZE);
 
     connections[connection_count++] = fd;
     printf("accepted connection from ");
@@ -132,7 +132,8 @@ struct transaction *get_transaction(void) {
 
     trans = trans_lookup_remove(conn, m->tag);
 
-    if (    conn->type == CONN_CLIENT_IN ||
+    if (    conn->type == CONN_UNKNOWN_IN ||
+            conn->type == CONN_CLIENT_IN ||
             conn->type == CONN_ENVOY_IN)
     {
         /* new, incoming request */

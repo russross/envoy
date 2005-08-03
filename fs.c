@@ -216,7 +216,7 @@ static void rerror(struct message *m, u16 errnum, int line) {
  * - all outstanding i/o on the connection is aborted
  * - all existing fids are clunked
  */
-struct transaction *client_tversion(struct transaction *trans) {
+struct transaction *unknown_tversion(struct transaction *trans) {
     struct Tversion *req = &trans->in->msg.tversion;
     struct Rversion *res = &trans->out->msg.rversion;
 
@@ -250,9 +250,19 @@ struct transaction *client_tversion(struct transaction *trans) {
  * - aqid identifies a file of type QTAUTH
  * - afid is used to exchange (undefined) data to authorize connection
  */
-struct transaction *client_tauth(struct transaction *trans) {
+struct transaction *unknown_tauth(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
+
+struct transaction *unknown_tread(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *unknown_twrite(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+/*****************************************************************************/
 
 /**
  * client_tattach: establish a connection
@@ -309,7 +319,7 @@ struct transaction *client_tattach(struct transaction *trans) {
  * - Rflush for any of multiple Tflushes answers all previous ones
  * - client cannot reuse oldtag until Rflush is received
  * - client must honor regular response received before Rflush, including
- *   and server-side state change
+ *   server-side state change
  */
 struct transaction *client_tflush(struct transaction *trans) {
     return trans;
@@ -956,4 +966,50 @@ struct transaction *client_twstat(struct transaction *trans) {
     }
 
     return trans;
+}
+
+/*****************************************************************************/
+
+struct transaction *envoy_tattach(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_tflush(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_twalk(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_topen(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_tcreate(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_tread(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_twrite(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_tclunk(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_tremove(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_tstat(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
+struct transaction *envoy_twstat(struct transaction *trans) {
+    failif(-1, ENOTSUP);
 }
