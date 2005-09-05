@@ -1,6 +1,8 @@
 #ifndef _DISPATCH_H_
 #define _DISPATCH_H_
 
-void main_loop(void);
+#include "map.h"
+
+void main_loop(struct map *root);
 
 #endif

@@ -109,6 +109,7 @@ void conn_insert_new(int fd, enum conn_type type, struct sockaddr_in *addr,
             TRANS_HASHTABLE_SIZE,
             (u32 (*)(const void *)) u16_hash,
             (int (*)(const void *, const void *)) u16_cmp);
+    conn->pending_writes = NULL;
 
     hash_set(fd_2_conn, &conn->fd, conn);
     hash_set(addr_2_conn, conn->addr, conn);
@@ -120,6 +121,37 @@ struct connection *conn_lookup_fd(int fd) {
 
 struct connection *conn_lookup_addr(struct sockaddr_in *addr) {
     return hash_get(addr_2_conn, addr);
+}
+
+struct transaction *conn_get_pending_write(struct connection *conn) {
+    struct transaction *res = NULL;
+    struct cons *prev, *current;
+
+    assert(conn != NULL);
+
+    prev = NULL;
+    current = conn->pending_writes;
+    while (!null(current)) {
+        res = car(current);
+        current = cdr(prev = current);
+    }
+
+    if (prev == NULL)
+        conn->pending_writes = NULL;
+    else
+        setcdr(prev, NULL);
+
+    return res;
+}
+
+int conn_has_pending_write(struct connection *conn) {
+    return conn->pending_writes != NULL;
+}
+
+void conn_queue_write(struct transaction *trans) {
+    assert(trans != NULL);
+
+    trans->conn->pending_writes = cons(trans, trans->conn->pending_writes);
 }
 
 void conn_remove(struct connection *conn) {

@@ -30,6 +30,7 @@ struct connection {
     int maxSize;
     struct hashtable *fid_2_fid;
     struct hashtable *tag_2_trans;
+    struct cons *pending_writes;
 };
 
 void                    conn_insert_new(int fd,
@@ -38,6 +39,9 @@ void                    conn_insert_new(int fd,
                                         int maxSize);
 struct connection *     conn_lookup_fd(int fd);
 struct connection *     conn_lookup_addr(struct sockaddr_in *addr);
+struct transaction *    conn_get_pending_write(struct connection *conn);
+int                     conn_has_pending_write(struct connection *conn);
+void                    conn_queue_write(struct transaction *trans);
 void                    conn_remove(struct connection *conn);
 
 struct transaction {
@@ -47,7 +51,7 @@ struct transaction {
     struct message *in;
     struct message *out;
 
-    struct transaction *prev;
+    struct transaction *dependent;
 };
 
 void                    trans_insert(struct transaction *trans);

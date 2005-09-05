@@ -5,7 +5,7 @@
 
 #define PORT 9922
 
-void start_listening();
+void transport_init();
 struct transaction *    get_transaction(void);
 void                    put_transaction(struct transaction *trans);
 

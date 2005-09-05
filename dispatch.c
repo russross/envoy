@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "9p.h"
 #include "state.h"
+#include "map.h"
 #include "transport.h"
 #include "fs.h"
 
@@ -126,7 +127,7 @@ static int get_envoy_request_handler(struct transaction *trans) {
     return 0;
 }
 
-void main_loop(void) {
+void main_loop(struct map *root) {
     struct transaction *trans;
 
     for (;;) {
