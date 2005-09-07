@@ -7,70 +7,6 @@
 #include "9p.h"
 
 /*
- * Lisp-like lists
- */
-
-struct cons {
-    void *car;
-    void *cdr;
-};
-
-static inline int null(struct cons *cons) {
-    return cons == NULL;
-}
-
-static inline void *car(struct cons *cons) {
-    assert(!null(cons));
-
-    return cons->car;
-}
-
-static inline void *cdr(struct cons *cons) {
-    assert(!null(cons));
-
-    return cons->cdr;
-}
-
-static inline struct cons *cons(void *car, void *cdr) {
-    struct cons *res = GC_NEW(struct cons);
-    
-    assert(res != NULL);
-
-    res->car = car;
-    res->cdr = cdr;
-    
-    return res;
-}
-
-static inline void *caar(struct cons *cons) {
-    return car(car(cons));
-}
-
-static inline void *cadr(struct cons *cons) {
-    return car(cdr(cons));
-}
-
-static inline void *cdar(struct cons *cons) {
-    return cdr(car(cons));
-}
-
-static inline void *cddr(struct cons *cons) {
-    return cdr(cdr(cons));
-}
-
-static inline void setcar(struct cons *cons, void *car) {
-    assert(!null(cons));
-
-    cons->car = car;
-}
-
-static inline void setcdr(struct cons *cons, void *cdr) {
-    assert(!null(cons));
-
-    cons->cdr = cdr;
-}
-
-/*
  * Generic hash tables
  */
 
@@ -137,59 +73,11 @@ static inline int emptystring(char *s) {
     return s == NULL || s[0] == 0;
 }
 
-static inline char *dirname(char *path) {
-    char *slash, *base;
-
-    if (!strcmp(path, "/"))
-        return path;
-
-    slash = strrchr(path, '/');
-    if (!slash)
-        return path;
-    assert(slash[1] != 0);
-    base = GC_MALLOC_ATOMIC(slash - path + 1);
-    assert(base != NULL);
-    strncpy(base, path, slash - path);
-    base[slash - path] = 0;
-
-    return base;
-}
-
-static inline char *filename(char *path) {
-    char *slash, *name;
-
-    /* root directory is a special case */
-    if (!strcmp(path, "/"))
-        return path;
-
-    slash = strrchr(path, '/');
-    if (!slash)
-        return path;
-    ++slash;
-    assert(*slash != 0);
-
-    name = GC_MALLOC_ATOMIC(strlen(slash) + 1);
-    strcpy(name, slash);
-
-    return name;
-}
-
-static inline char *concatname(char *path, char *name) {
-    int pathlen = strlen(path);
-    int namelen = strlen(name);
-    char *res = GC_MALLOC_ATOMIC(pathlen + namelen + 2);
-
-    assert(res != NULL);
-
-    strcpy(res, path);
-    assert(pathlen == 1 || res[pathlen-1] != '/');
-    if (path[pathlen-1] != '/')
-        strcat(res, "/");
-    strcat(res, name);
-
-    return res;
-}
-
+char *dirname(char *path);
+char *filename(char *path);
+char *concatname(char *path, char *name);
 char *resolvePath(char *base, char *ext, struct stat *info);
+
+struct sockaddr_in *make_address(char *host, int port);
 
 #endif

@@ -14,91 +14,6 @@
 #include "transport.h"
 #include "state.h"
 
-#define HANDLES_INITIAL_SIZE 32
-
-/*****************************************************************************/
-/* Connection sets */
-
-struct connection_set {
-    int *handles;
-    int count;
-    int max;
-};
-
-static struct connection_set connections_listen;
-static struct connection_set connections_read;
-static struct connection_set connections_write;
-
-static void connection_set_init(struct connection_set *elt) {
-    elt->handles = GC_MALLOC_ATOMIC(sizeof(int) * HANDLES_INITIAL_SIZE);
-    assert(elt->handles != NULL);
-    elt->count = 0;
-    elt->max = HANDLES_INITIAL_SIZE;
-}
-
-static void connection_set_add(struct connection_set *elt, int handle) {
-    /* do we need to resize the array? */
-    if (elt->count >= elt->max) {
-        int *old = elt->handles;
-        elt->max *= 2;
-        elt->handles = GC_MALLOC_ATOMIC(sizeof(int) * elt->max);
-        assert(elt->handles != NULL);
-        memcpy(elt->handles, old, sizeof(int) * elt->count);
-    }
-
-    elt->handles[elt->count++] = handle;
-}
-
-static void connection_set_remove(struct connection_set *elt, int handle)
-{
-    int i;
-
-    /* do we need to resize the array? */
-    if ((elt->count - 1) * 4 < elt->max && elt->max > HANDLES_INITIAL_SIZE) {
-        int *old = elt->handles;
-        elt->max /= 2;
-        elt->handles = GC_MALLOC_ATOMIC(sizeof(int) * elt->max);
-        assert(elt->handles != NULL);
-        memcpy(elt->handles, old, sizeof(int) * elt->count);
-    }
-
-    /* find the handle ... */
-    for (i = 0; i < elt->count && elt->handles[i] != handle; i++)
-        ;
-    assert(i != elt->count);
-
-    /* ... and remove it */
-    for (i++ ; i < elt->count; i++)
-        elt->handles[i-1] = elt->handles[i];
-    elt->count--;
-}
-
-static int connection_set_collect(struct connection_set *elt, fd_set *rset,
-        int high)
-{
-    int i;
-
-    for (i = 0; i < elt->count; i++) {
-        FD_SET(elt->handles[i], rset);
-        high = high > elt->handles[i] ? high : elt->handles[i]; 
-    }
-
-    return high;
-}
-
-static int connection_set_member(struct connection_set *elt, fd_set *rset) {
-    int i;
-
-    for (i = 0; i < elt->count; i++)
-        if (FD_ISSET(elt->handles[i], rset))
-            return elt->handles[i];
-
-    return -1;
-}
-
-/* Connection sets */
-/*****************************************************************************/
-
 static void write_message(int fd) {
     struct connection *conn;
     struct transaction *trans;
@@ -107,7 +22,6 @@ static void write_message(int fd) {
     assert((conn = conn_lookup_fd(fd)) != NULL);
     trans = conn_get_pending_write(conn);
 
-
     if (trans != NULL) {
         assert(trans != NULL);
         assert(trans->conn != NULL);
@@ -115,25 +29,10 @@ static void write_message(int fd) {
 
         /* if this was the last message in the queue, stop trying to write */
         if (!conn_has_pending_write(conn)) {
-            connection_set_remove(&connections_write, fd);
+            handles_remove(state->handles_write, fd);
         }
 
         packMessage(trans->out);
-
-        if (    trans->conn->type == CONN_ENVOY_OUT ||
-                trans->conn->type == CONN_STORAGE_OUT)
-        {
-            /* this is an outgoing request, so we should be prepared
-               for a response */
-            assert(trans->handler != NULL);
-            assert(trans->in == NULL);
-
-            trans_insert(trans);
-        } else {
-            /* this is a reply, so make sure there was a matching request */
-            assert(trans->in != NULL);
-        }
-
         printMessage(stderr, trans->out);
 
         len = send(trans->conn->fd, trans->out->raw, trans->out->size, 0);
@@ -168,9 +67,9 @@ static struct message *read_message(int fd, struct connection **from) {
 
         /* close down the connection */
         conn_remove(*from);
-        connection_set_remove(&connections_read, fd);
+        handles_remove(state->handles_read, fd);
         if (!conn_has_pending_write(*from))
-            connection_set_remove(&connections_write, fd);
+            handles_remove(state->handles_write, fd);
         close(fd);
 
         return NULL;
@@ -193,7 +92,7 @@ static void accept_connection(int sock) {
 
     conn_insert_new(fd, CONN_UNKNOWN_IN, addr, GLOBAL_MAX_SIZE);
 
-    connection_set_add(&connections_read, fd);
+    handles_add(state->handles_read, fd);
     printf("accepted connection from ");
     print_address(addr);
     printf("\n");
@@ -203,32 +102,32 @@ static struct message *handle_socket_event(struct connection **from) {
     int high, num, fd;
     fd_set rset, wset;
 
-    assert(connections_listen.count != 0);
+    assert(state->handles_listen->count != 0);
 
     /* prepare and select on all active connections */
     FD_ZERO(&rset);
-    high = connection_set_collect(&connections_listen, &rset, 0);
-    high = connection_set_collect(&connections_read, &rset, high);
+    high = handles_collect(state->handles_listen, &rset, 0);
+    high = handles_collect(state->handles_read, &rset, high);
     FD_ZERO(&wset);
-    high = connection_set_collect(&connections_write, &wset, high);
+    high = handles_collect(state->handles_write, &wset, high);
 
     num = select(high + 1, &rset, &wset, NULL, NULL);
 
     /* writable socket is available--send a queued message */
     /* note: failed connects will show up here first, but they will also
        show up in the readable set. */
-    if ((fd = connection_set_member(&connections_write, &wset)) > -1) {
+    if ((fd = handles_member(state->handles_write, &wset)) > -1) {
         write_message(fd);
         return NULL;
     }
 
     /* readable socket is available--read a message */
-    if ((fd = connection_set_member(&connections_read, &rset)) > -1) {
+    if ((fd = handles_member(state->handles_read, &rset)) > -1) {
         return read_message(fd, from);
     }
 
     /* listening socket is available--accept a new incoming connection */
-    if ((fd = connection_set_member(&connections_listen, &rset)) > -1) {
+    if ((fd = handles_member(state->handles_listen, &rset)) > -1) {
         accept_connection(fd);
         return NULL;
     }
@@ -244,71 +143,48 @@ void transport_init() {
     int fd;
     struct linger ling;
 
-    connection_set_init(&connections_listen);
-    connection_set_init(&connections_read);
-    connection_set_init(&connections_write);
-
     /* initialize a listening port */
-    assert(my_address != NULL);
+    assert(state->my_address != NULL);
 
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     assert(fd >= 0);
-    assert(bind(fd, (struct sockaddr *) my_address, sizeof(*my_address)) >= 0);
+    assert(bind(fd, (struct sockaddr *) state->my_address,
+                sizeof(*state->my_address)) >= 0);
     assert(listen(fd, 5) >= 0);
     
     ling.l_onoff = 1;
     ling.l_linger = 0;
     setsockopt(fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
-    connection_set_add(&connections_listen, fd);
+    handles_add(state->handles_listen, fd);
 }
 
-struct transaction *get_transaction(void) {
-    struct message *m;
-    struct transaction *trans;
-    struct connection *conn;
+struct message *get_message(struct connection **conn) {
+    struct message *msg = NULL;
 
-    do {
-        m = handle_socket_event(&conn);
-    } while (m == NULL);
+    while (msg == NULL)
+        msg = handle_socket_event(conn);
 
-    printMessage(stdout, m);
+    printMessage(stdout, msg);
 
-    trans = trans_lookup_remove(conn, m->tag);
-
-    if (    conn->type == CONN_UNKNOWN_IN ||
-            conn->type == CONN_CLIENT_IN ||
-            conn->type == CONN_ENVOY_IN)
-    {
-        /* new, incoming request */
-        assert(trans == NULL);
-
-        trans = transaction_new();
-    } else {
-        /* response to an old, outgoing request */
-        assert(trans != NULL);
-    }
-
-    trans->conn = conn;
-    trans->in = m;
-
-    return trans;
+    return msg;
 }
 
-void put_transaction(struct transaction *trans) {
+void put_message(struct transaction *trans) {
     /* do we need to open a socket? */
     if (trans->conn->fd < 0) {
+        struct connection *conn = trans->conn;
         int res;
         int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         assert(fd >= 0);
         assert(fcntl(fd, O_NONBLOCK) >= 0);
-        res = connect(fd, (struct sockaddr *) trans->conn->addr,
-                sizeof(*trans->conn->addr));
+        res = connect(fd, (struct sockaddr *) conn->addr, sizeof(*conn->addr));
         assert(res >= 0 || res == EINPROGRESS);
-        trans->conn->fd = fd;
+        trans->conn =
+            conn_insert_new(fd, conn->type, conn->addr, conn->maxSize);
     }
 
     if (!conn_has_pending_write(trans->conn))
-        connection_set_add(&connections_write, trans->conn->fd);
+        handles_add(state->handles_write, trans->conn->fd);
 
     conn_queue_write(trans);
 }

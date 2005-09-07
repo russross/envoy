@@ -9,12 +9,25 @@
 #define CONN_HASHTABLE_SIZE 64
 #define TRANS_HASHTABLE_SIZE 64
 #define FID_HASHTABLE_SIZE 64
-
-void state_init(void);
+#define HANDLES_INITIAL_SIZE 32
 
 struct message *message_new(void);
 struct transaction *transaction_new(void);
+struct handles *handles_new(void);
 
+/* handle sets */
+struct handles {
+    int *handles;
+    int count;
+    int max;
+};
+
+void handles_add(struct handles *set, int handle);
+void handles_remove(struct handles *set, int handle);
+int handles_collect(struct handles *set, fd_set *rset, int high);
+int handles_member(struct handles *set, fd_set *rset);
+
+/* connections */
 enum conn_type {
     CONN_CLIENT_IN,
     CONN_ENVOY_IN,
@@ -33,10 +46,13 @@ struct connection {
     struct cons *pending_writes;
 };
 
-void                    conn_insert_new(int fd,
+struct connection *     conn_insert_new(int fd,
                                         enum conn_type type,
                                         struct sockaddr_in *addr,
                                         int maxSize);
+struct connection *     conn_new_unopened(enum conn_type type,
+                                          struct sockaddr_in *addr,
+                                          int maxSize);
 struct connection *     conn_lookup_fd(int fd);
 struct connection *     conn_lookup_addr(struct sockaddr_in *addr);
 struct transaction *    conn_get_pending_write(struct connection *conn);
@@ -44,19 +60,22 @@ int                     conn_has_pending_write(struct connection *conn);
 void                    conn_queue_write(struct transaction *trans);
 void                    conn_remove(struct connection *conn);
 
+/* transactions */
 struct transaction {
-    struct transaction * (*handler)(struct transaction *trans);
+    void (*handler)(struct transaction *trans);
 
     struct connection *conn;
     struct message *in;
     struct message *out;
 
-    struct transaction *dependent;
+    struct cons *children;
+    struct transaction *parent;
 };
 
 void                    trans_insert(struct transaction *trans);
 struct transaction *    trans_lookup_remove(struct connection *conn, u16 tag);
 
+/* active files */
 enum fd_status {
     STATUS_CLOSED,
     STATUS_OPEN_FILE,
@@ -86,5 +105,23 @@ struct fid *            fid_lookup_remove(struct connection *conn, u32 fid);
 
 void print_address(struct sockaddr_in *addr);
 void state_dump(void);
+
+/* persistent state */
+struct state {
+    struct hashtable *fd_2_conn;
+    struct hashtable *addr_2_conn;
+    struct handles *handles_listen;
+    struct handles *handles_read;
+    struct handles *handles_write;
+    struct sockaddr_in *my_address;
+    struct map *map;
+    struct cons *transaction_queue;
+    struct cons *error_queue;
+    u16 nexttag;
+    u32 nextfid;
+};
+
+extern struct state *state;
+void state_init(void);
 
 #endif

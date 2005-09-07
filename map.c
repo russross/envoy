@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include "list.h"
 #include "util.h"
 #include "state.h"
 #include "map.h"

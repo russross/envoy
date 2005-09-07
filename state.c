@@ -6,14 +6,15 @@
 #include "9p.h"
 #include "config.h"
 #include "state.h"
+#include "list.h"
 #include "util.h"
+#include "map.h"
 
 /*
  * Static state
  */
 
-static struct hashtable *fd_2_conn = NULL;
-static struct hashtable *addr_2_conn = NULL;
+struct state *state = NULL;
 
 /*
  * Constructors
@@ -31,6 +32,18 @@ struct transaction *transaction_new(void) {
     struct transaction *t = GC_NEW(struct transaction);
     assert(t != NULL);
     return t;
+}
+
+struct handles *handles_new(void) {
+    struct handles *set = GC_NEW(struct handles);
+    assert(set != NULL);
+
+    set->handles = GC_MALLOC_ATOMIC(sizeof(int) * HANDLES_INITIAL_SIZE);
+    assert(set->handles != NULL);
+    set->count = 0;
+    set->max = HANDLES_INITIAL_SIZE;
+
+    return set;
 }
 
 /*
@@ -81,18 +94,79 @@ static int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b) {
 }
 
 /*
+ * Handle sets
+ */
+
+void handles_add(struct handles *set, int handle) {
+    /* do we need to resize the array? */
+    if (set->count >= set->max) {
+        int *old = set->handles;
+        set->max *= 2;
+        set->handles = GC_MALLOC_ATOMIC(sizeof(int) * set->max);
+        assert(set->handles != NULL);
+        memcpy(set->handles, old, sizeof(int) * set->count);
+    }
+
+    set->handles[set->count++] = handle;
+}
+
+void handles_remove(struct handles *set, int handle) {
+    int i;
+
+    /* do we need to resize the array? */
+    if ((set->count - 1) * 4 < set->max && set->max > HANDLES_INITIAL_SIZE) {
+        int *old = set->handles;
+        set->max /= 2;
+        set->handles = GC_MALLOC_ATOMIC(sizeof(int) * set->max);
+        assert(set->handles != NULL);
+        memcpy(set->handles, old, sizeof(int) * set->count);
+    }
+
+    /* find the handle ... */
+    for (i = 0; i < set->count && set->handles[i] != handle; i++)
+        ;
+    assert(i != set->count);
+
+    /* ... and remove it */
+    for (i++ ; i < set->count; i++)
+        set->handles[i-1] = set->handles[i];
+    set->count--;
+}
+
+int handles_collect(struct handles *set, fd_set *rset, int high) {
+    int i;
+
+    for (i = 0; i < set->count; i++) {
+        FD_SET(set->handles[i], rset);
+        high = high > set->handles[i] ? high : set->handles[i]; 
+    }
+
+    return high;
+}
+
+int handles_member(struct handles *set, fd_set *rset) {
+    int i;
+
+    for (i = 0; i < set->count; i++)
+        if (FD_ISSET(set->handles[i], rset))
+            return set->handles[i];
+
+    return -1;
+}
+
+/*
  * Connection pool state
  */
 
-void conn_insert_new(int fd, enum conn_type type, struct sockaddr_in *addr,
-        int maxSize)
+struct connection *conn_insert_new(int fd, enum conn_type type,
+        struct sockaddr_in *addr, int maxSize)
 {
     struct connection *conn;
 
     assert(fd >= 0);
     assert(addr != NULL);
-    assert(hash_get(fd_2_conn, &fd) == NULL);
-    assert(hash_get(addr_2_conn, addr) == NULL);
+    assert(hash_get(state->fd_2_conn, &fd) == NULL);
+    assert(hash_get(state->addr_2_conn, addr) == NULL);
 
     conn = GC_NEW(struct connection);
     assert(conn != NULL);
@@ -111,16 +185,40 @@ void conn_insert_new(int fd, enum conn_type type, struct sockaddr_in *addr,
             (int (*)(const void *, const void *)) u16_cmp);
     conn->pending_writes = NULL;
 
-    hash_set(fd_2_conn, &conn->fd, conn);
-    hash_set(addr_2_conn, conn->addr, conn);
+    hash_set(state->fd_2_conn, &conn->fd, conn);
+    hash_set(state->addr_2_conn, conn->addr, conn);
+
+    return conn;
+}
+
+struct connection *conn_new_unopened(enum conn_type type,
+        struct sockaddr_in *addr, int maxSize)
+{
+    struct connection *conn;
+
+    assert(addr != NULL);
+    assert(hash_get(state->addr_2_conn, addr) == NULL);
+
+    conn = GC_NEW(struct connection);
+    assert(conn != NULL);
+
+    conn->fd = -1;
+    conn->type = type;
+    conn->addr = addr;
+    conn->maxSize = maxSize;
+    conn->fid_2_fid = NULL;
+    conn->tag_2_trans = NULL;
+    conn->pending_writes = NULL;
+
+    return conn;
 }
 
 struct connection *conn_lookup_fd(int fd) {
-    return hash_get(fd_2_conn, &fd);
+    return hash_get(state->fd_2_conn, &fd);
 }
 
 struct connection *conn_lookup_addr(struct sockaddr_in *addr) {
-    return hash_get(addr_2_conn, addr);
+    return hash_get(state->addr_2_conn, addr);
 }
 
 struct transaction *conn_get_pending_write(struct connection *conn) {
@@ -156,11 +254,11 @@ void conn_queue_write(struct transaction *trans) {
 
 void conn_remove(struct connection *conn) {
     assert(conn != NULL);
-    assert(hash_get(fd_2_conn, &conn->fd) != NULL);
-    assert(hash_get(addr_2_conn, conn->addr) != NULL);
+    assert(hash_get(state->fd_2_conn, &conn->fd) != NULL);
+    assert(hash_get(state->addr_2_conn, conn->addr) != NULL);
 
-    hash_remove(fd_2_conn, &conn->fd);
-    hash_remove(addr_2_conn, conn->addr);
+    hash_remove(state->fd_2_conn, &conn->fd);
+    hash_remove(state->addr_2_conn, conn->addr);
 }
 
 /*
@@ -328,28 +426,47 @@ static void print_addr_conn(struct sockaddr_in *addr, struct connection *conn) {
 
 void state_dump(void) {
     printf("Hashtable: address -> connection\n");
-    hash_apply(addr_2_conn, (void (*)(void *, void *)) print_addr_conn);
+    hash_apply(state->addr_2_conn, (void (*)(void *, void *)) print_addr_conn);
 }
 
 /*
- * State initializers
+ * State initializer
  */
 
-static void conn_init(void) {
-    assert(fd_2_conn == NULL);
-    assert(addr_2_conn == NULL);
+void state_init(void) {
+    char *hostname;
 
-    fd_2_conn = hash_create(
+    assert(state == NULL);
+    state = GC_NEW(struct state);
+    assert(state != NULL);
+
+    state->handles_listen = handles_new();
+    state->handles_read = handles_new();
+    state->handles_write = handles_new();
+
+    state->fd_2_conn = hash_create(
             CONN_HASHTABLE_SIZE,
             (u32 (*)(const void *)) u32_hash,
             (int (*)(const void *, const void *)) u32_cmp);
 
-    addr_2_conn = hash_create(
+    state->addr_2_conn = hash_create(
             CONN_HASHTABLE_SIZE,
             (u32 (*)(const void *)) addr_hash,
             (int (*)(const void *, const void *)) addr_cmp);
-}
 
-void state_init(void) {
-    conn_init();
+    assert((hostname = getenv("HOSTNAME")) != NULL);
+    state->my_address = make_address(hostname, PORT);
+
+    state->map = GC_NEW(struct map);
+    assert(state->map != NULL);
+    state->map->prefix = NULL;
+    state->map->addr = state->my_address;
+    state->map->nchildren = 0;
+    state->map->children = NULL;
+
+    state->transaction_queue = NULL;
+    state->error_queue = NULL;
+
+    state->nexttag = 1;
+    state->nextfid = 1;
 }

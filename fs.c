@@ -12,6 +12,7 @@
 #include "9p.h"
 #include "config.h"
 #include "state.h"
+#include "dispatch.h"
 #include "util.h"
 #include "fs.h"
 
@@ -146,14 +147,16 @@ static void rerror(struct message *m, u16 errnum, int line) {
 #define failif(p,e) do { \
     if (p) { \
         rerror(trans->out, e, __LINE__); \
-        return trans; \
+        send_reply(trans); \
+        return; \
     } \
 } while(0)
 
 #define guard(f) do { \
     if ((f) < 0) { \
         rerror(trans->out, errno, __LINE__); \
-        return trans; \
+        send_reply(trans); \
+        return; \
     } \
 } while(0)
 
@@ -161,7 +164,8 @@ static void rerror(struct message *m, u16 errnum, int line) {
     (ptr) = fid_lookup(trans->conn, fid); \
     if ((ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
-        return trans; \
+        send_reply(trans); \
+        return; \
     } \
 } while(0)
 
@@ -169,7 +173,8 @@ static void rerror(struct message *m, u16 errnum, int line) {
     (ptr) = fid_lookup(trans->conn, req->fid); \
     if ((ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
-        return trans; \
+        send_reply(trans); \
+        return; \
     } \
 } while(0)
 
@@ -177,7 +182,8 @@ static void rerror(struct message *m, u16 errnum, int line) {
     (ptr) = fid_lookup_remove(trans->conn, req->fid); \
     if ((ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
-        return trans; \
+        send_reply(trans); \
+        return; \
     } \
 } while(0)
 
@@ -185,10 +191,12 @@ static void rerror(struct message *m, u16 errnum, int line) {
     (ptr) = fid_lookup(trans->conn, req->fid); \
     if ((ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
-        return trans; \
+        send_reply(trans); \
+        return; \
     } else if ((ptr)->status != STATUS_CLOSED) { \
         rerror(trans->out, ETXTBSY, __LINE__); \
-        return trans; \
+        send_reply(trans); \
+        return; \
     } \
 } while(0)
 
@@ -216,7 +224,7 @@ static void rerror(struct message *m, u16 errnum, int line) {
  * - all outstanding i/o on the connection is aborted
  * - all existing fids are clunked
  */
-struct transaction *unknown_tversion(struct transaction *trans) {
+void unknown_tversion(struct transaction *trans) {
     struct Tversion *req = &trans->in->msg.tversion;
     struct Rversion *res = &trans->out->msg.rversion;
 
@@ -231,7 +239,7 @@ struct transaction *unknown_tversion(struct transaction *trans) {
         res->version = req->version;
     }
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -250,15 +258,15 @@ struct transaction *unknown_tversion(struct transaction *trans) {
  * - aqid identifies a file of type QTAUTH
  * - afid is used to exchange (undefined) data to authorize connection
  */
-struct transaction *unknown_tauth(struct transaction *trans) {
+void unknown_tauth(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *unknown_tread(struct transaction *trans) {
+void unknown_tread(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *unknown_twrite(struct transaction *trans) {
+void unknown_twrite(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
@@ -283,7 +291,7 @@ struct transaction *unknown_twrite(struct transaction *trans) {
  * - afid may be used for multiple attach calls with same uname/aname
  * - error returned if fid is already in use
  */
-struct transaction *client_tattach(struct transaction *trans) {
+void client_tattach(struct transaction *trans) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
     struct stat info;
@@ -300,7 +308,7 @@ struct transaction *client_tattach(struct transaction *trans) {
     failif(fid_insert_new(trans->conn, req->fid, req->uname, path) < 0, EBADF);
     res->qid = stat2qid(&info);
     
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -321,8 +329,8 @@ struct transaction *client_tattach(struct transaction *trans) {
  * - client must honor regular response received before Rflush, including
  *   server-side state change
  */
-struct transaction *client_tflush(struct transaction *trans) {
-    return trans;
+void client_tflush(struct transaction *trans) {
+    send_reply(trans);
 }
 
 /**
@@ -360,7 +368,7 @@ struct transaction *client_tflush(struct transaction *trans) {
  *   - walk of ".." in root directory is equivalent to walk of no elements
  *   - maximum of MAXWELEM (16) elements in a single Twalk request
  */
-struct transaction *client_twalk(struct transaction *trans) {
+void client_twalk(struct transaction *trans) {
     struct Twalk *req = &trans->in->msg.twalk;
     struct Rwalk *res = &trans->out->msg.rwalk;
     struct fid *fid;
@@ -381,7 +389,8 @@ struct transaction *client_twalk(struct transaction *trans) {
         res->nwqid = 0;
         res->wqid = NULL;
 
-        return trans;
+        send_reply(trans);
+        return;
     }
 
     guard(lstat(fid->path, &info));
@@ -396,7 +405,8 @@ struct transaction *client_twalk(struct transaction *trans) {
         if (!req->wname[i] || !*req->wname[i] || strchr(req->wname[i], '/')) {
             if (i == 0)
                 failif(-1, EINVAL);
-            return trans;
+            send_reply(trans);
+            return;
         }
 
         /* build the revised name, watching for . and .. */
@@ -410,12 +420,14 @@ struct transaction *client_twalk(struct transaction *trans) {
         if (lstat(newpath, &info) < 0) {
             if (i == 0)
                 guard(-1);
-            return trans;
+            send_reply(trans);
+            return;
         }
         if (i < req->nwname - 1 && !S_ISDIR(info.st_mode)) {
             if (i == 0)
                 failif(-1, ENOTDIR);
-            return trans;
+            send_reply(trans);
+            return;
         }
         res->wqid[i] = stat2qid(&info);
         res->nwqid = i + 1;
@@ -426,7 +438,7 @@ struct transaction *client_twalk(struct transaction *trans) {
     else
         fid_insert_new(trans->conn, req->newfid, fid->uname, newpath);
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -459,7 +471,7 @@ struct transaction *client_twalk(struct transaction *trans) {
  *   or written to a file without breaking the i/o transfer into multiple 9P
  *   messages
  */
-struct transaction *client_topen(struct transaction *trans) {
+void client_topen(struct transaction *trans) {
     struct Topen *req = &trans->in->msg.topen;
     struct Ropen *res = &trans->out->msg.ropen;
     struct fid *fid;
@@ -490,7 +502,7 @@ struct transaction *client_topen(struct transaction *trans) {
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
     res->qid = stat2qid(&info);
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -520,7 +532,7 @@ struct transaction *client_topen(struct transaction *trans) {
  * - attempt to create an existing file will be rejected
  * - all other file open modes and restrictions match Topen; same for iounit
  */
-struct transaction *client_tcreate(struct transaction *trans) {
+void client_tcreate(struct transaction *trans) {
     struct Tcreate *req = &trans->in->msg.tcreate;
     struct Rcreate *res = &trans->out->msg.rcreate;
     struct fid *fid;
@@ -588,7 +600,7 @@ struct transaction *client_tcreate(struct transaction *trans) {
 
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -616,7 +628,7 @@ struct transaction *client_tcreate(struct transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-struct transaction *client_tread(struct transaction *trans) {
+void client_tread(struct transaction *trans) {
     struct Tread *req = &trans->in->msg.tread;
     struct Rread *res = &trans->out->msg.rread;
     struct fid *fid;
@@ -688,7 +700,7 @@ struct transaction *client_tread(struct transaction *trans) {
         failif(-1, EPERM);
     }
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -712,7 +724,7 @@ struct transaction *client_tread(struct transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-struct transaction *client_twrite(struct transaction *trans) {
+void client_twrite(struct transaction *trans) {
     struct Twrite *req = &trans->in->msg.twrite;
     struct Rwrite *res = &trans->out->msg.rwrite;
     struct fid *fid;
@@ -736,7 +748,7 @@ struct transaction *client_twrite(struct transaction *trans) {
         failif(-1, EPERM);
     }
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -752,7 +764,7 @@ struct transaction *client_twrite(struct transaction *trans) {
  * - if ORCLOSE was set at file open, file will be removed
  * - even if an error is returned, the fid is no longer valid
  */
-struct transaction *client_tclunk(struct transaction *trans) {
+void client_tclunk(struct transaction *trans) {
     struct Tclunk *req = &trans->in->msg.tclunk;
     struct fid *fid;
 
@@ -766,7 +778,7 @@ struct transaction *client_tclunk(struct transaction *trans) {
         guard(closedir(fid->dd));
     }
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -784,7 +796,7 @@ struct transaction *client_tclunk(struct transaction *trans) {
  * - if other clients have the file open, file may or may not be removed
  *   immediately: this is implementation dependent
  */
-struct transaction *client_tremove(struct transaction *trans) {
+void client_tremove(struct transaction *trans) {
     struct Tremove *req = &trans->in->msg.tremove;
     struct fid *fid;
 
@@ -805,7 +817,7 @@ struct transaction *client_tremove(struct transaction *trans) {
             guard(unlink(fid->path));
     }
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -820,7 +832,7 @@ struct transaction *client_tremove(struct transaction *trans) {
  * Semantics:
  * - requires no special permissions
  */
-struct transaction *client_tstat(struct transaction *trans) {
+void client_tstat(struct transaction *trans) {
     struct Tstat *req = &trans->in->msg.tstat;
     struct Rstat *res = &trans->out->msg.rstat;
     struct fid *fid;
@@ -830,7 +842,7 @@ struct transaction *client_tstat(struct transaction *trans) {
     guard(lstat(fid->path, &info));
     failif(stat2p9stat(&info, &res->stat, fid->path) < 0, EIO);
 
-    return trans;
+    send_reply(trans);
 }
 
 /**
@@ -865,7 +877,7 @@ struct transaction *client_tstat(struct transaction *trans) {
  *   - size field in the stat record
  *   - note that n = size + 2
  */
-struct transaction *client_twstat(struct transaction *trans) {
+void client_twstat(struct transaction *trans) {
     struct Twstat *req = &trans->in->msg.twstat;
     struct fid *fid;
     struct stat info;
@@ -880,7 +892,8 @@ struct transaction *client_twstat(struct transaction *trans) {
         guard(symlink(req->stat->extension, fid->path));
 
         fid->status = STATUS_CLOSED;
-        return trans;
+        send_reply(trans);
+        return;
     } else if (fid->status == STATUS_OPEN_LINK) {
         u32 targetfid;
         struct fid *target;
@@ -893,7 +906,8 @@ struct transaction *client_twstat(struct transaction *trans) {
         guard(link(target->path, fid->path));
 
         fid->status = STATUS_CLOSED;
-        return trans;
+        send_reply(trans);
+        return;
     } else if (fid->status == STATUS_OPEN_DEVICE) {
         char c;
         int major, minor;
@@ -907,7 +921,8 @@ struct transaction *client_twstat(struct transaction *trans) {
                     makedev(major, minor)));
 
         fid->status = STATUS_CLOSED;
-        return trans;
+        send_reply(trans);
+        return;
     }
     
     /* regular file or directory */
@@ -965,51 +980,51 @@ struct transaction *client_twstat(struct transaction *trans) {
         guard(truncate(fid->path, req->stat->length));
     }
 
-    return trans;
+    send_reply(trans);
 }
 
 /*****************************************************************************/
 
-struct transaction *envoy_tattach(struct transaction *trans) {
+void envoy_tattach(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_tflush(struct transaction *trans) {
+void envoy_tflush(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_twalk(struct transaction *trans) {
+void envoy_twalk(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_topen(struct transaction *trans) {
+void envoy_topen(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_tcreate(struct transaction *trans) {
+void envoy_tcreate(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_tread(struct transaction *trans) {
+void envoy_tread(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_twrite(struct transaction *trans) {
+void envoy_twrite(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_tclunk(struct transaction *trans) {
+void envoy_tclunk(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_tremove(struct transaction *trans) {
+void envoy_tremove(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_tstat(struct transaction *trans) {
+void envoy_tstat(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-struct transaction *envoy_twstat(struct transaction *trans) {
+void envoy_twstat(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }

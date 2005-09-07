@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
-#include <netdb.h>
 #include <gc.h>
 #include "9p.h"
 #include "config.h"
 #include "state.h"
+#include "list.h"
 #include "util.h"
 #include "transport.h"
 #include "dispatch.h"
@@ -111,46 +111,15 @@ void test_map(void) {
     dumpMap(root, "");
 }
 
-static struct sockaddr_in *make_address(char *host, int port) {
-    struct sockaddr_in *addr = GC_NEW_ATOMIC(struct sockaddr_in);
-    struct hostent *ent = gethostbyname(host);
-
-    assert(addr != NULL);
-    assert(ent != NULL);
-    assert(ent->h_addrtype == AF_INET && ent->h_length == 4);
-    assert(ent->h_addr_list[0] != NULL && ent->h_addr_list[1] == NULL);
-
-    addr->sin_family = AF_INET;
-    addr->sin_port = port;
-    addr->sin_addr = *((struct in_addr *) ent->h_addr_list[0]);
-
-    return addr;
-}
-
-struct map *config_init(void) {
-    struct map *root;
-    char *hostname;
-
-    assert((hostname = getenv("HOSTNAME")) != NULL);
-    my_address = make_address(hostname, PORT);
-    
-    root = GC_NEW(struct map);
-    assert(root != NULL);
-    root->prefix = NULL;
-    root->addr = my_address;
-    root->nchildren = 0;
-    root->children = NULL;
-
-    map_insert(root, cons("home", cons("rgr22", NULL)),
+void config_init(void) {
+    map_insert(state->map, cons("home", cons("rgr22", NULL)),
             make_address("pitfall-32", PORT));
-    map_insert(root, cons("usr", cons("lib", NULL)),
+    map_insert(state->map, cons("usr", cons("lib", NULL)),
             make_address("pitfall-32", PORT));
-    map_insert(root, cons("lib", NULL),
+    map_insert(state->map, cons("lib", NULL),
             make_address("donkeykong", PORT));
-    map_insert(root, cons("usr", cons("bin", NULL)),
+    map_insert(state->map, cons("usr", cons("bin", NULL)),
             make_address("donkeykong", PORT));
-
-    return root;
 }
 
 int main(int argc, char **argv) {
@@ -177,8 +146,8 @@ int main(int argc, char **argv) {
     }
 
     state_init();
-    root = config_init();
     transport_init();
+    config_init();
 
     /*test_dump();*/
     /*test_map();*/

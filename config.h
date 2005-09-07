@@ -4,6 +4,7 @@
 extern int GLOBAL_MAX_SIZE;
 extern int GLOBAL_MIN_SIZE;
 extern char *rootdir;
-extern struct sockaddr_in *my_address;
+
+#define PORT 9922
 
 #endif

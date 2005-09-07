@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <netdb.h>
 #include <assert.h>
 #include <gc.h>
 #include "9p.h"
+#include "list.h"
 #include "util.h"
 
 /*
@@ -210,4 +212,73 @@ char *resolvePath(char *base, char *ext, struct stat *info) {
     }
 
     return base;
+}
+
+char *dirname(char *path) {
+    char *slash, *base;
+
+    if (!strcmp(path, "/"))
+        return path;
+
+    slash = strrchr(path, '/');
+    if (!slash)
+        return path;
+    assert(slash[1] != 0);
+    base = GC_MALLOC_ATOMIC(slash - path + 1);
+    assert(base != NULL);
+    strncpy(base, path, slash - path);
+    base[slash - path] = 0;
+
+    return base;
+}
+
+char *filename(char *path) {
+    char *slash, *name;
+
+    /* root directory is a special case */
+    if (!strcmp(path, "/"))
+        return path;
+
+    slash = strrchr(path, '/');
+    if (!slash)
+        return path;
+    ++slash;
+    assert(*slash != 0);
+
+    name = GC_MALLOC_ATOMIC(strlen(slash) + 1);
+    strcpy(name, slash);
+
+    return name;
+}
+
+char *concatname(char *path, char *name) {
+    int pathlen = strlen(path);
+    int namelen = strlen(name);
+    char *res = GC_MALLOC_ATOMIC(pathlen + namelen + 2);
+
+    assert(res != NULL);
+
+    strcpy(res, path);
+    assert(pathlen == 1 || res[pathlen-1] != '/');
+    if (path[pathlen-1] != '/')
+        strcat(res, "/");
+    strcat(res, name);
+
+    return res;
+}
+
+struct sockaddr_in *make_address(char *host, int port) {
+    struct sockaddr_in *addr = GC_NEW_ATOMIC(struct sockaddr_in);
+    struct hostent *ent = gethostbyname(host);
+
+    assert(addr != NULL);
+    assert(ent != NULL);
+    assert(ent->h_addrtype == AF_INET && ent->h_length == 4);
+    assert(ent->h_addr_list[0] != NULL && ent->h_addr_list[1] == NULL);
+
+    addr->sin_family = AF_INET;
+    addr->sin_port = port;
+    addr->sin_addr = *((struct in_addr *) ent->h_addr_list[0]);
+
+    return addr;
 }

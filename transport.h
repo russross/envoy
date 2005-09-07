@@ -2,11 +2,10 @@
 #define _TRANSPORT_H_
 
 #include "9p.h"
-
-#define PORT 9922
+#include "state.h"
 
 void transport_init();
-struct transaction *    get_transaction(void);
-void                    put_transaction(struct transaction *trans);
+struct message *        get_message(struct connection **conn);
+void                    put_message(struct transaction *trans);
 
 #endif
