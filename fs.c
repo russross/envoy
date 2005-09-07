@@ -233,14 +233,20 @@ void unknown_tversion(struct transaction *trans) {
     res->msize = max(min(GLOBAL_MAX_SIZE, req->msize), GLOBAL_MIN_SIZE);
     trans->conn->maxSize = trans->out->maxSize = res->msize;
 
-    if (strcmp(req->version, "9P2000.u")) {
-        res->version = "unknown";
-    } else {
+    if (!strcmp(req->version, "9P2000.u")) {
+        trans->conn->type = CONN_CLIENT_IN;
         res->version = req->version;
+    } else if (!strcmp(req->version, "9P2000.envoy")) {
+        trans->conn->type = CONN_ENVOY_IN;
+        res->version = req->version;
+    } else {
+        res->version = "unknown";
     }
 
     send_reply(trans);
 }
+
+/*****************************************************************************/
 
 /**
  * client_tauth: check credentials to authorize a connection
@@ -258,19 +264,13 @@ void unknown_tversion(struct transaction *trans) {
  * - aqid identifies a file of type QTAUTH
  * - afid is used to exchange (undefined) data to authorize connection
  */
-void unknown_tauth(struct transaction *trans) {
+void client_tauth(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
-void unknown_tread(struct transaction *trans) {
+void envoy_tauth(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
-
-void unknown_twrite(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-/*****************************************************************************/
 
 /**
  * client_tattach: establish a connection
@@ -311,6 +311,10 @@ void client_tattach(struct transaction *trans) {
     send_reply(trans);
 }
 
+void envoy_tattach(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
 /**
  * client_tflush: abort a message
  *
@@ -331,6 +335,10 @@ void client_tattach(struct transaction *trans) {
  */
 void client_tflush(struct transaction *trans) {
     send_reply(trans);
+}
+
+void envoy_tflush(struct transaction *trans) {
+    failif(-1, ENOTSUP);
 }
 
 /**
@@ -441,6 +449,10 @@ void client_twalk(struct transaction *trans) {
     send_reply(trans);
 }
 
+void envoy_twalk(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
 /**
  * client_topen: prepare a fid for i/o on an existing file
  *
@@ -503,6 +515,10 @@ void client_topen(struct transaction *trans) {
     res->qid = stat2qid(&info);
 
     send_reply(trans);
+}
+
+void envoy_topen(struct transaction *trans) {
+    failif(-1, ENOTSUP);
 }
 
 /**
@@ -601,6 +617,10 @@ void client_tcreate(struct transaction *trans) {
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
 
     send_reply(trans);
+}
+
+void envoy_tcreate(struct transaction *trans) {
+    failif(-1, ENOTSUP);
 }
 
 /**
@@ -703,6 +723,10 @@ void client_tread(struct transaction *trans) {
     send_reply(trans);
 }
 
+void envoy_tread(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
 /**
  * client_twrite: transfer data to a file
  *
@@ -751,6 +775,10 @@ void client_twrite(struct transaction *trans) {
     send_reply(trans);
 }
 
+void envoy_twrite(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
 /**
  * client_tclunk: forget about a fid
  *
@@ -779,6 +807,10 @@ void client_tclunk(struct transaction *trans) {
     }
 
     send_reply(trans);
+}
+
+void envoy_tclunk(struct transaction *trans) {
+    failif(-1, ENOTSUP);
 }
 
 /**
@@ -820,6 +852,10 @@ void client_tremove(struct transaction *trans) {
     send_reply(trans);
 }
 
+void envoy_tremove(struct transaction *trans) {
+    failif(-1, ENOTSUP);
+}
+
 /**
  * client_tstat: inquire about a file's attributes
  *
@@ -843,6 +879,10 @@ void client_tstat(struct transaction *trans) {
     failif(stat2p9stat(&info, &res->stat, fid->path) < 0, EIO);
 
     send_reply(trans);
+}
+
+void envoy_tstat(struct transaction *trans) {
+    failif(-1, ENOTSUP);
 }
 
 /**
@@ -981,48 +1021,6 @@ void client_twstat(struct transaction *trans) {
     }
 
     send_reply(trans);
-}
-
-/*****************************************************************************/
-
-void envoy_tattach(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_tflush(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_twalk(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_topen(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_tcreate(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_tread(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_twrite(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_tclunk(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_tremove(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_tstat(struct transaction *trans) {
-    failif(-1, ENOTSUP);
 }
 
 void envoy_twstat(struct transaction *trans) {

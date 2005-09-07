@@ -158,6 +158,24 @@ let outputMessageStruct out m =
   fprintf out "@]@,} msg;";
   fprintf out "@]@,};@."
 
+let outputSetters out fields id =
+  match fields with (FInt4 "size"::FName msg::FInt2 "tag"::rest) ->
+    begin
+      let fieldLine elt =
+        let name = fieldName elt in
+        fprintf out "@,(m)->msg.%s.%s = (%s_v); \\" msg name name
+      in
+      let fieldArg elt =
+        fprintf out ", %s_v" (fieldName elt)
+      in
+      fprintf out "@[<v 4>#define set_%s(m" msg;
+      List.iter fieldArg rest;
+      fprintf out ") do { \\";
+      List.iter fieldLine rest;
+      fprintf out "@]@,} while(0)@.@.";
+    end
+  | _ -> raise BadMessage
+
 let outputUnpacker out m =
   let msg (id, fields) =
     match fields with (FInt4 "size"::FName msg::FInt2 "tag"::rest) ->
@@ -460,7 +478,9 @@ let go () =
   fprintf h "@.";
   List.iter (fun (i,f) -> outputStructs h f i) m;
   outputMessageStruct h m;
-  fprintf h "@.int unpackMessage(struct message *);";
+  fprintf h "@.";
+  List.iter (fun (i,f) -> outputSetters h f i) m;
+  fprintf h "int unpackMessage(struct message *);";
   fprintf h "@.int packMessage(struct message *);";
   fprintf h "@.void printMessage(FILE *fp, struct message *m);";
   fprintf h "@.";

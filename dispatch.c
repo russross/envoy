@@ -30,10 +30,10 @@ void send_request(struct transaction *trans) {
     assert(trans->handler != NULL || trans->parent != NULL);
     assert(trans->in == NULL);
 
+    put_message(trans);
+
     /* index this transaction so we can match the reply when it comes */
     trans_insert(trans);
-
-    put_message(trans);
 }
 
 void send_reply(struct transaction *trans) {
@@ -59,18 +59,9 @@ static int get_unknown_request_handler(struct transaction *trans) {
             trans->handler = unknown_tversion;
             break;
         case TAUTH:
-            trans->handler = unknown_tauth;
-            break;
         case TREAD:
-            trans->handler = unknown_tread;
-            break;
         case TWRITE:
-            trans->handler = unknown_twrite;
-            break;
         case TATTACH:
-            /* client is the default connection type */
-            trans->handler = client_tattach;
-            break;
         case TFLUSH:
         case TWALK:
         case TOPEN:
@@ -88,6 +79,9 @@ static int get_unknown_request_handler(struct transaction *trans) {
 
 static int get_client_request_handler(struct transaction *trans) {
     switch (trans->in->id) {
+        case TAUTH:
+            trans->handler = client_tauth;
+            break;
         case TFLUSH:
             trans->handler = client_tflush;
             break;
@@ -122,7 +116,6 @@ static int get_client_request_handler(struct transaction *trans) {
             trans->handler = client_twstat;
             break;
         case TVERSION:
-        case TAUTH:
         default:
             return -1;
     }
@@ -132,6 +125,9 @@ static int get_client_request_handler(struct transaction *trans) {
 
 static int get_envoy_request_handler(struct transaction *trans) {
     switch (trans->in->id) {
+        case TAUTH:
+            trans->handler = envoy_tauth;
+            break;
         case TFLUSH:
             trans->handler = envoy_tflush;
             break;
@@ -166,7 +162,6 @@ static int get_envoy_request_handler(struct transaction *trans) {
             trans->handler = envoy_twstat;
             break;
         case TVERSION:
-        case TAUTH:
         default:
             return -1;
     }
@@ -243,7 +238,7 @@ static void dispatch(struct transaction *trans) {
     }
 }
 
-void main_loop(struct map *root) {
+void main_loop(void) {
     struct transaction *trans;
     struct message *msg;
     struct connection *conn;
@@ -295,12 +290,12 @@ void main_loop(struct map *root) {
             default:
                 assert(0);
         }
+        state_dump();
     }
 }
 
 void connect_envoy(struct transaction *parent, struct connection *conn);
 static void connect_envoy_ii(struct transaction *trans);
-static void connect_envoy_iii(struct transaction *trans);
 
 void connect_envoy(struct transaction *parent, struct connection *conn) {
     /* prepare a Tversion message and package it in a transaction */
@@ -317,6 +312,7 @@ void connect_envoy(struct transaction *parent, struct connection *conn) {
     trans->out->msg.tversion.version = "9P2000.envoy";
     trans->children = NULL;
     trans->parent = parent;
+    parent->children = append_elt(parent->children, trans);
 
     send_request(trans);
 }
@@ -333,29 +329,6 @@ static void connect_envoy_ii(struct transaction *trans) {
 
     trans->conn->maxSize =
         max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
-
-    /* reform this transaction into a Tauth request */
-    trans->handler = connect_envoy_iii;
-    trans->in = NULL;
-    trans->out->maxSize = trans->conn->maxSize;
-    trans->out->tag = state->nexttag++;
-    trans->out->id = TAUTH;
-    trans->out->msg.tauth.afid = state->nextfid++;
-    trans->out->msg.tauth.uname = "envoy";
-    trans->out->msg.tauth.aname = "";
-    trans->children = NULL;
-
-    send_request(trans);
-}
-
-static void connect_envoy_iii(struct transaction *trans) {
-    /* check Rauth results */
-
-    /* blow up if the reply wasn't what we were expecting */
-    if (trans->in->id != RAUTH) {
-        handle_error(trans);
-        return;
-    }
 
     assert(trans->parent != NULL);
 

@@ -223,21 +223,13 @@ struct connection *conn_lookup_addr(struct sockaddr_in *addr) {
 
 struct transaction *conn_get_pending_write(struct connection *conn) {
     struct transaction *res = NULL;
-    struct cons *prev, *current;
 
     assert(conn != NULL);
 
-    prev = NULL;
-    current = conn->pending_writes;
-    while (!null(current)) {
-        res = car(current);
-        current = cdr(prev = current);
+    if (!null(conn->pending_writes)) {
+        res = car(conn->pending_writes);
+        conn->pending_writes = cdr(conn->pending_writes);
     }
-
-    if (prev == NULL)
-        conn->pending_writes = NULL;
-    else
-        setcdr(prev, NULL);
 
     return res;
 }
@@ -249,7 +241,8 @@ int conn_has_pending_write(struct connection *conn) {
 void conn_queue_write(struct transaction *trans) {
     assert(trans != NULL);
 
-    trans->conn->pending_writes = cons(trans, trans->conn->pending_writes);
+    trans->conn->pending_writes =
+        append_elt(trans->conn->pending_writes, trans);
 }
 
 void conn_remove(struct connection *conn) {
@@ -280,8 +273,8 @@ struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
 
     assert(conn != NULL);
 
-    if (tag == NOTAG)
-        return NULL;
+    /*if (tag == NOTAG)
+        return NULL;*/
 
     trans = hash_get(conn->tag_2_trans, &tag);
     hash_remove(conn->tag_2_trans, &tag);

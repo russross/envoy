@@ -6,11 +6,9 @@
 
 /* handshake messages (connection type unknown) */
 void unknown_tversion(struct transaction *trans);
-void unknown_tauth(struct transaction *trans);
-void unknown_tread(struct transaction *trans);
-void unknown_twrite(struct transaction *trans);
 
 /* messages from a client */
+void client_tauth(struct transaction *trans);
 void client_tattach(struct transaction *trans);
 void client_tflush(struct transaction *trans);
 void client_twalk(struct transaction *trans);
@@ -24,6 +22,7 @@ void client_tstat(struct transaction *trans);
 void client_twstat(struct transaction *trans);
 
 /* messages from another envoy */
+void envoy_tauth(struct transaction *trans);
 void envoy_tattach(struct transaction *trans);
 void envoy_tflush(struct transaction *trans);
 void envoy_twalk(struct transaction *trans);

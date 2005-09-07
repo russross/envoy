@@ -111,11 +111,33 @@ void test_map(void) {
     dumpMap(root, "");
 }
 
+void test_connect_done(struct transaction *trans) {
+    printf("test_connect_done called\n");
+}
+
+void test_connect(void) {
+    struct transaction *trans = transaction_new();
+    struct connection *conn = conn_new_unopened(CONN_ENVOY_OUT,
+            make_address("boulderdash", PORT), GLOBAL_MAX_SIZE);
+    if (!memcmp(&conn->addr->sin_addr, &state->my_address->sin_addr,
+                sizeof(conn->addr->sin_addr)))
+    {
+        printf("I am boulderdash\n");
+        return;
+    }
+    trans->handler = test_connect_done;
+    trans->conn = conn;
+    trans->in = trans->out = NULL;
+    trans->children = NULL;
+    trans->parent = NULL;
+    connect_envoy(trans, conn);
+}
+
 void config_init(void) {
     map_insert(state->map, cons("home", cons("rgr22", NULL)),
-            make_address("pitfall-32", PORT));
+            make_address("boulderdash", PORT));
     map_insert(state->map, cons("usr", cons("lib", NULL)),
-            make_address("pitfall-32", PORT));
+            make_address("boulderdash", PORT));
     map_insert(state->map, cons("lib", NULL),
             make_address("donkeykong", PORT));
     map_insert(state->map, cons("usr", cons("bin", NULL)),
@@ -125,7 +147,6 @@ void config_init(void) {
 int main(int argc, char **argv) {
     char cwd[100];
     struct stat info;
-    struct map *root;
 
     assert(sizeof(off_t) == 8);
     assert(sizeof(u8) == 1);
@@ -151,8 +172,9 @@ int main(int argc, char **argv) {
 
     /*test_dump();*/
     /*test_map();*/
+    test_connect();
     printf("root directory = [%s]\n", rootdir);
 
-    main_loop(root);
+    main_loop();
     return 0;
 }

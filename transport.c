@@ -173,14 +173,16 @@ void put_message(struct transaction *trans) {
     /* do we need to open a socket? */
     if (trans->conn->fd < 0) {
         struct connection *conn = trans->conn;
-        int res;
+        int res, flags;
         int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         assert(fd >= 0);
-        assert(fcntl(fd, O_NONBLOCK) >= 0);
+        assert((flags = fcntl(fd, F_GETFL, 0)) >= 0);
+        assert(fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0);
         res = connect(fd, (struct sockaddr *) conn->addr, sizeof(*conn->addr));
-        assert(res >= 0 || res == EINPROGRESS);
+        assert(res >= 0 || errno == EINPROGRESS);
         trans->conn =
             conn_insert_new(fd, conn->type, conn->addr, conn->maxSize);
+        handles_add(state->handles_read, trans->conn->fd);
     }
 
     if (!conn_has_pending_write(trans->conn))

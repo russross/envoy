@@ -8,6 +8,8 @@ void send_reply(struct transaction *trans);
 void queue_transaction(struct transaction *trans);
 void handle_error(struct transaction *trans);
 
-void main_loop(struct map *root);
+void main_loop(void);
+
+void connect_envoy(struct transaction *parent, struct connection *conn);
 
 #endif

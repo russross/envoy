@@ -73,6 +73,7 @@ struct cons *map_lookup(struct map *root, struct cons *path) {
         top = root->nchildren;
         bottom = 0;
         hit = 0;
+        index = 0;
 
         while (top > bottom) {
             index = bottom + (top - bottom) / 2;
