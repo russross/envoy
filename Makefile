@@ -1,8 +1,8 @@
 OCAMLC=ocamlc
 CC=gcc
 # -D_FILE_OFFSET_BITS=64 comes from `getconf LFS_CFLAGS`
-CCOPTS=-g -Wall -I $(HOME)/include -D_FILE_OFFSET_BITS=64
-LINKOPTS=-L $(HOME)/lib -lgc
+CCOPTS=-g -Wall -D_FILE_OFFSET_BITS=64
+LINKOPTS=-lgc
 
 SRC=9pstatic.c 9p.c list.c util.c config.c state.c transport.c fs.c dispatch.c envoy.c map.c
 OBJ=$(SRC:.c=.o)

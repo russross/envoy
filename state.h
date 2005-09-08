@@ -9,6 +9,7 @@
 #define CONN_HASHTABLE_SIZE 64
 #define TRANS_HASHTABLE_SIZE 64
 #define FID_HASHTABLE_SIZE 64
+#define FORWARD_HASHTABLE_SIZE 64
 #define HANDLES_INITIAL_SIZE 32
 
 struct message *message_new(void);
@@ -42,6 +43,7 @@ struct connection {
     struct sockaddr_in *addr;
     int maxSize;
     struct hashtable *fid_2_fid;
+    struct hashtable *fid_2_forward;
     struct hashtable *tag_2_trans;
     struct cons *pending_writes;
 };
@@ -103,6 +105,12 @@ int                     fid_insert_new(struct connection *conn,
 struct fid *            fid_lookup(struct connection *conn, u32 fid);
 struct fid *            fid_lookup_remove(struct connection *conn, u32 fid);
 
+struct forward {
+    u32 fid;
+    struct connection *rconn;
+    u32 rfid;
+};
+
 void print_address(struct sockaddr_in *addr);
 void state_dump(void);
 
@@ -117,8 +125,6 @@ struct state {
     struct map *map;
     struct cons *transaction_queue;
     struct cons *error_queue;
-    u16 nexttag;
-    u32 nextfid;
 };
 
 extern struct state *state;

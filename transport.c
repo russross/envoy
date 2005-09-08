@@ -68,7 +68,7 @@ static struct message *read_message(int fd, struct connection **from) {
         /* close down the connection */
         conn_remove(*from);
         handles_remove(state->handles_read, fd);
-        if (!conn_has_pending_write(*from))
+        if (conn_has_pending_write(*from))
             handles_remove(state->handles_write, fd);
         close(fd);
 
@@ -98,6 +98,7 @@ static void accept_connection(int sock) {
     printf("\n");
 }
 
+/* select on all our open sockets and dispatch when one is ready */
 static struct message *handle_socket_event(struct connection **from) {
     int high, num, fd;
     fd_set rset, wset;
@@ -183,6 +184,9 @@ void put_message(struct transaction *trans) {
         trans->conn =
             conn_insert_new(fd, conn->type, conn->addr, conn->maxSize);
         handles_add(state->handles_read, trans->conn->fd);
+        printf("opened connection to ");
+        print_address(conn->addr);
+        printf("\n");
     }
 
     if (!conn_has_pending_write(trans->conn))

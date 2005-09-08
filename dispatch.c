@@ -1,19 +1,3 @@
-/* Transaction dependencies are tracked using the children and parent fields.
- * When a message is received, the following rules are considered:
- *
- * 1. If the message is a new request, a handler is found based on the
- *    connection and message type.
- * 2. Else if handler and parent are both null, assert a failure.
- * 3. Else if handler is !null, handler is called.
- * 4. Else parent's children list is checked; if all transactions are
- *    completed, parent is processed starting at step 2.
- *
- * A handler returns a single transaction, but it may also make other changes
- * to transaction structures.  The returned transaction may have either a
- * message to be sent (out) or a list of children transactions with out fields
- * to be sent.
- */
-
 #include <stdlib.h>
 #include <assert.h>
 #include "9p.h"
@@ -282,6 +266,7 @@ void main_loop(void) {
                 /* this is a reply to a request we made */
                 assert(trans != NULL);
 
+                trans->in = msg;
                 queue_transaction(trans);
 
                 break;
@@ -290,7 +275,6 @@ void main_loop(void) {
             default:
                 assert(0);
         }
-        state_dump();
     }
 }
 
@@ -308,8 +292,7 @@ void connect_envoy(struct transaction *parent, struct connection *conn) {
     trans->out->maxSize = trans->conn->maxSize;
     trans->out->tag = NOTAG;
     trans->out->id = TVERSION;
-    trans->out->msg.tversion.msize = trans->conn->maxSize;
-    trans->out->msg.tversion.version = "9P2000.envoy";
+    set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");
     trans->children = NULL;
     trans->parent = parent;
     parent->children = append_elt(parent->children, trans);

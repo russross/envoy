@@ -179,6 +179,10 @@ struct connection *conn_insert_new(int fd, enum conn_type type,
             FID_HASHTABLE_SIZE,
             (u32 (*)(const void *)) u32_hash,
             (int (*)(const void *, const void *)) u32_cmp);
+    conn->fid_2_forward = hash_create(
+            FORWARD_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) u32_hash,
+            (int (*)(const void *, const void *)) u32_cmp);
     conn->tag_2_trans = hash_create(
             TRANS_HASHTABLE_SIZE,
             (u32 (*)(const void *)) u16_hash,
@@ -207,6 +211,7 @@ struct connection *conn_new_unopened(enum conn_type type,
     conn->addr = addr;
     conn->maxSize = maxSize;
     conn->fid_2_fid = NULL;
+    conn->fid_2_forward = NULL;
     conn->tag_2_trans = NULL;
     conn->pending_writes = NULL;
 
@@ -273,9 +278,6 @@ struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
 
     assert(conn != NULL);
 
-    /*if (tag == NOTAG)
-        return NULL;*/
-
     trans = hash_get(conn->tag_2_trans, &tag);
     hash_remove(conn->tag_2_trans, &tag);
 
@@ -294,7 +296,6 @@ int fid_insert_new(struct connection *conn, u32 fid, char *uname, char *path) {
     assert(uname != NULL && *uname);
     assert(path != NULL && *path);
 
-    /* when multithreaded, this needs to be atomic with the hash_set call */
     if (hash_get(conn->fid_2_fid, &fid) != NULL)
         return -1;
 
@@ -329,6 +330,56 @@ struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
 
     if (res != NULL)
         hash_remove(conn->fid_2_fid, &fid);
+
+    return res;
+}
+
+/*
+ * Forwarded fid state.
+ */
+
+int forward_insert_new(struct connection *conn, u32 fid,
+        struct connection *rconn, u32 rfid)
+{
+    struct forward *res;
+
+    assert(conn != NULL);
+    assert(fid != NOFID);
+    assert(rconn != NULL);
+    assert(rfid != NOFID);
+
+    if (hash_get(conn->fid_2_forward, &fid) != NULL)
+        return -1;
+
+    res = GC_NEW(struct forward);
+    assert(res != NULL);
+
+    res->fid = fid;
+    res->rconn = rconn;
+    res->rfid = rfid;
+
+    hash_set(conn->fid_2_forward, &res->fid, res);
+
+    return 0;
+}
+
+struct forward *forward_lookup(struct connection *conn, u32 fid) {
+    assert(conn != NULL);
+    assert(fid != NOFID);
+
+    return hash_get(conn->fid_2_forward, &fid);
+}
+
+struct forward *forward_lookup_remove(struct connection *conn, u32 fid) {
+    struct forward *res;
+
+    assert(conn != NULL);
+    assert(fid != NOFID);
+
+    res = hash_get(conn->fid_2_forward, &fid);
+
+    if (res != NULL)
+        hash_remove(conn->fid_2_forward, &fid);
 
     return res;
 }
@@ -459,7 +510,4 @@ void state_init(void) {
 
     state->transaction_queue = NULL;
     state->error_queue = NULL;
-
-    state->nexttag = 1;
-    state->nextfid = 1;
 }
