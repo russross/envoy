@@ -13,6 +13,8 @@
 #include "config.h"
 #include "state.h"
 #include "dispatch.h"
+#include "map.h"
+#include "list.h"
 #include "util.h"
 #include "fs.h"
 
@@ -200,6 +202,18 @@ static void rerror(struct message *m, u16 errnum, int line) {
     } \
 } while(0)
 
+struct sockaddr_in *get_envoy_address(char *path) {
+    struct cons *lst = map_lookup(state->map, splitpath(path));
+    struct map *elt;
+
+    if (null(lst))
+        return NULL;
+    while (!null(cdr(lst)))
+        lst = cdr(lst);
+    elt = car(lst);
+    return elt->addr;
+}
+
 /*****************************************************************************/
 
 /**
@@ -291,28 +305,63 @@ void envoy_tauth(struct transaction *trans) {
  * - afid may be used for multiple attach calls with same uname/aname
  * - error returned if fid is already in use
  */
-void client_tattach(struct transaction *trans) {
+void handle_tattach(struct transaction *trans, int client) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
-    struct stat info;
-    char *path;
-
+    struct sockaddr_in *addr;
+    
     failif(req->afid != NOFID, EBADF);
     failif(emptystring(req->uname), EINVAL);
-    if (emptystring(req->aname)) {
-        failif((path = resolvePath(rootdir, "", &info)) == NULL, ENOENT);
+
+    if (!null(trans->children)) {
+        /* we have a result back from an envoy */
+    } else if ((addr = get_envoy_address(req->aname)) == NULL ||
+            !addr_cmp(addr, trans->conn->addr))
+    {
+        /* this request should be handled locally */
+        struct stat info;
+        char *path;
+
+        if (emptystring(req->aname)) {
+            failif((path = resolvePath(rootdir, "", &info)) == NULL, ENOENT);
+        } else {
+            failif((path = resolvePath(rootdir, req->aname, &info)) == NULL,
+                    ENOENT);
+        }
+        failif(fid_insert_new(trans->conn, req->fid, req->uname, path) < 0,
+                EBADF);
+        res->qid = stat2qid(&info);
+
+        send_reply(trans);
+    } else if (client) {
+        /* this request needs to be forwarded */
+        struct transaction *rtrans = transaction_new();
+        rtrans->conn = conn_lookup_addr(addr);
+        if (rtrans->conn == NULL)
+            rtrans->conn = conn_new_unopened(CONN_ENVOY_OUT, addr);
+        rtrans->handler = NULL;
+        rtrans->out = trans->out;
+        trans->out = NULL;
+        rtrans->out->id = TATTACH;
+        rtrans->out->tag = conn_alloc_tag(rtrans->conn, rtrans);
+        rtrans->in = NULL;
+        rtrans->children = NULL;
+        rtrans->parent = trans;
+        trans->children = cons(rtrans, trans->children);
+
+        send_request(rtrans);
     } else {
-        failif((path = resolvePath(rootdir, req->aname, &info)) == NULL,
-                ENOENT);
+        /* this request was sent to the wrong place */
+        assert(0);
     }
-    failif(fid_insert_new(trans->conn, req->fid, req->uname, path) < 0, EBADF);
-    res->qid = stat2qid(&info);
-    
-    send_reply(trans);
+}
+
+void client_tattach(struct transaction *trans) {
+    handle_tattach(trans, 1);
 }
 
 void envoy_tattach(struct transaction *trans) {
-    failif(-1, ENOTSUP);
+    handle_tattach(trans, 0);
 }
 
 /**

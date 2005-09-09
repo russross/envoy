@@ -56,7 +56,7 @@ static struct cons *strip_prefix(struct cons *full, struct cons *prefix) {
 }
 
 struct cons *map_lookup(struct map *root, struct cons *path) {
-    struct cons *result = NULL, *reverse;
+    struct cons *result = NULL;
 
     assert(root != NULL);
     assert(null(root->prefix));
@@ -97,10 +97,7 @@ struct cons *map_lookup(struct map *root, struct cons *path) {
     }
 
     /* reverse the order of the result list */
-    for (reverse = NULL; !null(result); result = (struct cons *) cdr(result))
-        reverse = cons(car(result), reverse);
-
-    return reverse;
+    return reverse(result);
 }
 
 void map_insert(struct map *root, struct cons *path,

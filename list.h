@@ -69,5 +69,6 @@ static inline void setcdr(struct cons *cons, void *cdr) {
 }
 
 struct cons *append_elt(struct cons *list, void *elt);
+struct cons *reverse(struct cons *list);
 
 #endif

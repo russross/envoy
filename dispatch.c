@@ -15,9 +15,6 @@ void send_request(struct transaction *trans) {
     assert(trans->in == NULL);
 
     put_message(trans);
-
-    /* index this transaction so we can match the reply when it comes */
-    trans_insert(trans);
 }
 
 void send_reply(struct transaction *trans) {

@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <netdb.h>
 #include <assert.h>
 #include <gc.h>
 #include "9p.h"
@@ -60,22 +61,6 @@ static u32 generic_hash(const void *elt, int len, u32 hash) {
     return hash;
 }
 
-static u32 u32_hash(const u32 *key) {
-    return *key;
-}
-
-static int u32_cmp(const u32 *a, const u32 *b) {
-    return (int) *a - *b;
-}
-
-static u32 u16_hash(const u16 *key) {
-    return (u32) *key;
-}
-
-static int u16_cmp(const u16 *a, const u16 *b) {
-    return (int) *a - *b;
-}
-
 static u32 addr_hash(const struct sockaddr_in *addr) {
     u32 hash = 0;
     hash = generic_hash(&addr->sin_family, sizeof(addr->sin_family), hash);
@@ -84,7 +69,7 @@ static u32 addr_hash(const struct sockaddr_in *addr) {
     return hash;
 }
 
-static int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b) {
+int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b) {
     int x;
     if ((x = memcmp(&a->sin_family, &b->sin_family, sizeof(a->sin_family))))
         return x;
@@ -165,7 +150,7 @@ struct connection *conn_insert_new(int fd, enum conn_type type,
 
     assert(fd >= 0);
     assert(addr != NULL);
-    assert(hash_get(state->fd_2_conn, &fd) == NULL);
+    assert(!vector_test(state->conn_vector, fd));
     assert(hash_get(state->addr_2_conn, addr) == NULL);
 
     conn = GC_NEW(struct connection);
@@ -175,28 +160,19 @@ struct connection *conn_insert_new(int fd, enum conn_type type,
     conn->type = type;
     conn->addr = addr;
     conn->maxSize = maxSize;
-    conn->fid_2_fid = hash_create(
-            FID_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) u32_hash,
-            (int (*)(const void *, const void *)) u32_cmp);
-    conn->fid_2_forward = hash_create(
-            FORWARD_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) u32_hash,
-            (int (*)(const void *, const void *)) u32_cmp);
-    conn->tag_2_trans = hash_create(
-            TRANS_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) u16_hash,
-            (int (*)(const void *, const void *)) u16_cmp);
+    conn->fid_vector = vector_create(FID_VECTOR_SIZE);
+    conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
+    conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
     conn->pending_writes = NULL;
 
-    hash_set(state->fd_2_conn, &conn->fd, conn);
+    vector_set(state->conn_vector, conn->fd, conn);
     hash_set(state->addr_2_conn, conn->addr, conn);
 
     return conn;
 }
 
 struct connection *conn_new_unopened(enum conn_type type,
-        struct sockaddr_in *addr, int maxSize)
+        struct sockaddr_in *addr)
 {
     struct connection *conn;
 
@@ -209,17 +185,17 @@ struct connection *conn_new_unopened(enum conn_type type,
     conn->fd = -1;
     conn->type = type;
     conn->addr = addr;
-    conn->maxSize = maxSize;
-    conn->fid_2_fid = NULL;
-    conn->fid_2_forward = NULL;
-    conn->tag_2_trans = NULL;
+    conn->maxSize = GLOBAL_MAX_SIZE;
+    conn->fid_vector = vector_create(FID_VECTOR_SIZE);
+    conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
+    conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
     conn->pending_writes = NULL;
 
     return conn;
 }
 
 struct connection *conn_lookup_fd(int fd) {
-    return hash_get(state->fd_2_conn, &fd);
+    return vector_get(state->conn_vector, fd);
 }
 
 struct connection *conn_lookup_addr(struct sockaddr_in *addr) {
@@ -252,11 +228,17 @@ void conn_queue_write(struct transaction *trans) {
 
 void conn_remove(struct connection *conn) {
     assert(conn != NULL);
-    assert(hash_get(state->fd_2_conn, &conn->fd) != NULL);
+    assert(vector_test(state->conn_vector, conn->fd));
     assert(hash_get(state->addr_2_conn, conn->addr) != NULL);
 
-    hash_remove(state->fd_2_conn, &conn->fd);
+    vector_remove(state->conn_vector, conn->fd);
     hash_remove(state->addr_2_conn, conn->addr);
+}
+
+u32 conn_alloc_tag(struct connection *conn, struct transaction *trans) {
+    assert(conn != NULL && trans != NULL);
+
+    return vector_alloc(conn->tag_vector, trans);
 }
 
 /*
@@ -270,7 +252,7 @@ void trans_insert(struct transaction *trans) {
     assert(trans->in == NULL);
     assert(trans->out != NULL);
 
-    hash_set(trans->conn->tag_2_trans, &trans->out->tag, trans);
+    vector_set(trans->conn->tag_vector, trans->out->tag, trans);
 }
 
 struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
@@ -278,8 +260,8 @@ struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
 
     assert(conn != NULL);
 
-    trans = hash_get(conn->tag_2_trans, &tag);
-    hash_remove(conn->tag_2_trans, &tag);
+    trans = vector_get(conn->tag_vector, tag);
+    vector_remove(conn->tag_vector, tag);
 
     return trans;
 }
@@ -296,7 +278,7 @@ int fid_insert_new(struct connection *conn, u32 fid, char *uname, char *path) {
     assert(uname != NULL && *uname);
     assert(path != NULL && *path);
 
-    if (hash_get(conn->fid_2_fid, &fid) != NULL)
+    if (vector_test(conn->fid_vector, fid))
         return -1;
 
     res = GC_NEW(struct fid);
@@ -308,7 +290,7 @@ int fid_insert_new(struct connection *conn, u32 fid, char *uname, char *path) {
     res->fd = -1;
     res->status = STATUS_CLOSED;
 
-    hash_set(conn->fid_2_fid, &res->fid, res);
+    vector_set(conn->fid_vector, res->fid, res);
 
     return 0;
 }
@@ -317,7 +299,7 @@ struct fid *fid_lookup(struct connection *conn, u32 fid) {
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    return hash_get(conn->fid_2_fid, &fid);
+    return vector_get(conn->fid_vector, fid);
 }
 
 struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
@@ -326,10 +308,10 @@ struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    res = hash_get(conn->fid_2_fid, &fid);
+    res = vector_get(conn->fid_vector, fid);
 
     if (res != NULL)
-        hash_remove(conn->fid_2_fid, &fid);
+        vector_remove(conn->fid_vector, fid);
 
     return res;
 }
@@ -348,7 +330,7 @@ int forward_insert_new(struct connection *conn, u32 fid,
     assert(rconn != NULL);
     assert(rfid != NOFID);
 
-    if (hash_get(conn->fid_2_forward, &fid) != NULL)
+    if (vector_test(conn->forward_vector, fid))
         return -1;
 
     res = GC_NEW(struct forward);
@@ -358,7 +340,7 @@ int forward_insert_new(struct connection *conn, u32 fid,
     res->rconn = rconn;
     res->rfid = rfid;
 
-    hash_set(conn->fid_2_forward, &res->fid, res);
+    vector_set(conn->forward_vector, res->fid, res);
 
     return 0;
 }
@@ -367,7 +349,7 @@ struct forward *forward_lookup(struct connection *conn, u32 fid) {
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    return hash_get(conn->fid_2_forward, &fid);
+    return vector_get(conn->forward_vector, fid);
 }
 
 struct forward *forward_lookup_remove(struct connection *conn, u32 fid) {
@@ -376,10 +358,10 @@ struct forward *forward_lookup_remove(struct connection *conn, u32 fid) {
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    res = hash_get(conn->fid_2_forward, &fid);
+    res = vector_get(conn->forward_vector, fid);
 
     if (res != NULL)
-        hash_remove(conn->fid_2_forward, &fid);
+        vector_remove(conn->forward_vector, fid);
 
     return res;
 }
@@ -414,18 +396,24 @@ static void print_fid(struct fid *fid) {
     }
 }
 
-static void print_fid_fid(u32 *n, struct fid *fid) {
-    printf("   %-2u:\n", *n);
+static void print_fid_fid(u32 n, struct fid *fid) {
+    printf("   %-2u:\n", n);
     print_fid(fid);
 }
 
 void print_address(struct sockaddr_in *addr) {
-    printf("{%d.%d.%d.%d:%d}",
-            (addr->sin_addr.s_addr >> 24) & 0xff,
-            (addr->sin_addr.s_addr >> 16) & 0xff,
-            (addr->sin_addr.s_addr >>  8) & 0xff,
-             addr->sin_addr.s_addr        & 0xff,
-            addr->sin_port);
+    struct hostent *host = gethostbyaddr(&addr->sin_addr,
+            sizeof(addr->sin_addr), addr->sin_family);
+    if (host == NULL || host->h_name == NULL) {
+        printf("{%d.%d.%d.%d:%d}",
+                (addr->sin_addr.s_addr >> 24) & 0xff,
+                (addr->sin_addr.s_addr >> 16) & 0xff,
+                (addr->sin_addr.s_addr >>  8) & 0xff,
+                addr->sin_addr.s_addr        & 0xff,
+                addr->sin_port);
+    } else {
+        printf("{%s:%d}", host->h_name, addr->sin_port);
+    }
 }
 
 static void print_transaction(struct transaction *trans) {
@@ -439,8 +427,8 @@ static void print_transaction(struct transaction *trans) {
     }
 }
 
-static void print_tag_trans(u16 *tag, struct transaction *trans) {
-    printf("   %-2u:\n", (u32) *tag);
+static void print_tag_trans(u32 tag, struct transaction *trans) {
+    printf("   %-2u:\n", tag);
     print_transaction(trans);
 }
 
@@ -459,9 +447,9 @@ static void print_connection(struct connection *conn) {
     printf(" fd:%d ", conn->fd);
     print_connection_type(conn->type);
     printf("\n  fids:\n");
-    hash_apply(conn->fid_2_fid, (void (*)(void *, void *)) print_fid_fid);
+    vector_apply(conn->fid_vector, (void (*)(u32, void *)) print_fid_fid);
     printf("  transactions:\n");
-    hash_apply(conn->tag_2_trans, (void (*)(void *, void *)) print_tag_trans);
+    vector_apply(conn->tag_vector, (void (*)(u32, void *)) print_tag_trans);
 }
 
 static void print_addr_conn(struct sockaddr_in *addr, struct connection *conn) {
@@ -488,11 +476,7 @@ void state_init(void) {
     state->handles_read = handles_new();
     state->handles_write = handles_new();
 
-    state->fd_2_conn = hash_create(
-            CONN_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) u32_hash,
-            (int (*)(const void *, const void *)) u32_cmp);
-
+    state->conn_vector = vector_create(CONN_VECTOR_SIZE);
     state->addr_2_conn = hash_create(
             CONN_HASHTABLE_SIZE,
             (u32 (*)(const void *)) addr_hash,

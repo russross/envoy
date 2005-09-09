@@ -118,7 +118,7 @@ void test_connect_done(struct transaction *trans) {
 void test_connect(void) {
     struct transaction *trans = transaction_new();
     struct connection *conn = conn_new_unopened(CONN_ENVOY_OUT,
-            make_address("boulderdash", PORT), GLOBAL_MAX_SIZE);
+            make_address("boulderdash", PORT));
     if (!memcmp(&conn->addr->sin_addr, &state->my_address->sin_addr,
                 sizeof(conn->addr->sin_addr)))
     {

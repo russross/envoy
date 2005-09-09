@@ -13,3 +13,14 @@ struct cons *append_elt(struct cons *list, void *elt) {
 
     return res;
 }
+
+struct cons *reverse(struct cons *list) {
+    struct cons *res = NULL;
+
+    while (!null(list)) {
+        res = cons(car(list), res);
+        list = cdr(list);
+    }
+
+    return res;
+}

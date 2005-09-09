@@ -7,9 +7,10 @@
 #include "util.h"
 
 #define CONN_HASHTABLE_SIZE 64
-#define TRANS_HASHTABLE_SIZE 64
-#define FID_HASHTABLE_SIZE 64
-#define FORWARD_HASHTABLE_SIZE 64
+#define CONN_VECTOR_SIZE 64
+#define TAG_VECTOR_SIZE 64
+#define FID_VECTOR_SIZE 64
+#define FORWARD_VECTOR_SIZE 64
 #define HANDLES_INITIAL_SIZE 32
 
 struct message *message_new(void);
@@ -42,9 +43,9 @@ struct connection {
     enum conn_type type;
     struct sockaddr_in *addr;
     int maxSize;
-    struct hashtable *fid_2_fid;
-    struct hashtable *fid_2_forward;
-    struct hashtable *tag_2_trans;
+    struct vector *fid_vector;
+    struct vector *forward_vector;
+    struct vector *tag_vector;
     struct cons *pending_writes;
 };
 
@@ -53,14 +54,15 @@ struct connection *     conn_insert_new(int fd,
                                         struct sockaddr_in *addr,
                                         int maxSize);
 struct connection *     conn_new_unopened(enum conn_type type,
-                                          struct sockaddr_in *addr,
-                                          int maxSize);
+                                          struct sockaddr_in *addr);
 struct connection *     conn_lookup_fd(int fd);
 struct connection *     conn_lookup_addr(struct sockaddr_in *addr);
 struct transaction *    conn_get_pending_write(struct connection *conn);
 int                     conn_has_pending_write(struct connection *conn);
 void                    conn_queue_write(struct transaction *trans);
 void                    conn_remove(struct connection *conn);
+u32                     conn_alloc_tag(struct connection *conn,
+                                       struct transaction *trans);
 
 /* transactions */
 struct transaction {
@@ -111,12 +113,19 @@ struct forward {
     u32 rfid;
 };
 
+int                     forward_insert_new(struct connection *conn,
+                                           u32 fid,
+                                           struct connection *rconn, u32 rfid);
+struct forward *        forward_lookup(struct connection *conn, u32 fid);
+struct forward *        forward_lookup_remove(struct connection *conn, u32 fid);
+
 void print_address(struct sockaddr_in *addr);
+int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b);
 void state_dump(void);
 
 /* persistent state */
 struct state {
-    struct hashtable *fd_2_conn;
+    struct vector *conn_vector;
     struct hashtable *addr_2_conn;
     struct handles *handles_listen;
     struct handles *handles_read;

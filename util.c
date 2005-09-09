@@ -145,6 +145,88 @@ void hash_apply(struct hashtable *table, void (*fun)(void *, void *)) {
     }
 }
 
+/*
+ * Generic vectors
+ */
+
+struct vector *vector_create(u32 size) {
+    struct vector *v = GC_NEW(struct vector);
+
+    assert(v != NULL);
+    v->array = GC_MALLOC(sizeof(void *) * size);
+    assert(v->array != NULL);
+    v->size = size;
+    v->next = 0;
+
+    return v;
+}
+
+void *vector_get(struct vector *v, const u32 key) {
+    if (key >= v->next)
+        return NULL;
+
+    return v->array[key];
+}
+
+int vector_test(struct vector *v, const u32 key) {
+    return key < v->next && v->array[key] != NULL;
+}
+
+static void vector_double(struct vector *v) {
+    void **old = v->array;
+    v->array = GC_MALLOC(sizeof(void *) * v->size * 2);
+    assert(v->array != NULL);
+    memcpy(v->array, old, sizeof(void *) * v->size);
+    v->size *= 2;
+}
+
+u32 vector_alloc(struct vector *v, void *value) {
+    u32 i;
+
+    for (i = 0; i < v->next; i++) {
+        if (v->array[i] == NULL) {
+            v->array[i] = value;
+            return i;
+        }
+    }
+
+    if (v->next == v->size)
+        vector_double(v);
+
+    v->array[v->next] = value;
+
+    return v->next++;
+}
+
+void vector_set(struct vector *v, u32 key, void *value) {
+    while (key >= v->size)
+        vector_double(v);
+
+    while (v->next <= key)
+        v->array[v->next++] = NULL;
+
+    v->array[key] = value;
+}
+
+void vector_remove(struct vector *v, u32 key) {
+    assert(key < v->next && v->array[key] != NULL);
+    v->array[key] = NULL;
+    while (v->next > 0 && v->array[v->next - 1] == NULL)
+        v->next--;
+}
+
+void vector_apply(struct vector *v, void (*fun)(u32, void *)) {
+    u32 i;
+    
+    assert(v != NULL && fun != NULL);
+
+    for (i = 0; i < v->next; i++)
+        if (v->array[i] != NULL)
+            fun(i, v->array[i]);
+}
+
+/*****************************************************************************/
+
 /* we know base to be well-formed, with a leading slash, no trailing slash */
 char *resolvePath(char *base, char *ext, struct stat *info) {
     int first = 1;
@@ -281,4 +363,27 @@ struct sockaddr_in *make_address(char *host, int port) {
     addr->sin_addr = *((struct in_addr *) ent->h_addr_list[0]);
 
     return addr;
+}
+
+struct cons *splitpath(char *path) {
+    struct cons *res = NULL;
+
+    assert(path != NULL);
+    
+    while (*path) {
+        int i, j, k;
+
+        for (i = 0; path[i] == '/'; i++);
+        for (j = i; path[j] != 0 && path[j] != '/'; j++);
+        for (k = j; path[k] == '/'; k++);
+
+        if (j - i > 0)
+            res = cons(substring(path, i, j - i), res);
+        else
+            break;
+
+        path = &path[k];
+    }
+
+    return reverse(res);
 }

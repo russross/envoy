@@ -29,6 +29,24 @@ inline void hash_remove(struct hashtable *table, const void *key);
 void hash_apply(struct hashtable *table, void (*fun)(void *, void *));
 
 /*
+ * Generic vectors
+ */
+
+struct vector {
+    u32 size;
+    u32 next;
+    void **array;
+};
+
+struct vector *vector_create(u32 size);
+void *vector_get(struct vector *v, const u32 key);
+int vector_test(struct vector *v, const u32 key);
+u32 vector_alloc(struct vector *v, void *value);
+void vector_set(struct vector *v, u32 key, void *value);
+void vector_remove(struct vector *v, u32 key);
+void vector_apply(struct vector *v, void (*fun)(u32, void *));
+
+/*
  * General utility functions
  */
 
@@ -79,5 +97,6 @@ char *concatname(char *path, char *name);
 char *resolvePath(char *base, char *ext, struct stat *info);
 
 struct sockaddr_in *make_address(char *host, int port);
+struct cons *splitpath(char *path);
 
 #endif
