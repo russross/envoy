@@ -302,115 +302,115 @@ void envoy_tauth(struct transaction *trans) {
  */
 
 /* return the results of a request that has been handled by a remote envoy */
-void copy_envoy_response(struct transaction *trans) {
-    struct message *from;
-
-    assert(trans != NULL);
-    assert(!null(trans->children));
-
-    /* walk is a special case */
-    if (trans->out->id == RWALK)
-        return;
-    
-    from = ((struct transaction *) car(trans->children))->in;
-    assert(from != NULL);
-
-    trans->children = cdr(trans->children);
-    assert(null(trans->children));
-
-    /* copy the whole message over */
-    memcpy(&trans->out->msg, &from->msg, sizeof(from->msg));
-    trans->out->id = from->id;
-
-    send_reply(trans);
-}
-
-u32 get_fid(struct message *msg) {
-    switch (msg->id) {
-        case TATTACH:   return msg->msg.tattach.fid;
-        case TWALK:     return msg->msg.twalk.fid;
-        case TOPEN:     return msg->msg.topen.fid;
-        case TCREATE:   return msg->msg.tcreate.fid;
-        case TREAD:     return msg->msg.tread.fid;
-        case TWRITE:    return msg->msg.twrite.fid;
-        case TCLUNK:    return msg->msg.tclunk.fid;
-        case TREMOVE:   return msg->msg.tremove.fid;
-        case TSTAT:     return msg->msg.tstat.fid;
-        case TWSTAT:    return msg->msg.twstat.fid;
-        default:        return NOFID;
-    }
-}
-
-void set_fid(struct message *msg, u32 fid) {
-    switch (msg->id) {
-        case TATTACH:   msg->msg.tattach.fid = fid;
-                        break;
-        case TWALK:     msg->msg.twalk.fid = fid;
-                        break;
-        case TOPEN:     msg->msg.topen.fid = fid;
-                        break;
-        case TCREATE:   msg->msg.tcreate.fid = fid;
-                        break;
-        case TREAD:     msg->msg.tread.fid = fid;
-                        break;
-        case TWRITE:    msg->msg.twrite.fid = fid;
-                        break;
-        case TCLUNK:    msg->msg.tclunk.fid = fid;
-                        break;
-        case TREMOVE:   msg->msg.tremove.fid = fid;
-                        break;
-        case TSTAT:     msg->msg.tstat.fid = fid;
-                        break;
-        case TWSTAT:    msg->msg.twstat.fid = fid;
-                        break;
-        default:        break;
-    }
-}
-
-int try_forwarding(struct transaction *trans) {
-    u32 fid;
-    struct forward *forward;
-
-    switch (trans->in->id) {
-        case TOPEN:     fid = trans->in->msg.topen.fid;
-                        break;
-        case TCREATE:   fid = trans->in->msg.tcreate.fid;
-                        break;
-        case TREAD:     fid = trans->in->msg.tread.fid;
-                        break;
-        case TWRITE:    fid = trans->in->msg.twrite.fid;
-                        break;
-        case TCLUNK:    fid = trans->in->msg.tclunk.fid;
-                        break;
-        case TREMOVE:   fid = trans->in->msg.tremove.fid;
-                        break;
-        case TSTAT:     fid = trans->in->msg.tstat.fid;
-                        break;
-        case TWSTAT:    fid = trans->in->msg.twstat.fid;
-                        break;
-        default:        return 0;
-    }
-
-    forward = forward_lookup(trans->conn, fid);
-    if (forward == NULL) {}
-    return 0;
-
-}
+//void copy_envoy_response(struct transaction *trans) {
+//    struct message *from;
+//
+//    assert(trans != NULL);
+//    assert(!null(trans->children));
+//
+//    /* walk is a special case */
+//    if (trans->out->id == RWALK)
+//        return;
+//    
+//    from = ((struct transaction *) car(trans->children))->in;
+//    assert(from != NULL);
+//
+//    trans->children = cdr(trans->children);
+//    assert(null(trans->children));
+//
+//    /* copy the whole message over */
+//    memcpy(&trans->out->msg, &from->msg, sizeof(from->msg));
+//    trans->out->id = from->id;
+//
+//    send_reply(trans);
+//}
+//
+//u32 get_fid(struct message *msg) {
+//    switch (msg->id) {
+//        case TATTACH:   return msg->msg.tattach.fid;
+//        case TWALK:     return msg->msg.twalk.fid;
+//        case TOPEN:     return msg->msg.topen.fid;
+//        case TCREATE:   return msg->msg.tcreate.fid;
+//        case TREAD:     return msg->msg.tread.fid;
+//        case TWRITE:    return msg->msg.twrite.fid;
+//        case TCLUNK:    return msg->msg.tclunk.fid;
+//        case TREMOVE:   return msg->msg.tremove.fid;
+//        case TSTAT:     return msg->msg.tstat.fid;
+//        case TWSTAT:    return msg->msg.twstat.fid;
+//        default:        return NOFID;
+//    }
+//}
+//
+//void set_fid(struct message *msg, u32 fid) {
+//    switch (msg->id) {
+//        case TATTACH:   msg->msg.tattach.fid = fid;
+//                        break;
+//        case TWALK:     msg->msg.twalk.fid = fid;
+//                        break;
+//        case TOPEN:     msg->msg.topen.fid = fid;
+//                        break;
+//        case TCREATE:   msg->msg.tcreate.fid = fid;
+//                        break;
+//        case TREAD:     msg->msg.tread.fid = fid;
+//                        break;
+//        case TWRITE:    msg->msg.twrite.fid = fid;
+//                        break;
+//        case TCLUNK:    msg->msg.tclunk.fid = fid;
+//                        break;
+//        case TREMOVE:   msg->msg.tremove.fid = fid;
+//                        break;
+//        case TSTAT:     msg->msg.tstat.fid = fid;
+//                        break;
+//        case TWSTAT:    msg->msg.twstat.fid = fid;
+//                        break;
+//        default:        break;
+//    }
+//}
+//
+//int try_forwarding(struct transaction *trans) {
+//    u32 fid;
+//    struct forward *forward;
+//
+//    switch (trans->in->id) {
+//        case TOPEN:     fid = trans->in->msg.topen.fid;
+//                        break;
+//        case TCREATE:   fid = trans->in->msg.tcreate.fid;
+//                        break;
+//        case TREAD:     fid = trans->in->msg.tread.fid;
+//                        break;
+//        case TWRITE:    fid = trans->in->msg.twrite.fid;
+//                        break;
+//        case TCLUNK:    fid = trans->in->msg.tclunk.fid;
+//                        break;
+//        case TREMOVE:   fid = trans->in->msg.tremove.fid;
+//                        break;
+//        case TSTAT:     fid = trans->in->msg.tstat.fid;
+//                        break;
+//        case TWSTAT:    fid = trans->in->msg.twstat.fid;
+//                        break;
+//        default:        return 0;
+//    }
+//
+//    forward = forward_lookup(trans->conn, fid);
+//    if (forward == NULL) {}
+//    return 0;
+//
+//}
 
 void handle_tattach(struct transaction *trans, int client) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
-    struct sockaddr_in *addr;
+//    struct sockaddr_in *addr;
     
     failif(req->afid != NOFID, EBADF);
     failif(emptystring(req->uname), EINVAL);
 
-    if (!null(trans->children)) {
-        /* we have a result back from an envoy */
-        copy_envoy_response(trans);
-    } else if ((addr = get_envoy_address(req->aname)) == NULL ||
-            !addr_cmp(addr, trans->conn->addr))
-    {
+//    if (!null(trans->children)) {
+//        /* we have a result back from an envoy */
+//        copy_envoy_response(trans);
+//    } else if ((addr = get_envoy_address(req->aname)) == NULL ||
+//            !addr_cmp(addr, trans->conn->addr))
+//    {
         /* this request should be handled locally */
         struct stat info;
         char *path;
@@ -426,27 +426,27 @@ void handle_tattach(struct transaction *trans, int client) {
         res->qid = stat2qid(&info);
 
         send_reply(trans);
-    } else if (client) {
-        /* this request needs to be forwarded */
-        struct transaction *rtrans = transaction_new();
-        rtrans->conn = conn_lookup_addr(addr);
-        if (rtrans->conn == NULL)
-            rtrans->conn = conn_new_unopened(CONN_ENVOY_OUT, addr);
-        rtrans->handler = NULL;
-        rtrans->out = trans->out;
-        trans->out = NULL;
-        rtrans->out->id = TATTACH;
-        rtrans->out->tag = conn_alloc_tag(rtrans->conn, rtrans);
-        rtrans->in = NULL;
-        rtrans->children = NULL;
-        rtrans->parent = trans;
-        trans->children = cons(rtrans, trans->children);
-
-        send_request(rtrans);
-    } else {
-        /* this request was sent to the wrong place */
-        assert(0);
-    }
+//    } else if (client) {
+//        /* this request needs to be forwarded */
+//        struct transaction *rtrans = transaction_new();
+//        rtrans->conn = conn_lookup_addr(addr);
+//        if (rtrans->conn == NULL)
+//            rtrans->conn = conn_new_unopened(CONN_ENVOY_OUT, addr);
+//        rtrans->handler = NULL;
+//        rtrans->out = trans->out;
+//        trans->out = NULL;
+//        rtrans->out->id = TATTACH;
+//        rtrans->out->tag = conn_alloc_tag(rtrans->conn, rtrans);
+//        rtrans->in = NULL;
+//        rtrans->children = NULL;
+//        rtrans->parent = trans;
+//        trans->children = cons(rtrans, trans->children);
+//
+//        send_request(rtrans);
+//    } else {
+//        /* this request was sent to the wrong place */
+//        assert(0);
+//    }
 }
 
 void client_tattach(struct transaction *trans) {

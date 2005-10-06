@@ -4,6 +4,7 @@
 #include <netdb.h>
 #include <sys/select.h>
 #include <assert.h>
+#include <pthread.h>
 #include <gc/gc.h>
 #include "9p.h"
 #include "config.h"
@@ -33,6 +34,9 @@ struct message *message_new(void) {
 struct transaction *transaction_new(void) {
     struct transaction *t = GC_NEW(struct transaction);
     assert(t != NULL);
+    t->wait = GC_NEW(pthread_cond_t);
+    assert(t->wait != NULL);
+    pthread_cond_init(t->wait, NULL);
     return t;
 }
 
@@ -493,6 +497,44 @@ void state_init(void) {
     state->map->nchildren = 0;
     state->map->children = NULL;
 
-    state->transaction_queue = NULL;
     state->error_queue = NULL;
+    state->biglock = GC_NEW(pthread_mutex_t);
+    assert(state->biglock != NULL);
+    pthread_mutex_init(state->biglock, NULL);
+    state->wait_socket = GC_NEW(pthread_cond_t);
+    assert(state->wait_socket != NULL);
+    pthread_cond_init(state->wait_socket, NULL);
+    state->active_worker_count = 0;
+}
+
+void worker_wait(struct transaction *trans) {
+    state->active_worker_count--;
+    pthread_cond_signal(state->wait_socket);
+    pthread_cond_wait(trans->wait, state->biglock);
+}
+
+void worker_start(void) {
+    pthread_mutex_lock(state->biglock);
+}
+
+void worker_finish(void) {
+    state->active_worker_count--;
+    pthread_cond_signal(state->wait_socket);
+    pthread_mutex_unlock(state->biglock);
+}
+
+void worker_create(void * (*func)(void *), void *arg) {
+    pthread_t newthread;
+    state->active_worker_count++;
+    pthread_create(&newthread, NULL, func, arg);
+}
+
+void worker_wakeup(struct transaction *trans) {
+    state->active_worker_count++;
+    pthread_cond_signal(trans->wait);
+}
+
+void worker_wait_for_all(void) {
+    while (state->active_worker_count > 0)
+        pthread_cond_wait(state->wait_socket, state->biglock);
 }

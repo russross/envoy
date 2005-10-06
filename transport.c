@@ -103,6 +103,9 @@ static struct message *handle_socket_event(struct connection **from) {
     int high, num, fd;
     fd_set rset, wset;
 
+    /* only proceed when everyone else is waiting on us */
+    worker_wait_for_all();
+
     assert(state->handles_listen->count != 0);
 
     /* prepare and select on all active connections */

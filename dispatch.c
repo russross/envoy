@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <gc/gc.h>
 #include "9p.h"
 #include "state.h"
 #include "map.h"
@@ -11,10 +12,10 @@
 void send_request(struct transaction *trans) {
     assert(trans->conn->type == CONN_ENVOY_OUT ||
            trans->conn->type == CONN_STORAGE_OUT);
-    assert(trans->handler != NULL || trans->parent != NULL);
     assert(trans->in == NULL);
 
     put_message(trans);
+    worker_wait(trans);
 }
 
 void send_reply(struct transaction *trans) {
@@ -26,197 +27,87 @@ void send_reply(struct transaction *trans) {
     put_message(trans);
 }
 
-void queue_transaction(struct transaction *trans) {
-    state->transaction_queue = append_elt(state->transaction_queue, trans);
-}
-
 void handle_error(struct transaction *trans) {
     state->error_queue = append_elt(state->error_queue, trans);
 }
 
-static int get_unknown_request_handler(struct transaction *trans) {
-    switch (trans->in->id) {
-        case TVERSION:
-            trans->handler = unknown_tversion;
-            break;
-        case TAUTH:
-        case TREAD:
-        case TWRITE:
-        case TATTACH:
-        case TFLUSH:
-        case TWALK:
-        case TOPEN:
-        case TCREATE:
-        case TCLUNK:
-        case TREMOVE:
-        case TSTAT:
-        case TWSTAT:
-        default:
-            return -1;
+static void *dispatch(struct transaction *trans) {
+    /* we're a new thread, so acquire the big lock */
+    worker_start();
+
+    assert(trans->conn->type == CONN_UNKNOWN_IN ||
+            trans->conn->type == CONN_CLIENT_IN ||
+            trans->conn->type == CONN_ENVOY_IN);
+    assert(trans->out == NULL);
+
+    trans->out = message_new();
+    trans->out->maxSize = trans->conn->maxSize;
+    trans->out->tag = trans->in->tag;
+    trans->out->id = trans->in->id + 1;
+
+    if (trans->conn->type == CONN_UNKNOWN_IN) {
+        switch (trans->in->id) {
+            case TVERSION:  unknown_tversion(trans);        break;
+            case TAUTH:
+            case TREAD:
+            case TWRITE:
+            case TATTACH:
+            case TFLUSH:
+            case TWALK:
+            case TOPEN:
+            case TCREATE:
+            case TCLUNK:
+            case TREMOVE:
+            case TSTAT:
+            case TWSTAT:
+            default:
+                handle_error(trans);
+                printf("\nBad request from unknown connection\n");
+        }
+    } else if (trans->conn->type == CONN_CLIENT_IN) {
+        switch (trans->in->id) {
+            case TAUTH:     client_tauth(trans);            break;
+            case TFLUSH:    client_tflush(trans);           break;
+            case TATTACH:   client_tattach(trans);          break;
+            case TWALK:     client_twalk(trans);            break;
+            case TOPEN:     client_topen(trans);            break;
+            case TCREATE:   client_tcreate(trans);          break;
+            case TREAD:     client_tread(trans);            break;
+            case TWRITE:    client_twrite(trans);           break;
+            case TCLUNK:    client_tclunk(trans);           break;
+            case TREMOVE:   client_tremove(trans);          break;
+            case TSTAT:     client_tstat(trans);            break;
+            case TWSTAT:    client_twstat(trans);           break;
+            case TVERSION:
+            default:
+                handle_error(trans);
+                printf("\nBad request from client\n");
+        }
+    } else if (trans->conn->type == CONN_ENVOY_IN) {
+        switch (trans->in->id) {
+            case TAUTH:     envoy_tauth(trans);             break;
+            case TFLUSH:    envoy_tflush(trans);            break;
+            case TATTACH:   envoy_tattach(trans);           break;
+            case TWALK:     envoy_twalk(trans);             break;
+            case TOPEN:     envoy_topen(trans);             break;
+            case TCREATE:   envoy_tcreate(trans);           break;
+            case TREAD:     envoy_tread(trans);             break;
+            case TWRITE:    envoy_twrite(trans);            break;
+            case TCLUNK:    envoy_tclunk(trans);            break;
+            case TREMOVE:   envoy_tremove(trans);           break;
+            case TSTAT:     envoy_tstat(trans);             break;
+            case TWSTAT:    envoy_twstat(trans);            break;
+            case TVERSION:
+            default:
+                handle_error(trans);
+                printf("\nBad request from envoy\n");
+        }
+    } else {
+        assert(0);
     }
 
-    return 0;
-}
-
-static int get_client_request_handler(struct transaction *trans) {
-    switch (trans->in->id) {
-        case TAUTH:
-            trans->handler = client_tauth;
-            break;
-        case TFLUSH:
-            trans->handler = client_tflush;
-            break;
-        case TATTACH:
-            trans->handler = client_tattach;
-            break;
-        case TWALK:
-            trans->handler = client_twalk;
-            break;
-        case TOPEN:
-            trans->handler = client_topen;
-            break;
-        case TCREATE:
-            trans->handler = client_tcreate;
-            break;
-        case TREAD:
-            trans->handler = client_tread;
-            break;
-        case TWRITE:
-            trans->handler = client_twrite;
-            break;
-        case TCLUNK:
-            trans->handler = client_tclunk;
-            break;
-        case TREMOVE:
-            trans->handler = client_tremove;
-            break;
-        case TSTAT:
-            trans->handler = client_tstat;
-            break;
-        case TWSTAT:
-            trans->handler = client_twstat;
-            break;
-        case TVERSION:
-        default:
-            return -1;
-    }
-
-    return 0;
-}
-
-static int get_envoy_request_handler(struct transaction *trans) {
-    switch (trans->in->id) {
-        case TAUTH:
-            trans->handler = envoy_tauth;
-            break;
-        case TFLUSH:
-            trans->handler = envoy_tflush;
-            break;
-        case TATTACH:
-            trans->handler = envoy_tattach;
-            break;
-        case TWALK:
-            trans->handler = envoy_twalk;
-            break;
-        case TOPEN:
-            trans->handler = envoy_topen;
-            break;
-        case TCREATE:
-            trans->handler = envoy_tcreate;
-            break;
-        case TREAD:
-            trans->handler = envoy_tread;
-            break;
-        case TWRITE:
-            trans->handler = envoy_twrite;
-            break;
-        case TCLUNK:
-            trans->handler = envoy_tclunk;
-            break;
-        case TREMOVE:
-            trans->handler = envoy_tremove;
-            break;
-        case TSTAT:
-            trans->handler = envoy_tstat;
-            break;
-        case TWSTAT:
-            trans->handler = envoy_twstat;
-            break;
-        case TVERSION:
-        default:
-            return -1;
-    }
-
-    return 0;
-}
-
-static void dispatch(struct transaction *trans) {
-    switch (trans->conn->type) {
-        case CONN_UNKNOWN_IN:
-        case CONN_CLIENT_IN:
-        case CONN_ENVOY_IN:
-            assert(trans->out == NULL);
-
-            switch (trans->conn->type) {
-                case CONN_UNKNOWN_IN:
-                    if (get_unknown_request_handler(trans) < 0) {
-                        handle_error(trans);
-                        printf("\nBad request from unknown connection\n");
-                        return;
-                    }
-                    break;
-                case CONN_CLIENT_IN:
-                    if (get_client_request_handler(trans) < 0) {
-                        handle_error(trans);
-                        printf("\nBad request from client\n");
-                        return;
-                    }
-                    break;
-                case CONN_ENVOY_IN:
-                    if (get_envoy_request_handler(trans) < 0) {
-                        handle_error(trans);
-                        printf("\nBad request from envoy\n");
-                        return;
-                    }
-                    break;
-                default:
-                    assert(0);
-            }
-            trans->out = message_new();
-            trans->out->maxSize = trans->conn->maxSize;
-            trans->out->tag = trans->in->tag;
-            trans->out->id = trans->in->id + 1;
-
-            trans->handler(trans);
-            break;
-
-        case CONN_ENVOY_OUT:
-        case CONN_STORAGE_OUT:
-            assert(trans->handler != NULL || trans->parent != NULL);
-
-            /* first check if there are any children waiting */
-            if (trans->children != NULL) {
-                struct cons *list = trans->children;
-                struct transaction *elt;
-
-                while (!null(list)) {
-                    elt = car(list);
-                    list = cdr(list);
-
-                    /* nothing to do--one of the children is still pending */
-                    if (elt->in == NULL)
-                        return;
-                }
-            }
-
-            if (trans->handler != NULL)
-                trans->handler(trans);
-
-            break;
-
-        default:
-            assert(0);
-    }
+    worker_finish();
+    return NULL;
 }
 
 void main_loop(void) {
@@ -229,14 +120,6 @@ void main_loop(void) {
         if (!null(state->error_queue)) {
             printf("PANIC! Unhandled error\n");
             state->error_queue = cdr(state->error_queue);
-            continue;
-        }
-
-        /* handle any pending transactions */
-        if (!null(state->transaction_queue)) {
-            trans = car(state->transaction_queue);
-            state->transaction_queue = cdr(state->transaction_queue);
-            dispatch(trans);
             continue;
         }
 
@@ -255,8 +138,7 @@ void main_loop(void) {
                 trans->conn = conn;
                 trans->in = msg;
 
-                queue_transaction(trans);
-
+                worker_create((void * (*)(void *)) dispatch, (void *) trans);
                 break;
 
             case CONN_ENVOY_OUT:
@@ -264,8 +146,9 @@ void main_loop(void) {
                 assert(trans != NULL);
 
                 trans->in = msg;
-                queue_transaction(trans);
 
+                /* wake up the handler that is waiting for this message */
+                worker_wakeup(trans);
                 break;
                 
             case CONN_STORAGE_OUT:
@@ -275,14 +158,10 @@ void main_loop(void) {
     }
 }
 
-void connect_envoy(struct transaction *parent, struct connection *conn);
-static void connect_envoy_ii(struct transaction *trans);
-
-void connect_envoy(struct transaction *parent, struct connection *conn) {
+struct transaction *connect_envoy(struct connection *conn) {
     /* prepare a Tversion message and package it in a transaction */
     struct transaction *trans = transaction_new();
 
-    trans->handler = connect_envoy_ii;
     trans->conn = conn;
     trans->in = NULL;
     trans->out = message_new();
@@ -290,28 +169,20 @@ void connect_envoy(struct transaction *parent, struct connection *conn) {
     trans->out->tag = NOTAG;
     trans->out->id = TVERSION;
     set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");
-    trans->children = NULL;
-    trans->parent = parent;
-    parent->children = append_elt(parent->children, trans);
 
     send_request(trans);
-}
 
-static void connect_envoy_ii(struct transaction *trans) {
     /* check Rversion results and prepare a Tauth message */
     struct Rversion *res = &trans->in->msg.rversion;
 
     /* blow up if the reply wasn't what we were expecting */
     if (trans->in->id != RVERSION || strcmp(res->version, "9P2000.envoy")) {
         handle_error(trans);
-        return;
+        return NULL;
     }
 
     trans->conn->maxSize =
         max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
 
-    assert(trans->parent != NULL);
-
-    /* try again on the parent transaction to initiate an attach */
-    queue_transaction(trans->parent);
+    return trans;
 }

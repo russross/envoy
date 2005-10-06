@@ -4,7 +4,8 @@
 #include <netinet/in.h>
 #include <dirent.h>
 #include <sys/select.h>
-#include <st.h>
+#include <pthread.h>
+#include <gc/gc.h>
 #include "9p.h"
 #include "util.h"
 
@@ -68,14 +69,11 @@ u32                     conn_alloc_tag(struct connection *conn,
 
 /* transactions */
 struct transaction {
-    void (*handler)(struct transaction *trans);
+    pthread_cond_t *wait;
 
     struct connection *conn;
     struct message *in;
     struct message *out;
-
-    struct cons *children;
-    struct transaction *parent;
 };
 
 void                    trans_insert(struct transaction *trans);
@@ -134,11 +132,21 @@ struct state {
     struct handles *handles_write;
     struct sockaddr_in *my_address;
     struct map *map;
-    struct cons *transaction_queue;
     struct cons *error_queue;
+    pthread_mutex_t *biglock;
+    pthread_cond_t *wait_socket;
+    int active_worker_count;
 };
 
 extern struct state *state;
 void state_init(void);
+
+
+void worker_wait(struct transaction *trans);
+void worker_start(void);
+void worker_finish(void);
+void worker_create(void * (*func)(void *), void *arg);
+void worker_wakeup(struct transaction *trans);
+void worker_wait_for_all(void);
 
 #endif
