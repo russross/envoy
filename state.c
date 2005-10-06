@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netdb.h>
+#include <sys/select.h>
 #include <assert.h>
-#include <gc.h>
+#include <gc/gc.h>
 #include "9p.h"
 #include "config.h"
 #include "state.h"

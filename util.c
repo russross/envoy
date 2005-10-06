@@ -4,7 +4,7 @@
 #include <sys/stat.h>
 #include <netdb.h>
 #include <assert.h>
-#include <gc.h>
+#include <gc/gc.h>
 #include "9p.h"
 #include "list.h"
 #include "util.h"

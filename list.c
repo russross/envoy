@@ -1,4 +1,4 @@
-#include <gc.h>
+#include <gc/gc.h>
 #include "list.h"
 
 struct cons *append_elt(struct cons *list, void *elt) {

@@ -8,7 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-#include <gc.h>
+#include <gc/gc.h>
 #include "9p.h"
 #include "config.h"
 #include "state.h"
@@ -305,6 +305,103 @@ void envoy_tauth(struct transaction *trans) {
  * - afid may be used for multiple attach calls with same uname/aname
  * - error returned if fid is already in use
  */
+
+/* return the results of a request that has been handled by a remote envoy */
+void copy_envoy_response(struct transaction *trans) {
+    struct message *from;
+
+    assert(trans != NULL);
+    assert(!null(trans->children));
+
+    /* walk is a special case */
+    if (trans->out->id == RWALK)
+        return;
+    
+    from = ((struct transaction *) car(trans->children))->in;
+    assert(from != NULL);
+
+    trans->children = cdr(trans->children);
+    assert(null(trans->children));
+
+    /* copy the whole message over */
+    memcpy(&trans->out->msg, &from->msg, sizeof(from->msg));
+    trans->out->id = from->id;
+
+    send_reply(trans);
+}
+
+u32 get_fid(struct message *msg) {
+    switch (msg->id) {
+        case TATTACH:   return msg->msg.tattach.fid;
+        case TWALK:     return msg->msg.twalk.fid;
+        case TOPEN:     return msg->msg.topen.fid;
+        case TCREATE:   return msg->msg.tcreate.fid;
+        case TREAD:     return msg->msg.tread.fid;
+        case TWRITE:    return msg->msg.twrite.fid;
+        case TCLUNK:    return msg->msg.tclunk.fid;
+        case TREMOVE:   return msg->msg.tremove.fid;
+        case TSTAT:     return msg->msg.tstat.fid;
+        case TWSTAT:    return msg->msg.twstat.fid;
+        default:        return NOFID;
+    }
+}
+
+void set_fid(struct message *msg, u32 fid) {
+    switch (msg->id) {
+        case TATTACH:   msg->msg.tattach.fid = fid;
+                        break;
+        case TWALK:     msg->msg.twalk.fid = fid;
+                        break;
+        case TOPEN:     msg->msg.topen.fid = fid;
+                        break;
+        case TCREATE:   msg->msg.tcreate.fid = fid;
+                        break;
+        case TREAD:     msg->msg.tread.fid = fid;
+                        break;
+        case TWRITE:    msg->msg.twrite.fid = fid;
+                        break;
+        case TCLUNK:    msg->msg.tclunk.fid = fid;
+                        break;
+        case TREMOVE:   msg->msg.tremove.fid = fid;
+                        break;
+        case TSTAT:     msg->msg.tstat.fid = fid;
+                        break;
+        case TWSTAT:    msg->msg.twstat.fid = fid;
+                        break;
+        default:        break;
+    }
+}
+
+int try_forwarding(struct transaction *trans) {
+    u32 fid;
+    struct forward *forward;
+
+    switch (trans->in->id) {
+        case TOPEN:     fid = trans->in->msg.topen.fid;
+                        break;
+        case TCREATE:   fid = trans->in->msg.tcreate.fid;
+                        break;
+        case TREAD:     fid = trans->in->msg.tread.fid;
+                        break;
+        case TWRITE:    fid = trans->in->msg.twrite.fid;
+                        break;
+        case TCLUNK:    fid = trans->in->msg.tclunk.fid;
+                        break;
+        case TREMOVE:   fid = trans->in->msg.tremove.fid;
+                        break;
+        case TSTAT:     fid = trans->in->msg.tstat.fid;
+                        break;
+        case TWSTAT:    fid = trans->in->msg.twstat.fid;
+                        break;
+        default:        return 0;
+    }
+
+    forward = forward_lookup(trans->conn, fid);
+    if (forward == NULL) {}
+    return 0;
+
+}
+
 void handle_tattach(struct transaction *trans, int client) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
@@ -315,6 +412,7 @@ void handle_tattach(struct transaction *trans, int client) {
 
     if (!null(trans->children)) {
         /* we have a result back from an envoy */
+        copy_envoy_response(trans);
     } else if ((addr = get_envoy_address(req->aname)) == NULL ||
             !addr_cmp(addr, trans->conn->addr))
     {

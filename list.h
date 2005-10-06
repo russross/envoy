@@ -2,7 +2,7 @@
 #define _LIST_H_
 
 #include <assert.h>
-#include <gc.h>
+#include <gc/gc.h>
 
 /*
  * Lisp-like lists

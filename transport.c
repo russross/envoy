@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <gc.h>
+#include <gc/gc.h>
 #include "9p.h"
 #include "config.h"
 #include "transport.h"

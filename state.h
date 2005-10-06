@@ -3,6 +3,8 @@
 
 #include <netinet/in.h>
 #include <dirent.h>
+#include <sys/select.h>
+#include <st.h>
 #include "9p.h"
 #include "util.h"
 

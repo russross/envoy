@@ -3,7 +3,7 @@
 
 #include <sys/stat.h>
 #include <string.h>
-#include <gc.h>
+#include <gc/gc.h>
 #include "9p.h"
 
 /*
