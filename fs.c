@@ -18,8 +18,6 @@
 #include "util.h"
 #include "fs.h"
 
-#define ERROR_BUFFER_LEN 80
-
 /* generate a qid record from a file stat record */
 static inline struct qid stat2qid(struct stat *info) {
     struct qid qid;
@@ -136,12 +134,9 @@ static inline int unixflags(u32 mode) {
 
 /* generate an error response with Unix errno errnum */
 static void rerror(struct message *m, u16 errnum, int line) {
-    char buf[ERROR_BUFFER_LEN];
-
     m->id = RERROR;
     m->msg.rerror.errnum = errnum;
-    m->msg.rerror.ename =
-        stringcopy(strerror_r(errnum, buf, ERROR_BUFFER_LEN - 1));
+    m->msg.rerror.ename = stringcopy(strerror(errnum));
     fprintf(stderr, "error #%u: %s (%s line %d)\n",
             (u32) errnum, m->msg.rerror.ename, __FILE__, line);
 }
@@ -842,7 +837,7 @@ void client_tread(struct transaction *trans) {
                 /* are we going to overflow? */
                 if (res->count + statsize(fid->next_dir_entry) > count)
                     break;
-                packStat(res->data, &res->count, fid->next_dir_entry);
+                packStat(res->data, (int *) &res->count, fid->next_dir_entry);
             }
             fid->next_dir_entry = NULL;
 

@@ -54,7 +54,7 @@ struct handles *handles_new(void) {
 
 static u32 generic_hash(const void *elt, int len, u32 hash) {
     int i;
-    u8 *bytes = (char *) elt;
+    u8 *bytes = (u8 *) elt;
 
     for (i = 0; i < len; i++)
         hash = hash * 157 + *(bytes++);
