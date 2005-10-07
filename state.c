@@ -266,7 +266,8 @@ struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
     assert(conn != NULL);
 
     trans = vector_get(conn->tag_vector, tag);
-    vector_remove(conn->tag_vector, tag);
+    if (trans != NULL)
+        vector_remove(conn->tag_vector, tag);
 
     return trans;
 }
@@ -498,35 +499,78 @@ void state_init(void) {
     state->map->children = NULL;
 
     state->error_queue = NULL;
+
     state->biglock = GC_NEW(pthread_mutex_t);
     assert(state->biglock != NULL);
     pthread_mutex_init(state->biglock, NULL);
-    state->wait_socket = GC_NEW(pthread_cond_t);
-    assert(state->wait_socket != NULL);
-    pthread_cond_init(state->wait_socket, NULL);
+    pthread_mutex_lock(state->biglock);
+
+    state->wait_workers = GC_NEW(pthread_cond_t);
+    assert(state->wait_workers != NULL);
+    pthread_cond_init(state->wait_workers, NULL);
+
     state->active_worker_count = 0;
+    state->thread_pool = NULL;
+}
+
+/*
+ * Worker threads
+ */
+
+static void *worker_thread_loop(struct worker_thread *t) {
+    state->active_worker_count++;
+    pthread_mutex_lock(state->biglock);
+
+    int i;
+    for (i = 0; i < THREAD_LIFETIME; i++) {
+        if (i > 0) {
+            /* wait in the pool for a request */
+            state->thread_pool = append_elt(state->thread_pool, t);
+            pthread_cond_wait(t->wait, state->biglock);
+        }
+
+        /* service the request */
+        if (t->func != NULL)
+            t->func(t->arg);
+        t->func = NULL;
+        state->active_worker_count--;
+        pthread_cond_signal(state->wait_workers);
+    }
+
+    pthread_mutex_unlock(state->biglock);
+    return NULL;
+}
+
+void worker_create(void * (*func)(void *), void *arg) {
+    if (null(state->thread_pool)) {
+        struct worker_thread *t = GC_NEW(struct worker_thread);
+        assert(t != NULL);
+        t->wait = GC_NEW(pthread_cond_t);
+        assert(t->wait != NULL);
+        pthread_cond_init(t->wait, NULL);
+
+        t->func = func;
+        t->arg = arg;
+
+        pthread_t newthread;
+        pthread_create(&newthread, NULL,
+                (void *(*)(void *)) worker_thread_loop, (void *) t);
+    } else {
+        struct worker_thread *t = car(state->thread_pool);
+        state->thread_pool = cdr(state->thread_pool);
+
+        t->func = func;
+        t->arg = arg;
+
+        state->active_worker_count++;
+        pthread_cond_signal(t->wait);
+    }
 }
 
 void worker_wait(struct transaction *trans) {
     state->active_worker_count--;
-    pthread_cond_signal(state->wait_socket);
+    pthread_cond_signal(state->wait_workers);
     pthread_cond_wait(trans->wait, state->biglock);
-}
-
-void worker_start(void) {
-    pthread_mutex_lock(state->biglock);
-}
-
-void worker_finish(void) {
-    state->active_worker_count--;
-    pthread_cond_signal(state->wait_socket);
-    pthread_mutex_unlock(state->biglock);
-}
-
-void worker_create(void * (*func)(void *), void *arg) {
-    pthread_t newthread;
-    state->active_worker_count++;
-    pthread_create(&newthread, NULL, func, arg);
 }
 
 void worker_wakeup(struct transaction *trans) {
@@ -536,5 +580,5 @@ void worker_wakeup(struct transaction *trans) {
 
 void worker_wait_for_all(void) {
     while (state->active_worker_count > 0)
-        pthread_cond_wait(state->wait_socket, state->biglock);
+        pthread_cond_wait(state->wait_workers, state->biglock);
 }

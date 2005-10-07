@@ -15,6 +15,7 @@
 #define FID_VECTOR_SIZE 64
 #define FORWARD_VECTOR_SIZE 64
 #define HANDLES_INITIAL_SIZE 32
+#define THREAD_LIFETIME 1024
 
 struct message *message_new(void);
 struct transaction *transaction_new(void);
@@ -125,6 +126,7 @@ void state_dump(void);
 
 /* persistent state */
 struct state {
+    pthread_mutex_t *biglock;
     struct vector *conn_vector;
     struct hashtable *addr_2_conn;
     struct handles *handles_listen;
@@ -133,19 +135,23 @@ struct state {
     struct sockaddr_in *my_address;
     struct map *map;
     struct cons *error_queue;
-    pthread_mutex_t *biglock;
-    pthread_cond_t *wait_socket;
+    struct cons *thread_pool;
+    pthread_cond_t *wait_workers;
     int active_worker_count;
 };
 
 extern struct state *state;
 void state_init(void);
 
+/* worker threads */
+struct worker_thread {
+    pthread_cond_t *wait;
+    void * (*func)(void *);
+    void *arg;
+};
 
-void worker_wait(struct transaction *trans);
-void worker_start(void);
-void worker_finish(void);
 void worker_create(void * (*func)(void *), void *arg);
+void worker_wait(struct transaction *trans);
 void worker_wakeup(struct transaction *trans);
 void worker_wait_for_all(void);
 

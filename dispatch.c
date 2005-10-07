@@ -15,6 +15,7 @@ void send_request(struct transaction *trans) {
     assert(trans->in == NULL);
 
     put_message(trans);
+    trans_insert(trans);
     worker_wait(trans);
 }
 
@@ -32,9 +33,6 @@ void handle_error(struct transaction *trans) {
 }
 
 static void *dispatch(struct transaction *trans) {
-    /* we're a new thread, so acquire the big lock */
-    worker_start();
-
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||
             trans->conn->type == CONN_ENVOY_IN);
@@ -106,7 +104,6 @@ static void *dispatch(struct transaction *trans) {
         assert(0);
     }
 
-    worker_finish();
     return NULL;
 }
 

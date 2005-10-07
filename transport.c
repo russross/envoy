@@ -23,7 +23,6 @@ static void write_message(int fd) {
     trans = conn_get_pending_write(conn);
 
     if (trans != NULL) {
-        assert(trans != NULL);
         assert(trans->conn != NULL);
         assert(trans->out != NULL);
 
