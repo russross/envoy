@@ -23,9 +23,8 @@ struct handles *handles_new(void);
 
 /* handle sets */
 struct handles {
-    int *handles;
-    int count;
-    int max;
+    fd_set *set;
+    int high;
 };
 
 void handles_add(struct handles *set, int handle);

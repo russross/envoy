@@ -43,11 +43,10 @@ struct transaction *transaction_new(void) {
 struct handles *handles_new(void) {
     struct handles *set = GC_NEW(struct handles);
     assert(set != NULL);
-
-    set->handles = GC_MALLOC_ATOMIC(sizeof(int) * HANDLES_INITIAL_SIZE);
-    assert(set->handles != NULL);
-    set->count = 0;
-    set->max = HANDLES_INITIAL_SIZE;
+    set->set = GC_NEW_ATOMIC(fd_set);
+    assert(set != NULL);
+    FD_ZERO(set->set);
+    set->high = -1;
 
     return set;
 }
@@ -88,58 +87,33 @@ int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b) {
  */
 
 void handles_add(struct handles *set, int handle) {
-    /* do we need to resize the array? */
-    if (set->count >= set->max) {
-        int *old = set->handles;
-        set->max *= 2;
-        set->handles = GC_MALLOC_ATOMIC(sizeof(int) * set->max);
-        assert(set->handles != NULL);
-        memcpy(set->handles, old, sizeof(int) * set->count);
-    }
-
-    set->handles[set->count++] = handle;
+    FD_SET(handle, set->set);
+    set->high = handle > set->high ? handle : set->high;
 }
 
 void handles_remove(struct handles *set, int handle) {
-    int i;
-
-    /* do we need to resize the array? */
-    if ((set->count - 1) * 4 < set->max && set->max > HANDLES_INITIAL_SIZE) {
-        int *old = set->handles;
-        set->max /= 2;
-        set->handles = GC_MALLOC_ATOMIC(sizeof(int) * set->max);
-        assert(set->handles != NULL);
-        memcpy(set->handles, old, sizeof(int) * set->count);
-    }
-
-    /* find the handle ... */
-    for (i = 0; i < set->count && set->handles[i] != handle; i++)
-        ;
-    assert(i != set->count);
-
-    /* ... and remove it */
-    for (i++ ; i < set->count; i++)
-        set->handles[i-1] = set->handles[i];
-    set->count--;
+    FD_CLR(handle, set->set);
+    if (handle >= set->high)
+        while (set->high >= 0 && FD_ISSET(set->high, set->set))
+            set->high--;
 }
 
 int handles_collect(struct handles *set, fd_set *rset, int high) {
     int i;
+    fd_mask *a = (fd_mask *) rset, *b = (fd_mask *) set->set;
 
-    for (i = 0; i < set->count; i++) {
-        FD_SET(set->handles[i], rset);
-        high = high > set->handles[i] ? high : set->handles[i]; 
-    }
+    for (i = 0; i < sizeof(fd_set) * 8 / NFDBITS; i++)
+        a[i] &= b[i];
 
-    return high;
+    return high > set->high ? high : set->high;
 }
 
 int handles_member(struct handles *set, fd_set *rset) {
     int i;
 
-    for (i = 0; i < set->count; i++)
-        if (FD_ISSET(set->handles[i], rset))
-            return set->handles[i];
+    for (i = 0; i < set->high; i++)
+        if (FD_ISSET(i, rset) && FD_ISSET(i, set->set))
+            return i;
 
     return -1;
 }
