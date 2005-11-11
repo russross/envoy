@@ -31,7 +31,7 @@ static void write_message(int fd) {
             handles_remove(state->handles_write, fd);
         }
 
-        packMessage(trans->out);
+        packMessage(trans->out, trans->conn->maxSize);
         printMessage(stderr, trans->out);
 
         len = send(trans->conn->fd, trans->out->raw, trans->out->size, 0);

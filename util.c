@@ -208,11 +208,21 @@ void vector_set(struct vector *v, u32 key, void *value) {
     v->array[key] = value;
 }
 
-void vector_remove(struct vector *v, u32 key) {
-    assert(key < v->next && v->array[key] != NULL);
+void *vector_get_remove(struct vector *v, u32 key) {
+    void *res;
+
+    if (key >= v->next || v->array[key] == NULL)
+        return NULL;
+
+    res = v->array[key];
     v->array[key] = NULL;
     while (v->next > 0 && v->array[v->next - 1] == NULL)
         v->next--;
+    return res;
+}
+
+void vector_remove(struct vector *v, u32 key) {
+    vector_get_remove(v, key);
 }
 
 void vector_apply(struct vector *v, void (*fun)(u32, void *)) {

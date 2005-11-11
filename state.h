@@ -14,12 +14,9 @@
 #define TAG_VECTOR_SIZE 64
 #define FID_VECTOR_SIZE 64
 #define FORWARD_VECTOR_SIZE 64
+#define GLOBAL_FORWARD_VECTOR_SIZE 64
 #define HANDLES_INITIAL_SIZE 32
 #define THREAD_LIFETIME 1024
-
-struct message *message_new(void);
-struct transaction *transaction_new(void);
-struct handles *handles_new(void);
 
 /* handle sets */
 struct handles {
@@ -50,6 +47,7 @@ struct connection {
     struct vector *forward_vector;
     struct vector *tag_vector;
     struct cons *pending_writes;
+    struct transaction *notag_trans;
 };
 
 struct connection *     conn_insert_new(int fd,
@@ -64,8 +62,6 @@ struct transaction *    conn_get_pending_write(struct connection *conn);
 int                     conn_has_pending_write(struct connection *conn);
 void                    conn_queue_write(struct transaction *trans);
 void                    conn_remove(struct connection *conn);
-u32                     conn_alloc_tag(struct connection *conn,
-                                       struct transaction *trans);
 
 /* transactions */
 struct transaction {
@@ -113,11 +109,10 @@ struct forward {
     u32 rfid;
 };
 
-int                     forward_insert_new(struct connection *conn,
-                                           u32 fid,
-                                           struct connection *rconn, u32 rfid);
-struct forward *        forward_lookup(struct connection *conn, u32 fid);
-struct forward *        forward_lookup_remove(struct connection *conn, u32 fid);
+u32 forward_create_new(struct connection *conn, u32 fid,
+        struct connection *rconn);
+struct forward *forward_lookup(struct connection *conn, u32 fid);
+struct forward *forward_lookup_remove(struct connection *conn, u32 fid);
 
 void print_address(struct sockaddr_in *addr);
 int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b);
@@ -127,6 +122,7 @@ void state_dump(void);
 struct state {
     pthread_mutex_t *biglock;
     struct vector *conn_vector;
+    struct vector *forward_fids;
     struct hashtable *addr_2_conn;
     struct handles *handles_listen;
     struct handles *handles_read;
@@ -153,5 +149,10 @@ void worker_create(void * (*func)(void *), void *arg);
 void worker_wait(struct transaction *trans);
 void worker_wakeup(struct transaction *trans);
 void worker_wait_for_all(void);
+
+struct message *message_new(void);
+struct transaction *transaction_new(struct connection *conn,
+        struct message *in, struct message *out);
+struct handles *handles_new(void);
 
 #endif

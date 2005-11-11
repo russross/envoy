@@ -11,6 +11,6 @@ void handle_error(struct transaction *trans);
 
 void main_loop(void);
 
-struct transaction *connect_envoy(struct connection *conn);
+struct connection *connect_envoy(struct sockaddr_in *addr);
 
 #endif

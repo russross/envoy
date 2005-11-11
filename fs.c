@@ -52,7 +52,7 @@ static int stat2p9stat(struct stat *info, struct p9stat **p9info, char *path) {
     res->type = 0;
     res->dev = info->st_dev;
     res->qid = stat2qid(info);
-    
+
     res->mode = info->st_mode & 0777;
     if (S_ISDIR(info->st_mode))
         res->mode |= DMDIR;
@@ -70,7 +70,7 @@ static int stat2p9stat(struct stat *info, struct p9stat **p9info, char *path) {
         res->mode |= DMSETUID;
     if ((S_ISGID & info->st_mode))
         res->mode |= DMSETGID;
-    
+
     res->atime = info->st_atime;
     res->mtime = info->st_mtime;
     res->length = info->st_size;
@@ -209,10 +209,62 @@ struct sockaddr_in *get_envoy_address(char *path) {
     return elt->addr;
 }
 
+/*
+ * forward a request to an envoy by copying trans->in to env->out and
+ * changing fids, then send the message, wait for a reply, copy the
+ * reply to trans->out, and send it.
+ */
+#define copy_forward(MESSAGE) do { \
+    fwd = forward_lookup(trans->conn, trans->in->msg.MESSAGE.fid); \
+    env->out->msg.MESSAGE.fid = fwd->rfid; \
+} while(0);
+
+void forward_to_envoy(struct transaction *trans) {
+    struct transaction *env;
+    struct forward *fwd = NULL;
+
+    assert(trans != NULL);
+
+    /* copy the whole message over */
+    env = transaction_new(NULL, NULL, message_new());
+    memcpy(&env->out->msg, &trans->in->msg, sizeof(trans->in->msg));
+    env->out->id = trans->in->id;
+
+    /* translate the fid */
+    switch (trans->in->id) {
+        /* look up the fid translation */
+        case TATTACH:   copy_forward(tattach);  break;
+        case TOPEN:     copy_forward(topen);    break;
+        case TCREATE:   copy_forward(tcreate);  break;
+        case TREAD:     copy_forward(tread);    break;
+        case TWRITE:    copy_forward(twrite);   break;
+        case TCLUNK:    copy_forward(tclunk);   break;
+        case TREMOVE:   copy_forward(tremove);  break;
+        case TSTAT:     copy_forward(tstat);    break;
+        case TWSTAT:    copy_forward(twstat);   break;
+
+        /* it's a bug if we got called for the remaining messages */
+        default:
+            assert(0);
+    }
+
+    env->conn = fwd->rconn;
+    send_request(env);
+
+    /* now copy the response back into trans */
+    memcpy(&trans->out->msg, &env->in->msg, sizeof(env->in->msg));
+    trans->out->id = env->in->id;
+
+    send_reply(trans);
+}
+
+#undef copy_forward
+
+
 /*****************************************************************************/
 
 /**
- * client_tversion: initial handshake
+ * tversion: initial handshake
  *
  * Arguments:
  * - msize[4]: suggested maximum message size
@@ -233,14 +285,14 @@ struct sockaddr_in *get_envoy_address(char *path) {
  * - all outstanding i/o on the connection is aborted
  * - all existing fids are clunked
  */
-void unknown_tversion(struct transaction *trans) {
+void handle_tversion(struct transaction *trans) {
     struct Tversion *req = &trans->in->msg.tversion;
     struct Rversion *res = &trans->out->msg.rversion;
 
     failif(trans->in->tag != NOTAG, ECONNREFUSED);
 
     res->msize = max(min(GLOBAL_MAX_SIZE, req->msize), GLOBAL_MIN_SIZE);
-    trans->conn->maxSize = trans->out->maxSize = res->msize;
+    trans->conn->maxSize = res->msize;
 
     if (!strcmp(req->version, "9P2000.u")) {
         trans->conn->type = CONN_CLIENT_IN;
@@ -258,7 +310,7 @@ void unknown_tversion(struct transaction *trans) {
 /*****************************************************************************/
 
 /**
- * client_tauth: check credentials to authorize a connection
+ * tauth: check credentials to authorize a connection
  *
  * Arguments:
  * - afid[4]: fid to use for authorization channel
@@ -273,16 +325,12 @@ void unknown_tversion(struct transaction *trans) {
  * - aqid identifies a file of type QTAUTH
  * - afid is used to exchange (undefined) data to authorize connection
  */
-void client_tauth(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
-void envoy_tauth(struct transaction *trans) {
+void handle_tauth(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
 /**
- * client_tattach: establish a connection
+ * tattach: establish a connection
  *
  * Arguments:
  * - fid[4]: proposed fid for the connection
@@ -300,118 +348,44 @@ void envoy_tauth(struct transaction *trans) {
  * - afid may be used for multiple attach calls with same uname/aname
  * - error returned if fid is already in use
  */
-
-/* return the results of a request that has been handled by a remote envoy */
-//void copy_envoy_response(struct transaction *trans) {
-//    struct message *from;
-//
-//    assert(trans != NULL);
-//    assert(!null(trans->children));
-//
-//    /* walk is a special case */
-//    if (trans->out->id == RWALK)
-//        return;
-//    
-//    from = ((struct transaction *) car(trans->children))->in;
-//    assert(from != NULL);
-//
-//    trans->children = cdr(trans->children);
-//    assert(null(trans->children));
-//
-//    /* copy the whole message over */
-//    memcpy(&trans->out->msg, &from->msg, sizeof(from->msg));
-//    trans->out->id = from->id;
-//
-//    send_reply(trans);
-//}
-//
-//u32 get_fid(struct message *msg) {
-//    switch (msg->id) {
-//        case TATTACH:   return msg->msg.tattach.fid;
-//        case TWALK:     return msg->msg.twalk.fid;
-//        case TOPEN:     return msg->msg.topen.fid;
-//        case TCREATE:   return msg->msg.tcreate.fid;
-//        case TREAD:     return msg->msg.tread.fid;
-//        case TWRITE:    return msg->msg.twrite.fid;
-//        case TCLUNK:    return msg->msg.tclunk.fid;
-//        case TREMOVE:   return msg->msg.tremove.fid;
-//        case TSTAT:     return msg->msg.tstat.fid;
-//        case TWSTAT:    return msg->msg.twstat.fid;
-//        default:        return NOFID;
-//    }
-//}
-//
-//void set_fid(struct message *msg, u32 fid) {
-//    switch (msg->id) {
-//        case TATTACH:   msg->msg.tattach.fid = fid;
-//                        break;
-//        case TWALK:     msg->msg.twalk.fid = fid;
-//                        break;
-//        case TOPEN:     msg->msg.topen.fid = fid;
-//                        break;
-//        case TCREATE:   msg->msg.tcreate.fid = fid;
-//                        break;
-//        case TREAD:     msg->msg.tread.fid = fid;
-//                        break;
-//        case TWRITE:    msg->msg.twrite.fid = fid;
-//                        break;
-//        case TCLUNK:    msg->msg.tclunk.fid = fid;
-//                        break;
-//        case TREMOVE:   msg->msg.tremove.fid = fid;
-//                        break;
-//        case TSTAT:     msg->msg.tstat.fid = fid;
-//                        break;
-//        case TWSTAT:    msg->msg.twstat.fid = fid;
-//                        break;
-//        default:        break;
-//    }
-//}
-//
-//int try_forwarding(struct transaction *trans) {
-//    u32 fid;
-//    struct forward *forward;
-//
-//    switch (trans->in->id) {
-//        case TOPEN:     fid = trans->in->msg.topen.fid;
-//                        break;
-//        case TCREATE:   fid = trans->in->msg.tcreate.fid;
-//                        break;
-//        case TREAD:     fid = trans->in->msg.tread.fid;
-//                        break;
-//        case TWRITE:    fid = trans->in->msg.twrite.fid;
-//                        break;
-//        case TCLUNK:    fid = trans->in->msg.tclunk.fid;
-//                        break;
-//        case TREMOVE:   fid = trans->in->msg.tremove.fid;
-//                        break;
-//        case TSTAT:     fid = trans->in->msg.tstat.fid;
-//                        break;
-//        case TWSTAT:    fid = trans->in->msg.twstat.fid;
-//                        break;
-//        default:        return 0;
-//    }
-//
-//    forward = forward_lookup(trans->conn, fid);
-//    if (forward == NULL) {}
-//    return 0;
-//
-//}
-
-void handle_tattach(struct transaction *trans, int client) {
+void handle_tattach(struct transaction *trans) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
-//    struct sockaddr_in *addr;
-    
+    struct sockaddr_in *addr;
+
     failif(req->afid != NOFID, EBADF);
     failif(emptystring(req->uname), EINVAL);
 
-//    if (!null(trans->children)) {
-//        /* we have a result back from an envoy */
-//        copy_envoy_response(trans);
-//    } else if ((addr = get_envoy_address(req->aname)) == NULL ||
-//            !addr_cmp(addr, trans->conn->addr))
-//    {
-        /* this request should be handled locally */
+    if ((addr = get_envoy_address(req->aname)) != NULL &&
+            !addr_cmp(addr, trans->conn->addr))
+    {
+        /* this request should be forwarded */
+        struct connection *rconn;
+
+        if (trans->conn->type == CONN_ENVOY_IN) {
+            /* this request shouldn't have been sent here */
+            handle_error(trans);
+            return;
+        }
+
+        rconn = conn_lookup_addr(addr);
+
+        /* we may need to shake hands across a new connection */
+        if (rconn == NULL)
+            rconn = connect_envoy(addr);
+        if (rconn == NULL) {
+            handle_error(trans);
+            return;
+        }
+
+        if (forward_create_new(trans->conn, req->fid, rconn) == NOFID) {
+            handle_error(trans);
+            return;
+        }
+
+        forward_to_envoy(trans);
+    } else {
+        /* this request can be handled locally */
         struct stat info;
         char *path;
 
@@ -426,39 +400,11 @@ void handle_tattach(struct transaction *trans, int client) {
         res->qid = stat2qid(&info);
 
         send_reply(trans);
-//    } else if (client) {
-//        /* this request needs to be forwarded */
-//        struct transaction *rtrans = transaction_new();
-//        rtrans->conn = conn_lookup_addr(addr);
-//        if (rtrans->conn == NULL)
-//            rtrans->conn = conn_new_unopened(CONN_ENVOY_OUT, addr);
-//        rtrans->handler = NULL;
-//        rtrans->out = trans->out;
-//        trans->out = NULL;
-//        rtrans->out->id = TATTACH;
-//        rtrans->out->tag = conn_alloc_tag(rtrans->conn, rtrans);
-//        rtrans->in = NULL;
-//        rtrans->children = NULL;
-//        rtrans->parent = trans;
-//        trans->children = cons(rtrans, trans->children);
-//
-//        send_request(rtrans);
-//    } else {
-//        /* this request was sent to the wrong place */
-//        assert(0);
-//    }
-}
-
-void client_tattach(struct transaction *trans) {
-    handle_tattach(trans, 1);
-}
-
-void envoy_tattach(struct transaction *trans) {
-    handle_tattach(trans, 0);
+    }
 }
 
 /**
- * client_tflush: abort a message
+ * tflush: abort a message
  *
  * Arguments:
  * - oldtag[2]: tag of transaction to abort
@@ -475,16 +421,12 @@ void envoy_tattach(struct transaction *trans) {
  * - client must honor regular response received before Rflush, including
  *   server-side state change
  */
-void client_tflush(struct transaction *trans) {
-    send_reply(trans);
-}
-
-void envoy_tflush(struct transaction *trans) {
+void handle_tflush(struct transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
 /**
- * client_twalk: descend a directory hierarchy
+ * twalk: descend a directory hierarchy
  *
  * Arguments:
  * - fid[4]: fid of starting point
@@ -596,7 +538,7 @@ void envoy_twalk(struct transaction *trans) {
 }
 
 /**
- * client_topen: prepare a fid for i/o on an existing file
+ * topen: prepare a fid for i/o on an existing file
  *
  * Arguments:
  * - fid[4]: fid of file to open
@@ -625,7 +567,7 @@ void envoy_twalk(struct transaction *trans) {
  *   or written to a file without breaking the i/o transfer into multiple 9P
  *   messages
  */
-void client_topen(struct transaction *trans) {
+void handle_topen(struct transaction *trans) {
     struct Topen *req = &trans->in->msg.topen;
     struct Ropen *res = &trans->out->msg.ropen;
     struct fid *fid;
@@ -647,7 +589,7 @@ void client_topen(struct transaction *trans) {
     } else {
         int flags;
         failif((flags = unixflags(req->mode)) == -1, EINVAL);
-        
+
         guard(fid->fd = open(fid->path, flags));
 
         fid->status = STATUS_OPEN_FILE;
@@ -659,12 +601,8 @@ void client_topen(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_topen(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
 /**
- * client_tcreate: prepare a fid for i/o on a new file
+ * tcreate: prepare a fid for i/o on a new file
  *
  * Arguments:
  * - fid[4]: fid of directory in which file is to be created
@@ -690,7 +628,7 @@ void envoy_topen(struct transaction *trans) {
  * - attempt to create an existing file will be rejected
  * - all other file open modes and restrictions match Topen; same for iounit
  */
-void client_tcreate(struct transaction *trans) {
+void handle_tcreate(struct transaction *trans) {
     struct Tcreate *req = &trans->in->msg.tcreate;
     struct Rcreate *res = &trans->out->msg.rcreate;
     struct fid *fid;
@@ -761,12 +699,8 @@ void client_tcreate(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_tcreate(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
 /**
- * client_tread: transfer data from a file
+ * tread: transfer data from a file
  *
  * Arguments:
  * - fid[4]: file/directory to read from
@@ -790,7 +724,7 @@ void envoy_tcreate(struct transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-void client_tread(struct transaction *trans) {
+void handle_tread(struct transaction *trans) {
     struct Tread *req = &trans->in->msg.tread;
     struct Rread *res = &trans->out->msg.rread;
     struct fid *fid;
@@ -865,12 +799,8 @@ void client_tread(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_tread(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
 /**
- * client_twrite: transfer data to a file
+ * twrite: transfer data to a file
  *
  * Arguments:
  * - fid[4]: file to write to
@@ -890,7 +820,7 @@ void envoy_tread(struct transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-void client_twrite(struct transaction *trans) {
+void handle_twrite(struct transaction *trans) {
     struct Twrite *req = &trans->in->msg.twrite;
     struct Rwrite *res = &trans->out->msg.rwrite;
     struct fid *fid;
@@ -917,12 +847,8 @@ void client_twrite(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_twrite(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
 /**
- * client_tclunk: forget about a fid
+ * tclunk: forget about a fid
  *
  * Arguments:
  * - fid[4]: fid to forget about
@@ -934,7 +860,7 @@ void envoy_twrite(struct transaction *trans) {
  * - if ORCLOSE was set at file open, file will be removed
  * - even if an error is returned, the fid is no longer valid
  */
-void client_tclunk(struct transaction *trans) {
+void handle_tclunk(struct transaction *trans) {
     struct Tclunk *req = &trans->in->msg.tclunk;
     struct fid *fid;
 
@@ -951,12 +877,8 @@ void client_tclunk(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_tclunk(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
 /**
- * client_tremove: remove a file
+ * tremove: remove a file
  *
  * Arguments:
  * - fid[4]: fid of file to remove
@@ -970,7 +892,7 @@ void envoy_tclunk(struct transaction *trans) {
  * - if other clients have the file open, file may or may not be removed
  *   immediately: this is implementation dependent
  */
-void client_tremove(struct transaction *trans) {
+void handle_tremove(struct transaction *trans) {
     struct Tremove *req = &trans->in->msg.tremove;
     struct fid *fid;
 
@@ -994,12 +916,8 @@ void client_tremove(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_tremove(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
 /**
- * client_tstat: inquire about a file's attributes
+ * tstat: inquire about a file's attributes
  *
  * Arguments:
  * - fid[4]: fid of file being queried
@@ -1010,7 +928,7 @@ void envoy_tremove(struct transaction *trans) {
  * Semantics:
  * - requires no special permissions
  */
-void client_tstat(struct transaction *trans) {
+void handle_tstat(struct transaction *trans) {
     struct Tstat *req = &trans->in->msg.tstat;
     struct Rstat *res = &trans->out->msg.rstat;
     struct fid *fid;
@@ -1023,12 +941,8 @@ void client_tstat(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_tstat(struct transaction *trans) {
-    failif(-1, ENOTSUP);
-}
-
 /**
- * client_twstat: modify a file's attributes
+ * twstat: modify a file's attributes
  *
  * Arguments:
  * - fid[4]: fid of file being modified
@@ -1059,7 +973,7 @@ void envoy_tstat(struct transaction *trans) {
  *   - size field in the stat record
  *   - note that n = size + 2
  */
-void client_twstat(struct transaction *trans) {
+void handle_twstat(struct transaction *trans) {
     struct Twstat *req = &trans->in->msg.twstat;
     struct fid *fid;
     struct stat info;
@@ -1099,14 +1013,14 @@ void client_twstat(struct transaction *trans) {
         failif(c != 'c' && c != 'b', EINVAL);
 
         guard(mknod(fid->path,
-                    (fid->omode & 0777) | (c == 'c' ? S_IFCHR : S_IFBLK), 
+                    (fid->omode & 0777) | (c == 'c' ? S_IFCHR : S_IFBLK),
                     makedev(major, minor)));
 
         fid->status = STATUS_CLOSED;
         send_reply(trans);
         return;
     }
-    
+
     /* regular file or directory */
     guard(lstat(fid->path, &info));
     name = filename(fid->path);
@@ -1163,8 +1077,4 @@ void client_twstat(struct transaction *trans) {
     }
 
     send_reply(trans);
-}
-
-void envoy_twstat(struct transaction *trans) {
-    failif(-1, ENOTSUP);
 }

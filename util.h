@@ -44,6 +44,7 @@ int vector_test(struct vector *v, const u32 key);
 u32 vector_alloc(struct vector *v, void *value);
 void vector_set(struct vector *v, u32 key, void *value);
 void vector_remove(struct vector *v, u32 key);
+void *vector_get_remove(struct vector *v, u32 key);
 void vector_apply(struct vector *v, void (*fun)(u32, void *));
 
 /*

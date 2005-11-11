@@ -28,15 +28,22 @@ struct message *message_new(void) {
     assert(m != NULL);
     m->raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
     assert(m->raw != NULL);
+    /* make sure tag doesn't default to NOTAG */
+    m->tag = 0;
     return m;
 }
 
-struct transaction *transaction_new(void) {
+struct transaction *transaction_new(struct connection *conn,
+        struct message *in, struct message *out)
+{
     struct transaction *t = GC_NEW(struct transaction);
     assert(t != NULL);
     t->wait = GC_NEW(pthread_cond_t);
     assert(t->wait != NULL);
     pthread_cond_init(t->wait, NULL);
+    t->conn = conn;
+    t->in = in;
+    t->out = out;
     return t;
 }
 
@@ -102,8 +109,8 @@ int handles_collect(struct handles *set, fd_set *rset, int high) {
     int i;
     fd_mask *a = (fd_mask *) rset, *b = (fd_mask *) set->set;
 
-    for (i = 0; i < sizeof(fd_set) * 8 / NFDBITS; i++)
-        a[i] &= b[i];
+    for (i = 0; i * NFDBITS <= high; i++)
+        a[i] |= b[i];
 
     return high > set->high ? high : set->high;
 }
@@ -111,7 +118,7 @@ int handles_collect(struct handles *set, fd_set *rset, int high) {
 int handles_member(struct handles *set, fd_set *rset) {
     int i;
 
-    for (i = 0; i < set->high; i++)
+    for (i = 0; i <= set->high; i++)
         if (FD_ISSET(i, rset) && FD_ISSET(i, set->set))
             return i;
 
@@ -143,6 +150,7 @@ struct connection *conn_insert_new(int fd, enum conn_type type,
     conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
     conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
     conn->pending_writes = NULL;
+    conn->notag_trans = NULL;
 
     vector_set(state->conn_vector, conn->fd, conn);
     hash_set(state->addr_2_conn, conn->addr, conn);
@@ -169,6 +177,7 @@ struct connection *conn_new_unopened(enum conn_type type,
     conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
     conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
     conn->pending_writes = NULL;
+    conn->notag_trans = NULL;
 
     return conn;
 }
@@ -214,12 +223,6 @@ void conn_remove(struct connection *conn) {
     hash_remove(state->addr_2_conn, conn->addr);
 }
 
-u32 conn_alloc_tag(struct connection *conn, struct transaction *trans) {
-    assert(conn != NULL && trans != NULL);
-
-    return vector_alloc(conn->tag_vector, trans);
-}
-
 /*
  * Transaction pool state
  * Active transactions that are waiting for a response are indexed by tag.
@@ -231,19 +234,23 @@ void trans_insert(struct transaction *trans) {
     assert(trans->in == NULL);
     assert(trans->out != NULL);
 
-    vector_set(trans->conn->tag_vector, trans->out->tag, trans);
+    /* NOTAG is a special case */
+    if (trans->out->tag == NOTAG)
+        trans->conn->notag_trans = trans;
+    else
+        trans->out->tag = vector_alloc(trans->conn->tag_vector, trans);
 }
 
 struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
-    struct transaction *trans;
-
     assert(conn != NULL);
 
-    trans = vector_get(conn->tag_vector, tag);
-    if (trans != NULL)
-        vector_remove(conn->tag_vector, tag);
+    if (tag == NOTAG) {
+        struct transaction *res = conn->notag_trans;
+        conn->notag_trans = NULL;
+        return res;
+    }
 
-    return trans;
+    return (struct transaction *) vector_get_remove(conn->tag_vector, tag);
 }
 
 /*
@@ -283,46 +290,41 @@ struct fid *fid_lookup(struct connection *conn, u32 fid) {
 }
 
 struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
-    struct fid *res;
-
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    res = vector_get(conn->fid_vector, fid);
-
-    if (res != NULL)
-        vector_remove(conn->fid_vector, fid);
-
-    return res;
+    return (struct fid *) vector_get_remove(conn->fid_vector, fid);
 }
 
 /*
  * Forwarded fid state.
  */
 
-int forward_insert_new(struct connection *conn, u32 fid,
-        struct connection *rconn, u32 rfid)
+u32 forward_create_new(struct connection *conn, u32 fid,
+        struct connection *rconn)
 {
-    struct forward *res;
+    struct forward *fwd;
+    u32 rfid;
 
     assert(conn != NULL);
     assert(fid != NOFID);
     assert(rconn != NULL);
-    assert(rfid != NOFID);
 
     if (vector_test(conn->forward_vector, fid))
-        return -1;
+        return NOFID;
 
-    res = GC_NEW(struct forward);
-    assert(res != NULL);
+    fwd = GC_NEW(struct forward);
+    assert(fwd != NULL);
 
-    res->fid = fid;
-    res->rconn = rconn;
-    res->rfid = rfid;
+    rfid = vector_alloc(state->forward_fids, fwd);
 
-    vector_set(conn->forward_vector, res->fid, res);
+    fwd->fid = fid;
+    fwd->rconn = rconn;
+    fwd->rfid = rfid;
 
-    return 0;
+    vector_set(conn->forward_vector, fid, fwd);
+
+    return rfid;
 }
 
 struct forward *forward_lookup(struct connection *conn, u32 fid) {
@@ -333,17 +335,17 @@ struct forward *forward_lookup(struct connection *conn, u32 fid) {
 }
 
 struct forward *forward_lookup_remove(struct connection *conn, u32 fid) {
-    struct forward *res;
+    struct forward *fwd;
 
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    res = vector_get(conn->forward_vector, fid);
+    fwd = vector_get_remove(conn->forward_vector, fid);
 
-    if (res != NULL)
-        vector_remove(conn->forward_vector, fid);
+    if (fwd != NULL)
+        vector_remove(state->forward_fids, fwd->rfid);
 
-    return res;
+    return fwd;
 }
 
 /*
@@ -457,6 +459,7 @@ void state_init(void) {
     state->handles_write = handles_new();
 
     state->conn_vector = vector_create(CONN_VECTOR_SIZE);
+    state->forward_fids = vector_create(GLOBAL_FORWARD_VECTOR_SIZE);
     state->addr_2_conn = hash_create(
             CONN_HASHTABLE_SIZE,
             (u32 (*)(const void *)) addr_hash,

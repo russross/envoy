@@ -4,35 +4,23 @@
 #include "9p.h"
 #include "state.h"
 
-/* handshake messages (connection type unknown) */
-void unknown_tversion(struct transaction *trans);
+void forward_to_envoy(struct transaction *trans);
 
-/* messages from a client */
-void client_tauth(struct transaction *trans);
-void client_tattach(struct transaction *trans);
-void client_tflush(struct transaction *trans);
+void handle_tversion(struct transaction *trans);
+
 void client_twalk(struct transaction *trans);
-void client_topen(struct transaction *trans);
-void client_tcreate(struct transaction *trans);
-void client_tread(struct transaction *trans);
-void client_twrite(struct transaction *trans);
-void client_tclunk(struct transaction *trans);
-void client_tremove(struct transaction *trans);
-void client_tstat(struct transaction *trans);
-void client_twstat(struct transaction *trans);
-
-/* messages from another envoy */
-void envoy_tauth(struct transaction *trans);
-void envoy_tattach(struct transaction *trans);
-void envoy_tflush(struct transaction *trans);
 void envoy_twalk(struct transaction *trans);
-void envoy_topen(struct transaction *trans);
-void envoy_tcreate(struct transaction *trans);
-void envoy_tread(struct transaction *trans);
-void envoy_twrite(struct transaction *trans);
-void envoy_tclunk(struct transaction *trans);
-void envoy_tremove(struct transaction *trans);
-void envoy_tstat(struct transaction *trans);
-void envoy_twstat(struct transaction *trans);
+
+void handle_tauth(struct transaction *trans);
+void handle_tattach(struct transaction *trans);
+void handle_tflush(struct transaction *trans);
+void handle_topen(struct transaction *trans);
+void handle_tcreate(struct transaction *trans);
+void handle_tread(struct transaction *trans);
+void handle_twrite(struct transaction *trans);
+void handle_tclunk(struct transaction *trans);
+void handle_tremove(struct transaction *trans);
+void handle_tstat(struct transaction *trans);
+void handle_twstat(struct transaction *trans);
 
 #endif

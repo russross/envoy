@@ -20,7 +20,7 @@ void test_dump(void) {
     int size;
     struct p9stat *stat;
     
-    m.raw = GC_MALLOC_ATOMIC(m.maxSize = 32768);
+    m.raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
 
     m.id = TVERSION;
     m.tag = 1;
@@ -28,7 +28,7 @@ void test_dump(void) {
     m.msg.tversion.version = "9P2000.u";
 
     printMessage(stdout, &m);
-    packMessage(&m);
+    packMessage(&m, GLOBAL_MAX_SIZE);
     printf("packed size = %d\n", m.size);
     dumpBytes(stdout, "    ", m.raw, m.size);
 
@@ -44,7 +44,7 @@ void test_dump(void) {
 
     printMessage(stdout, &m);
 
-    packMessage(&m);
+    packMessage(&m, GLOBAL_MAX_SIZE);
     printf("packed size = %d\n", m.size);
     dumpBytes(stdout, "    ", m.raw, m.size);
 
@@ -71,7 +71,7 @@ void test_dump(void) {
 
     printMessage(stdout, &m);
 
-    packMessage(&m);
+    packMessage(&m, GLOBAL_MAX_SIZE);
     printf("packed size = %d\n", m.size);
     dumpBytes(stdout, "    ", m.raw, m.size);
 
@@ -87,7 +87,7 @@ void test_dump(void) {
 
     printMessage(stdout, &m);
 
-    packMessage(&m);
+    packMessage(&m, GLOBAL_MAX_SIZE);
     printf("packed size = %d\n", m.size);
     dumpBytes(stdout, "    ", m.raw, m.size);
 }
@@ -112,15 +112,14 @@ void test_map(void) {
 }
 
 void *test_connect(void *arg) {
-    struct connection *conn = conn_new_unopened(CONN_ENVOY_OUT,
-            make_address("boulderdash", PORT));
-    if (!memcmp(&conn->addr->sin_addr, &state->my_address->sin_addr,
-                sizeof(conn->addr->sin_addr)))
+    struct sockaddr_in *addr = make_address("boulderdash", PORT);
+    if (!memcmp(&addr->sin_addr, &state->my_address->sin_addr,
+                sizeof(addr->sin_addr)))
     {
         printf("I am boulderdash\n");
     } else {
-        struct transaction *trans = connect_envoy(conn);
-        if (trans != NULL)
+        struct connection *conn = connect_envoy(addr);
+        if (conn != NULL)
             printf("test_connect done\n");
         else
             printf("connect_envoy returned NULL to test_connect\n");

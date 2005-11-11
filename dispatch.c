@@ -39,13 +39,12 @@ static void *dispatch(struct transaction *trans) {
     assert(trans->out == NULL);
 
     trans->out = message_new();
-    trans->out->maxSize = trans->conn->maxSize;
     trans->out->tag = trans->in->tag;
     trans->out->id = trans->in->id + 1;
 
     if (trans->conn->type == CONN_UNKNOWN_IN) {
         switch (trans->in->id) {
-            case TVERSION:  unknown_tversion(trans);        break;
+            case TVERSION:  handle_tversion(trans);        break;
             case TAUTH:
             case TREAD:
             case TWRITE:
@@ -63,38 +62,62 @@ static void *dispatch(struct transaction *trans) {
                 printf("\nBad request from unknown connection\n");
         }
     } else if (trans->conn->type == CONN_CLIENT_IN) {
+
+/*
+ * This macro checks if the fid for a transaction has a forwarding address,
+ * and if so calls forward_to_envoy with it.  Otherwise, it calls the normal
+ * handler.
+ */
+#define forward_or_handle(MESSAGE,HANDLER) do { \
+    if (forward_lookup(trans->conn, trans->in->msg.MESSAGE.fid) == NULL) { \
+        HANDLER(trans); \
+    } else { \
+        forward_to_envoy(trans); \
+    } \
+} while(0);
+
         switch (trans->in->id) {
-            case TAUTH:     client_tauth(trans);            break;
-            case TFLUSH:    client_tflush(trans);           break;
-            case TATTACH:   client_tattach(trans);          break;
+            case TOPEN:     forward_or_handle(topen, handle_topen);     break;
+            case TCREATE:   forward_or_handle(tcreate, handle_tcreate); break;
+            case TREAD:     forward_or_handle(tread, handle_tread);     break;
+            case TWRITE:    forward_or_handle(twrite, handle_twrite);   break;
+            case TCLUNK:    forward_or_handle(tclunk, handle_tclunk);   break;
+            case TREMOVE:   forward_or_handle(tremove, handle_tremove); break;
+            case TSTAT:     forward_or_handle(tstat, handle_tstat);     break;
+            case TWSTAT:    forward_or_handle(twstat, handle_twstat);   break;
+
+#undef forward_or_handle
+
+            case TATTACH:   handle_tattach(trans);          break;
+
+            case TAUTH:     handle_tauth(trans);            break;
+            case TFLUSH:    handle_tflush(trans);           break;
             case TWALK:     client_twalk(trans);            break;
-            case TOPEN:     client_topen(trans);            break;
-            case TCREATE:   client_tcreate(trans);          break;
-            case TREAD:     client_tread(trans);            break;
-            case TWRITE:    client_twrite(trans);           break;
-            case TCLUNK:    client_tclunk(trans);           break;
-            case TREMOVE:   client_tremove(trans);          break;
-            case TSTAT:     client_tstat(trans);            break;
-            case TWSTAT:    client_twstat(trans);           break;
+
             case TVERSION:
             default:
                 handle_error(trans);
                 printf("\nBad request from client\n");
         }
     } else if (trans->conn->type == CONN_ENVOY_IN) {
+        // This request has been forwarded to us, so pass it directly to the
+        // handler.  Behavior for objects we no longer own is
+        // not yet implemented
         switch (trans->in->id) {
-            case TAUTH:     envoy_tauth(trans);             break;
-            case TFLUSH:    envoy_tflush(trans);            break;
-            case TATTACH:   envoy_tattach(trans);           break;
+            case TATTACH:   handle_tattach(trans);          break;
+            case TOPEN:     handle_topen(trans);            break;
+            case TCREATE:   handle_tcreate(trans);          break;
+            case TREAD:     handle_tread(trans);            break;
+            case TWRITE:    handle_twrite(trans);           break;
+            case TCLUNK:    handle_tclunk(trans);           break;
+            case TREMOVE:   handle_tremove(trans);          break;
+            case TSTAT:     handle_tstat(trans);            break;
+            case TWSTAT:    handle_twstat(trans);           break;
+
+            case TAUTH:     handle_tauth(trans);            break;
+            case TFLUSH:    handle_tflush(trans);           break;
             case TWALK:     envoy_twalk(trans);             break;
-            case TOPEN:     envoy_topen(trans);             break;
-            case TCREATE:   envoy_tcreate(trans);           break;
-            case TREAD:     envoy_tread(trans);             break;
-            case TWRITE:    envoy_twrite(trans);            break;
-            case TCLUNK:    envoy_tclunk(trans);            break;
-            case TREMOVE:   envoy_tremove(trans);           break;
-            case TSTAT:     envoy_tstat(trans);             break;
-            case TWSTAT:    envoy_twstat(trans);            break;
+
             case TVERSION:
             default:
                 handle_error(trans);
@@ -131,9 +154,8 @@ void main_loop(void) {
             case CONN_ENVOY_IN:
                 /* this is a new transaction */
                 assert(trans == NULL);
-                trans = transaction_new();
-                trans->conn = conn;
-                trans->in = msg;
+
+                trans = transaction_new(conn, msg, NULL);
 
                 worker_create((void * (*)(void *)) dispatch, (void *) trans);
                 break;
@@ -155,14 +177,16 @@ void main_loop(void) {
     }
 }
 
-struct transaction *connect_envoy(struct connection *conn) {
-    /* prepare a Tversion message and package it in a transaction */
-    struct transaction *trans = transaction_new();
+struct connection *connect_envoy(struct sockaddr_in *addr) {
+    struct connection *conn;
+    struct transaction *trans;
+    struct Rversion *res;
 
-    trans->conn = conn;
-    trans->in = NULL;
-    trans->out = message_new();
-    trans->out->maxSize = trans->conn->maxSize;
+    /* start a new connection */
+    conn = conn_new_unopened(CONN_ENVOY_OUT, addr);
+
+    /* prepare a Tversion message and package it in a transaction */
+    trans = transaction_new(conn, NULL, message_new());
     trans->out->tag = NOTAG;
     trans->out->id = TVERSION;
     set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");
@@ -170,7 +194,7 @@ struct transaction *connect_envoy(struct connection *conn) {
     send_request(trans);
 
     /* check Rversion results and prepare a Tauth message */
-    struct Rversion *res = &trans->in->msg.rversion;
+    res = &trans->in->msg.rversion;
 
     /* blow up if the reply wasn't what we were expecting */
     if (trans->in->id != RVERSION || strcmp(res->version, "9P2000.envoy")) {
@@ -181,5 +205,5 @@ struct transaction *connect_envoy(struct connection *conn) {
     trans->conn->maxSize =
         max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
 
-    return trans;
+    return conn;
 }

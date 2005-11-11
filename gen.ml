@@ -143,9 +143,8 @@ let outputStructs out fields id =
 let outputMessageStruct out m =
   fprintf out "@[<v 4>struct message {";
   fprintf out "@,u8 *raw;";
-  fprintf out "@,u32 maxSize;";
-  fprintf out "@,";
   fprintf out "@,u32 size;";
+  fprintf out "@,";
   fprintf out "@,u8 id;";
   fprintf out "@,u16 tag;";
   fprintf out "@,";
@@ -343,14 +342,14 @@ let outputPacker out m =
       end
     | _ -> raise BadMessage
   in
-  fprintf out "@[<v 4>int packMessage(struct message *m) {";
+  fprintf out "@[<v 4>int packMessage(struct message *m, u32 maxSize) {";
   fprintf out "@,int i = 0;";
   fprintf out "@,@,@[<v 4>switch (m->id) {";
   List.iter msgSize m;
   fprintf out "@,@[<v 4>default:";
   fprintf out "@,return -1;@]";
   fprintf out "@]@,}";
-  fprintf out "@,@,@[<v 4>if (m->size > m->maxSize)";
+  fprintf out "@,@,@[<v 4>if (m->size > maxSize)";
   fprintf out "@,return -1;@]";
   fprintf out "@,@,packU32(m->raw, &i, m->size);";
   fprintf out "@,packU8(m->raw, &i, m->id);";
@@ -481,7 +480,7 @@ let go () =
   fprintf h "@.";
   List.iter (fun (i,f) -> outputSetters h f i) m;
   fprintf h "int unpackMessage(struct message *);";
-  fprintf h "@.int packMessage(struct message *);";
+  fprintf h "@.int packMessage(struct message *, u32);";
   fprintf h "@.void printMessage(FILE *fp, struct message *m);";
   fprintf h "@.";
   fprintf h "@.#endif@.";
