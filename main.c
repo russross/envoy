@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <assert.h>
 #include <gc/gc.h>
@@ -12,9 +13,10 @@
 #include "transport.h"
 #include "dispatch.h"
 #include "map.h"
+#include "types.h"
 
 void test_dump(void) {
-    struct message m;
+    Message m;
     char *path[] = { "local", "scratch", "rgr22", "1234567" };
     u8 *data;
     int size;
@@ -93,9 +95,9 @@ void test_dump(void) {
 }
 
 void test_map(void) {
-    struct map *root = GC_NEW(struct map);
-    struct cons *a, *b;
-    struct sockaddr_in *addr = GC_NEW_ATOMIC(struct sockaddr_in);
+    Map *root = GC_NEW(Map);
+    List *a, *b;
+    Address *addr = GC_NEW_ATOMIC(Address);
     assert(root != NULL);
     root->prefix = NULL;
     root->addr = addr;
@@ -112,13 +114,13 @@ void test_map(void) {
 }
 
 void *test_connect(void *arg) {
-    struct sockaddr_in *addr = make_address("boulderdash", PORT);
+    Address *addr = make_address("boulderdash", PORT);
     if (!memcmp(&addr->sin_addr, &state->my_address->sin_addr,
                 sizeof(addr->sin_addr)))
     {
         printf("I am boulderdash\n");
     } else {
-        struct connection *conn = connect_envoy(addr);
+        Connection *conn = connect_envoy(addr);
         if (conn != NULL)
             printf("test_connect done\n");
         else

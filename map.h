@@ -1,18 +1,18 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
-#include "util.h"
+#include "list.h"
+#include "types.h"
 
 struct map {
-    struct cons *prefix;
-    struct sockaddr_in *addr;
+    List *prefix;
+    Address *addr;
     int nchildren;
     struct map **children;
 };
 
-struct cons *map_lookup(struct map *root, struct cons *path);
-void map_insert(struct map *root, struct cons *path,
-        struct sockaddr_in *addr);
-void dumpMap(struct map *root, char *indent);
+List *map_lookup(Map *root, List *path);
+void map_insert(Map *root, List *path, Address *addr);
+void dumpMap(Map *root, char *indent);
 
 #endif

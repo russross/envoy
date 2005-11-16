@@ -8,7 +8,7 @@
  * size helpers
  */
 
-inline int statsize(struct p9stat *elt) {
+int statsize(struct p9stat *elt) {
     return
         2 +     /* size[2] */
         2 +     /* type[2] */
@@ -29,7 +29,7 @@ inline int statsize(struct p9stat *elt) {
         (elt->extension == NULL ? 0 : strlen(elt->extension));
 }
 
-inline int stringlistsize(u16 len, char **elt) {
+int stringlistsize(u16 len, char **elt) {
     int i;
     int size = len * 2;
     for (i = 0; i < len; i++)
@@ -41,7 +41,7 @@ inline int stringlistsize(u16 len, char **elt) {
  * unpack helpers
  */
 
-inline u8 unpackU8(u8 *raw, int size, int *i) {
+u8 unpackU8(u8 *raw, int size, int *i) {
     if (*i < 0) return (u8) 0;
     *i += 1;
     if (*i > size) {
@@ -51,7 +51,7 @@ inline u8 unpackU8(u8 *raw, int size, int *i) {
     return raw[*i - 1];
 }
 
-inline u16 unpackU16(u8 *raw, int size, int *i) {
+u16 unpackU16(u8 *raw, int size, int *i) {
     if (*i < 0) return (u16) 0;
     *i += 2;
     if (*i > size) {
@@ -62,7 +62,7 @@ inline u16 unpackU16(u8 *raw, int size, int *i) {
            ((u16) raw[*i - 1] << 8);
 }
 
-inline u32 unpackU32(u8 *raw, int size, int *i) {
+u32 unpackU32(u8 *raw, int size, int *i) {
     if (*i < 0) return (u32) 0;
     *i += 4;
     if (*i > size) {
@@ -75,7 +75,7 @@ inline u32 unpackU32(u8 *raw, int size, int *i) {
            ((u32) raw[*i - 1] << 24);
 }
 
-inline u64 unpackU64(u8 *raw, int size, int *i) {
+u64 unpackU64(u8 *raw, int size, int *i) {
     if (*i < 0) return (u64) 0;
     *i += 8;
     if (*i > size) {
@@ -92,7 +92,7 @@ inline u64 unpackU64(u8 *raw, int size, int *i) {
            ((u64) raw[*i - 1] << 56);
 }
 
-inline u8 *unpackData(u8 *raw, int size, int *i, u32 *len) {
+u8 *unpackData(u8 *raw, int size, int *i, u32 *len) {
     u8 *d = NULL;
     *len = unpackU32(raw, size, i) & 0x00ffffff;
     if (*i < 0) return NULL;
@@ -107,7 +107,7 @@ inline u8 *unpackData(u8 *raw, int size, int *i, u32 *len) {
     return d;
 }
 
-inline char *unpackString(u8 *raw, int size, int *i) {
+char *unpackString(u8 *raw, int size, int *i) {
     char *s = NULL;
     int len = unpackU16(raw, size, i);
     if (*i < 0) return NULL;
@@ -121,7 +121,7 @@ inline char *unpackString(u8 *raw, int size, int *i) {
     return s;
 }
 
-inline char **unpackStringlist(u8 *raw, int size, int *i, u16 *n) {
+char **unpackStringlist(u8 *raw, int size, int *i, u16 *n) {
     int x;
     char **v = NULL;
     *n = unpackU16(raw, size, i);
@@ -140,7 +140,7 @@ inline char **unpackStringlist(u8 *raw, int size, int *i, u16 *n) {
     return v;
 }
 
-inline struct qid unpackQid(u8 *raw, int size, int *i) {
+struct qid unpackQid(u8 *raw, int size, int *i) {
    struct qid qid;
    qid.type = unpackU8(raw, size, i);
    qid.version = unpackU32(raw, size, i);
@@ -148,7 +148,7 @@ inline struct qid unpackQid(u8 *raw, int size, int *i) {
    return qid;
 }
 
-inline struct qid *unpackQidlist(u8 *raw, int size, int *i, u16 *n) {
+struct qid *unpackQidlist(u8 *raw, int size, int *i, u16 *n) {
     int x;
     struct qid *v = NULL;
     *n = unpackU16(raw, size, i);
@@ -169,7 +169,7 @@ inline struct qid *unpackQidlist(u8 *raw, int size, int *i, u16 *n) {
     return v;
 }
 
-inline struct p9stat *unpackStat(u8 *raw, int size, int *i) {
+struct p9stat *unpackStat(u8 *raw, int size, int *i) {
     u16 length;
     int starti = *i;
     struct p9stat *stat;
@@ -201,7 +201,7 @@ inline struct p9stat *unpackStat(u8 *raw, int size, int *i) {
     return stat;
 }
 
-inline struct p9stat *unpackStatn(u8 *raw, int size, int *i) {
+struct p9stat *unpackStatn(u8 *raw, int size, int *i) {
     u16 n = unpackU16(raw, size, i);
     int peek = *i;
     if (*i < 0 || unpackU16(raw, size, &peek) != n - 2 || peek < 0)
@@ -213,23 +213,23 @@ inline struct p9stat *unpackStatn(u8 *raw, int size, int *i) {
  * pack helpers
  */
 
-inline void packU8(u8 *raw, int *i, u8 elt) {
+void packU8(u8 *raw, int *i, u8 elt) {
     raw[(*i)++] = elt;
 }
 
-inline void packU16(u8 *raw, int *i, u16 elt) {
+void packU16(u8 *raw, int *i, u16 elt) {
     raw[(*i)++] = (u8) ( elt       & 0xff);
     raw[(*i)++] = (u8) ((elt >> 8) & 0xff);
 }
 
-inline void packU32(u8 *raw, int *i, u32 elt) {
+void packU32(u8 *raw, int *i, u32 elt) {
     raw[(*i)++] = (u8) ( elt        & 0xff);
     raw[(*i)++] = (u8) ((elt >> 8)  & 0xff);
     raw[(*i)++] = (u8) ((elt >> 16) & 0xff);
     raw[(*i)++] = (u8) ((elt >> 24) & 0xff);
 }
 
-inline void packU64(u8 *raw, int *i, u64 elt) {
+void packU64(u8 *raw, int *i, u64 elt) {
     raw[(*i)++] = (u8) ( elt        & 0xff);
     raw[(*i)++] = (u8) ((elt >> 8)  & 0xff);
     raw[(*i)++] = (u8) ((elt >> 16) & 0xff);
@@ -240,14 +240,14 @@ inline void packU64(u8 *raw, int *i, u64 elt) {
     raw[(*i)++] = (u8) ((elt >> 56) & 0xff);
 }
 
-inline void packData(u8 *raw, int *i, u32 len, u8 *elt) {
+void packData(u8 *raw, int *i, u32 len, u8 *elt) {
     packU32(raw, i, len);
     if (len > 0)
         memcpy(raw + *i, elt, len);
     *i += len;
 }
 
-inline void packString(u8 *raw, int *i, char *elt) {
+void packString(u8 *raw, int *i, char *elt) {
     int len = elt == NULL ? 0 : strlen(elt);
     packU16(raw, i, (u16) len);
     if (len > 0)
@@ -255,27 +255,27 @@ inline void packString(u8 *raw, int *i, char *elt) {
     *i += len;
 }
 
-inline void packStringlist(u8 *raw, int *i, u16 len, char **elt) {
+void packStringlist(u8 *raw, int *i, u16 len, char **elt) {
     int x;
     packU16(raw, i, len);
     for (x = 0; x < len; x++)
         packString(raw, i, elt[x]);
 }
 
-inline void packQid(u8 *raw, int *i, struct qid elt) {
+void packQid(u8 *raw, int *i, struct qid elt) {
     packU8(raw, i, elt.type);
     packU32(raw, i, elt.version);
     packU64(raw, i, elt.path);
 }
 
-inline void packQidlist(u8 *raw, int *i, u16 len, struct qid *elt) {
+void packQidlist(u8 *raw, int *i, u16 len, struct qid *elt) {
     int x;
     packU16(raw, i, len);
     for (x = 0; x < len; x++)
         packQid(raw, i, elt[x]);
 }
 
-inline void packStat(u8 *raw, int *i, struct p9stat *elt) {
+void packStat(u8 *raw, int *i, struct p9stat *elt) {
     u16 size = (u16) statsize(elt) - sizeof(u16);
     packU16(raw, i, size);
     packU16(raw, i, elt->type);
@@ -295,7 +295,7 @@ inline void packStat(u8 *raw, int *i, struct p9stat *elt) {
     packU32(raw, i, elt->n_muid);
 }
 
-inline void packStatn(u8 *raw, int *i, struct p9stat *elt) {
+void packStatn(u8 *raw, int *i, struct p9stat *elt) {
     int start = *i;
     packU16(raw, i, 0);
     packStat(raw, i, elt);

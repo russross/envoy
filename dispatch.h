@@ -3,14 +3,16 @@
 
 #include "state.h"
 #include "map.h"
+#include "types.h"
 
-void send_request(struct transaction *trans);
-void send_reply(struct transaction *trans);
-void queue_transaction(struct transaction *trans);
-void handle_error(struct transaction *trans);
+void send_request(Transaction *trans);
+void send_requests(List *list);
+void send_reply(Transaction *trans);
+void queue_transaction(Transaction *trans);
+void handle_error(Transaction *trans);
 
 void main_loop(void);
 
-struct connection *connect_envoy(struct sockaddr_in *addr);
+Connection *connect_envoy(Address *addr);
 
 #endif

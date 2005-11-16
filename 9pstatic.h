@@ -8,6 +8,7 @@ typedef unsigned long long u64;
 #define MAXWELEM 16
 
 #define NOTAG 0xffff
+#define ALLOCTAG 0xfffe
 #define NOFID 0xffffffff
 
 enum openmodes {
@@ -78,33 +79,33 @@ struct p9stat {
     u32 n_muid;
 };
 
-inline int statsize(struct p9stat *elt);
-inline int stringlistsize(u16 len, char **elt);
+int statsize(struct p9stat *elt);
+int stringlistsize(u16 len, char **elt);
 
 void dumpBytes(FILE *fp, char *prefix, u8 *buff, int size);
 void dumpData(FILE *fp, char *prefix, u8 *buff, int size);
 void dumpStat(FILE *fp, char *prefix, struct p9stat *stat);
 
-inline u8 unpackU8(u8 *raw, int size, int *i);
-inline u16 unpackU16(u8 *raw, int size, int *i);
-inline u32 unpackU32(u8 *raw, int size, int *i);
-inline u64 unpackU64(u8 *raw, int size, int *i);
-inline u8 *unpackData(u8 *raw, int size, int *i, u32 *len);
-inline char *unpackString(u8 *raw, int size, int *i);
-inline char **unpackStringlist(u8 *raw, int size, int *i, u16 *n);
-inline struct qid unpackQid(u8 *raw, int size, int *i);
-inline struct qid *unpackQidlist(u8 *raw, int size, int *i, u16 *n);
-inline struct p9stat *unpackStat(u8 *raw, int size, int *i);
-inline struct p9stat *unpackStatn(u8 *raw, int size, int *i);
+u8 unpackU8(u8 *raw, int size, int *i);
+u16 unpackU16(u8 *raw, int size, int *i);
+u32 unpackU32(u8 *raw, int size, int *i);
+u64 unpackU64(u8 *raw, int size, int *i);
+u8 *unpackData(u8 *raw, int size, int *i, u32 *len);
+char *unpackString(u8 *raw, int size, int *i);
+char **unpackStringlist(u8 *raw, int size, int *i, u16 *n);
+struct qid unpackQid(u8 *raw, int size, int *i);
+struct qid *unpackQidlist(u8 *raw, int size, int *i, u16 *n);
+struct p9stat *unpackStat(u8 *raw, int size, int *i);
+struct p9stat *unpackStatn(u8 *raw, int size, int *i);
 
-inline void packU8(u8 *raw, int *i, u8 elt);
-inline void packU16(u8 *raw, int *i, u16 elt);
-inline void packU32(u8 *raw, int *i, u32 elt);
-inline void packU64(u8 *raw, int *i, u64 elt);
-inline void packData(u8 *raw, int *i, u32 len, u8 *elt);
-inline void packString(u8 *raw, int *i, char *elt);
-inline void packStringlist(u8 *raw, int *i, u16 len, char **elt);
-inline void packQid(u8 *raw, int *i, struct qid elt);
-inline void packQidlist(u8 *raw, int *i, u16 len, struct qid *elt);
-inline void packStat(u8 *raw, int *i, struct p9stat *elt);
-inline void packStatn(u8 *raw, int *i, struct p9stat *elt);
+void packU8(u8 *raw, int *i, u8 elt);
+void packU16(u8 *raw, int *i, u16 elt);
+void packU32(u8 *raw, int *i, u32 elt);
+void packU64(u8 *raw, int *i, u64 elt);
+void packData(u8 *raw, int *i, u32 len, u8 *elt);
+void packString(u8 *raw, int *i, char *elt);
+void packStringlist(u8 *raw, int *i, u16 len, char **elt);
+void packQid(u8 *raw, int *i, struct qid elt);
+void packQidlist(u8 *raw, int *i, u16 len, struct qid *elt);
+void packStat(u8 *raw, int *i, struct p9stat *elt);
+void packStatn(u8 *raw, int *i, struct p9stat *elt);

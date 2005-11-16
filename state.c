@@ -23,39 +23,13 @@ struct state *state = NULL;
  * Constructors
  */
 
-struct message *message_new(void) {
-    struct message *m = GC_NEW(struct message);
-    assert(m != NULL);
-    m->raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
-    assert(m->raw != NULL);
-    /* make sure tag doesn't default to NOTAG */
-    m->tag = 0;
-    return m;
-}
-
-struct transaction *transaction_new(struct connection *conn,
-        struct message *in, struct message *out)
-{
-    struct transaction *t = GC_NEW(struct transaction);
-    assert(t != NULL);
-    t->wait = GC_NEW(pthread_cond_t);
-    assert(t->wait != NULL);
-    pthread_cond_init(t->wait, NULL);
-    t->conn = conn;
-    t->in = in;
-    t->out = out;
-    return t;
-}
-
-struct handles *handles_new(void) {
-    struct handles *set = GC_NEW(struct handles);
-    assert(set != NULL);
-    set->set = GC_NEW_ATOMIC(fd_set);
-    assert(set != NULL);
-    FD_ZERO(set->set);
-    set->high = -1;
-
-    return set;
+Message *message_new(void) {
+    Message *msg = GC_NEW(Message);
+    assert(msg != NULL);
+    msg->raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
+    assert(msg->raw != NULL);
+    msg->tag = ALLOCTAG;
+    return msg;
 }
 
 /*
@@ -72,7 +46,7 @@ static u32 generic_hash(const void *elt, int len, u32 hash) {
     return hash;
 }
 
-static u32 addr_hash(const struct sockaddr_in *addr) {
+static u32 addr_hash(const Address *addr) {
     u32 hash = 0;
     hash = generic_hash(&addr->sin_family, sizeof(addr->sin_family), hash);
     hash = generic_hash(&addr->sin_port, sizeof(addr->sin_port), hash);
@@ -80,272 +54,13 @@ static u32 addr_hash(const struct sockaddr_in *addr) {
     return hash;
 }
 
-int addr_cmp(const struct sockaddr_in *a, const struct sockaddr_in *b) {
+int addr_cmp(const Address *a, const Address *b) {
     int x;
     if ((x = memcmp(&a->sin_family, &b->sin_family, sizeof(a->sin_family))))
         return x;
     if ((x = memcmp(&a->sin_port, &b->sin_port, sizeof(a->sin_port))))
         return x;
     return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
-}
-
-/*
- * Handle sets
- */
-
-void handles_add(struct handles *set, int handle) {
-    FD_SET(handle, set->set);
-    set->high = handle > set->high ? handle : set->high;
-}
-
-void handles_remove(struct handles *set, int handle) {
-    FD_CLR(handle, set->set);
-    if (handle >= set->high)
-        while (set->high >= 0 && FD_ISSET(set->high, set->set))
-            set->high--;
-}
-
-int handles_collect(struct handles *set, fd_set *rset, int high) {
-    int i;
-    fd_mask *a = (fd_mask *) rset, *b = (fd_mask *) set->set;
-
-    for (i = 0; i * NFDBITS <= high; i++)
-        a[i] |= b[i];
-
-    return high > set->high ? high : set->high;
-}
-
-int handles_member(struct handles *set, fd_set *rset) {
-    int i;
-
-    for (i = 0; i <= set->high; i++)
-        if (FD_ISSET(i, rset) && FD_ISSET(i, set->set))
-            return i;
-
-    return -1;
-}
-
-/*
- * Connection pool state
- */
-
-struct connection *conn_insert_new(int fd, enum conn_type type,
-        struct sockaddr_in *addr, int maxSize)
-{
-    struct connection *conn;
-
-    assert(fd >= 0);
-    assert(addr != NULL);
-    assert(!vector_test(state->conn_vector, fd));
-    assert(hash_get(state->addr_2_conn, addr) == NULL);
-
-    conn = GC_NEW(struct connection);
-    assert(conn != NULL);
-
-    conn->fd = fd;
-    conn->type = type;
-    conn->addr = addr;
-    conn->maxSize = maxSize;
-    conn->fid_vector = vector_create(FID_VECTOR_SIZE);
-    conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
-    conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
-    conn->pending_writes = NULL;
-    conn->notag_trans = NULL;
-
-    vector_set(state->conn_vector, conn->fd, conn);
-    hash_set(state->addr_2_conn, conn->addr, conn);
-
-    return conn;
-}
-
-struct connection *conn_new_unopened(enum conn_type type,
-        struct sockaddr_in *addr)
-{
-    struct connection *conn;
-
-    assert(addr != NULL);
-    assert(hash_get(state->addr_2_conn, addr) == NULL);
-
-    conn = GC_NEW(struct connection);
-    assert(conn != NULL);
-
-    conn->fd = -1;
-    conn->type = type;
-    conn->addr = addr;
-    conn->maxSize = GLOBAL_MAX_SIZE;
-    conn->fid_vector = vector_create(FID_VECTOR_SIZE);
-    conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
-    conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
-    conn->pending_writes = NULL;
-    conn->notag_trans = NULL;
-
-    return conn;
-}
-
-struct connection *conn_lookup_fd(int fd) {
-    return vector_get(state->conn_vector, fd);
-}
-
-struct connection *conn_lookup_addr(struct sockaddr_in *addr) {
-    return hash_get(state->addr_2_conn, addr);
-}
-
-struct transaction *conn_get_pending_write(struct connection *conn) {
-    struct transaction *res = NULL;
-
-    assert(conn != NULL);
-
-    if (!null(conn->pending_writes)) {
-        res = car(conn->pending_writes);
-        conn->pending_writes = cdr(conn->pending_writes);
-    }
-
-    return res;
-}
-
-int conn_has_pending_write(struct connection *conn) {
-    return conn->pending_writes != NULL;
-}
-
-void conn_queue_write(struct transaction *trans) {
-    assert(trans != NULL);
-
-    trans->conn->pending_writes =
-        append_elt(trans->conn->pending_writes, trans);
-}
-
-void conn_remove(struct connection *conn) {
-    assert(conn != NULL);
-    assert(vector_test(state->conn_vector, conn->fd));
-    assert(hash_get(state->addr_2_conn, conn->addr) != NULL);
-
-    vector_remove(state->conn_vector, conn->fd);
-    hash_remove(state->addr_2_conn, conn->addr);
-}
-
-/*
- * Transaction pool state
- * Active transactions that are waiting for a response are indexed by tag.
- */
-
-void trans_insert(struct transaction *trans) {
-    assert(trans != NULL);
-    assert(trans->conn != NULL);
-    assert(trans->in == NULL);
-    assert(trans->out != NULL);
-
-    /* NOTAG is a special case */
-    if (trans->out->tag == NOTAG)
-        trans->conn->notag_trans = trans;
-    else
-        trans->out->tag = vector_alloc(trans->conn->tag_vector, trans);
-}
-
-struct transaction *trans_lookup_remove(struct connection *conn, u16 tag) {
-    assert(conn != NULL);
-
-    if (tag == NOTAG) {
-        struct transaction *res = conn->notag_trans;
-        conn->notag_trans = NULL;
-        return res;
-    }
-
-    return (struct transaction *) vector_get_remove(conn->tag_vector, tag);
-}
-
-/*
- * Fid pool state
- */
-
-int fid_insert_new(struct connection *conn, u32 fid, char *uname, char *path) {
-    struct fid *res;
-
-    assert(conn != NULL);
-    assert(fid != NOFID);
-    assert(uname != NULL && *uname);
-    assert(path != NULL && *path);
-
-    if (vector_test(conn->fid_vector, fid))
-        return -1;
-
-    res = GC_NEW(struct fid);
-    assert(res != NULL);
-
-    res->fid = fid;
-    res->uname = uname;
-    res->path = path;
-    res->fd = -1;
-    res->status = STATUS_CLOSED;
-
-    vector_set(conn->fid_vector, res->fid, res);
-
-    return 0;
-}
-
-struct fid *fid_lookup(struct connection *conn, u32 fid) {
-    assert(conn != NULL);
-    assert(fid != NOFID);
-
-    return vector_get(conn->fid_vector, fid);
-}
-
-struct fid *fid_lookup_remove(struct connection *conn, u32 fid) {
-    assert(conn != NULL);
-    assert(fid != NOFID);
-
-    return (struct fid *) vector_get_remove(conn->fid_vector, fid);
-}
-
-/*
- * Forwarded fid state.
- */
-
-u32 forward_create_new(struct connection *conn, u32 fid,
-        struct connection *rconn)
-{
-    struct forward *fwd;
-    u32 rfid;
-
-    assert(conn != NULL);
-    assert(fid != NOFID);
-    assert(rconn != NULL);
-
-    if (vector_test(conn->forward_vector, fid))
-        return NOFID;
-
-    fwd = GC_NEW(struct forward);
-    assert(fwd != NULL);
-
-    rfid = vector_alloc(state->forward_fids, fwd);
-
-    fwd->fid = fid;
-    fwd->rconn = rconn;
-    fwd->rfid = rfid;
-
-    vector_set(conn->forward_vector, fid, fwd);
-
-    return rfid;
-}
-
-struct forward *forward_lookup(struct connection *conn, u32 fid) {
-    assert(conn != NULL);
-    assert(fid != NOFID);
-
-    return vector_get(conn->forward_vector, fid);
-}
-
-struct forward *forward_lookup_remove(struct connection *conn, u32 fid) {
-    struct forward *fwd;
-
-    assert(conn != NULL);
-    assert(fid != NOFID);
-
-    fwd = vector_get_remove(conn->forward_vector, fid);
-
-    if (fwd != NULL)
-        vector_remove(state->forward_fids, fwd->rfid);
-
-    return fwd;
 }
 
 /*
@@ -363,7 +78,7 @@ static void print_status(enum fd_status status) {
             "(unknown status)");
 }
 
-static void print_fid(struct fid *fid) {
+static void print_fid(Fid *fid) {
     printf("    fid:%u path:%s uname:%s\n    ",
             fid->fid, fid->path, fid->uname);
     print_status(fid->status);
@@ -378,12 +93,12 @@ static void print_fid(struct fid *fid) {
     }
 }
 
-static void print_fid_fid(u32 n, struct fid *fid) {
+static void print_fid_fid(u32 n, Fid *fid) {
     printf("   %-2u:\n", n);
     print_fid(fid);
 }
 
-void print_address(struct sockaddr_in *addr) {
+void print_address(Address *addr) {
     struct hostent *host = gethostbyaddr(&addr->sin_addr,
             sizeof(addr->sin_addr), addr->sin_family);
     if (host == NULL || host->h_name == NULL) {
@@ -398,7 +113,7 @@ void print_address(struct sockaddr_in *addr) {
     }
 }
 
-static void print_transaction(struct transaction *trans) {
+static void print_transaction(Transaction *trans) {
     if (trans->in != NULL) {
         printf("    Req: ");
         printMessage(stdout, trans->in);
@@ -409,7 +124,7 @@ static void print_transaction(struct transaction *trans) {
     }
 }
 
-static void print_tag_trans(u32 tag, struct transaction *trans) {
+static void print_tag_trans(u32 tag, Transaction *trans) {
     printf("   %-2u:\n", tag);
     print_transaction(trans);
 }
@@ -423,7 +138,7 @@ static void print_connection_type(enum conn_type type) {
             "(unknown state)");
 }
 
-static void print_connection(struct connection *conn) {
+static void print_connection(Connection *conn) {
     printf(" ");
     print_address(conn->addr);
     printf(" fd:%d ", conn->fd);
@@ -434,7 +149,7 @@ static void print_connection(struct connection *conn) {
     vector_apply(conn->tag_vector, (void (*)(u32, void *)) print_tag_trans);
 }
 
-static void print_addr_conn(struct sockaddr_in *addr, struct connection *conn) {
+static void print_addr_conn(Address *addr, Connection *conn) {
     print_connection(conn);
 }
 
@@ -468,7 +183,7 @@ void state_init(void) {
     assert((hostname = getenv("HOSTNAME")) != NULL);
     state->my_address = make_address(hostname, PORT);
 
-    state->map = GC_NEW(struct map);
+    state->map = GC_NEW(Map);
     assert(state->map != NULL);
     state->map->prefix = NULL;
     state->map->addr = state->my_address;
@@ -488,74 +203,4 @@ void state_init(void) {
 
     state->active_worker_count = 0;
     state->thread_pool = NULL;
-}
-
-/*
- * Worker threads
- */
-
-static void *worker_thread_loop(struct worker_thread *t) {
-    state->active_worker_count++;
-    pthread_mutex_lock(state->biglock);
-
-    int i;
-    for (i = 0; i < THREAD_LIFETIME; i++) {
-        if (i > 0) {
-            /* wait in the pool for a request */
-            state->thread_pool = append_elt(state->thread_pool, t);
-            pthread_cond_wait(t->wait, state->biglock);
-        }
-
-        /* service the request */
-        if (t->func != NULL)
-            t->func(t->arg);
-        t->func = NULL;
-        state->active_worker_count--;
-        pthread_cond_signal(state->wait_workers);
-    }
-
-    pthread_mutex_unlock(state->biglock);
-    return NULL;
-}
-
-void worker_create(void * (*func)(void *), void *arg) {
-    if (null(state->thread_pool)) {
-        struct worker_thread *t = GC_NEW(struct worker_thread);
-        assert(t != NULL);
-        t->wait = GC_NEW(pthread_cond_t);
-        assert(t->wait != NULL);
-        pthread_cond_init(t->wait, NULL);
-
-        t->func = func;
-        t->arg = arg;
-
-        pthread_t newthread;
-        pthread_create(&newthread, NULL,
-                (void *(*)(void *)) worker_thread_loop, (void *) t);
-    } else {
-        struct worker_thread *t = car(state->thread_pool);
-        state->thread_pool = cdr(state->thread_pool);
-
-        t->func = func;
-        t->arg = arg;
-
-        state->active_worker_count++;
-        pthread_cond_signal(t->wait);
-    }
-}
-
-void worker_wait(struct transaction *trans) {
-    state->active_worker_count--;
-    pthread_cond_signal(state->wait_workers);
-    pthread_cond_wait(trans->wait, state->biglock);
-}
-
-void worker_wakeup(struct transaction *trans) {
-    state->active_worker_count++;
-    pthread_cond_signal(trans->wait);
-}
-
-void worker_wait_for_all(void) {
-    while (state->active_worker_count > 0)
-        pthread_cond_wait(state->wait_workers, state->biglock);
 }

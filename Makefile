@@ -4,7 +4,7 @@ CC=gcc
 CCOPTS=-g -Wall -D_FILE_OFFSET_BITS=64 -D_REENTRANT -DGC_LINUX_THREADS
 LINKOPTS=-lgc
 
-SRC=9pstatic.c 9p.c list.c util.c config.c state.c transport.c fs.c dispatch.c main.c map.c
+SRC=9pstatic.c 9p.c list.c vector.c hashtable.c connection.c handles.c transaction.c fid.c util.c config.c state.c transport.c fs.c dispatch.c main.c map.c worker.c forward.c
 OBJ=$(SRC:.c=.o)
 
 all:	envoy

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <gc/gc.h>
 #include "9p.h"
@@ -7,19 +8,86 @@
 #include "transport.h"
 #include "fs.h"
 #include "list.h"
+#include "util.h"
 #include "config.h"
 
-void send_request(struct transaction *trans) {
+void send_request(Transaction *trans) {
     assert(trans->conn->type == CONN_ENVOY_OUT ||
            trans->conn->type == CONN_STORAGE_OUT);
     assert(trans->in == NULL);
 
+    /* allocate a condition variable */
+    assert(trans->wait == NULL);
+    trans->wait = GC_NEW(pthread_cond_t);
+    assert(trans->wait != NULL);
+    pthread_cond_init(trans->wait, NULL);
+
     put_message(trans);
     trans_insert(trans);
     worker_wait(trans);
+
+    /* we should have response when we wake up */
+    assert(trans->in != NULL);
+    GC_free(trans->wait);
+    trans->wait = NULL;
 }
 
-void send_reply(struct transaction *trans) {
+void send_requests(List *list) {
+    Transaction *trans;
+    List *ptr;
+    pthread_cond_t *wait;
+    int count = 0, remaining = 0;
+
+    assert(!null(list));
+
+    wait = GC_NEW(pthread_cond_t);
+    assert(wait != NULL);
+    pthread_cond_init(wait, NULL);
+
+    for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
+        count++;
+        trans = car(ptr);
+        assert(trans->conn->type == CONN_ENVOY_OUT ||
+                trans->conn->type == CONN_STORAGE_OUT);
+        assert(trans->in == NULL);
+        assert(trans->wait == NULL);
+
+        trans->wait = wait;
+        put_message(trans);
+        trans_insert(trans);
+    }
+    remaining = count;
+
+    /* It's possible that multiple responses arrived and we were signalled
+     * multiple times before we woke up.  In that case, active_worker_count
+     * will be too high and the main select thread won't be scheduled.
+     * We check how many responses have arrived since we were last called,
+     * which is the number that have non-NULL wait and in fields.
+     * We subtract that number (except for one corresponding to this thread)
+     * from active_worker_count. */
+    while (remaining > 0) {
+        /* wait for at least one response */
+        worker_wait_multiple(wait);
+
+        /* this increment compensates for the extra decrement that will
+         * happen in the loop below */
+        state->active_worker_count++;
+
+        /* see how many responses came in */
+        for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
+            trans = car(ptr);
+            if (trans->in != NULL && trans->wait != NULL) {
+                if (--remaining == 0)
+                    GC_free(trans->wait);
+
+                trans->wait = NULL;
+                state->active_worker_count--;
+            }
+        }
+    }
+}
+
+void send_reply(Transaction *trans) {
     assert(trans->conn->type == CONN_ENVOY_IN ||
            trans->conn->type == CONN_CLIENT_IN ||
            trans->conn->type == CONN_UNKNOWN_IN);
@@ -28,11 +96,11 @@ void send_reply(struct transaction *trans) {
     put_message(trans);
 }
 
-void handle_error(struct transaction *trans) {
+void handle_error(Transaction *trans) {
     state->error_queue = append_elt(state->error_queue, trans);
 }
 
-static void *dispatch(struct transaction *trans) {
+static void *dispatch(Transaction *trans) {
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||
             trans->conn->type == CONN_ENVOY_IN);
@@ -131,9 +199,9 @@ static void *dispatch(struct transaction *trans) {
 }
 
 void main_loop(void) {
-    struct transaction *trans;
-    struct message *msg;
-    struct connection *conn;
+    Transaction *trans;
+    Message *msg;
+    Connection *conn;
 
     for (;;) {
         /* handle any pending errors */
@@ -155,7 +223,7 @@ void main_loop(void) {
                 /* this is a new transaction */
                 assert(trans == NULL);
 
-                trans = transaction_new(conn, msg, NULL);
+                trans = trans_new(conn, msg, NULL);
 
                 worker_create((void * (*)(void *)) dispatch, (void *) trans);
                 break;
@@ -177,16 +245,16 @@ void main_loop(void) {
     }
 }
 
-struct connection *connect_envoy(struct sockaddr_in *addr) {
-    struct connection *conn;
-    struct transaction *trans;
+Connection *connect_envoy(Address *addr) {
+    Connection *conn;
+    Transaction *trans;
     struct Rversion *res;
 
     /* start a new connection */
     conn = conn_new_unopened(CONN_ENVOY_OUT, addr);
 
     /* prepare a Tversion message and package it in a transaction */
-    trans = transaction_new(conn, NULL, message_new());
+    trans = trans_new(conn, NULL, message_new());
     trans->out->tag = NOTAG;
     trans->out->id = TVERSION;
     set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");

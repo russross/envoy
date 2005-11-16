@@ -16,6 +16,7 @@
 #include "map.h"
 #include "list.h"
 #include "util.h"
+#include "types.h"
 #include "fs.h"
 
 /* generate a qid record from a file stat record */
@@ -133,7 +134,7 @@ static inline int unixflags(u32 mode) {
 /*****************************************************************************/
 
 /* generate an error response with Unix errno errnum */
-static void rerror(struct message *m, u16 errnum, int line) {
+static void rerror(Message *m, u16 errnum, int line) {
     m->id = RERROR;
     m->msg.rerror.errnum = errnum;
     m->msg.rerror.ename = stringcopy(strerror(errnum));
@@ -197,9 +198,9 @@ static void rerror(struct message *m, u16 errnum, int line) {
     } \
 } while(0)
 
-struct sockaddr_in *get_envoy_address(char *path) {
-    struct cons *lst = map_lookup(state->map, splitpath(path));
-    struct map *elt;
+Address *get_envoy_address(char *path) {
+    List *lst = map_lookup(state->map, splitpath(path));
+    Map *elt;
 
     if (null(lst))
         return NULL;
@@ -219,14 +220,14 @@ struct sockaddr_in *get_envoy_address(char *path) {
     env->out->msg.MESSAGE.fid = fwd->rfid; \
 } while(0);
 
-void forward_to_envoy(struct transaction *trans) {
-    struct transaction *env;
+void forward_to_envoy(Transaction *trans) {
+    Transaction *env;
     struct forward *fwd = NULL;
 
     assert(trans != NULL);
 
     /* copy the whole message over */
-    env = transaction_new(NULL, NULL, message_new());
+    env = trans_new(NULL, NULL, message_new());
     memcpy(&env->out->msg, &trans->in->msg, sizeof(trans->in->msg));
     env->out->id = trans->in->id;
 
@@ -285,7 +286,7 @@ void forward_to_envoy(struct transaction *trans) {
  * - all outstanding i/o on the connection is aborted
  * - all existing fids are clunked
  */
-void handle_tversion(struct transaction *trans) {
+void handle_tversion(Transaction *trans) {
     struct Tversion *req = &trans->in->msg.tversion;
     struct Rversion *res = &trans->out->msg.rversion;
 
@@ -325,7 +326,7 @@ void handle_tversion(struct transaction *trans) {
  * - aqid identifies a file of type QTAUTH
  * - afid is used to exchange (undefined) data to authorize connection
  */
-void handle_tauth(struct transaction *trans) {
+void handle_tauth(Transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
@@ -348,7 +349,7 @@ void handle_tauth(struct transaction *trans) {
  * - afid may be used for multiple attach calls with same uname/aname
  * - error returned if fid is already in use
  */
-void handle_tattach(struct transaction *trans) {
+void handle_tattach(Transaction *trans) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
     struct sockaddr_in *addr;
@@ -421,7 +422,7 @@ void handle_tattach(struct transaction *trans) {
  * - client must honor regular response received before Rflush, including
  *   server-side state change
  */
-void handle_tflush(struct transaction *trans) {
+void handle_tflush(Transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
@@ -460,12 +461,38 @@ void handle_tflush(struct transaction *trans) {
  *   - walk of ".." in root directory is equivalent to walk of no elements
  *   - maximum of MAXWELEM (16) elements in a single Twalk request
  */
-void client_twalk(struct transaction *trans) {
+//static List *walk_path_list(int n, int count, char **names, char *path) {
+//    char *newpath;
+//
+//    if (n == count || !names[n] || !*names[n] || strchr(names[n], '/'))
+//        return NULL;
+//
+//    if (!strcmp(names[n], "."))
+//        newpath = path;
+//    else if (!strcmp(names[n], ".."))
+//        newpath = dirname(path);
+//    else
+//        newpath = concatname(path, names[n]);
+//
+//    return cons(newpath, walk_path_list(n+1, count, names, newpath));
+//}
+//
+//static List *walk_qid_list(List *paths) {
+//    struct stat info;
+//
+//    if (null(paths) || lstat(car(paths), &info) < 0)
+//        return NULL;
+//
+//    return cons(stat2qid(&info), walk_qid_list(cdr(paths)));
+//}
+
+void client_twalk(Transaction *trans) {
     struct Twalk *req = &trans->in->msg.twalk;
     struct Rwalk *res = &trans->out->msg.rwalk;
-    struct fid *fid;
+    Fid *fid;
     struct stat info;
     char *newpath;
+//    List *paths, *qids;
     int i;
 
     failif(req->nwname > MAXWELEM, EMSGSIZE);
@@ -485,12 +512,37 @@ void client_twalk(struct transaction *trans) {
         return;
     }
 
+    /* make sure we're starting from a directory */
     guard(lstat(fid->path, &info));
     failif(!S_ISDIR(info.st_mode), ENOTDIR);
 
     res->nwqid = 0;
     res->wqid = GC_MALLOC_ATOMIC(sizeof(struct qid) * req->nwname);
     assert(res->wqid != NULL);
+
+//    /* get the list of paths to check */
+//    paths = walk_path_list(0, req->nwname, req->wname, fid->path);
+//
+//    /* gather the qids for all the paths */
+//    qids = walk_qid_list(paths);
+//
+//    /* now pack them into a reply */
+//    for (i = 0; !null(qids); qids = cdr(qids), i++) {
+//        if (i < req->nwname - 1 && !(res->wqid[i]->type & QTDIR))
+//            break;
+//        res->wqid[i] = car(qids);
+//        res->nwqid = i + 1;
+//    }
+//
+//    /* if we had qids left, it means we quit on a non-directory */
+//    failif(i == 0 && !null(qid), ENOTDIR);
+//    failif(i == 0, EINVAL);
+//
+//    /* there was an error somewhere on the way (after the first element) */
+//    if (i != req->nwname) {
+//        send_reply(trans);
+//        return;
+//    }
 
     newpath = fid->path;
     for (i = 0; i < req->nwname; i++) {
@@ -533,7 +585,7 @@ void client_twalk(struct transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_twalk(struct transaction *trans) {
+void envoy_twalk(Transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
@@ -567,10 +619,10 @@ void envoy_twalk(struct transaction *trans) {
  *   or written to a file without breaking the i/o transfer into multiple 9P
  *   messages
  */
-void handle_topen(struct transaction *trans) {
+void handle_topen(Transaction *trans) {
     struct Topen *req = &trans->in->msg.topen;
     struct Ropen *res = &trans->out->msg.ropen;
-    struct fid *fid;
+    Fid *fid;
     struct stat info;
 
     require_fid_closed(fid);
@@ -628,10 +680,10 @@ void handle_topen(struct transaction *trans) {
  * - attempt to create an existing file will be rejected
  * - all other file open modes and restrictions match Topen; same for iounit
  */
-void handle_tcreate(struct transaction *trans) {
+void handle_tcreate(Transaction *trans) {
     struct Tcreate *req = &trans->in->msg.tcreate;
     struct Rcreate *res = &trans->out->msg.rcreate;
-    struct fid *fid;
+    Fid *fid;
     struct stat dirinfo;
     struct stat info;
     char *newpath;
@@ -724,10 +776,10 @@ void handle_tcreate(struct transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-void handle_tread(struct transaction *trans) {
+void handle_tread(Transaction *trans) {
     struct Tread *req = &trans->in->msg.tread;
     struct Rread *res = &trans->out->msg.rread;
-    struct fid *fid;
+    Fid *fid;
     u32 count;
 
     require_fid(fid);
@@ -820,10 +872,10 @@ void handle_tread(struct transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-void handle_twrite(struct transaction *trans) {
+void handle_twrite(Transaction *trans) {
     struct Twrite *req = &trans->in->msg.twrite;
     struct Rwrite *res = &trans->out->msg.rwrite;
-    struct fid *fid;
+    Fid *fid;
 
     require_fid(fid);
     failif((fid->omode & OMASK) == OREAD, EACCES);
@@ -860,9 +912,9 @@ void handle_twrite(struct transaction *trans) {
  * - if ORCLOSE was set at file open, file will be removed
  * - even if an error is returned, the fid is no longer valid
  */
-void handle_tclunk(struct transaction *trans) {
+void handle_tclunk(Transaction *trans) {
     struct Tclunk *req = &trans->in->msg.tclunk;
-    struct fid *fid;
+    Fid *fid;
 
     require_fid_remove(fid);
 
@@ -892,9 +944,9 @@ void handle_tclunk(struct transaction *trans) {
  * - if other clients have the file open, file may or may not be removed
  *   immediately: this is implementation dependent
  */
-void handle_tremove(struct transaction *trans) {
+void handle_tremove(Transaction *trans) {
     struct Tremove *req = &trans->in->msg.tremove;
-    struct fid *fid;
+    Fid *fid;
 
     require_fid_remove(fid);
 
@@ -928,10 +980,10 @@ void handle_tremove(struct transaction *trans) {
  * Semantics:
  * - requires no special permissions
  */
-void handle_tstat(struct transaction *trans) {
+void handle_tstat(Transaction *trans) {
     struct Tstat *req = &trans->in->msg.tstat;
     struct Rstat *res = &trans->out->msg.rstat;
-    struct fid *fid;
+    Fid *fid;
     struct stat info;
 
     require_fid(fid);
@@ -973,9 +1025,9 @@ void handle_tstat(struct transaction *trans) {
  *   - size field in the stat record
  *   - note that n = size + 2
  */
-void handle_twstat(struct transaction *trans) {
+void handle_twstat(Transaction *trans) {
     struct Twstat *req = &trans->in->msg.twstat;
-    struct fid *fid;
+    Fid *fid;
     struct stat info;
     char *name;
 
@@ -992,7 +1044,7 @@ void handle_twstat(struct transaction *trans) {
         return;
     } else if (fid->status == STATUS_OPEN_LINK) {
         u32 targetfid;
-        struct fid *target;
+        Fid *target;
         failif(emptystring(req->stat->extension), EINVAL);
         failif(sscanf(req->stat->extension, "hardlink(%u)", &targetfid) != 1,
                 EINVAL);

@@ -1,3 +1,4 @@
+#include <gc/gc.h>
 #include <string.h>
 #include <assert.h>
 #include "list.h"
@@ -5,9 +6,9 @@
 #include "state.h"
 #include "map.h"
 
-void dumpMap(struct map *root, char *indent) {
+void dumpMap(Map *root, char *indent) {
     char *s = NULL;
-    struct cons *elt;
+    List *elt;
     int i;
 
     for (elt = root->prefix; !null(elt); elt = cdr(elt)) {
@@ -26,7 +27,7 @@ void dumpMap(struct map *root, char *indent) {
 }
 
 /* compare prefix with the prefix of path of the same length */
-static int path_cmp(struct cons *path, struct cons *prefix) {
+static int path_cmp(List *path, List *prefix) {
     while (!null(path) && !null(prefix)) {
         int test = strcmp(car(path), car(prefix));
         if (test != 0)
@@ -43,7 +44,7 @@ static int path_cmp(struct cons *path, struct cons *prefix) {
     return 0;
 }
 
-static struct cons *strip_prefix(struct cons *full, struct cons *prefix) {
+static List *strip_prefix(List *full, List *prefix) {
     while (!null(full) && !null(prefix)) {
         assert(!strcmp(car(full), car(prefix)));
         full = cdr(full);
@@ -55,8 +56,8 @@ static struct cons *strip_prefix(struct cons *full, struct cons *prefix) {
     return full;
 }
 
-struct cons *map_lookup(struct map *root, struct cons *path) {
-    struct cons *result = NULL;
+List *map_lookup(Map *root, List *path) {
+    List *result = NULL;
 
     assert(root != NULL);
     assert(null(root->prefix));
@@ -100,14 +101,12 @@ struct cons *map_lookup(struct map *root, struct cons *path) {
     return reverse(result);
 }
 
-void map_insert(struct map *root, struct cons *path,
-        struct sockaddr_in *addr)
-{
-    struct cons *ancestry; 
-    struct map *parent;
+void map_insert(Map *root, List *path, Address *addr) {
+    List *ancestry; 
+    Map *parent;
     int nsiblings = 0, nchildren = 0, i;
-    struct map **siblings, **children;
-    struct map *newnode;
+    Map **siblings, **children;
+    Map *newnode;
 
     /* first find the node that will be the parent of the new node */
     ancestry = map_lookup(root, path);
@@ -115,7 +114,7 @@ void map_insert(struct map *root, struct cons *path,
 
     do {
         /* consume some of our path */
-        parent = (struct map *) car(ancestry);
+        parent = (Map *) car(ancestry);
         path = strip_prefix(path, parent->prefix);
     } while (!null(ancestry = cdr(ancestry)));
 
@@ -130,15 +129,15 @@ void map_insert(struct map *root, struct cons *path,
             nchildren++;
 
     /* now we know how big everything will be */
-    siblings = GC_MALLOC(sizeof(struct map *) * (nsiblings + 1));
+    siblings = GC_MALLOC(sizeof(Map *) * (nsiblings + 1));
     assert(siblings != NULL);
     if (nchildren > 0) {
-        children = GC_MALLOC(sizeof(struct map *) * nchildren);
+        children = GC_MALLOC(sizeof(Map *) * nchildren);
         assert(children != NULL);
     } else {
         children = NULL;
     }
-    newnode = GC_NEW(struct map);
+    newnode = GC_NEW(Map);
     assert(newnode != NULL);
 
     newnode->prefix = path;
@@ -159,7 +158,7 @@ void map_insert(struct map *root, struct cons *path,
             if (path_cmp(siblings[nsiblings]->prefix,
                          siblings[nsiblings-1]->prefix) < 0)
             {
-                struct map *swap = siblings[nsiblings];
+                Map *swap = siblings[nsiblings];
                 siblings[nsiblings] = siblings[nsiblings-1];
                 siblings[nsiblings-1] = swap;
             }
@@ -177,6 +176,6 @@ void map_insert(struct map *root, struct cons *path,
     parent->children = siblings;
 }
 
-void map_delete(struct map *root, struct cons *path) {
+void map_delete(Map *root, List *path) {
 }
 
