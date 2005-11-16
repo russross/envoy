@@ -1,10 +1,10 @@
 #ifndef _CONNECTION_H_
 #define _CONNECTION_H_
 
-#include "9p.h"
+#include <netinet/in.h>
 #include "types.h"
-#include "vector.h"
 #include "list.h"
+#include "vector.h"
 #include "transaction.h"
 
 /* connections */

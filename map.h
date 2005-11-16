@@ -1,8 +1,9 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
-#include "list.h"
+#include <netinet/in.h>
 #include "types.h"
+#include "list.h"
 
 struct map {
     List *prefix;

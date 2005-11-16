@@ -1,4 +1,7 @@
+#include <assert.h>
 #include <gc/gc.h>
+#include <stdlib.h>
+#include "types.h"
 #include "list.h"
 
 int null(List *list) {

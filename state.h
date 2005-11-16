@@ -3,17 +3,13 @@
 
 #include <pthread.h>
 #include <gc/gc.h>
-#include "9p.h"
+#include <netinet/in.h>
+#include "types.h"
 #include "list.h"
-#include "connection.h"
-#include "transaction.h"
 #include "vector.h"
-#include "map.h"
-#include "handles.h"
 #include "hashtable.h"
-#include "fid.h"
-#include "forward.h"
-#include "worker.h"
+#include "handles.h"
+#include "map.h"
 
 #define CONN_HASHTABLE_SIZE 64
 #define CONN_VECTOR_SIZE 64

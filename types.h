@@ -1,8 +1,6 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
-#include <netinet/in.h>
-
 typedef struct sockaddr_in Address;
 typedef struct transaction Transaction;
 typedef struct connection Connection;

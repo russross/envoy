@@ -1,9 +1,12 @@
 #include <assert.h>
 #include <gc/gc.h>
-
-#include "forward.h"
+#include <stdlib.h>
+#include "types.h"
+#include "9p.h"
 #include "vector.h"
+#include "connection.h"
 #include "state.h"
+#include "forward.h"
 
 /*
  * Forwarded fid state.

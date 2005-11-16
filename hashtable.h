@@ -1,6 +1,7 @@
 #ifndef _HASHTABLE_H_
 #define _HASHTABLE_H_
 
+#include "types.h"
 #include "9p.h"
 #include "list.h"
 

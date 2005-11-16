@@ -1,7 +1,9 @@
 #include <assert.h>
 #include <gc/gc.h>
+#include <stdlib.h>
 #include <string.h>
-
+#include "types.h"
+#include "9p.h"
 #include "vector.h"
 
 /*

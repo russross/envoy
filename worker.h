@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 #include <gc/gc.h>
-#include "9p.h"
+#include "types.h"
 #include "transaction.h"
 
 /* worker threads */

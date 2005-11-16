@@ -1,8 +1,8 @@
 #ifndef _FORWARD_H_
 #define _FORWARD_H_
 
-#include "9p.h"
 #include "types.h"
+#include "9p.h"
 #include "connection.h"
 
 struct forward {

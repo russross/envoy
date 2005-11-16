@@ -1,8 +1,7 @@
 #ifndef _FS_H_
 #define _FS_H_
 
-#include "9p.h"
-#include "state.h"
+#include "transaction.h"
 
 void forward_to_envoy(struct transaction *trans);
 

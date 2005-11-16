@@ -1,11 +1,11 @@
 #ifndef _TRANSACTION_H_
 #define _TRANSACTION_H_
 
-#include <assert.h>
 #include <pthread.h>
 #include <gc/gc.h>
-#include "9p.h"
 #include "types.h"
+#include "9p.h"
+#include "connection.h"
 
 struct transaction {
     pthread_cond_t *wait;

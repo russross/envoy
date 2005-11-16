@@ -1,19 +1,22 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <assert.h>
 #include <gc/gc.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <netinet/in.h>
+#include <string.h>
+#include "types.h"
 #include "9p.h"
+#include "list.h"
+#include "connection.h"
+#include "util.h"
 #include "config.h"
 #include "state.h"
-#include "list.h"
-#include "util.h"
 #include "transport.h"
 #include "dispatch.h"
 #include "map.h"
-#include "types.h"
+#include "worker.h"
 
 void test_dump(void) {
     Message m;

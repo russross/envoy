@@ -1,11 +1,13 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <netdb.h>
 #include <assert.h>
 #include <gc/gc.h>
-#include "9p.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <string.h>
+#include "types.h"
 #include "list.h"
 #include "util.h"
 

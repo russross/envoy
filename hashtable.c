@@ -1,8 +1,10 @@
 #include <assert.h>
 #include <gc/gc.h>
-
-#include "hashtable.h"
+#include <stdlib.h>
+#include "types.h"
+#include "9p.h"
 #include "list.h"
+#include "hashtable.h"
 
 /*
  * Generic hash tables

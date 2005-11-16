@@ -1,8 +1,12 @@
 #include <assert.h>
 #include <gc/gc.h>
-#include "fid.h"
+#include <stdlib.h>
+#include "types.h"
+#include "9p.h"
 #include "vector.h"
 #include "connection.h"
+#include "fid.h"
+#include "state.h"
 
 /*
  * Fid pool state

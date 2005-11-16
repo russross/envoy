@@ -1,9 +1,15 @@
 #include <assert.h>
 #include <gc/gc.h>
-#include "connection.h"
+#include <stdlib.h>
+#include <netinet/in.h>
+#include "types.h"
+#include "list.h"
+#include "vector.h"
 #include "hashtable.h"
-#include "state.h"
+#include "connection.h"
+#include "transaction.h"
 #include "config.h"
+#include "state.h"
 
 /*
  * Connection pool state

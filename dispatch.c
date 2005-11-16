@@ -1,15 +1,25 @@
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
+#include <pthread.h>
 #include <gc/gc.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <string.h>
+#include "types.h"
 #include "9p.h"
-#include "state.h"
-#include "map.h"
-#include "transport.h"
-#include "fs.h"
 #include "list.h"
+#include "connection.h"
+#include "transaction.h"
 #include "util.h"
 #include "config.h"
+#include "state.h"
+#include "transport.h"
+#include "fs.h"
+#include "dispatch.h"
+#include "worker.h"
+#include "forward.h"
 
 void send_request(Transaction *trans) {
     assert(trans->conn->type == CONN_ENVOY_OUT ||

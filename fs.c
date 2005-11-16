@@ -1,23 +1,27 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <utime.h>
-#include <string.h>
-#include <errno.h>
 #include <assert.h>
 #include <gc/gc.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <utime.h>
+#include <sys/stat.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include <string.h>
+#include "types.h"
 #include "9p.h"
+#include "list.h"
+#include "connection.h"
+#include "transaction.h"
+#include "fid.h"
+#include "util.h"
 #include "config.h"
 #include "state.h"
+#include "fs.h"
 #include "dispatch.h"
 #include "map.h"
-#include "list.h"
-#include "util.h"
-#include "types.h"
-#include "fs.h"
+#include "forward.h"
 
 /* generate a qid record from a file stat record */
 static inline struct qid stat2qid(struct stat *info) {

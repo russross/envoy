@@ -1,16 +1,22 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <netdb.h>
-#include <sys/select.h>
 #include <assert.h>
 #include <pthread.h>
 #include <gc/gc.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <string.h>
+#include "types.h"
 #include "9p.h"
+#include "vector.h"
+#include "hashtable.h"
+#include "connection.h"
+#include "handles.h"
+#include "transaction.h"
+#include "fid.h"
+#include "util.h"
 #include "config.h"
 #include "state.h"
-#include "list.h"
-#include "util.h"
 #include "map.h"
 
 /*

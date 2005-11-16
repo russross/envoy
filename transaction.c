@@ -1,6 +1,12 @@
-#include "transaction.h"
+#include <assert.h>
+#include <gc/gc.h>
+#include <stdlib.h>
+#include "types.h"
+#include "9p.h"
 #include "vector.h"
 #include "connection.h"
+#include "transaction.h"
+#include "state.h"
 
 /*
  * Transaction pool state

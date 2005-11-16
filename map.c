@@ -1,6 +1,10 @@
-#include <gc/gc.h>
-#include <string.h>
 #include <assert.h>
+#include <gc/gc.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <netinet/in.h>
+#include <string.h>
+#include "types.h"
 #include "list.h"
 #include "util.h"
 #include "state.h"

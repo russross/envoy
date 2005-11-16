@@ -1,0 +1,164 @@
+[
+
+[   '<assert.h>',
+    '<pthread.h>',
+    '<gc/gc.h>',
+    '<stdlib.h>',
+    '<stdio.h>',
+    '<unistd.h>',
+    '<dirent.h>',
+    '<netdb.h>',
+    '<fcntl.h>',
+    '<utime.h>',
+    '<sys/select.h>',
+    '<sys/stat.h>',
+    '<sys/types.h>',
+    '<sys/socket.h>',
+    '<netinet/in.h>',
+    '<errno.h>',
+    '<string.h>',
+    ],
+
+{
+    '<assert.h>' => {
+        'assert' => 1,
+    },
+
+    '<pthread.h>' => {
+        'pthread_t' => 1,
+        'pthread_create' => 1,
+        'pthread_mutex_t' => 1,
+        'pthread_mutex_lock' => 1,
+        'pthread_mutex_unlock' => 1,
+        'pthread_cond_t' => 1,
+        'pthread_cond_init' => 1,
+        'pthread_cond_wait' => 1,
+        'pthread_cond_signal' => 1,
+    },
+
+    '<gc/gc.h>' => {
+        'pthread_t' => 1,
+        'pthread_create' => 1,
+        'pthread_mutex_t' => 1,
+        'pthread_mutex_lock' => 1,
+        'pthread_mutex_unlock' => 1,
+        'pthread_cond_t' => 1,
+        'pthread_cond_init' => 1,
+        'pthread_cond_wait' => 1,
+        'pthread_cond_signal' => 1,
+        'GC_NEW' => 1,
+        'GC_MALLOC' => 1,
+        'GC_NEW_ATOMIC' => 1,
+        'GC_MALLOC_ATOMIC' => 1,
+        'GC_free' => 1,
+    },
+
+    '<stdlib.h>' => {
+        'getenv' => 1,
+        'NULL' => 1,
+    },
+
+    '<unistd.h>' => {
+        'getcwd' => 1,
+        'readdir' => 1,
+        'getdents' => 1,
+        'readlink' => 1,
+        'close' => 1,
+        'read' => 1,
+        'write' => 1,
+    },
+
+    '<dirent.h>' => {
+        'DIR' => 1,
+    },
+
+    '<netdb.h>' => {
+        'gethostbyname' => 1,
+        'gethostbyaddr' => 1,
+    },
+
+    '<fcntl.h>' => {
+        'F_GETFL' => 1,
+        'F_SETFL' => 1,
+        'O_NONBLOCK' => 1,
+        'O_RDONLY' => 1,
+        'O_TRUNC' => 1,
+        'O_WRONLY' => 1,
+        'O_RDWR' => 1,
+        'fcntl' => 1,
+    },
+
+    '<utime.h>' => {
+        'utime' => 1,
+        'struct utimbuf' => 1,
+        'struct timeval' => 1,
+    },
+
+    '<sys/select.h>' => {
+        'select' => 1,
+        'fd_set' => 1,
+        'fd_mask' => 1,
+        'NFDBITS' => 1,
+        'FD_CLR' => 1,
+        'FD_SET' => 1,
+        'FD_ISSET' => 1,
+        'FD_ZERO' => 1,
+    },
+
+    '<sys/stat.h>' => {
+        'struct stat' => 1,
+        'lstat' => 1,
+        'S_ISREG' => 1,
+        'S_ISDIR' => 1,
+        'S_ISCHR' => 1,
+        'S_ISBLK' => 1,
+        'S_ISFIFO' => 1,
+        'S_ISLNK' => 1,
+        'S_ISSOCK' => 1,
+        'S_ISUID' => 1,
+        'S_ISGID' => 1,
+    },
+
+    '<sys/types.h>' => {
+    },
+
+    '<sys/socket.h>' => {
+        'socket' => 1,
+        'connect' => 1,
+        'listen' => 1,
+        'accept' => 1,
+        'bind' => 1,
+        'getsockname' => 1,
+        'setsockopt' => 1,
+        'struct sockaddr' => 1,
+        'sendmsg' => 1,
+        'recvmsg' => 1,
+        'AF_INET' => 1,
+        'SOCK_STREAM' => 1,
+    },
+
+    '<netinet/in.h>' => {
+        'struct sockaddr_in' => 1,
+        'Address' => 1,
+        'IPPROTO_TCP' => 1,
+    },
+
+    '<errno.h>' => {
+        'errno' => 1,
+    },
+
+    '<string.h>' => {
+        'strerror' => 1,
+        'memcpy' => 1,
+        'memcmp' => 1,
+        'strcmp' => 1,
+        'strcat' => 1,
+    },
+
+    '<stdio.h>' => {
+        'printf' => 1,
+        'sprintf' => 1,
+        'fprintf' => 1,
+    },
+}
+]

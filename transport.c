@@ -1,18 +1,21 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
+#include <gc/gc.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <sys/types.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <gc/gc.h>
+#include <errno.h>
 #include "9p.h"
+#include "connection.h"
+#include "handles.h"
+#include "transaction.h"
 #include "config.h"
-#include "transport.h"
 #include "state.h"
+#include "transport.h"
+#include "worker.h"
 
 static void write_message(int fd) {
     struct connection *conn;

@@ -2,8 +2,9 @@
 #define _FID_H_
 
 #include <dirent.h>
-#include "9p.h"
 #include "types.h"
+#include "9p.h"
+#include "connection.h"
 
 /* active files */
 enum fd_status {

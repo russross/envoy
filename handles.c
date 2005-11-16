@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <gc/gc.h>
-
+#include <stdlib.h>
+#include <sys/select.h>
+#include "types.h"
 #include "handles.h"
 
 /*

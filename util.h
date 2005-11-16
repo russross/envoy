@@ -2,8 +2,9 @@
 #define _UTIL_H_
 
 #include <sys/stat.h>
-#include "9p.h"
+#include <netinet/in.h>
 #include "types.h"
+#include "list.h"
 
 /*
  * General utility functions

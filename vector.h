@@ -1,8 +1,8 @@
 #ifndef _VECTOR_H_
 #define _VECTOR_H_
 
-#include "9p.h"
 #include "types.h"
+#include "9p.h"
 
 /*
  * Generic vectors

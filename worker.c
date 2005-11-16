@@ -1,9 +1,12 @@
 #include <assert.h>
 #include <pthread.h>
 #include <gc/gc.h>
-
-#include "worker.h"
+#include <stdlib.h>
+#include "types.h"
+#include "list.h"
+#include "transaction.h"
 #include "state.h"
+#include "worker.h"
 
 /*
  * Worker threads
