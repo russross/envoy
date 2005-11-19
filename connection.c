@@ -56,7 +56,12 @@ Connection *conn_get_from_addr(Address *addr) {
         int fd;
         if ((fd = open_connection(addr)) < 0)
             return NULL;
-        conn = conn_insert_new(fd, CONN_ENVOY_OUT, addr);
+        if (addr->sin_port == ENVOY_PORT)
+            conn = conn_insert_new(fd, CONN_ENVOY_OUT, addr);
+        else if (addr->sin_port == STORAGE_PORT)
+            conn = conn_insert_new(fd, CONN_STORAGE_OUT, addr);
+        else
+            assert(0);
         if (connect_envoy(conn) < 0) {
             conn_remove(conn);
             return NULL;

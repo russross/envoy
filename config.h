@@ -5,6 +5,7 @@ extern int GLOBAL_MAX_SIZE;
 extern int GLOBAL_MIN_SIZE;
 extern char *rootdir;
 
-#define PORT 9922
+#define ENVOY_PORT 9922
+#define STORAGE_PORT 9923
 
 #endif

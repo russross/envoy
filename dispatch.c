@@ -262,7 +262,12 @@ int connect_envoy(Connection *conn) {
     trans = trans_new(conn, NULL, message_new());
     trans->out->tag = NOTAG;
     trans->out->id = TVERSION;
-    set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");
+    if (conn->type == CONN_ENVOY_OUT)
+        set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");
+    else if (conn->type == CONN_STORAGE_OUT)
+        set_tversion(trans->out, trans->conn->maxSize, "9P2000.storage");
+    else
+        assert(0);
 
     send_request(trans);
 

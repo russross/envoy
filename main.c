@@ -117,7 +117,7 @@ void test_map(void) {
 }
 
 void *test_connect(void *arg) {
-    Address *addr = make_address("boulderdash", PORT);
+    Address *addr = make_address("boulderdash", ENVOY_PORT);
     if (!memcmp(&addr->sin_addr, &state->my_address->sin_addr,
                 sizeof(addr->sin_addr)))
     {
@@ -135,13 +135,13 @@ void *test_connect(void *arg) {
 
 void config_init(void) {
     map_insert(state->map, cons("home", cons("rgr22", NULL)),
-            make_address("boulderdash", PORT));
+            make_address("boulderdash", ENVOY_PORT));
     map_insert(state->map, cons("usr", cons("lib", NULL)),
-            make_address("boulderdash", PORT));
+            make_address("boulderdash", ENVOY_PORT));
     map_insert(state->map, cons("lib", NULL),
-            make_address("donkeykong", PORT));
+            make_address("donkeykong", ENVOY_PORT));
     map_insert(state->map, cons("usr", cons("bin", NULL)),
-            make_address("donkeykong", PORT));
+            make_address("donkeykong", ENVOY_PORT));
 }
 
 int main(int argc, char **argv) {

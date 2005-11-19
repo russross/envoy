@@ -187,7 +187,7 @@ void state_init(void) {
             (int (*)(const void *, const void *)) addr_cmp);
 
     assert((hostname = getenv("HOSTNAME")) != NULL);
-    state->my_address = make_address(hostname, PORT);
+    state->my_address = make_address(hostname, ENVOY_PORT);
 
     state->map = GC_NEW(Map);
     assert(state->map != NULL);
