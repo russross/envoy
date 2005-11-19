@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/select.h>
-#include <netinet/in.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"
@@ -32,8 +31,8 @@ void send_request(Transaction *trans) {
     assert(trans->wait != NULL);
     pthread_cond_init(trans->wait, NULL);
 
-    put_message(trans);
     trans_insert(trans);
+    put_message(trans->conn, trans->out);
     worker_wait(trans);
 
     /* we should have response when we wake up */
@@ -63,8 +62,8 @@ void send_requests(List *list) {
         assert(trans->wait == NULL);
 
         trans->wait = wait;
-        put_message(trans);
         trans_insert(trans);
+        put_message(trans->conn, trans->out);
     }
     remaining = count;
 
@@ -103,7 +102,7 @@ void send_reply(Transaction *trans) {
            trans->conn->type == CONN_UNKNOWN_IN);
     assert(trans->in != NULL);
 
-    put_message(trans);
+    put_message(trans->conn, trans->out);
 }
 
 void handle_error(Transaction *trans) {
@@ -255,13 +254,9 @@ void main_loop(void) {
     }
 }
 
-Connection *connect_envoy(Address *addr) {
-    Connection *conn;
+int connect_envoy(Connection *conn) {
     Transaction *trans;
     struct Rversion *res;
-
-    /* start a new connection */
-    conn = conn_new_unopened(CONN_ENVOY_OUT, addr);
 
     /* prepare a Tversion message and package it in a transaction */
     trans = trans_new(conn, NULL, message_new());
@@ -277,11 +272,10 @@ Connection *connect_envoy(Address *addr) {
     /* blow up if the reply wasn't what we were expecting */
     if (trans->in->id != RVERSION || strcmp(res->version, "9P2000.envoy")) {
         handle_error(trans);
-        return NULL;
+        return -1;
     }
 
-    trans->conn->maxSize =
-        max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
+    conn->maxSize = max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
 
-    return conn;
+    return 0;
 }

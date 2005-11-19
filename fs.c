@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <utime.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
 #include <string.h>
@@ -226,7 +227,7 @@ Address *get_envoy_address(char *path) {
 
 void forward_to_envoy(Transaction *trans) {
     Transaction *env;
-    struct forward *fwd = NULL;
+    Forward *fwd = NULL;
 
     assert(trans != NULL);
 
@@ -365,7 +366,7 @@ void handle_tattach(Transaction *trans) {
             !addr_cmp(addr, trans->conn->addr))
     {
         /* this request should be forwarded */
-        struct connection *rconn;
+        Connection *rconn;
 
         if (trans->conn->type == CONN_ENVOY_IN) {
             /* this request shouldn't have been sent here */
@@ -373,11 +374,9 @@ void handle_tattach(Transaction *trans) {
             return;
         }
 
-        rconn = conn_lookup_addr(addr);
+        rconn = conn_get_from_addr(addr);
 
-        /* we may need to shake hands across a new connection */
-        if (rconn == NULL)
-            rconn = connect_envoy(addr);
+        /* did we fail to connect to the remote envoy? */
         if (rconn == NULL) {
             handle_error(trans);
             return;

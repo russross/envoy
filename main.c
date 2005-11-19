@@ -123,7 +123,7 @@ void *test_connect(void *arg) {
     {
         printf("I am boulderdash\n");
     } else {
-        Connection *conn = connect_envoy(addr);
+        Connection *conn = conn_get_from_addr(addr);
         if (conn != NULL)
             printf("test_connect done\n");
         else

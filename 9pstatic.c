@@ -92,6 +92,25 @@ u64 unpackU64(u8 *raw, int size, int *i) {
            ((u64) raw[*i - 1] << 56);
 }
 
+u64 *unpackU64list(u8 *raw, int size, int *i, u16 *n) {
+    int x;
+    u64 *v = NULL;
+    *n = unpackU16(raw, size, i);
+    if (*i < 0) return NULL;
+    if (*n == 0)
+        return NULL;
+    if (*n > MAXFELEM || (v = GC_MALLOC_ATOMIC(sizeof(u64) * *n)) == NULL) {
+        *i = -1;
+        return NULL;
+    }
+    for (x = 0; x < *n; x++) {
+        v[x] = unpackU64(raw, size, i);
+        if (*i < 0)
+            return NULL;
+    }
+    return v;
+}
+
 u8 *unpackData(u8 *raw, int size, int *i, u32 *len) {
     u8 *d = NULL;
     *len = unpackU32(raw, size, i) & 0x00ffffff;
@@ -238,6 +257,13 @@ void packU64(u8 *raw, int *i, u64 elt) {
     raw[(*i)++] = (u8) ((elt >> 40) & 0xff);
     raw[(*i)++] = (u8) ((elt >> 48) & 0xff);
     raw[(*i)++] = (u8) ((elt >> 56) & 0xff);
+}
+
+void packU64list(u8 *raw, int *i, u16 len, u64 *elt) {
+    int x;
+    packU16(raw, i, len);
+    for (x = 0; x < len; x++)
+        packU64(raw, i, elt[x]);
 }
 
 void packData(u8 *raw, int *i, u32 len, u8 *elt) {

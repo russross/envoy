@@ -1,3 +1,4 @@
+# 9p2000.u protocol
 100 size[4] Tversion tag[2] msize[4] version[s]
 101 size[4] Rversion tag[2] msize[4] version[s]
 102 size[4] Tauth tag[2] afid[4] uname[s] aname[s]
@@ -25,3 +26,30 @@
 125 size[4] Rstat tag[2] stat[n]
 126 size[4] Twstat tag[2] fid[4] stat[n]
 127 size[4] Rwstat tag[2]
+
+# envoy protocol extensions
+150 size[4] Tesnapshot tag[2] 
+151 size[4] Resnapshot tag[2] 
+152 size[4] Temigrate tag[2]
+153 size[4] Remigrate tag[2]
+
+# object storage server protocol
+200 size[4] Tsversion tag[2] msize[4] version[s]
+201 size[4] Rsversion tag[2] msize[4] version[s]
+203 size[4] Rserror tag[2] ename[s] errno[2]
+204 size[4] Tsreserve tag[2]
+205 size[4] Rsreserve tag[2] firstid[8] count[4]
+206 size[4] Tscreate tag[2] id[8] stat[n]
+207 size[4] Rscreate tag[2]
+208 size[4] Tsclone tag[2] id[8] oldid[8]
+209 size[4] Rsclone tag[2]
+210 size[4] Tsread tag[2] id[8] offset[8] count[4]
+211 size[4] Rsread tag[2] count[4] data[count]
+212 size[4] Tswrite tag[2] id[8] offset[8] count[4] data[count]
+213 size[4] Rswrite tag[2] count[4]
+214 size[4] Tsstat tag[2] id[8]
+215 size[4] Rsstat tag[2] stat[n]
+216 size[4] Tswstat tag[2] id[8] stat[n]
+217 size[4] Rswstat tag[2]
+218 size[4] Tsfreeze tag[2] nid[2] nid*(id[8])
+219 size[4] Rsfreeze tag[2]

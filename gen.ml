@@ -14,6 +14,7 @@ type field = FName of string
            | FData of string * string
            | FStringlist of string * string
            | FQidlist of string * string
+           | FInt8list of string * string
 
 let rec fieldName f =
   match f with
@@ -27,6 +28,7 @@ let rec fieldName f =
   | FStringlist (_, s) -> s
   | FQid s -> s
   | FQidlist (_, s) -> s
+  | FInt8list (_, s) -> s
   | FStat s -> s
 
 let rec getType f =
@@ -36,6 +38,7 @@ let rec getType f =
   | FInt2 _ -> "u16 "
   | FInt4 _ -> "u32 "
   | FInt8 _ -> "u64 "
+  | FInt8list _ -> "u64 *"
   | FQid _ -> "struct qid "
   | FQidlist _ -> "struct qid *"
   | FData _ -> "u8 *"
@@ -50,6 +53,7 @@ let rec fieldWorker f =
   | FInt2 _ -> "u16"
   | FInt4 _ -> "u32"
   | FInt8 _ -> "u64"
+  | FInt8list _ -> "u64list"
   | FQid _ -> "qid"
   | FQidlist _ -> "qidlist"
   | FData _ -> "data"
@@ -76,6 +80,7 @@ let lexer = make_lexer ["["; "]"; "("; ")"; "*"; "s" ; "n"]
  *   count[4] name[count]  -> FData name
  *   len[2] len*(name[13]) -> FQidlist name
  *   len[2] len*(name[s])  -> FStringlist name
+ *   len[2] len*(name[4])  -> FInt8list name
  *   name[n]               -> FStat name
  *   name                  -> FName name
  *)
@@ -90,6 +95,7 @@ let parseMessage s =
           (match f rest with
           | (FString name, Kwd ")"::rest') -> (FStringlist (len1, name), rest')
           | (FQid name, Kwd ")"::rest') -> (FQidlist (len1, name), rest')
+          | (FInt8 name, Kwd ")"::rest') -> (FInt8list (len1, name), rest')
           | _ -> raise BadMessage)
     | (Ident len1::Kwd "["::Int 4::Kwd "]"::
        Ident name::Kwd "["::Ident len2::Kwd "]"::rest) when len1 = len2 ->
@@ -130,7 +136,8 @@ let outputStructs out fields id =
               fprintf out "@,u32 %s;" l;
               fprintf out "@,%s%s;" (getType elt) s
         | FQidlist (l, s)
-        | FStringlist (l, s) ->
+        | FStringlist (l, s)
+        | FInt8list (l, s) ->
               fprintf out "@,u16 %s;" l;
               fprintf out "@,%s%s;" (getType elt) s
       in
@@ -195,7 +202,8 @@ let outputUnpacker out m =
                   (String.capitalize (fieldWorker elt))
           | FData (len, name)
           | FStringlist (len, name)
-          | FQidlist (len, name) ->
+          | FQidlist (len, name)
+          | FInt8list (len, name) ->
               fprintf out "@,m->msg.%s.%s = " msg name;
               fprintf out "unpack%s(@[<v>m->raw, (int) m->size, &i,@ "
                   (String.capitalize (fieldWorker elt));
@@ -244,6 +252,7 @@ let outputFreer out m =
               fprintf out "@,freeStat(m->msg.%s.%s);@]" msg name
           | FQidlist (_, name)
           | FData (_, name)
+          | FInt8list (_, name)
           | FString name ->
               fprintf out "@,@[<v 4>if (m->msg.%s.%s != NULL)" msg name;
               fprintf out "@,free(m->msg.%s.%s);@]" msg name
@@ -303,6 +312,9 @@ let outputPacker out m =
           | FQidlist (len, name) ->
               size := !size + 2;
               fprintf out "(13 * m->msg.%s.%s) +@ " msg len
+          | FInt8list (len, name) ->
+              size := !size + 2;
+              fprintf out "(8 * m->msg.%s.%s) +@ " msg len
         in
         fprintf out "@,@[<v 4>case %s:" (String.uppercase msg);
         fprintf out "@,m->size = @[<hov>(u32) ";
@@ -330,7 +342,8 @@ let outputPacker out m =
                   (String.capitalize (fieldWorker elt)) msg name
           | FData (len, name)
           | FStringlist (len, name)
-          | FQidlist (len, name) ->
+          | FQidlist (len, name)
+          | FInt8list (len, name) ->
               fprintf out "@,pack%s(@[<hov>m->raw, &i,@ m->msg.%s.%s,@ "
                   (String.capitalize (fieldWorker elt)) msg len;
               fprintf out "m->msg.%s.%s);@]" msg name
@@ -420,6 +433,14 @@ let outputPrinter out m =
               fprintf out "m->msg.%s.%s[i].version,@ " msg name;
               fprintf out "m->msg.%s.%s[i].path);@]" msg name;
               fprintf out "@]"
+          | FInt8list (len, name) ->
+              fprintf out "@,fprintf(fp, \" %s * %%d:\", " name;
+              fprintf out "(u32) m->msg.%s.%s);" msg len;
+              fprintf out "@,@[<v 4>for (i = 0; i < (int) m->msg.%s.%s; i++)"
+                  msg len;
+              fprintf out "@,fprintf(fp, \"\\n    ";
+              fprintf out "%%2d: %s[$%%llx]\", i, " name;
+              fprintf out "m->msg.%s.%s[i]);@]" msg name
         in
         fprintf out "@,@[<v 4>case %s:" (String.uppercase msg);
         fprintf out "@,fprintf(fp, \"%s[%%d]:\", m->tag);"
@@ -466,12 +487,13 @@ let go () =
 
   let hfp = open_out (stem ^ ".h") in
   let h = formatter_of_out_channel hfp in
+  let hdef = "_" ^ (String.uppercase stem) ^ "_H_" in
   fprintf h "/*";
   fprintf h "@. * Generated file--do not edit!";
   fprintf h "@. */";
-  fprintf h "@.@.#ifndef _9P_H_";
-  fprintf h "@.#define _9P_H_";
-  fprintf h "@.@.#include \"9pstatic.h\"@.@.";
+  fprintf h "@.@.#ifndef %s" hdef;
+  fprintf h "@.#define %s" hdef;
+  fprintf h "@.@.#include \"%sstatic.h\"@.@." stem;
   List.iter (fun (i,f) ->
       fprintf h "#define %s %d@." (String.uppercase (getName (i,f))) i) m;
   fprintf h "@.";

@@ -6,6 +6,7 @@ typedef unsigned int u32;
 typedef unsigned long long u64;
 
 #define MAXWELEM 16
+#define MAXFELEM 64
 
 #define NOTAG 0xffff
 #define ALLOCTAG 0xfffe
@@ -90,6 +91,7 @@ u8 unpackU8(u8 *raw, int size, int *i);
 u16 unpackU16(u8 *raw, int size, int *i);
 u32 unpackU32(u8 *raw, int size, int *i);
 u64 unpackU64(u8 *raw, int size, int *i);
+u64 *unpackU64list(u8 *raw, int size, int *i, u16 *n);
 u8 *unpackData(u8 *raw, int size, int *i, u32 *len);
 char *unpackString(u8 *raw, int size, int *i);
 char **unpackStringlist(u8 *raw, int size, int *i, u16 *n);
@@ -102,6 +104,7 @@ void packU8(u8 *raw, int *i, u8 elt);
 void packU16(u8 *raw, int *i, u16 elt);
 void packU32(u8 *raw, int *i, u32 elt);
 void packU64(u8 *raw, int *i, u64 elt);
+void packU64list(u8 *raw, int *i, u16 len, u64 *elt);
 void packData(u8 *raw, int *i, u32 len, u8 *elt);
 void packString(u8 *raw, int *i, char *elt);
 void packStringlist(u8 *raw, int *i, u16 len, char **elt);

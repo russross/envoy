@@ -82,5 +82,5 @@ List *reverse(List *list) {
         list = next;
     }
 
-    return next;
+    return prev;
 }

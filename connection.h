@@ -12,6 +12,7 @@ enum conn_type {
     CONN_CLIENT_IN,
     CONN_ENVOY_IN,
     CONN_ENVOY_OUT,
+    CONN_STORAGE_IN,
     CONN_STORAGE_OUT,
     CONN_UNKNOWN_IN
 };
@@ -28,14 +29,12 @@ struct connection {
     Transaction *notag_trans;
 };
 
-Connection *conn_insert_new(
-        int fd, enum conn_type type, Address *addr, int maxSize);
-Connection *conn_new_unopened(enum conn_type type, Address *addr);
+Connection *conn_insert_new(int fd, enum conn_type type, Address *addr);
 Connection *conn_lookup_fd(int fd);
-Connection *conn_lookup_addr(Address *addr);
-Transaction *conn_get_pending_write(Connection *conn);
+Connection *conn_get_from_addr(Address *addr);
+Message *conn_get_pending_write(Connection *conn);
 int conn_has_pending_write(Connection *conn);
-void conn_queue_write(Transaction *trans);
+void conn_queue_write(Connection *conn, Message *msg);
 void conn_remove(Connection *conn);
 
 #endif

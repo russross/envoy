@@ -6,7 +6,7 @@ LINKOPTS=-lgc
 
 SRCNOGEN=9pstatic.c 9p.c
 SRCNOINC=main.c
-SRCINC=list.c vector.c hashtable.c connection.c handles.c transaction.c fid.c util.c config.c state.c transport.c fs.c dispatch.c map.c worker.c forward.c
+SRCINC=list.c vector.c hashtable.c connection.c handles.c transaction.c fid.c util.c config.c state.c transport.c fs.c dispatch.c map.c worker.c forward.c heap.c lru.c
 INCNOSRC=types.h
 
 SRC=$(SRCNOGEN) $(SRCNOINC) $(SRCINC)

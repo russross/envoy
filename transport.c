@@ -8,43 +8,39 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include "types.h"
 #include "9p.h"
 #include "connection.h"
 #include "handles.h"
-#include "transaction.h"
 #include "config.h"
 #include "state.h"
 #include "transport.h"
 #include "worker.h"
 
 static void write_message(int fd) {
-    struct connection *conn;
-    struct transaction *trans;
+    Connection *conn;
+    Message *msg;
     int len;
 
     assert((conn = conn_lookup_fd(fd)) != NULL);
-    trans = conn_get_pending_write(conn);
+    msg = conn_get_pending_write(conn);
 
-    if (trans != NULL) {
-        assert(trans->conn != NULL);
-        assert(trans->out != NULL);
-
+    if (msg != NULL) {
         /* if this was the last message in the queue, stop trying to write */
-        if (!conn_has_pending_write(conn)) {
+        if (!conn_has_pending_write(conn))
             handles_remove(state->handles_write, fd);
-        }
 
-        packMessage(trans->out, trans->conn->maxSize);
-        printMessage(stderr, trans->out);
+        packMessage(msg, conn->maxSize);
+        printMessage(stderr, msg);
 
-        len = send(trans->conn->fd, trans->out->raw, trans->out->size, 0);
+        len = send(conn->fd, msg->raw, msg->size, 0);
 
-        assert(len == trans->out->size);
+        assert(len == msg->size);
     }
 }
 
-static struct message *read_message(int fd, struct connection **from) {
-    struct message *m = message_new();
+static Message *read_message(int fd, Connection **from) {
+    Message *m = message_new();
     int index = 0;
     int count;
 
@@ -81,18 +77,18 @@ static struct message *read_message(int fd, struct connection **from) {
 }
 
 static void accept_connection(int sock) {
-    struct sockaddr_in *addr;
+    Address *addr;
     socklen_t len;
     int fd;
 
-    addr = GC_NEW_ATOMIC(struct sockaddr_in);
+    addr = GC_NEW_ATOMIC(Address);
     assert(addr != NULL);
 
-    len = sizeof(struct sockaddr_in);
+    len = sizeof(Address);
     fd = accept(sock, (struct sockaddr *) addr, &len);
     assert(fd >= 0);
 
-    conn_insert_new(fd, CONN_UNKNOWN_IN, addr, GLOBAL_MAX_SIZE);
+    conn_insert_new(fd, CONN_UNKNOWN_IN, addr);
 
     handles_add(state->handles_read, fd);
     printf("accepted connection from ");
@@ -101,7 +97,7 @@ static void accept_connection(int sock) {
 }
 
 /* select on all our open sockets and dispatch when one is ready */
-static struct message *handle_socket_event(struct connection **from) {
+static Message *handle_socket_event(Connection **from) {
     int high, num, fd;
     fd_set rset, wset;
 
@@ -164,8 +160,8 @@ void transport_init() {
     handles_add(state->handles_listen, fd);
 }
 
-struct message *get_message(struct connection **conn) {
-    struct message *msg = NULL;
+Message *get_message(Connection **conn) {
+    Message *msg = NULL;
 
     while (msg == NULL)
         msg = handle_socket_event(conn);
@@ -175,29 +171,44 @@ struct message *get_message(struct connection **conn) {
     return msg;
 }
 
-void put_message(struct transaction *trans) {
-    /* do we need to open a socket? */
-    if (trans->conn->fd < 0) {
-        struct connection *conn = trans->conn;
-        int res, flags;
-        int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        assert(fd >= 0);
-        assert((flags = fcntl(fd, F_GETFL, 0)) >= 0);
-        assert(fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0);
-        res = connect(fd, (struct sockaddr *) conn->addr, sizeof(*conn->addr));
-        assert(res >= 0 || errno == EINPROGRESS);
-        trans->conn =
-            conn_insert_new(fd, conn->type, conn->addr, conn->maxSize);
-        handles_add(state->handles_read, trans->conn->fd);
-        printf("opened connection to ");
-        print_address(conn->addr);
-        printf("\n");
+void put_message(Connection *conn, Message *msg) {
+    assert(conn != NULL && msg != NULL && conn->fd >= 0);
+
+    if (!conn_has_pending_write(conn))
+        handles_add(state->handles_write, conn->fd);
+
+    conn_queue_write(conn, msg);
+}
+
+int open_connection(Address *addr) {
+    int status, flags;
+    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    if (fd < 0)
+        return fd;
+    if ((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+        close(fd);
+        return flags;
+    }
+    if ((status = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0) {
+        close(fd);
+        return status;
     }
 
-    if (!conn_has_pending_write(trans->conn))
-        handles_add(state->handles_write, trans->conn->fd);
+    status = connect(fd, (struct sockaddr *) addr, sizeof(*addr));
 
-    conn_queue_write(trans);
+    if (status < 0 && errno != EINPROGRESS) {
+        close(fd);
+        return status;
+    }
+
+    handles_add(state->handles_read, fd);
+
+    printf("opened connection to ");
+    print_address(addr);
+    printf("\n");
+
+    return fd;
 }
 
 /* Public API */

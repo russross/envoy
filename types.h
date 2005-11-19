@@ -13,5 +13,8 @@ typedef struct map Map;
 typedef struct vector Vector;
 typedef struct list List;
 typedef struct handles Handles;
+typedef struct dlist Dlist;
+typedef struct heap Heap;
+typedef struct lru Lru;
 
 #endif

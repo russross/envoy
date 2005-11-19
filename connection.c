@@ -7,17 +7,16 @@
 #include "vector.h"
 #include "hashtable.h"
 #include "connection.h"
-#include "transaction.h"
 #include "config.h"
 #include "state.h"
+#include "transport.h"
+#include "dispatch.h"
 
 /*
  * Connection pool state
  */
 
-Connection *conn_insert_new(int fd, enum conn_type type,
-        Address *addr, int maxSize)
-{
+Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
     Connection *conn;
 
     assert(fd >= 0);
@@ -31,7 +30,7 @@ Connection *conn_insert_new(int fd, enum conn_type type,
     conn->fd = fd;
     conn->type = type;
     conn->addr = addr;
-    conn->maxSize = maxSize;
+    conn->maxSize = GLOBAL_MAX_SIZE;
     conn->fid_vector = vector_create(FID_VECTOR_SIZE);
     conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
     conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
@@ -44,60 +43,52 @@ Connection *conn_insert_new(int fd, enum conn_type type,
     return conn;
 }
 
-Connection *conn_new_unopened(enum conn_type type, Address *addr) {
-    Connection *conn;
-
-    assert(addr != NULL);
-    assert(hash_get(state->addr_2_conn, addr) == NULL);
-
-    conn = GC_NEW(Connection);
-    assert(conn != NULL);
-
-    conn->fd = -1;
-    conn->type = type;
-    conn->addr = addr;
-    conn->maxSize = GLOBAL_MAX_SIZE;
-    conn->fid_vector = vector_create(FID_VECTOR_SIZE);
-    conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
-    conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
-    conn->pending_writes = NULL;
-    conn->notag_trans = NULL;
-
-    return conn;
-}
-
 Connection *conn_lookup_fd(int fd) {
     return vector_get(state->conn_vector, fd);
 }
 
-Connection *conn_lookup_addr(Address *addr) {
-    return hash_get(state->addr_2_conn, addr);
+Connection *conn_get_from_addr(Address *addr) {
+    Connection *conn;
+
+    assert(addr != NULL);
+        
+    if ((conn = hash_get(state->addr_2_conn, addr)) == NULL) {
+        int fd;
+        if ((fd = open_connection(addr)) < 0)
+            return NULL;
+        conn = conn_insert_new(fd, CONN_ENVOY_OUT, addr);
+        if (connect_envoy(conn) < 0) {
+            conn_remove(conn);
+            return NULL;
+        }
+    }
+
+    return conn;
 }
 
-Transaction *conn_get_pending_write(Connection *conn) {
-    Transaction *res = NULL;
+Message *conn_get_pending_write(Connection *conn) {
+    Message *msg = NULL;
 
     assert(conn != NULL);
 
     if (!null(conn->pending_writes)) {
         List *elt = conn->pending_writes;
-        res = car(elt);
+        msg = car(elt);
         conn->pending_writes = cdr(elt);
         GC_free(elt);
     }
 
-    return res;
+    return msg;
 }
 
 int conn_has_pending_write(Connection *conn) {
     return !null(conn->pending_writes);
 }
 
-void conn_queue_write(Transaction *trans) {
-    assert(trans != NULL);
+void conn_queue_write(Connection *conn, Message *msg) {
+    assert(conn != NULL && msg != NULL);
 
-    trans->conn->pending_writes =
-        append_elt(trans->conn->pending_writes, trans);
+    conn->pending_writes = append_elt(conn->pending_writes, msg);
 }
 
 void conn_remove(Connection *conn) {
