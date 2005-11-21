@@ -9,7 +9,6 @@
 void send_request(Transaction *trans);
 void send_requests(List *list);
 void send_reply(Transaction *trans);
-void queue_transaction(Transaction *trans);
 void handle_error(Transaction *trans);
 
 void main_loop(void);

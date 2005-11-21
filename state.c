@@ -18,6 +18,7 @@
 #include "config.h"
 #include "state.h"
 #include "map.h"
+#include "oid.h"
 
 /*
  * Static state
@@ -42,7 +43,7 @@ Message *message_new(void) {
  * Hash and comparison functions
  */
 
-static u32 generic_hash(const void *elt, int len, u32 hash) {
+u32 generic_hash(const void *elt, int len, u32 hash) {
     int i;
     u8 *bytes = (u8 *) elt;
 
@@ -209,4 +210,7 @@ void state_init(void) {
 
     state->active_worker_count = 0;
     state->thread_pool = NULL;
+
+    state->oid_lru = oid_init_lru();
+
 }

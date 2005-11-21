@@ -5,6 +5,8 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 typedef unsigned long long u64;
 
+#define OID_BITS 64
+
 #define MAXWELEM 16
 #define MAXFELEM 64
 
