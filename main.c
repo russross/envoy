@@ -17,6 +17,7 @@
 #include "dispatch.h"
 #include "map.h"
 #include "worker.h"
+#include "oid.h"
 
 void test_dump(void) {
     Message m;
@@ -144,6 +145,16 @@ void config_init(void) {
             make_address("donkeykong", ENVOY_PORT));
 }
 
+void test_oid(void) {
+    u64 oid;
+    int count;
+
+    printf("first available: %llx\n", oid_find_next_available());
+    assert(oid_reserve_block(&oid, &count) == 0);
+    printf("reserved: %llx with %d entries\n", oid, count);
+    printf("first available: %llx\n", oid_find_next_available());
+}
+
 int main(int argc, char **argv) {
     char cwd[100];
     struct stat info;
@@ -159,6 +170,7 @@ int main(int argc, char **argv) {
         return -1;
     }
     
+    objectroot = "/local/scratch/rgr22/root";
     assert(getcwd(cwd, 100) == cwd);
     rootdir = resolvePath(resolvePath("/", cwd, &info), argv[1], &info);
     if (rootdir == NULL) {
@@ -172,9 +184,10 @@ int main(int argc, char **argv) {
 
     /*test_dump();*/
     /*test_map();*/
-    worker_create(test_connect, NULL);
+    /*worker_create(test_connect, NULL);*/
     printf("root directory = [%s]\n", rootdir);
 
+    test_oid();
     main_loop();
     return 0;
 }

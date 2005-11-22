@@ -14,6 +14,7 @@
     '<sys/stat.h>',
     '<sys/types.h>',
     '<sys/socket.h>',
+    '<sys/sendfile.h>',
     '<netinet/in.h>',
     '<errno.h>',
     '<string.h>',
@@ -135,6 +136,10 @@
         'recvmsg' => 1,
         'AF_INET' => 1,
         'SOCK_STREAM' => 1,
+    },
+
+    '<sys/sendfile.h>' => {
+        'sendfile' => 1,
     },
 
     '<netinet/in.h>' => {

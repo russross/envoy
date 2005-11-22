@@ -38,7 +38,7 @@
 201 size[4] Rsreserve tag[2] firstoid[8] count[4]
 202 size[4] Tscreate tag[2] oid[8] stat[n]
 203 size[4] Rscreate tag[2]
-204 size[4] Tsclone tag[2] oid[8] oldoid[8]
+204 size[4] Tsclone tag[2] oid[8] newoid[8]
 205 size[4] Rsclone tag[2]
 206 size[4] Tsread tag[2] oid[8] offset[8] count[4]
 207 size[4] Rsread tag[2] count[4] data[count]

@@ -211,6 +211,8 @@ void state_init(void) {
     state->active_worker_count = 0;
     state->thread_pool = NULL;
 
-    state->oid_lru = oid_init_lru();
+    state->oid_dir_lru = oid_init_dir_lru();
+    state->oid_fd_lru = oid_init_fd_lru();
+    state->oid_next_available = oid_find_next_available();
 
 }

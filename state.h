@@ -22,6 +22,7 @@
 #define HANDLES_INITIAL_SIZE 32
 #define THREAD_LIFETIME 1024
 #define OBJECTDIR_CACHE_SIZE 32
+#define FD_CACHE_SIZE 32
 
 void print_address(Address *addr);
 int addr_cmp(const Address *a, const Address *b);
@@ -44,7 +45,9 @@ struct state {
     List *thread_pool;
     pthread_cond_t *wait_workers;
     int active_worker_count;
-    Lru *oid_lru;
+    Lru *oid_dir_lru;
+    Lru *oid_fd_lru;
+    u64 oid_next_available;
 };
 
 extern struct state *state;
