@@ -55,8 +55,9 @@ enum qidtypes {
     QTFILE =            0x00,
 };
 
-/* non-data size of an Rread message */
+/* non-data size of read messages */
 #define RREAD_HEADER 11
+#define RSREAD_HEADER 11
 
 struct qid {
     u8 type;

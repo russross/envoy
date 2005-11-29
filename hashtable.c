@@ -20,7 +20,7 @@ Hashtable *hash_create(
     assert(keyhash != NULL);
     assert(keycmp != NULL);
     assert(bucketCount > 0);
-    
+
     table = GC_NEW(Hashtable);
     assert(table != NULL);
 
@@ -66,7 +66,7 @@ static void hash_size_double(Hashtable *table) {
             u32 hash = table->keyhash(caar(elt)) % newBucketCount;
             newBuckets[hash] = cons(car(elt), newBuckets[hash]);
             elt = cdr(elt);
-        } 
+        }
     }
 
     GC_free(table->buckets);

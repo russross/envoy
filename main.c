@@ -25,7 +25,7 @@ void test_dump(void) {
     u8 *data;
     int size;
     struct p9stat *stat;
-    
+
     m.raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
 
     m.id = TVERSION;
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage: %s <root path>\n", argv[0]);
         return -1;
     }
-    
+
     objectroot = "/local/scratch/rgr22/root";
     assert(getcwd(cwd, 100) == cwd);
     rootdir = resolvePath(resolvePath("/", cwd, &info), argv[1], &info);

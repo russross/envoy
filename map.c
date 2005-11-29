@@ -106,7 +106,7 @@ List *map_lookup(Map *root, List *path) {
 }
 
 void map_insert(Map *root, List *path, Address *addr) {
-    List *ancestry; 
+    List *ancestry;
     Map *parent;
     int nsiblings = 0, nchildren = 0, i;
     Map **siblings, **children;

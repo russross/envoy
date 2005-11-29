@@ -153,7 +153,7 @@ void transport_init() {
     assert(bind(fd, (struct sockaddr *) state->my_address,
                 sizeof(*state->my_address)) >= 0);
     assert(listen(fd, 5) >= 0);
-    
+
     ling.l_onoff = 1;
     ling.l_linger = 0;
     setsockopt(fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));

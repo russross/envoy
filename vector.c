@@ -89,7 +89,7 @@ void vector_remove(Vector *v, const u32 key) {
 
 void vector_apply(Vector *v, void (*fun)(u32, void *)) {
     u32 i;
-    
+
     assert(v != NULL && fun != NULL);
 
     for (i = 0; i < v->next; i++)

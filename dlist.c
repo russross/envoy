@@ -21,7 +21,7 @@ struct dlist *dlist_new(void) {
 
 struct dlist_cell *dlist_push(struct dlist *list, void *elt) {
     struct dlist_cell *last;
-    
+
     assert(list != NULL);
 
     last = dlist_cons(elt);

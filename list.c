@@ -22,12 +22,12 @@ void *cdr(List *list) {
 
 List *cons(void *car, void *cdr) {
     List *list = GC_NEW(List);
-    
+
     assert(list != NULL);
 
     list->car = car;
     list->cdr = cdr;
-    
+
     return list;
 }
 

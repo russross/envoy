@@ -1,5 +1,8 @@
+#include <assert.h>
+#include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include "types.h"
@@ -35,15 +38,7 @@ static void rerror(Message *m, u16 errnum, int line) {
     } \
 } while(0)
 
-#define require_oid(ptr) do { \
-    (ptr) = oid_lookup(req->oid); \
-    if ((ptr) == NULL) { \
-        rerror(trans->out, EBADF, __LINE__); \
-            send_reply(trans); \
-            return; \
-    } \
-} while(0)
-
+/*****************************************************************************/
 
 void handle_tsreserve(Transaction *trans) {
     struct Rsreserve *res = &trans->out->msg.rsreserve;
@@ -55,33 +50,75 @@ void handle_tsreserve(Transaction *trans) {
 
 void handle_tscreate(Transaction *trans) {
     struct Tscreate *req = &trans->in->msg.tscreate;
-    struct Rscreate *res = &trans->out->msg.rscreate;
+    // struct Rscreate *res = &trans->out->msg.rscreate;
+    int status;
+
+    status = oid_create(req->oid, req->stat);
+    failif(status != 0, status);
+
+    /* TODO: */
+    send_reply(trans);
 }
 
 void handle_tsclone(Transaction *trans) {
-    struct Tsclone *req = &trans->in->msg.tsclone;
-    struct Rsclone *res = &trans->out->msg.rsclone;
+    //struct Tsclone *req = &trans->in->msg.tsclone;
+    //struct Rsclone *res = &trans->out->msg.rsclone;
 }
 
 void handle_tsread(Transaction *trans) {
     struct Tsread *req = &trans->in->msg.tsread;
     struct Rsread *res = &trans->out->msg.rsread;
-    Oid *oid;
+    struct fd_wrapper *wrapper;
 
-    //require_oid(oid);
+    /* make sure the requested data is small enough to transmit */
+    failif(req->count > trans->conn->maxSize - RSREAD_HEADER, EMSGSIZE);
+
+    /* get a handle to the open file */
+    failif((wrapper = oid_get_open_fd_wrapper(req->oid)) == NULL, ENOENT);
+
+    if (lseek(wrapper->fd, req->offset, SEEK_SET) != req->offset) {
+        wrapper->refcount--;
+        guard(-1);
+    }
+
+    res->data = GC_MALLOC_ATOMIC(req->count);
+    assert(res->data != NULL);
+
+    res->count = read(wrapper->fd, res->data, req->count);
+
+    wrapper->refcount--;
+    guard(res->count >= 0);
+
+    send_reply(trans);
 }
 
 void handle_tswrite(Transaction *trans) {
     struct Tswrite *req = &trans->in->msg.tswrite;
     struct Rswrite *res = &trans->out->msg.rswrite;
+    struct fd_wrapper *wrapper;
+
+    /* get a handle to the open file */
+    failif((wrapper = oid_get_open_fd_wrapper(req->oid)) == NULL, ENOENT);
+
+    if (lseek(wrapper->fd, req->offset, SEEK_SET) != req->offset) {
+        wrapper->refcount--;
+        guard(-1);
+    }
+
+    res->count = write(wrapper->fd, req->data, req->count);
+
+    wrapper->refcount--;
+    guard(res->count >= 0);
+
+    send_reply(trans);
 }
 
 void handle_tsstat(Transaction *trans) {
-    struct Tsstat *req = &trans->in->msg.tsstat;
-    struct Rsstat *res = &trans->out->msg.rsstat;
+    //struct Tsstat *req = &trans->in->msg.tsstat;
+    //struct Rsstat *res = &trans->out->msg.rsstat;
 }
 
 void handle_tswstat(Transaction *trans) {
-    struct Tswstat *req = &trans->in->msg.tswstat;
-    struct Rswstat *res = &trans->out->msg.rswstat;
+    //struct Tswstat *req = &trans->in->msg.tswstat;
+    //struct Rswstat *res = &trans->out->msg.rswstat;
 }

@@ -33,9 +33,9 @@ Lru *lru_new(int size, u32 (*keyhash)(const void *),
 
 void *lru_get(Lru *lru, void *key) {
     struct lru_elt *elt;
-    
+
     assert(lru != NULL);
-    
+
     if ((elt = hash_get(lru->table, key)) == NULL)
         return NULL;
 

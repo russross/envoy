@@ -246,7 +246,7 @@ void main_loop(void) {
                 /* wake up the handler that is waiting for this message */
                 worker_wakeup(trans);
                 break;
-                
+
             case CONN_STORAGE_OUT:
             default:
                 assert(0);

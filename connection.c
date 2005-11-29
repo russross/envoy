@@ -51,7 +51,7 @@ Connection *conn_get_from_addr(Address *addr) {
     Connection *conn;
 
     assert(addr != NULL);
-        
+
     if ((conn = hash_get(state->addr_2_conn, addr)) == NULL) {
         int fd;
         if ((fd = open_connection(addr)) < 0)

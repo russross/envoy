@@ -86,6 +86,8 @@
         'O_TRUNC' => 1,
         'O_WRONLY' => 1,
         'O_RDWR' => 1,
+        'O_LARGEFILE' => 1,
+        'O_NOFOLLOW' => 1,
         'fcntl' => 1,
     },
 

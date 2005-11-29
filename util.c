@@ -155,7 +155,7 @@ List *splitpath(char *path) {
     List *res = NULL;
 
     assert(path != NULL);
-    
+
     while (*path) {
         int i, j, k;
 

@@ -16,6 +16,5 @@ typedef struct handles Handles;
 typedef struct dlist Dlist;
 typedef struct heap Heap;
 typedef struct lru Lru;
-typedef struct oid Oid;
 
 #endif
