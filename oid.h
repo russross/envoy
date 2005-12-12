@@ -12,6 +12,7 @@
  */
 
 #define OBJECT_DIR_MODE 0755
+#define OBJECT_FILENAME_LENGTH 29
 
 struct fd_wrapper {
     int refcount;

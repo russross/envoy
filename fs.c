@@ -1113,23 +1113,16 @@ void handle_twstat(Transaction *trans) {
     }
 
     /* gid */
-    if (req->stat->gid != NULL && *req->stat->gid &&
-            req->stat->n_gid != ~(u32) 0)
-    {
+    if (!emptystring(req->stat->gid) && req->stat->n_gid != ~(u32) 0)
         guard(lchown(fid->path, -1, req->stat->n_gid));
-    }
 
     /* uid */
-    if (req->stat->uid != NULL && *req->stat->uid &&
-            req->stat->n_uid != ~(u32) 0)
-    {
+    if (!emptystring(req->stat->uid) && req->stat->n_uid != ~(u32) 0)
         guard(lchown(fid->path, req->stat->n_uid, -1));
-    }
 
     /* truncate */
-    if (req->stat->length != ~(u64) 0 && req->stat->length != info.st_size) {
+    if (req->stat->length != ~(u64) 0 && req->stat->length != info.st_size)
         guard(truncate(fid->path, req->stat->length));
-    }
 
     send_reply(trans);
 }

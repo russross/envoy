@@ -9,6 +9,7 @@ typedef unsigned long long u64;
 
 #define MAXWELEM 16
 #define MAXFELEM 64
+#define MAX_EXTENSION_LENGTH 1000
 
 #define NOTAG 0xffff
 #define ALLOCTAG 0xfffe

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <utime.h>
 #include <sys/stat.h>
 #include <string.h>
 #include "types.h"
@@ -303,6 +304,18 @@ struct objectdir *objectdir_lookup(u64 start) {
     return result;
 }
 
+static inline struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
+    struct qid qid;
+    qid.type =
+        (mode & DMDIR) ? QTDIR :
+        (mode & DMSYMLINK) ? QTLINK :
+        0x00;
+    qid.version = mtime ^ (size << 8);
+    qid.path = oid;
+
+    return qid;
+}
+
 struct p9stat *oid_stat(u64 oid) {
     /* get filename */
     u64 start = objectdir_findstart(oid);
@@ -310,7 +323,6 @@ struct p9stat *oid_stat(u64 oid) {
     char *filename;
     struct stat info;
     struct p9stat *result;
-    int size = 1 << BITS_PER_DIR_OBJECTS;
 
     unsigned int id, mode;
     char type, eos;
@@ -334,13 +346,53 @@ struct p9stat *oid_stat(u64 oid) {
     assert(result != NULL);
 
     /* convert everything to a 9p stat record */
-    /* TODO: */
+    result->type = 0;
+    result->dev = 0;
+    result->qid = makeqid(mode, info.st_mtime, info.st_size, oid);
+    result->mode = mode;
+    result->atime = info.st_atime;
+    result->mtime = info.st_mtime;
+    result->length = info.st_size;
+    result->name = NULL;
+    result->uid = stringcopy(name);
+    result->gid = stringcopy(group);
+    result->muid = result->uid;
+    result->extension = NULL;
+    /* for special files, read the contents of the file into extension */
+    if (mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET) &&
+            info.st_size > 0 && info.st_size < MAX_EXTENSION_LENGTH)
+    {
+        int i, size;
+        struct fd_wrapper *wrapper = oid_get_open_fd_wrapper(oid);
+        result->extension = GC_MALLOC_ATOMIC(info.st_size + 1);
+        assert(result->extension != NULL);
+        if (lseek(wrapper->fd, 0, SEEK_SET) < 0) {
+            wrapper->refcount--;
+            return NULL;
+        }
+        for (size = 0; size < info.st_size; ) {
+            i = read(wrapper->fd, result->extension + size,
+                    info.st_size - size);
+            if (i <= 0) {
+                wrapper->refcount--;
+                return NULL;
+            }
+            size += i;
+        }
+        result->extension[size] = 0;
+        wrapper->refcount--;
+    }
+    result->n_uid = atoi(name);
+    result->n_gid = atoi(group);
+    result->n_muid = atoi(name);
+
+    return result;
 }
 
 int oid_wstat(u64 oid, struct p9stat *info) {
     u64 start = objectdir_findstart(oid);
     struct objectdir *dir;
-    char *filename;
+    char *filename, *newfilename;
 
     unsigned int id, mode;
     char type, eos;
@@ -360,13 +412,81 @@ int oid_wstat(u64 oid, struct p9stat *info) {
     }
 
     /* make the requested changes */
-    /* TODO: */
+
+    /* mtime */
+    if (info->mtime != ~(u32) 0) {
+        struct utimbuf buf;
+        buf.actime = 0;
+        buf.modtime = info->mtime;
+        if (utime(filename, &buf) < 0)
+            return -1;
+    }
+
+    /* mode */
+    if (info->mode != ~(u32) 0)
+        mode = info->mode;
+
+    /* gid */
+    if (!emptystring(info->gid)) {
+        strncpy(group, info->gid, 8);
+        name[8] = 0;
+    }
+
+    /* uid */
+    if (!emptystring(info->uid)) {
+        strncpy(name, info->uid, 8);
+        name[8] = 0;
+    }
+
+    /* extension */
+    if (!emptystring(info->extension) &&
+            (mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET)))
+    {
+        struct fd_wrapper *wrapper = oid_get_open_fd_wrapper(oid);
+        int len = strlen(info->extension);
+        if (ftruncate(wrapper->fd, 0) < 0 ||
+                lseek(wrapper->fd, 0, SEEK_SET) < 0 ||
+                write(wrapper->fd, info->extension, len) != len)
+        {
+            wrapper->refcount--;
+            return -1;
+        }
+        wrapper->refcount--;
+    } else if (info->length != ~(u64) 0) {
+        /* truncate */
+        struct stat finfo;
+        if (lstat(filename, &finfo) < 0)
+            return -1;
+        if (info->length != finfo.st_size) {
+            if (truncate(filename, info->length) < 0)
+                return -1;
+        }
+    }
+
+    /* see if there were any filename changes */
+    newfilename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
+    assert(newfilename != NULL);
+    sprintf(newfilename, "%0*x %08x %8s %8s",
+            (BITS_PER_DIR_OBJECTS + 3) / 4, (unsigned) (oid - start),
+            mode,
+            name,
+            group);
+    if (!strcmp(filename, newfilename)) {
+        if (rename(filename, newfilename) < 0)
+            return -1;
+        dir->filenames[oid - start] = newfilename;
+    }
+
+    return 0;
 }
 
 int oid_create(u64 oid, struct p9stat *info) {
     u64 start = objectdir_findstart(oid);
     struct objectdir *dir;
+    struct utimbuf buf;
     char *filename;
+    char *pathname;
+    int fd;
 
     if (    /* find the place for this object and make sure it is new */
             (dir = objectdir_lookup(start)) == NULL ||
@@ -375,8 +495,38 @@ int oid_create(u64 oid, struct p9stat *info) {
         return -1;
     }
 
-    /* create the file and set the stats */
-    /* TODO: */
+    /* create the file and set filename-encoded stats */
+    filename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
+    assert(filename != NULL);
+    sprintf(filename, "%0*x %08x %8s %8s",
+            (BITS_PER_DIR_OBJECTS + 3) / 4, (unsigned) (oid - start),
+            info->mode,
+            info->uid,
+            info->gid);
+    pathname = concatname(dir->dirname, filename);
+
+    fd = creat(pathname, info->mode & 07777);
+    if (fd < 0)
+        return -1;
+    dir->filenames[oid - start] = filename;
+    oid_add_fd_wrapper(oid, fd);
+
+    /* store metadata for special file types as file contents */
+    if (!emptystring(info->extension) &&
+            (info->mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET)) &&
+            strlen(info->extension) !=
+            write(fd, info->extension, strlen(info->extension)))
+    {
+        return -1;
+    }
+
+    /* set the times */
+    buf.actime = info->atime;
+    buf.modtime = info->mtime;
+    if (utime(pathname, &buf) < 0)
+        return -1;
+
+    return 0;
 }
 
 struct fd_wrapper *oid_get_open_fd_wrapper(u64 oid) {

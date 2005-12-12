@@ -166,6 +166,7 @@
         'printf' => 1,
         'sprintf' => 1,
         'fprintf' => 1,
+        'rename' => 1,
     },
 }
 ]
