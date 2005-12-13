@@ -1,6 +1,7 @@
 #ifndef _OID_H_
 #define _OID_H_
 
+#include <utime.h>
 #include "types.h"
 #include "9p.h"
 #include "util.h"
@@ -42,5 +43,6 @@ struct objectdir *oid_read_dir(u64 start);
 struct p9stat *oid_stat(u64 oid);
 int oid_wstat(u64 oid, struct p9stat *info);
 int oid_create(u64 oid, struct p9stat *info);
+int oid_set_times(u64 oid, struct utimbuf *buf);
 
 #endif

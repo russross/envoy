@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <utime.h>
 #include <errno.h>
 #include <string.h>
 #include "types.h"
@@ -50,13 +51,11 @@ void handle_tsreserve(Transaction *trans) {
 
 void handle_tscreate(Transaction *trans) {
     struct Tscreate *req = &trans->in->msg.tscreate;
-    // struct Rscreate *res = &trans->out->msg.rscreate;
     int status;
 
     status = oid_create(req->oid, req->stat);
     failif(status != 0, status);
 
-    /* TODO: */
     send_reply(trans);
 }
 
@@ -69,6 +68,7 @@ void handle_tsread(Transaction *trans) {
     struct Tsread *req = &trans->in->msg.tsread;
     struct Rsread *res = &trans->out->msg.rsread;
     struct fd_wrapper *wrapper;
+    struct utimbuf buf;
 
     /* make sure the requested data is small enough to transmit */
     failif(req->count > trans->conn->maxSize - RSREAD_HEADER, EMSGSIZE);
@@ -89,6 +89,11 @@ void handle_tsread(Transaction *trans) {
     wrapper->refcount--;
     guard(res->count >= 0);
 
+    /* set the atime */
+    buf.actime = req->atime;
+    buf.modtime = 0;
+    guard(oid_set_times(req->oid, &buf));
+
     send_reply(trans);
 }
 
@@ -96,6 +101,7 @@ void handle_tswrite(Transaction *trans) {
     struct Tswrite *req = &trans->in->msg.tswrite;
     struct Rswrite *res = &trans->out->msg.rswrite;
     struct fd_wrapper *wrapper;
+    struct utimbuf buf;
 
     /* get a handle to the open file */
     failif((wrapper = oid_get_open_fd_wrapper(req->oid)) == NULL, ENOENT);
@@ -110,15 +116,28 @@ void handle_tswrite(Transaction *trans) {
     wrapper->refcount--;
     guard(res->count >= 0);
 
+    /* set the mtime */
+    buf.actime = 0;
+    buf.modtime = req->mtime;
+    guard(oid_set_times(req->oid, &buf));
+
     send_reply(trans);
 }
 
 void handle_tsstat(Transaction *trans) {
-    //struct Tsstat *req = &trans->in->msg.tsstat;
-    //struct Rsstat *res = &trans->out->msg.rsstat;
+    struct Tsstat *req = &trans->in->msg.tsstat;
+    struct Rsstat *res = &trans->out->msg.rsstat;
+
+    res->stat = oid_stat(req->oid);
+    failif(res->stat == NULL, ENOENT);
+
+    send_reply(trans);
 }
 
 void handle_tswstat(Transaction *trans) {
-    //struct Tswstat *req = &trans->in->msg.tswstat;
-    //struct Rswstat *res = &trans->out->msg.rswstat;
+    struct Tswstat *req = &trans->in->msg.tswstat;
+
+    failif(oid_wstat(req->oid, req->stat) < 0, ENOENT);
+
+    send_reply(trans);
 }

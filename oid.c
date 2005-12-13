@@ -266,12 +266,11 @@ struct objectdir *oid_read_dir(u64 start) {
 
     while ((ent = readdir(dd)) != NULL) {
         unsigned int id, mode;
-        char type, eos;
+        char eos;
         char name[9], group[9];
-        if (sscanf(ent->d_name, "%x %c%o %8s %8s%c",
-                    &id, &type, &mode, name, group, &eos) == 5 &&
+        if (sscanf(ent->d_name, "%x %x %8s %8s%c",
+                    &id, &mode, name, group, &eos) == 5 &&
                 id < size &&
-                (type == 'd' || type == 'f' || type == 'l') &&
                 name[0] != 0 && group[0] != 0)
         {
             result->filenames[id] = stringcopy(ent->d_name);
@@ -325,16 +324,15 @@ struct p9stat *oid_stat(u64 oid) {
     struct p9stat *result;
 
     unsigned int id, mode;
-    char type, eos;
+    char eos;
     char name[9], group[9];
 
     if (    /* gather all the info we need */
             (dir = objectdir_lookup(start)) == NULL ||
             (filename = dir->filenames[oid - start]) == NULL ||
-            sscanf(filename, "%x %c%o %8s %8s%c",
-                &id, &type, &mode, name, group, &eos) != 5 ||
+            sscanf(filename, "%x %x %8s %8s%c",
+                &id, &mode, name, group, &eos) != 5 ||
             id != oid - start ||
-            (type != 'd' && type != 'f' && type != 'l') ||
             name[0] == 0 ||
             group[0] == 0 ||
             lstat(concatname(dir->dirname, filename), &info) < 0)
@@ -393,23 +391,24 @@ int oid_wstat(u64 oid, struct p9stat *info) {
     u64 start = objectdir_findstart(oid);
     struct objectdir *dir;
     char *filename, *newfilename;
+    char *pathname, *newpathname;
 
     unsigned int id, mode;
-    char type, eos;
+    char eos;
     char name[9], group[9];
 
     if (    /* get the current info for the object */
             (dir = objectdir_lookup(start)) == NULL ||
             (filename = dir->filenames[oid - start]) == NULL ||
-            sscanf(filename, "%x %c%o %8s %8s%c",
-                &id, &type, &mode, name, group, &eos) != 5 ||
+            sscanf(filename, "%x %x %8s %8s%c",
+                &id, &mode, name, group, &eos) != 5 ||
             id != oid - start ||
-            (type != 'd' && type != 'f' && type != 'l') ||
             name[0] == 0 ||
             group[0] == 0)
     {
         return -1;
     }
+    pathname = concatname(dir->dirname, filename);
 
     /* make the requested changes */
 
@@ -418,7 +417,7 @@ int oid_wstat(u64 oid, struct p9stat *info) {
         struct utimbuf buf;
         buf.actime = 0;
         buf.modtime = info->mtime;
-        if (utime(filename, &buf) < 0)
+        if (utime(pathname, &buf) < 0)
             return -1;
     }
 
@@ -455,10 +454,10 @@ int oid_wstat(u64 oid, struct p9stat *info) {
     } else if (info->length != ~(u64) 0) {
         /* truncate */
         struct stat finfo;
-        if (lstat(filename, &finfo) < 0)
+        if (lstat(pathname, &finfo) < 0)
             return -1;
         if (info->length != finfo.st_size) {
-            if (truncate(filename, info->length) < 0)
+            if (truncate(pathname, info->length) < 0)
                 return -1;
         }
     }
@@ -472,7 +471,8 @@ int oid_wstat(u64 oid, struct p9stat *info) {
             name,
             group);
     if (!strcmp(filename, newfilename)) {
-        if (rename(filename, newfilename) < 0)
+        newpathname = concatname(dir->dirname, newfilename);
+        if (rename(pathname, newpathname) < 0)
             return -1;
         dir->filenames[oid - start] = newfilename;
     }
@@ -556,4 +556,19 @@ struct fd_wrapper *oid_get_open_fd_wrapper(u64 oid) {
     wrapper->refcount++;
 
     return wrapper;
+}
+
+int oid_set_times(u64 oid, struct utimbuf *buf) {
+    u64 start = objectdir_findstart(oid);
+    struct objectdir *dir;
+    char *filename;
+
+    if ((dir = objectdir_lookup(start)) == NULL ||
+            (filename = dir->filenames[oid - start]) == NULL ||
+            utime(concatname(dir->dirname, filename), buf) < 0)
+    {
+        return -1;
+    }
+
+    return 0;
 }
