@@ -3,13 +3,14 @@
 
 #include "types.h"
 #include "transaction.h"
+#include "worker.h"
 
-void handle_tsreserve(Transaction *trans);
-void handle_tscreate(Transaction *trans);
-void handle_tsclone(Transaction *trans);
-void handle_tsread(Transaction *trans);
-void handle_tswrite(Transaction *trans);
-void handle_tsstat(Transaction *trans);
-void handle_tswstat(Transaction *trans);
+void handle_tsreserve(Worker *worker, Transaction *trans);
+void handle_tscreate(Worker *worker, Transaction *trans);
+void handle_tsclone(Worker *worker, Transaction *trans);
+void handle_tsread(Worker *worker, Transaction *trans);
+void handle_tswrite(Worker *worker, Transaction *trans);
+void handle_tsstat(Worker *worker, Transaction *trans);
+void handle_tswstat(Worker *worker, Transaction *trans);
 
 #endif

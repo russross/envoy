@@ -147,7 +147,7 @@ void config_init(void) {
 
 void test_oid(void) {
     u64 oid;
-    int count;
+    u32 count;
 
     printf("first available: %llx\n", oid_find_next_available());
     assert(oid_reserve_block(&oid, &count) == 0);

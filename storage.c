@@ -12,20 +12,22 @@
 #include "util.h"
 #include "storage.h"
 #include "dispatch.h"
+#include "worker.h"
 #include "oid.h"
 
 /* generate an error response with Unix errno errnum */
-static void rerror(Message *m, u16 errnum, int line) {
+static void rerror(Worker *w, Message *m, char *file, int line) {
     m->id = RERROR;
-    m->msg.rerror.errnum = errnum;
-    m->msg.rerror.ename = stringcopy(strerror(errnum));
+    m->msg.rerror.errnum = w->errnum;
+    m->msg.rerror.ename = stringcopy(strerror(w->errnum));
     fprintf(stderr, "error #%u: %s (%s line %d)\n",
-            (u32) errnum, m->msg.rerror.ename, __FILE__, line);
+            (u32) w->errnum, m->msg.rerror.ename, file, line);
 }
 
 #define failif(p,e) do { \
     if (p) { \
-        rerror(trans->out, e, __LINE__); \
+        worker->errnum = e; \
+        rerror(worker, trans->out, __FILE__, __LINE__); \
             send_reply(trans); \
             return; \
     } \
@@ -33,7 +35,8 @@ static void rerror(Message *m, u16 errnum, int line) {
 
 #define guard(f) do { \
     if ((f) < 0) { \
-        rerror(trans->out, errno, __LINE__); \
+        worker->errnum = errno; \
+        rerror(worker, trans->out, __FILE__, __LINE__); \
             send_reply(trans); \
             return; \
     } \
@@ -41,7 +44,7 @@ static void rerror(Message *m, u16 errnum, int line) {
 
 /*****************************************************************************/
 
-void handle_tsreserve(Transaction *trans) {
+void handle_tsreserve(Worker *worker, Transaction *trans) {
     struct Rsreserve *res = &trans->out->msg.rsreserve;
 
     failif(oid_reserve_block(&res->firstoid, &res->count), ENOMEM);
@@ -49,7 +52,7 @@ void handle_tsreserve(Transaction *trans) {
     send_reply(trans);
 }
 
-void handle_tscreate(Transaction *trans) {
+void handle_tscreate(Worker *worker, Transaction *trans) {
     struct Tscreate *req = &trans->in->msg.tscreate;
 
     failif(oid_create(req->oid, req->stat) < 0, ENOMEM);
@@ -57,7 +60,7 @@ void handle_tscreate(Transaction *trans) {
     send_reply(trans);
 }
 
-void handle_tsclone(Transaction *trans) {
+void handle_tsclone(Worker *worker, Transaction *trans) {
     struct Tsclone *req = &trans->in->msg.tsclone;
 
     failif(oid_clone(req->oid, req->newoid) < 0, ENOMEM);
@@ -65,20 +68,19 @@ void handle_tsclone(Transaction *trans) {
     send_reply(trans);
 }
 
-void handle_tsread(Transaction *trans) {
+void handle_tsread(Worker *worker, Transaction *trans) {
     struct Tsread *req = &trans->in->msg.tsread;
     struct Rsread *res = &trans->out->msg.rsread;
-    struct fd_wrapper *wrapper;
+    struct oid_fd *wrapper;
     struct utimbuf buf;
 
     /* make sure the requested data is small enough to transmit */
     failif(req->count > trans->conn->maxSize - RSREAD_HEADER, EMSGSIZE);
 
     /* get a handle to the open file */
-    failif((wrapper = oid_get_open_fd_wrapper(req->oid)) == NULL, ENOENT);
+    failif((wrapper = oid_get_open_fd(req->oid)) == NULL, ENOENT);
 
     if (lseek(wrapper->fd, req->offset, SEEK_SET) != req->offset) {
-        wrapper->refcount--;
         guard(-1);
     }
 
@@ -87,7 +89,6 @@ void handle_tsread(Transaction *trans) {
 
     res->count = read(wrapper->fd, res->data, req->count);
 
-    wrapper->refcount--;
     guard(res->count >= 0);
 
     /* set the atime */
@@ -98,23 +99,21 @@ void handle_tsread(Transaction *trans) {
     send_reply(trans);
 }
 
-void handle_tswrite(Transaction *trans) {
+void handle_tswrite(Worker *worker, Transaction *trans) {
     struct Tswrite *req = &trans->in->msg.tswrite;
     struct Rswrite *res = &trans->out->msg.rswrite;
-    struct fd_wrapper *wrapper;
+    struct oid_fd *wrapper;
     struct utimbuf buf;
 
     /* get a handle to the open file */
-    failif((wrapper = oid_get_open_fd_wrapper(req->oid)) == NULL, ENOENT);
+    failif((wrapper = oid_get_open_fd(req->oid)) == NULL, ENOENT);
 
     if (lseek(wrapper->fd, req->offset, SEEK_SET) != req->offset) {
-        wrapper->refcount--;
         guard(-1);
     }
 
     res->count = write(wrapper->fd, req->data, req->count);
 
-    wrapper->refcount--;
     guard(res->count >= 0);
 
     /* set the mtime */
@@ -125,7 +124,7 @@ void handle_tswrite(Transaction *trans) {
     send_reply(trans);
 }
 
-void handle_tsstat(Transaction *trans) {
+void handle_tsstat(Worker *worker, Transaction *trans) {
     struct Tsstat *req = &trans->in->msg.tsstat;
     struct Rsstat *res = &trans->out->msg.rsstat;
 
@@ -135,7 +134,7 @@ void handle_tsstat(Transaction *trans) {
     send_reply(trans);
 }
 
-void handle_tswstat(Transaction *trans) {
+void handle_tswstat(Worker *worker, Transaction *trans) {
     struct Tswstat *req = &trans->in->msg.tswstat;
 
     failif(oid_wstat(req->oid, req->stat) < 0, ENOENT);

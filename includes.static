@@ -74,6 +74,7 @@
         'close' => 1,
         'read' => 1,
         'write' => 1,
+        'sleep' => 1,
     },
 
     '<dirent.h>' => {

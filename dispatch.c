@@ -105,11 +105,11 @@ void send_reply(Transaction *trans) {
     put_message(trans->conn, trans->out);
 }
 
-void handle_error(Transaction *trans) {
+void handle_error(Worker *worker, Transaction *trans) {
     state->error_queue = append_elt(state->error_queue, trans);
 }
 
-static void *dispatch(Transaction *trans) {
+static void *dispatch(Worker *worker, Transaction *trans) {
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||
             trans->conn->type == CONN_ENVOY_IN);
@@ -121,7 +121,7 @@ static void *dispatch(Transaction *trans) {
 
     if (trans->conn->type == CONN_UNKNOWN_IN) {
         switch (trans->in->id) {
-            case TVERSION:  handle_tversion(trans);        break;
+            case TVERSION:  handle_tversion(worker, trans);             break;
             case TAUTH:
             case TREAD:
             case TWRITE:
@@ -135,7 +135,7 @@ static void *dispatch(Transaction *trans) {
             case TSTAT:
             case TWSTAT:
             default:
-                handle_error(trans);
+                handle_error(worker, trans);
                 printf("\nBad request from unknown connection\n");
         }
     } else if (trans->conn->type == CONN_CLIENT_IN) {
@@ -147,9 +147,9 @@ static void *dispatch(Transaction *trans) {
  */
 #define forward_or_handle(MESSAGE,HANDLER) do { \
     if (forward_lookup(trans->conn, trans->in->msg.MESSAGE.fid) == NULL) { \
-        HANDLER(trans); \
+        HANDLER(worker, trans); \
     } else { \
-        forward_to_envoy(trans); \
+        forward_to_envoy(worker, trans); \
     } \
 } while(0);
 
@@ -165,15 +165,15 @@ static void *dispatch(Transaction *trans) {
 
 #undef forward_or_handle
 
-            case TATTACH:   handle_tattach(trans);          break;
+            case TATTACH:   handle_tattach(worker, trans);              break;
 
-            case TAUTH:     handle_tauth(trans);            break;
-            case TFLUSH:    handle_tflush(trans);           break;
-            case TWALK:     client_twalk(trans);            break;
+            case TAUTH:     handle_tauth(worker, trans);                break;
+            case TFLUSH:    handle_tflush(worker, trans);               break;
+            case TWALK:     client_twalk(worker, trans);                break;
 
             case TVERSION:
             default:
-                handle_error(trans);
+                handle_error(worker, trans);
                 printf("\nBad request from client\n");
         }
     } else if (trans->conn->type == CONN_ENVOY_IN) {
@@ -234,7 +234,7 @@ void main_loop(void) {
 
                 trans = trans_new(conn, msg, NULL);
 
-                worker_create((void * (*)(void *)) dispatch, (void *) trans);
+                worker_create(dispatch, trans);
                 break;
 
             case CONN_ENVOY_OUT:

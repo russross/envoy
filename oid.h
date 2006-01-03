@@ -1,6 +1,8 @@
 #ifndef _OID_H_
 #define _OID_H_
 
+#include <pthread.h>
+#include <gc/gc.h>
 #include <utime.h>
 #include "types.h"
 #include "9p.h"
@@ -43,11 +45,11 @@ Lru *oid_init_dir_lru(void);
 Lru *oid_init_fd_lru(void);
 
 u64 oid_find_next_available(void);
-struct fd_wrapper *oid_add_fd_wrapper(u64 oid, int fd);
-struct fd_wrapper *oid_get_open_fd_wrapper(u64 oid);
+struct oid_fd *oid_add_fd(u64 oid, int fd);
+struct oid_fd *oid_get_open_fd(u64 oid);
 struct objectdir *oid_read_dir(u64 start);
 
-int oid_reserve_block(u64 *oid, int *count);
+int oid_reserve_block(u64 *oid, u32 *count);
 struct p9stat *oid_stat(u64 oid);
 int oid_wstat(u64 oid, struct p9stat *info);
 int oid_create(u64 oid, struct p9stat *info);

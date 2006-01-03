@@ -1,29 +1,37 @@
 #ifndef _WORKER_H_
 #define _WORKER_H_
 
+#include <assert.h>
 #include <pthread.h>
+#include <setjmp.h>
 #include <gc/gc.h>
+#include <stdlib.h>
 #include "types.h"
+#include "9p.h"
+#include "list.h"
 #include "transaction.h"
 
 /* the order here is the order in which locks must be acquired */
 enum worker_state_types {
     OBJECT_DIRECTORY,
     OBJECT_FD,
+    OBJECT_TOP,
 };
 
 enum worker_transaction_states {
     WORKER_ZERO,
     WORKER_RETRY,
-    WORKER_ABORT,
 };
 
 /* worker threads */
 struct worker {
     pthread_cond_t *wait;
-    void * (*func)(void *);
-    void *arg;
+    void (*func)(Worker *, Transaction *);
+    Transaction *arg;
 
+    jmp_buf jmp;
+
+    u16 errnum;
     List *cleanup;
 };
 
@@ -45,7 +53,7 @@ struct worker {
 
 void worker_cleanup(Worker *worker);
 
-void worker_create(void * (*func)(void *), void *arg);
+void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
 void worker_wait(Transaction *trans);
 void worker_wait_multiple(pthread_cond_t *wait);
 void worker_wakeup(Transaction *trans);

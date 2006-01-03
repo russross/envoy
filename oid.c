@@ -14,6 +14,7 @@
 #include "util.h"
 #include "config.h"
 #include "state.h"
+#include "worker.h"
 #include "lru.h"
 #include "oid.h"
 
@@ -248,7 +249,7 @@ u64 oid_find_next_available(void) {
     return path_to_oid(reverse(lastpath)) + (1 << BITS_PER_DIR_OBJECTS);
 }
 
-int oid_reserve_block(u64 *oid, int *count) {
+int oid_reserve_block(u64 *oid, u32 *count) {
     char *dir = objectroot;
     struct stat info;
     List *path;
@@ -406,7 +407,7 @@ struct p9stat *oid_stat(Worker *worker, u64 oid) {
             info.st_size > 0 && info.st_size < MAX_EXTENSION_LENGTH)
     {
         int i, size;
-        struct oid_fd *wrapper = oid_get_open_oid_fd(oid);
+        struct oid_fd *wrapper = oid_get_open_fd(oid);
         result->extension = GC_MALLOC_ATOMIC(info.st_size + 1);
         assert(result->extension != NULL);
         if (lseek(wrapper->fd, 0, SEEK_SET) < 0) {
@@ -479,7 +480,7 @@ int oid_wstat(u64 oid, struct p9stat *info) {
     if (!emptystring(info->extension) &&
             (mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET)))
     {
-        struct oid_fd *wrapper = oid_get_open_oid_fd(oid);
+        struct oid_fd *wrapper = oid_get_open_fd(oid);
         int len = strlen(info->extension);
         if (ftruncate(wrapper->fd, 0) < 0 ||
                 lseek(wrapper->fd, 0, SEEK_SET) < 0 ||
@@ -556,7 +557,7 @@ int oid_create(u64 oid, struct p9stat *info) {
     return 0;
 }
 
-struct oid_fd *oid_get_open_oid_fd(u64 oid) {
+struct oid_fd *oid_get_open_fd(u64 oid) {
     struct oid_fd *wrapper;
 
     /* first check the cache */
@@ -602,7 +603,7 @@ int oid_set_times(u64 oid, struct utimbuf *buf) {
 
 int oid_clone(u64 oldoid, u64 newoid) {
     struct p9stat *info = oid_stat(oldoid);
-    struct oid_fd *new_wrapper, *old_wrapper;
+    struct oid_fd *new_fd, *old_fd;
     void *buff = GC_MALLOC_ATOMIC(CLONE_BUFFER_SIZE);
     int count;
     struct utimbuf buf;
@@ -617,38 +618,34 @@ int oid_clone(u64 oldoid, u64 newoid) {
         return 0;
 
     /* open both files and position at the start of the files */
-    if ((old_wrapper = oid_get_open_oid_fd(oldoid)) == NULL)
+    if ((old_fd = oid_get_open_fd(oldoid)) == NULL)
         return -1;
-    if (lseek(old_wrapper->fd, 0, SEEK_SET) < 0 ||
-            ((new_wrapper = oid_get_open_oid_fd(newoid)) == NULL))
+    if (lseek(old_fd->fd, 0, SEEK_SET) < 0 ||
+            ((new_fd = oid_get_open_fd(newoid)) == NULL))
     {
-        old_wrapper->refcount--;
         return -1;
     }
-    if (lseek(new_wrapper->fd, 0, SEEK_SET) < 0) {
-        new_wrapper->refcount--;
+    if (lseek(new_fd->fd, 0, SEEK_SET) < 0) {
         return -1;
     }
 
     /* copy the file a chunk at a time */
     for (;;) {
-        count = read(old_wrapper->fd, buff, CLONE_BUFFER_SIZE);
+        count = read(old_fd->fd, buff, CLONE_BUFFER_SIZE);
         if (count == 0)
             break;
         if (count < 0) {
-            old_wrapper->refcount--;
-            new_wrapper->refcount--;
             return -1;
         }
-        if (write(new_wrapper->fd, buff, count) != count) {
-            old_wrapper->refcount--;
-            new_wrapper->refcount--;
+        if (write(new_fd->fd, buff, count) != count) {
+            old_fd->refcount--;
+            new_fd->refcount--;
             return -1;
         }
     }
 
-    old_wrapper->refcount--;
-    new_wrapper->refcount--;
+    //old_fd->refcount--;
+    //new_wrapper->refcount--;
 
     buf.actime = info->atime;
     buf.modtime = info->mtime;

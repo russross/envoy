@@ -1,12 +1,16 @@
 #include <assert.h>
 #include <pthread.h>
+#include <setjmp.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "types.h"
 #include "list.h"
 #include "transaction.h"
 #include "state.h"
 #include "worker.h"
+#include "oid.h"
 
 /*
  * Worker threads
@@ -24,9 +28,18 @@ static void *worker_loop(Worker *t) {
             pthread_cond_wait(t->wait, state->biglock);
         }
 
+        /* initialize the exception handler and catch exceptions */
+        while (setjmp(t->jmp) == WORKER_RETRY) {
+            /* wait for some condition to be try and retry */
+            printf("WORKER_RETRY invoked\n");
+            sleep(5);
+            worker_cleanup(t);
+        }
+
         /* service the request */
         if (t->func != NULL)
-            t->func(t->arg);
+            t->func(t, t->arg);
+        worker_cleanup(t);
         t->func = NULL;
         state->active_worker_count--;
         pthread_cond_signal(state->wait_workers);
@@ -36,7 +49,7 @@ static void *worker_loop(Worker *t) {
     return NULL;
 }
 
-void worker_create(void * (*func)(void *), void *arg) {
+void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
     if (null(state->thread_pool)) {
         Worker *t = GC_NEW(Worker);
         assert(t != NULL);
@@ -94,9 +107,10 @@ void worker_cleanup(Worker *worker) {
     while (!null(worker->cleanup)) {
         struct oid_dir *dir;
         struct oid_fd *fd;
-        enum worker_state_types type = caar(worker->cleanup);
+        enum worker_state_types type =
+            (enum worker_state_types) caar(worker->cleanup);
         void *obj = cdar(worker->cleanup);
-        worker->cleanup = cdr(worked->cleanup);
+        worker->cleanup = cdr(worker->cleanup);
         worker_lock_acquire(type);
 
         switch (type) {
