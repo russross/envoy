@@ -50,7 +50,13 @@ struct state {
     u64 oid_next_available;
 };
 
+extern pthread_mutex_t *oid_dir_lock;
+extern pthread_mutex_t *oid_fd_lock;
+
 extern struct state *state;
 void state_init(void);
+
+void oid_lock_acquire(void);
+void oid_lock_release(void);
 
 #endif

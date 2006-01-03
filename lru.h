@@ -28,6 +28,7 @@ struct lru {
     u32 counter;
     Hashtable *table;
     Heap *heap;
+    int (*resurrect)(void *);
     void (*cleanup)(void *);
 };
 
@@ -42,6 +43,7 @@ Lru *lru_new(
         int size,
         u32 (*keyhash)(const void *),
         int (*keycmp)(const void *, const void *),
+        int (*resurrect)(void *),
         void (*cleanup)(void *));
 void *lru_get(Lru *lru, void *key);
 void lru_add(Lru *lru, void *key, void *value);

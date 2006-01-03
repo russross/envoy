@@ -51,17 +51,18 @@ void handle_tsreserve(Transaction *trans) {
 
 void handle_tscreate(Transaction *trans) {
     struct Tscreate *req = &trans->in->msg.tscreate;
-    int status;
 
-    status = oid_create(req->oid, req->stat);
-    failif(status != 0, status);
+    failif(oid_create(req->oid, req->stat) < 0, ENOMEM);
 
     send_reply(trans);
 }
 
 void handle_tsclone(Transaction *trans) {
-    //struct Tsclone *req = &trans->in->msg.tsclone;
-    //struct Rsclone *res = &trans->out->msg.rsclone;
+    struct Tsclone *req = &trans->in->msg.tsclone;
+
+    failif(oid_clone(req->oid, req->newoid) < 0, ENOMEM);
+
+    send_reply(trans);
 }
 
 void handle_tsread(Transaction *trans) {

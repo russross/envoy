@@ -2,6 +2,7 @@
 
 [   '<assert.h>',
     '<pthread.h>',
+    '<setjmp.h>',
     '<gc/gc.h>',
     '<stdlib.h>',
     '<stdio.h>',
@@ -35,6 +36,12 @@
         'pthread_cond_init' => 1,
         'pthread_cond_wait' => 1,
         'pthread_cond_signal' => 1,
+    },
+
+    '<setjmp.h>' => {
+        'setjmp' => 1,
+        'longjmp' => 1,
+        'jmp_buf' => 1,
     },
 
     '<gc/gc.h>' => {

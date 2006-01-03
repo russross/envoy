@@ -16,13 +16,15 @@ static int lru_cmp(struct lru_elt *a, struct lru_elt *b) {
 }
 
 Lru *lru_new(int size, u32 (*keyhash)(const void *),
-        int (*keycmp)(const void *, const void *), void (*cleanup)(void *))
+        int (*keycmp)(const void *, const void *), int (*resurrect)(void *),
+        void (*cleanup)(void *))
 {
     Lru *lru = GC_NEW(Lru);
     assert(lru != NULL);
 
     lru->table = hash_create((size + 1) * 3 / 2, keyhash, keycmp);
     lru->heap = heap_new(size + 1, (int (*)(void *, void *)) lru_cmp);
+    lru->resurrect = resurrect;
     lru->cleanup = cleanup;
     lru->size = size;
     lru->count = 0;
@@ -62,10 +64,14 @@ void lru_add(Lru *lru, void *key, void *value) {
     while (lru->count >= lru->size) {
         elt = heap_remove(lru->heap);
 
-        /* has this item has been touched since we saw it last? */
+        /* has this item been touched since we saw it last? */
         if (elt->count != elt->refresh) {
             /* re-insert it with its updated rank */
             elt->count = elt->refresh;
+            heap_add(lru->heap, elt);
+        } else if (lru->resurrect(elt->value)) {
+            /* refresh this item and keep it */
+            elt->count = elt->refresh = lru->counter++;
             heap_add(lru->heap, elt);
         } else {
             /* remove it from the hashtable and destroy it */

@@ -17,7 +17,39 @@
 #include "lru.h"
 #include "oid.h"
 
-static inline u64 objectdir_findstart(u64 oid) {
+static inline char *make_filename(u64 oid, u32 mode, char *name, char *group) {
+    char *filename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
+    assert(filename != NULL);
+    sprintf(filename, "%0*x %8x %*.*s %*.*s",
+            (BITS_PER_DIR_OBJECTS + 3) / 4,
+            (unsigned) (oid & ((1 << BITS_PER_DIR_OBJECTS) - 1)),
+            mode,
+            MAX_UID_LENGTH, MAX_UID_LENGTH, name,
+            MAX_GID_LENGTH, MAX_GID_LENGTH, group);
+    return filename;
+}
+
+static inline int parse_filename(char *filename, unsigned int *id, u32 *mode,
+        char **name, char **group)
+{
+    char eos;
+
+    *name = GC_MALLOC_ATOMIC(MAX_UID_LENGTH + 1);
+    assert(name != NULL);
+    *group = GC_MALLOC_ATOMIC(MAX_GID_LENGTH + 1);
+    assert(group != NULL);
+
+    if (sscanf(filename, "%x %x %8s %8s%c",
+                id, mode, *name, *group, &eos) != 5 ||
+            name[0] == 0 || group[0] == 0)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
+static inline u64 oid_dir_findstart(u64 oid) {
     return (oid >> BITS_PER_DIR_OBJECTS) << BITS_PER_DIR_OBJECTS;
 }
 
@@ -34,18 +66,27 @@ static int u64_cmp(const u64 *a, const u64 *b) {
         return 1;
 }
 
-static void close_dir(struct objectdir *od) {
+static int resurrect_dir(struct oid_dir *od) {
+    return od->wait != NULL;
+}
+
+static void close_dir(struct oid_dir *od) {
+    assert(od->wait == NULL);
+
     /* no cleanup is required */
     od->start = ~0LL;
     od->dirname = NULL;
     od->filenames = NULL;
 }
 
-static void close_fd_wrapper(struct fd_wrapper *wrapper) {
-    if (--wrapper->refcount == 0) {
-        close(wrapper->fd);
-        wrapper->fd = -1;
-    }
+static int resurrect_oid_fd(struct oid_fd *wrapper) {
+    return wrapper->wait != NULL;
+}
+
+static void close_oid_fd(struct oid_fd *wrapper) {
+    assert(wrapper->wait == NULL);
+    close(wrapper->fd);
+    wrapper->fd = -1;
 }
 
 Lru *oid_init_dir_lru(void) {
@@ -53,6 +94,7 @@ Lru *oid_init_dir_lru(void) {
             OBJECTDIR_CACHE_SIZE,
             (u32 (*)(const void *)) u64_hash,
             (int (*)(const void *, const void *)) u64_cmp,
+            (int (*)(void *)) resurrect_dir,
             (void (*)(void *)) close_dir);
 }
 
@@ -61,15 +103,16 @@ Lru *oid_init_fd_lru(void) {
             FD_CACHE_SIZE,
             (u32 (*)(const void *)) u64_hash,
             (int (*)(const void *, const void *)) u64_cmp,
-            (void (*)(void *)) close_fd_wrapper);
+            (int (*)(void *)) resurrect_oid_fd,
+            (void (*)(void *)) close_oid_fd);
 }
 
-struct fd_wrapper *oid_add_fd_wrapper(u64 oid, int fd) {
-    struct fd_wrapper *wrapper;
+struct oid_fd *oid_add_oid_fd(u64 oid, int fd) {
+    struct oid_fd *wrapper;
     u64 *key;
 
     assert(fd >= 0);
-    wrapper = GC_NEW_ATOMIC(struct fd_wrapper);
+    wrapper = GC_NEW_ATOMIC(struct oid_fd);
     assert(wrapper != NULL);
     key = GC_NEW_ATOMIC(u64);
     assert(key != NULL);
@@ -224,7 +267,7 @@ int oid_reserve_block(u64 *oid, int *count) {
         dir = concatname(dir, car(path));
         path = cdr(path);
         if (lstat(dir, &info) < 0) {
-            if (mkdir(dir, 0755) < 0)
+            if (mkdir(dir, OBJECT_DIR_MODE) < 0)
                 return -1;
         } else if (!S_ISDIR(info.st_mode)) {
             return -1;
@@ -234,70 +277,76 @@ int oid_reserve_block(u64 *oid, int *count) {
     return 0;
 }
 
-struct objectdir *oid_read_dir(u64 start) {
+/* Read a directory of objects.  The argument should be a blank object that
+ * is already indexed in the LRU and reserved. */
+static void oid_read_dir(struct oid_dir *dir) {
     int i;
-    int size = 1 << BITS_PER_DIR_OBJECTS;
-    struct objectdir *result;
+    const int size = 1 << BITS_PER_DIR_OBJECTS;
     char *dirname;
     DIR *dd;
     struct dirent *ent;
     List *path;
 
-    assert(start == objectdir_findstart(start));
-
     dirname = objectroot;
-    path = oid_to_path(start);
-    for (path = oid_to_path(start); !null(path); path = cdr(path))
+    path = oid_to_path(dir->start);
+    for (path = oid_to_path(dir->start); !null(path); path = cdr(path))
         dirname = concatname(dirname, (char *) car(path));
 
-    result = GC_NEW(struct objectdir);
-    assert(result != NULL);
-    result->dirname = dirname;
-    result->filenames = GC_MALLOC(sizeof(char *) * size);
-    assert(result->filenames != NULL);
-    result->start = start;
+    dir->dirname = dirname;
 
+    dir->filenames = GC_MALLOC(sizeof(char *) * size);
+    assert(dir->filenames != NULL);
     for (i = 0; i < size; i++)
         result->filenames[i] = NULL;
 
     dd = opendir(dirname);
     if (dd == NULL)
-        return NULL;
+        return;
 
     while ((ent = readdir(dd)) != NULL) {
         unsigned int id, mode;
-        char eos;
-        char name[9], group[9];
-        if (sscanf(ent->d_name, "%x %x %8s %8s%c",
-                    &id, &mode, name, group, &eos) == 5 &&
-                id < size &&
-                name[0] != 0 && group[0] != 0)
+        char *name, *group;
+        if (parse_filename(ent->d_name, &id, &mode, &name, &group) == 0 &&
+            id < size)
         {
             result->filenames[id] = stringcopy(ent->d_name);
         }
     }
 
     closedir(dd);
-
-    return result;
 }
 
-struct objectdir *objectdir_lookup(u64 start) {
-    struct objectdir *result;
+struct oid_dir *oid_dir_lookup(Worker *worker, u64 start) {
+    struct oid_dir *result;
 
-    assert(start == objectdir_findstart(start));
+    worker_lock_acquire(OBJECT_DIRECTORY);
+
+    assert(start == oid_dir_findstart(start));
 
     result = lru_get(state->oid_dir_lru, &start);
 
     if (result == NULL) {
-        result = oid_read_dir(start);
+        /* create a new blank entry and reserve it */
+        u64 *key = GC_NEW_ATOMIC(u64);
+        assert(key != NULL);
+        *key = start;
 
-        if (result != NULL) {
-            u64 *key = GC_NEW_ATOMIC(u64);
-            assert(key != NULL);
-            *key = start;
-            lru_add(state->oid_dir_lru, key, result);
-        }
+        result = GC_NEW(struct oid_dir);
+        assert(result != NULL);
+        result->wait = NULL;
+        result->start = start;
+        result->dirname = NULL;
+        result->filenames = NULL;
+        
+        lru_add(state->oid_dir_lru, key, result);
+
+        worker_reserve(worker, OBJECT_DIRECTORY, result);
+        worker_lock_release(OBJECT_DIRECTORY);
+
+        oid_read_dir(result);
+    } else {
+        worker_reserve(worker, OBJECT_DIRECTORY, result);
+        worker_lock_release(OBJECT_DIRECTORY);
     }
 
     return result;
@@ -315,26 +364,22 @@ static inline struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
     return qid;
 }
 
-struct p9stat *oid_stat(u64 oid) {
+struct p9stat *oid_stat(Worker *worker, u64 oid) {
     /* get filename */
-    u64 start = objectdir_findstart(oid);
-    struct objectdir *dir;
+    u64 start = oid_dir_findstart(oid);
+    struct oid_dir *dir;
     char *filename;
     struct stat info;
     struct p9stat *result;
 
     unsigned int id, mode;
-    char eos;
-    char name[9], group[9];
+    char *name, *group;
 
     if (    /* gather all the info we need */
-            (dir = objectdir_lookup(start)) == NULL ||
+            (dir = oid_dir_lookup(worker, start)) == NULL ||
             (filename = dir->filenames[oid - start]) == NULL ||
-            sscanf(filename, "%x %x %8s %8s%c",
-                &id, &mode, name, group, &eos) != 5 ||
+            parse_filename(filename, &id, &mode, &name, &group) < 0 ||
             id != oid - start ||
-            name[0] == 0 ||
-            group[0] == 0 ||
             lstat(concatname(dir->dirname, filename), &info) < 0)
     {
         return NULL;
@@ -361,7 +406,7 @@ struct p9stat *oid_stat(u64 oid) {
             info.st_size > 0 && info.st_size < MAX_EXTENSION_LENGTH)
     {
         int i, size;
-        struct fd_wrapper *wrapper = oid_get_open_fd_wrapper(oid);
+        struct oid_fd *wrapper = oid_get_open_oid_fd(oid);
         result->extension = GC_MALLOC_ATOMIC(info.st_size + 1);
         assert(result->extension != NULL);
         if (lseek(wrapper->fd, 0, SEEK_SET) < 0) {
@@ -388,23 +433,20 @@ struct p9stat *oid_stat(u64 oid) {
 }
 
 int oid_wstat(u64 oid, struct p9stat *info) {
-    u64 start = objectdir_findstart(oid);
-    struct objectdir *dir;
+    u64 start = oid_dir_findstart(oid);
+    struct oid_dir *dir;
     char *filename, *newfilename;
     char *pathname, *newpathname;
 
-    unsigned int id, mode;
-    char eos;
-    char name[9], group[9];
+    unsigned int id;
+    u32 mode;
+    char *name, *group;
 
     if (    /* get the current info for the object */
-            (dir = objectdir_lookup(start)) == NULL ||
+            (dir = oid_dir_lookup(start)) == NULL ||
             (filename = dir->filenames[oid - start]) == NULL ||
-            sscanf(filename, "%x %x %8s %8s%c",
-                &id, &mode, name, group, &eos) != 5 ||
-            id != oid - start ||
-            name[0] == 0 ||
-            group[0] == 0)
+            parse_filename(filename, &id, &mode, &name, &group) < 0 ||
+            id != oid - start)
     {
         return -1;
     }
@@ -426,22 +468,18 @@ int oid_wstat(u64 oid, struct p9stat *info) {
         mode = info->mode;
 
     /* gid */
-    if (!emptystring(info->gid)) {
-        strncpy(group, info->gid, 8);
-        name[8] = 0;
-    }
+    if (!emptystring(info->gid))
+        group = info->gid;
 
     /* uid */
-    if (!emptystring(info->uid)) {
-        strncpy(name, info->uid, 8);
-        name[8] = 0;
-    }
+    if (!emptystring(info->uid))
+        name = info->uid;
 
     /* extension */
     if (!emptystring(info->extension) &&
             (mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET)))
     {
-        struct fd_wrapper *wrapper = oid_get_open_fd_wrapper(oid);
+        struct oid_fd *wrapper = oid_get_open_oid_fd(oid);
         int len = strlen(info->extension);
         if (ftruncate(wrapper->fd, 0) < 0 ||
                 lseek(wrapper->fd, 0, SEEK_SET) < 0 ||
@@ -462,14 +500,9 @@ int oid_wstat(u64 oid, struct p9stat *info) {
         }
     }
 
+    newfilename = make_filename(oid, mode, name, group);
+
     /* see if there were any filename changes */
-    newfilename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
-    assert(newfilename != NULL);
-    sprintf(newfilename, "%0*x %08x %8s %8s",
-            (BITS_PER_DIR_OBJECTS + 3) / 4, (unsigned) (oid - start),
-            mode,
-            name,
-            group);
     if (!strcmp(filename, newfilename)) {
         newpathname = concatname(dir->dirname, newfilename);
         if (rename(pathname, newpathname) < 0)
@@ -481,35 +514,29 @@ int oid_wstat(u64 oid, struct p9stat *info) {
 }
 
 int oid_create(u64 oid, struct p9stat *info) {
-    u64 start = objectdir_findstart(oid);
-    struct objectdir *dir;
+    u64 start = oid_dir_findstart(oid);
+    struct oid_dir *dir;
     struct utimbuf buf;
     char *filename;
     char *pathname;
     int fd;
 
     if (    /* find the place for this object and make sure it is new */
-            (dir = objectdir_lookup(start)) == NULL ||
+            (dir = oid_dir_lookup(start)) == NULL ||
             (filename = dir->filenames[oid - start]) != NULL)
     {
         return -1;
     }
 
     /* create the file and set filename-encoded stats */
-    filename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
-    assert(filename != NULL);
-    sprintf(filename, "%0*x %08x %8s %8s",
-            (BITS_PER_DIR_OBJECTS + 3) / 4, (unsigned) (oid - start),
-            info->mode,
-            info->uid,
-            info->gid);
+    filename = make_filename(oid, info->mode, info->uid, info->gid);
     pathname = concatname(dir->dirname, filename);
 
-    fd = creat(pathname, info->mode & 07777);
+    fd = creat(pathname, OBJECT_MODE);
     if (fd < 0)
         return -1;
     dir->filenames[oid - start] = filename;
-    oid_add_fd_wrapper(oid, fd);
+    oid_add_oid_fd(oid, fd);
 
     /* store metadata for special file types as file contents */
     if (!emptystring(info->extension) &&
@@ -529,26 +556,26 @@ int oid_create(u64 oid, struct p9stat *info) {
     return 0;
 }
 
-struct fd_wrapper *oid_get_open_fd_wrapper(u64 oid) {
-    struct fd_wrapper *wrapper;
+struct oid_fd *oid_get_open_oid_fd(u64 oid) {
+    struct oid_fd *wrapper;
 
     /* first check the cache */
     wrapper = lru_get(state->oid_fd_lru, &oid);
 
     /* open the file if necessary */
     if (wrapper == NULL) {
-        u64 start = objectdir_findstart(oid);
-        struct objectdir *dir;
+        u64 start = oid_dir_findstart(oid);
+        struct oid_dir *dir;
         char *filename;
         int fd;
         if (    /* find the pathname and open the file */
-                (dir = objectdir_lookup(start)) == NULL ||
+                (dir = oid_dir_lookup(start)) == NULL ||
                 (filename = dir->filenames[oid - start]) == NULL ||
                 (fd = open(concatname(dir->dirname, filename), O_RDWR )) < 0)
         {
             return NULL;
         }
-        wrapper = oid_add_fd_wrapper(oid, fd);
+        wrapper = oid_add_oid_fd(oid, fd);
     }
 
     assert(wrapper->fd >= 0);
@@ -559,11 +586,11 @@ struct fd_wrapper *oid_get_open_fd_wrapper(u64 oid) {
 }
 
 int oid_set_times(u64 oid, struct utimbuf *buf) {
-    u64 start = objectdir_findstart(oid);
-    struct objectdir *dir;
+    u64 start = oid_dir_findstart(oid);
+    struct oid_dir *dir;
     char *filename;
 
-    if ((dir = objectdir_lookup(start)) == NULL ||
+    if ((dir = oid_dir_lookup(start)) == NULL ||
             (filename = dir->filenames[oid - start]) == NULL ||
             utime(concatname(dir->dirname, filename), buf) < 0)
     {
@@ -571,4 +598,60 @@ int oid_set_times(u64 oid, struct utimbuf *buf) {
     }
 
     return 0;
+}
+
+int oid_clone(u64 oldoid, u64 newoid) {
+    struct p9stat *info = oid_stat(oldoid);
+    struct oid_fd *new_wrapper, *old_wrapper;
+    void *buff = GC_MALLOC_ATOMIC(CLONE_BUFFER_SIZE);
+    int count;
+    struct utimbuf buf;
+
+    assert(buff != NULL);
+
+    if (oid_create(newoid, info) < 0)
+        return -1;
+
+    /* zero byte file? */
+    if (info->length == 0LL)
+        return 0;
+
+    /* open both files and position at the start of the files */
+    if ((old_wrapper = oid_get_open_oid_fd(oldoid)) == NULL)
+        return -1;
+    if (lseek(old_wrapper->fd, 0, SEEK_SET) < 0 ||
+            ((new_wrapper = oid_get_open_oid_fd(newoid)) == NULL))
+    {
+        old_wrapper->refcount--;
+        return -1;
+    }
+    if (lseek(new_wrapper->fd, 0, SEEK_SET) < 0) {
+        new_wrapper->refcount--;
+        return -1;
+    }
+
+    /* copy the file a chunk at a time */
+    for (;;) {
+        count = read(old_wrapper->fd, buff, CLONE_BUFFER_SIZE);
+        if (count == 0)
+            break;
+        if (count < 0) {
+            old_wrapper->refcount--;
+            new_wrapper->refcount--;
+            return -1;
+        }
+        if (write(new_wrapper->fd, buff, count) != count) {
+            old_wrapper->refcount--;
+            new_wrapper->refcount--;
+            return -1;
+        }
+    }
+
+    old_wrapper->refcount--;
+    new_wrapper->refcount--;
+
+    buf.actime = info->atime;
+    buf.modtime = info->mtime;
+    
+    return oid_set_times(newoid, &buf);
 }

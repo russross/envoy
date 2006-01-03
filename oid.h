@@ -13,10 +13,15 @@
  */
 
 #define OBJECT_DIR_MODE 0755
+#define OBJECT_MODE 0644
 #define OBJECT_FILENAME_LENGTH 29
+#define MAX_UID_LENGTH 8
+#define MAX_GID_LENGTH 8
+#define CLONE_BUFFER_SIZE 8192
 
-struct fd_wrapper {
-    int refcount;
+struct oid_fd {
+    pthread_cond_t *wait;
+    
     int fd;
 };
 
@@ -26,7 +31,9 @@ enum oid_type {
     OID_LINK,
 };
 
-struct objectdir {
+struct oid_dir {
+    pthread_cond_t *wait;
+
     u64 start;
     char *dirname;
     char **filenames;
@@ -34,15 +41,17 @@ struct objectdir {
 
 Lru *oid_init_dir_lru(void);
 Lru *oid_init_fd_lru(void);
+
 u64 oid_find_next_available(void);
-int oid_reserve_block(u64 *oid, int *count);
 struct fd_wrapper *oid_add_fd_wrapper(u64 oid, int fd);
 struct fd_wrapper *oid_get_open_fd_wrapper(u64 oid);
 struct objectdir *oid_read_dir(u64 start);
 
+int oid_reserve_block(u64 *oid, int *count);
 struct p9stat *oid_stat(u64 oid);
 int oid_wstat(u64 oid, struct p9stat *info);
 int oid_create(u64 oid, struct p9stat *info);
 int oid_set_times(u64 oid, struct utimbuf *buf);
+int oid_clone(u64 oldoid, u64 newoid);
 
 #endif

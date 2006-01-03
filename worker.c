@@ -12,7 +12,7 @@
  * Worker threads
  */
 
-static void *worker_thread_loop(Worker *t) {
+static void *worker_loop(Worker *t) {
     state->active_worker_count++;
     pthread_mutex_lock(state->biglock);
 
@@ -49,7 +49,7 @@ void worker_create(void * (*func)(void *), void *arg) {
 
         pthread_t newthread;
         pthread_create(&newthread, NULL,
-                (void *(*)(void *)) worker_thread_loop, (void *) t);
+                (void *(*)(void *)) worker_loop, (void *) t);
     } else {
         Worker *t = car(state->thread_pool);
         state->thread_pool = cdr(state->thread_pool);
@@ -83,3 +83,30 @@ void worker_wait_for_all(void) {
     while (state->active_worker_count > 0)
         pthread_cond_wait(state->wait_workers, state->biglock);
 }
+
+#define cleanup(var) do { \
+    var = obj; \
+    pthread_cond_broadcast(var->wait); \
+    var->wait = NULL; \
+} while (0)
+
+void worker_cleanup(Worker *worker) {
+    while (!null(worker->cleanup)) {
+        struct oid_dir *dir;
+        struct oid_fd *fd;
+        enum worker_state_types type = caar(worker->cleanup);
+        void *obj = cdar(worker->cleanup);
+        worker->cleanup = cdr(worked->cleanup);
+        worker_lock_acquire(type);
+
+        switch (type) {
+            case OBJECT_DIRECTORY:      cleanup(dir);   break;
+            case OBJECT_FD:             cleanup(fd);    break;
+            default:
+                assert(0);
+        }
+
+        worker_lock_release(type);
+    }
+}
+#undef cleanup
