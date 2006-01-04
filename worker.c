@@ -16,6 +16,29 @@
  * Worker threads
  */
 
+static pthread_mutex_t *locks[OBJECT_TOP];
+
+void worker_init(void) {
+    int i;
+    for (i = 0; i < OBJECT_TOP; i++) {
+        locks[i] = GC_NEW(pthread_mutex_t);
+        assert(locks[i] != NULL);
+        pthread_mutex_init(locks[i], NULL);
+    }
+}
+
+void worker_lock_acquire(enum worker_state_types type) {
+    assert(type >= 0 && type < OBJECT_TOP);
+
+    pthread_mutex_lock(locks[type]);
+}
+
+void worker_lock_release(enum worker_state_types type) {
+    assert(type >= 0 && type < OBJECT_TOP);
+
+    pthread_mutex_unlock(locks[type]);
+}
+
 static void *worker_loop(Worker *t) {
     state->active_worker_count++;
     pthread_mutex_lock(state->biglock);

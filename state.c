@@ -179,6 +179,8 @@ void state_init(void) {
     state->handles_listen = handles_new();
     state->handles_read = handles_new();
     state->handles_write = handles_new();
+    state->refresh_pipe = GC_MALLOC_ATOMIC(sizeof(int) * 2);
+    assert(state->refresh_pipe != NULL);
 
     state->conn_vector = vector_create(CONN_VECTOR_SIZE);
     state->forward_fids = vector_create(GLOBAL_FORWARD_VECTOR_SIZE);

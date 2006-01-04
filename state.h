@@ -39,6 +39,7 @@ struct state {
     Handles *handles_listen;
     Handles *handles_read;
     Handles *handles_write;
+    int *refresh_pipe;
     Address *my_address;
     Map *map;
     List *error_queue;

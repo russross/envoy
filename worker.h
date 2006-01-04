@@ -53,10 +53,14 @@ struct worker {
 
 void worker_cleanup(Worker *worker);
 
+void worker_init(void);
+void worker_lock_acquire(enum worker_state_types type);
+void worker_lock_release(enum worker_state_types type);
 void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
 void worker_wait(Transaction *trans);
 void worker_wait_multiple(pthread_cond_t *wait);
 void worker_wakeup(Transaction *trans);
 void worker_wait_for_all(void);
+
 
 #endif

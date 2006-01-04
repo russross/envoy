@@ -125,6 +125,15 @@ static Message *handle_socket_event(Connection **from) {
 
     /* readable socket is available--read a message */
     if ((fd = handles_member(state->handles_read, &rset)) > -1) {
+        /* was this a refresh request? */
+        if (fd == state->refresh_pipe[1]) {
+            char buff[16];
+            if (read(fd, buff, 16) < 0)
+                perror("handle_socket_event failed to read pipe");
+
+            return NULL;
+        }
+
         return read_message(fd, from);
     }
 
@@ -144,6 +153,10 @@ static Message *handle_socket_event(Connection **from) {
 void transport_init() {
     int fd;
     struct linger ling;
+
+    /* initialize a pipe that we can use to interrupt select */
+    assert(pipe(state->refresh_pipe) == 0);
+    handles_add(state->handles_read, state->refresh_pipe[0]);
 
     /* initialize a listening port */
     assert(state->my_address != NULL);
@@ -209,6 +222,12 @@ int open_connection(Address *addr) {
     printf("\n");
 
     return fd;
+}
+
+void transport_refresh(void) {
+    char buff = "";
+    if (write(state->refresh_pipe[1], &buff, 1) < 0)
+        perror("transport_refresh failed to write to pipe");
 }
 
 /* Public API */
