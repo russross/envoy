@@ -27,6 +27,8 @@ struct connection {
     Vector *tag_vector;
     List *pending_writes;
     Transaction *notag_trans;
+    Message *partial;
+    int partialbytes;
 };
 
 Connection *conn_insert_new(int fd, enum conn_type type, Address *addr);

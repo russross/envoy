@@ -40,13 +40,24 @@ static void write_message(int fd) {
 }
 
 static Message *read_message(int fd, Connection **from) {
-    Message *m = message_new();
-    int index = 0;
+    Message *m;
     int count;
+    int index = 0;
 
     *from = conn_lookup_fd(fd);
     assert(*from != NULL);
 
+    /* see if this is the continuation of a partial read */
+    if ((*from)->partial == NULL) {
+        (*from)->partial = m = message_new();
+        (*from)->partialbytes = count = 0;
+    } else {
+        m = (*from)->partial;
+        count = (*from)->partialbytes;
+    }
+
+    if (count < 4) {
+        int bytes = 
     count = recv(fd, m->raw, 4, MSG_WAITALL);
 
     /* has the connection been closed? */
@@ -228,6 +239,10 @@ void transport_refresh(void) {
     char buff = "";
     if (write(state->refresh_pipe[1], &buff, 1) < 0)
         perror("transport_refresh failed to write to pipe");
+}
+
+void main_loop(void) {
+
 }
 
 /* Public API */

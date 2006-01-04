@@ -36,6 +36,8 @@ Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
     conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
     conn->pending_writes = NULL;
     conn->notag_trans = NULL;
+    conn->partial = NULL;
+    conn->partialbytes = 0;
 
     vector_set(state->conn_vector, conn->fd, conn);
     hash_set(state->addr_2_conn, conn->addr, conn);
