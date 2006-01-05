@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include "types.h"
 #include "connection.h"
+#include "dispatch.h"
 
 void transport_init(void);
 Message *get_message(Connection **conn);

@@ -6,6 +6,7 @@
 #include "list.h"
 #include "vector.h"
 #include "transaction.h"
+#include "worker.h"
 
 /* connections */
 enum conn_type {
@@ -27,13 +28,15 @@ struct connection {
     Vector *tag_vector;
     List *pending_writes;
     Transaction *notag_trans;
-    Message *partial;
-    int partialbytes;
+    Message *partial_in;
+    int partial_in_bytes;
+    Message *partial_out;
+    int partial_out_bytes;
 };
 
 Connection *conn_insert_new(int fd, enum conn_type type, Address *addr);
 Connection *conn_lookup_fd(int fd);
-Connection *conn_get_from_addr(Address *addr);
+Connection *conn_get_from_addr(Worker *worker, Address *addr);
 Message *conn_get_pending_write(Connection *conn);
 int conn_has_pending_write(Connection *conn);
 void conn_queue_write(Connection *conn, Message *msg);

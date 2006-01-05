@@ -117,6 +117,7 @@ void test_map(void) {
     dumpMap(root, "");
 }
 
+/*
 void *test_connect(void *arg) {
     Address *addr = make_address("boulderdash", ENVOY_PORT);
     if (!memcmp(&addr->sin_addr, &state->my_address->sin_addr,
@@ -133,6 +134,7 @@ void *test_connect(void *arg) {
 
     return NULL;
 }
+*/
 
 void config_init(void) {
     map_insert(state->map, cons("home", cons("rgr22", NULL)),

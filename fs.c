@@ -22,6 +22,7 @@
 #include "fs.h"
 #include "dispatch.h"
 #include "map.h"
+#include "worker.h"
 #include "forward.h"
 
 /* generate a qid record from a file stat record */
@@ -225,7 +226,7 @@ Address *get_envoy_address(char *path) {
     env->out->msg.MESSAGE.fid = fwd->rfid; \
 } while(0);
 
-void forward_to_envoy(Transaction *trans) {
+void forward_to_envoy(Worker *worker, Transaction *trans) {
     Transaction *env;
     Forward *fwd = NULL;
 
@@ -291,7 +292,7 @@ void forward_to_envoy(Transaction *trans) {
  * - all outstanding i/o on the connection is aborted
  * - all existing fids are clunked
  */
-void handle_tversion(Transaction *trans) {
+void handle_tversion(Worker *worker, Transaction *trans) {
     struct Tversion *req = &trans->in->msg.tversion;
     struct Rversion *res = &trans->out->msg.rversion;
 
@@ -331,7 +332,7 @@ void handle_tversion(Transaction *trans) {
  * - aqid identifies a file of type QTAUTH
  * - afid is used to exchange (undefined) data to authorize connection
  */
-void handle_tauth(Transaction *trans) {
+void handle_tauth(Worker *worker, Transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
@@ -354,7 +355,7 @@ void handle_tauth(Transaction *trans) {
  * - afid may be used for multiple attach calls with same uname/aname
  * - error returned if fid is already in use
  */
-void handle_tattach(Transaction *trans) {
+void handle_tattach(Worker *worker, Transaction *trans) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
     struct sockaddr_in *addr;
@@ -370,24 +371,24 @@ void handle_tattach(Transaction *trans) {
 
         if (trans->conn->type == CONN_ENVOY_IN) {
             /* this request shouldn't have been sent here */
-            handle_error(trans);
+            handle_error(worker, trans);
             return;
         }
 
-        rconn = conn_get_from_addr(addr);
+        rconn = conn_get_from_addr(worker, addr);
 
         /* did we fail to connect to the remote envoy? */
         if (rconn == NULL) {
-            handle_error(trans);
+            handle_error(worker, trans);
             return;
         }
 
         if (forward_create_new(trans->conn, req->fid, rconn) == NOFID) {
-            handle_error(trans);
+            handle_error(worker, trans);
             return;
         }
 
-        forward_to_envoy(trans);
+        forward_to_envoy(worker, trans);
     } else {
         /* this request can be handled locally */
         struct stat info;
@@ -425,7 +426,7 @@ void handle_tattach(Transaction *trans) {
  * - client must honor regular response received before Rflush, including
  *   server-side state change
  */
-void handle_tflush(Transaction *trans) {
+void handle_tflush(Worker *worker, Transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
@@ -489,7 +490,7 @@ void handle_tflush(Transaction *trans) {
 //    return cons(stat2qid(&info), walk_qid_list(cdr(paths)));
 //}
 
-void client_twalk(Transaction *trans) {
+void client_twalk(Worker *worker, Transaction *trans) {
     struct Twalk *req = &trans->in->msg.twalk;
     struct Rwalk *res = &trans->out->msg.rwalk;
     Fid *fid;
@@ -588,7 +589,7 @@ void client_twalk(Transaction *trans) {
     send_reply(trans);
 }
 
-void envoy_twalk(Transaction *trans) {
+void envoy_twalk(Worker *worker, Transaction *trans) {
     failif(-1, ENOTSUP);
 }
 
@@ -622,7 +623,7 @@ void envoy_twalk(Transaction *trans) {
  *   or written to a file without breaking the i/o transfer into multiple 9P
  *   messages
  */
-void handle_topen(Transaction *trans) {
+void handle_topen(Worker *worker, Transaction *trans) {
     struct Topen *req = &trans->in->msg.topen;
     struct Ropen *res = &trans->out->msg.ropen;
     Fid *fid;
@@ -683,7 +684,7 @@ void handle_topen(Transaction *trans) {
  * - attempt to create an existing file will be rejected
  * - all other file open modes and restrictions match Topen; same for iounit
  */
-void handle_tcreate(Transaction *trans) {
+void handle_tcreate(Worker *worker, Transaction *trans) {
     struct Tcreate *req = &trans->in->msg.tcreate;
     struct Rcreate *res = &trans->out->msg.rcreate;
     Fid *fid;
@@ -779,7 +780,7 @@ void handle_tcreate(Transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-void handle_tread(Transaction *trans) {
+void handle_tread(Worker *worker, Transaction *trans) {
     struct Tread *req = &trans->in->msg.tread;
     struct Rread *res = &trans->out->msg.rread;
     Fid *fid;
@@ -875,7 +876,7 @@ void handle_tread(Transaction *trans) {
  *   from open/create, if non-zero, gives maximum size guaranteed to be
  *   returned atomically
  */
-void handle_twrite(Transaction *trans) {
+void handle_twrite(Worker *worker, Transaction *trans) {
     struct Twrite *req = &trans->in->msg.twrite;
     struct Rwrite *res = &trans->out->msg.rwrite;
     Fid *fid;
@@ -915,7 +916,7 @@ void handle_twrite(Transaction *trans) {
  * - if ORCLOSE was set at file open, file will be removed
  * - even if an error is returned, the fid is no longer valid
  */
-void handle_tclunk(Transaction *trans) {
+void handle_tclunk(Worker *worker, Transaction *trans) {
     struct Tclunk *req = &trans->in->msg.tclunk;
     Fid *fid;
 
@@ -947,7 +948,7 @@ void handle_tclunk(Transaction *trans) {
  * - if other clients have the file open, file may or may not be removed
  *   immediately: this is implementation dependent
  */
-void handle_tremove(Transaction *trans) {
+void handle_tremove(Worker *worker, Transaction *trans) {
     struct Tremove *req = &trans->in->msg.tremove;
     Fid *fid;
 
@@ -983,7 +984,7 @@ void handle_tremove(Transaction *trans) {
  * Semantics:
  * - requires no special permissions
  */
-void handle_tstat(Transaction *trans) {
+void handle_tstat(Worker *worker, Transaction *trans) {
     struct Tstat *req = &trans->in->msg.tstat;
     struct Rstat *res = &trans->out->msg.rstat;
     Fid *fid;
@@ -1028,7 +1029,7 @@ void handle_tstat(Transaction *trans) {
  *   - size field in the stat record
  *   - note that n = size + 2
  */
-void handle_twstat(Transaction *trans) {
+void handle_twstat(Worker *worker, Transaction *trans) {
     struct Twstat *req = &trans->in->msg.twstat;
     Fid *fid;
     struct stat info;

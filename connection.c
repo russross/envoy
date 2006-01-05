@@ -11,6 +11,7 @@
 #include "state.h"
 #include "transport.h"
 #include "dispatch.h"
+#include "worker.h"
 
 /*
  * Connection pool state
@@ -36,8 +37,10 @@ Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
     conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
     conn->pending_writes = NULL;
     conn->notag_trans = NULL;
-    conn->partial = NULL;
-    conn->partialbytes = 0;
+    conn->partial_in = NULL;
+    conn->partial_in_bytes = 0;
+    conn->partial_out = NULL;
+    conn->partial_out_bytes = 0;
 
     vector_set(state->conn_vector, conn->fd, conn);
     hash_set(state->addr_2_conn, conn->addr, conn);
@@ -49,7 +52,7 @@ Connection *conn_lookup_fd(int fd) {
     return vector_get(state->conn_vector, fd);
 }
 
-Connection *conn_get_from_addr(Address *addr) {
+Connection *conn_get_from_addr(Worker *worker, Address *addr) {
     Connection *conn;
 
     assert(addr != NULL);
@@ -64,7 +67,7 @@ Connection *conn_get_from_addr(Address *addr) {
             conn = conn_insert_new(fd, CONN_STORAGE_OUT, addr);
         else
             assert(0);
-        if (connect_envoy(conn) < 0) {
+        if (connect_envoy(worker, conn) < 0) {
             conn_remove(conn);
             return NULL;
         }
@@ -89,7 +92,7 @@ Message *conn_get_pending_write(Connection *conn) {
 }
 
 int conn_has_pending_write(Connection *conn) {
-    return !null(conn->pending_writes);
+    return conn->partial_out != NULL || !null(conn->pending_writes);
 }
 
 void conn_queue_write(Connection *conn, Message *msg) {

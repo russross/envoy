@@ -109,7 +109,7 @@ void handle_error(Worker *worker, Transaction *trans) {
     state->error_queue = append_elt(state->error_queue, trans);
 }
 
-static void *dispatch(Worker *worker, Transaction *trans) {
+static void dispatch(Worker *worker, Transaction *trans) {
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||
             trans->conn->type == CONN_ENVOY_IN);
@@ -181,30 +181,28 @@ static void *dispatch(Worker *worker, Transaction *trans) {
         // handler.  Behavior for objects we no longer own is
         // not yet implemented
         switch (trans->in->id) {
-            case TATTACH:   handle_tattach(trans);          break;
-            case TOPEN:     handle_topen(trans);            break;
-            case TCREATE:   handle_tcreate(trans);          break;
-            case TREAD:     handle_tread(trans);            break;
-            case TWRITE:    handle_twrite(trans);           break;
-            case TCLUNK:    handle_tclunk(trans);           break;
-            case TREMOVE:   handle_tremove(trans);          break;
-            case TSTAT:     handle_tstat(trans);            break;
-            case TWSTAT:    handle_twstat(trans);           break;
+            case TATTACH:   handle_tattach(worker, trans);  break;
+            case TOPEN:     handle_topen(worker, trans);    break;
+            case TCREATE:   handle_tcreate(worker, trans);  break;
+            case TREAD:     handle_tread(worker, trans);    break;
+            case TWRITE:    handle_twrite(worker, trans);   break;
+            case TCLUNK:    handle_tclunk(worker, trans);   break;
+            case TREMOVE:   handle_tremove(worker, trans);  break;
+            case TSTAT:     handle_tstat(worker, trans);    break;
+            case TWSTAT:    handle_twstat(worker, trans);   break;
 
-            case TAUTH:     handle_tauth(trans);            break;
-            case TFLUSH:    handle_tflush(trans);           break;
-            case TWALK:     envoy_twalk(trans);             break;
+            case TAUTH:     handle_tauth(worker, trans);    break;
+            case TFLUSH:    handle_tflush(worker, trans);   break;
+            case TWALK:     envoy_twalk(worker, trans);     break;
 
             case TVERSION:
             default:
-                handle_error(trans);
+                handle_error(worker, trans);
                 printf("\nBad request from envoy\n");
         }
     } else {
         assert(0);
     }
-
-    return NULL;
 }
 
 void main_loop(void) {
@@ -254,7 +252,7 @@ void main_loop(void) {
     }
 }
 
-int connect_envoy(Connection *conn) {
+int connect_envoy(Worker *worker, Connection *conn) {
     Transaction *trans;
     struct Rversion *res;
 
@@ -276,7 +274,7 @@ int connect_envoy(Connection *conn) {
 
     /* blow up if the reply wasn't what we were expecting */
     if (trans->in->id != RVERSION || strcmp(res->version, "9P2000.envoy")) {
-        handle_error(trans);
+        handle_error(worker, trans);
         return -1;
     }
 

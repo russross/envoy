@@ -15,76 +15,119 @@
 #include "config.h"
 #include "state.h"
 #include "transport.h"
+#include "dispatch.h"
 #include "worker.h"
 
-static void write_message(int fd) {
-    Connection *conn;
+static void write_message(int fd, Connection *conn) {
     Message *msg;
-    int len;
+    int bytes;
 
-    assert((conn = conn_lookup_fd(fd)) != NULL);
-    msg = conn_get_pending_write(conn);
+    while (conn_get_pending_write(conn)) {
+        /* see if this is the continuation of a partial write */
+        if (conn->partial_out == NULL) {
+            conn->partial_out = msg = conn_get_pending_write(conn);
+            conn->partial_out_bytes = bytes = 0;
 
-    if (msg != NULL) {
-        /* if this was the last message in the queue, stop trying to write */
-        if (!conn_has_pending_write(conn))
-            handles_remove(state->handles_write, fd);
+            assert(msg != NULL);
 
-        packMessage(msg, conn->maxSize);
-        printMessage(stderr, msg);
+            packMessage(msg, conn->maxSize);
+            printMessage(stderr, msg);
+        } else {
+            msg = conn->partial_out;
+            bytes = conn->partial_out_bytes;
+        }
 
-        len = send(conn->fd, msg->raw, msg->size, 0);
+        /* keep trying to send the message */
+        while (bytes < msg->size) {
+            int res = send(conn->fd, msg->raw + bytes, msg->size - bytes,
+                    MSG_DONTWAIT);
 
-        assert(len == msg->size);
+            /* would we block? */
+            if (res == 0 || (res < 0 && errno == EAGAIN))
+                return;
+
+            /* don't know how to handle any other errors... */
+            assert(res >= 0);
+
+            /* record the bytes we sent */
+            conn->partial_out_bytes = (bytes += res);
+        }
+
+        /* that message is finished */
+        conn->partial_out = NULL;
+        conn->partial_out_bytes = 0;
     }
+
+    /* this was the last message in the queue so stop trying to write */
+    handles_remove(state->handles_write, fd);
 }
 
-static Message *read_message(int fd, Connection **from) {
-    Message *m;
-    int count;
-    int index = 0;
-
-    *from = conn_lookup_fd(fd);
-    assert(*from != NULL);
+static Message *read_message(int fd, Connection *conn) {
+    Message *msg;
+    int bytes, size;
 
     /* see if this is the continuation of a partial read */
-    if ((*from)->partial == NULL) {
-        (*from)->partial = m = message_new();
-        (*from)->partialbytes = count = 0;
+    if (conn->partial_in == NULL) {
+        conn->partial_in = msg = message_new();
+        conn->partial_in_bytes = bytes = 0;
     } else {
-        m = (*from)->partial;
-        count = (*from)->partialbytes;
+        msg = conn->partial_in;
+        bytes = conn->partial_in_bytes;
     }
 
-    if (count < 4) {
-        int bytes = 
-    count = recv(fd, m->raw, 4, MSG_WAITALL);
+    /* we start by reading the size field, then the whole message */
+    size = (bytes < 4) ? 4 : msg->size;
 
-    /* has the connection been closed? */
-    if (count == 0)
-        printf("socket closed from other end\n");
+    while (bytes < size) {
+        int res =
+            recv(fd, msg->raw + bytes, size - bytes, MSG_DONTWAIT);
 
-    if (    count != 4 ||
-            (m->size = unpackU32(m->raw, 4, &index)) > GLOBAL_MAX_SIZE ||
-            recv(fd, m->raw + 4, m->size - 4, MSG_WAITALL) != m->size - 4 ||
-            unpackMessage(m) < 0)
-    {
-        /* something went wrong */
-        printf("closing connection: ");
-        print_address((*from)->addr);
-        printf("\n");
+        /* did we run out of data? */
+        if (res < 0 && errno == EAGAIN)
+            return NULL;
 
-        /* close down the connection */
-        conn_remove(*from);
-        handles_remove(state->handles_read, fd);
-        if (conn_has_pending_write(*from))
-            handles_remove(state->handles_write, fd);
-        close(fd);
+        /* an error or connection closed from other side? */
+        if (res <= 0)
+            break;
+        
+        /* record the bytes we read */
+        conn->partial_in_bytes = (bytes += res);
 
-        return NULL;
+        /* read the message length once it's available and check it */
+        if (bytes == 4) {
+            int index = 0;
+            if ((size = unpackU32(msg->raw, 4, &index)) > GLOBAL_MAX_SIZE)
+                break;
+            else
+                msg->size = size;
+        }
+
+        /* have we read the whole message? */
+        if (bytes == size) {
+            if (unpackMessage(msg) < 0) {
+                break;
+            } else {
+                /* success */
+                conn->partial_in = NULL;
+                conn->partial_in_bytes = 0;
+                return msg;
+            }
+        }
     }
 
-    return m;
+    /* time to shut down this connection */
+    printf("closing connection: ");
+    print_address(conn->addr);
+    printf("\n");
+
+    /* close down the connection */
+    conn_remove(conn);
+    handles_remove(state->handles_read, fd);
+    if (conn_has_pending_write(conn))
+        handles_remove(state->handles_write, fd);
+    close(fd);
+
+    return NULL;
 }
 
 static void accept_connection(int sock) {
@@ -130,7 +173,9 @@ static Message *handle_socket_event(Connection **from) {
     /* note: failed connects will show up here first, but they will also
        show up in the readable set. */
     if ((fd = handles_member(state->handles_write, &wset)) > -1) {
-        write_message(fd);
+        Connection *conn = conn_lookup_fd(fd);
+        assert(conn != NULL);
+        write_message(fd, conn);
         return NULL;
     }
 
@@ -145,7 +190,11 @@ static Message *handle_socket_event(Connection **from) {
             return NULL;
         }
 
-        return read_message(fd, from);
+        /* find the connection and store it for our caller */
+        *from = conn_lookup_fd(fd);
+        assert(*from != NULL);
+
+        return read_message(fd, *from);
     }
 
     /* listening socket is available--accept a new incoming connection */
@@ -236,8 +285,8 @@ int open_connection(Address *addr) {
 }
 
 void transport_refresh(void) {
-    char buff = "";
-    if (write(state->refresh_pipe[1], &buff, 1) < 0)
+    char *buff = "";
+    if (write(state->refresh_pipe[1], buff, 1) < 0)
         perror("transport_refresh failed to write to pipe");
 }
 
