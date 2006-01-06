@@ -52,8 +52,10 @@ Connection *conn_lookup_fd(int fd) {
     return vector_get(state->conn_vector, fd);
 }
 
-Connection *conn_get_from_addr(Worker *worker, Address *addr) {
+static Connection *get_from_addr(Worker *worker, Address *addr) {
     Connection *conn;
+
+    /* note: caller must hold LOCK_CONNECTION */
 
     assert(addr != NULL);
 
@@ -61,18 +63,28 @@ Connection *conn_get_from_addr(Worker *worker, Address *addr) {
         int fd;
         if ((fd = open_connection(addr)) < 0)
             return NULL;
+
         if (addr->sin_port == ENVOY_PORT)
             conn = conn_insert_new(fd, CONN_ENVOY_OUT, addr);
         else if (addr->sin_port == STORAGE_PORT)
             conn = conn_insert_new(fd, CONN_STORAGE_OUT, addr);
         else
             assert(0);
+
         if (connect_envoy(worker, conn) < 0) {
             conn_remove(conn);
             return NULL;
         }
     }
 
+    return conn;
+}
+
+Connection *conn_get_from_addr(Worker *worker, Address *addr) {
+    Connection *conn;
+    worker_lock_acquire(LOCK_CONNECTION);
+    conn = get_from_addr(worker, addr);
+    worker_lock_release(LOCK_CONNECTION);
     return conn;
 }
 

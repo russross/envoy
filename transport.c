@@ -18,11 +18,11 @@
 #include "dispatch.h"
 #include "worker.h"
 
-static void write_message(int fd, Connection *conn) {
+static void write_message(Connection *conn) {
     Message *msg;
     int bytes;
 
-    while (conn_get_pending_write(conn)) {
+    while (conn_has_pending_write(conn)) {
         /* see if this is the continuation of a partial write */
         if (conn->partial_out == NULL) {
             conn->partial_out = msg = conn_get_pending_write(conn);
@@ -43,11 +43,12 @@ static void write_message(int fd, Connection *conn) {
                     MSG_DONTWAIT);
 
             /* would we block? */
-            if (res == 0 || (res < 0 && errno == EAGAIN))
+            if (res < 0 && errno == EAGAIN)
                 return;
 
             /* don't know how to handle any other errors... */
-            assert(res >= 0);
+            /* TODO: we should handle connect failures here */
+            assert(res > 0);
 
             /* record the bytes we sent */
             conn->partial_out_bytes = (bytes += res);
@@ -59,10 +60,10 @@ static void write_message(int fd, Connection *conn) {
     }
 
     /* this was the last message in the queue so stop trying to write */
-    handles_remove(state->handles_write, fd);
+    handles_remove(state->handles_write, conn->fd);
 }
 
-static Message *read_message(int fd, Connection *conn) {
+static Message *read_message(Connection *conn) {
     Message *msg;
     int bytes, size;
 
@@ -80,7 +81,7 @@ static Message *read_message(int fd, Connection *conn) {
 
     while (bytes < size) {
         int res =
-            recv(fd, msg->raw + bytes, size - bytes, MSG_DONTWAIT);
+            recv(conn->fd, msg->raw + bytes, size - bytes, MSG_DONTWAIT);
 
         /* did we run out of data? */
         if (res < 0 && errno == EAGAIN)
@@ -122,10 +123,10 @@ static Message *read_message(int fd, Connection *conn) {
 
     /* close down the connection */
     conn_remove(conn);
-    handles_remove(state->handles_read, fd);
+    handles_remove(state->handles_read, conn->fd);
     if (conn_has_pending_write(conn))
-        handles_remove(state->handles_write, fd);
-    close(fd);
+        handles_remove(state->handles_write, conn->fd);
+    close(conn->fd);
 
     return NULL;
 }
@@ -155,9 +156,7 @@ static Message *handle_socket_event(Connection **from) {
     int high, num, fd;
     fd_set rset, wset;
 
-    /* only proceed when everyone else is waiting on us */
-    worker_wait_for_all();
-
+    /* handles are guarded by connection lock */
     assert(state->handles_listen->high >= 0);
 
     /* prepare and select on all active connections */
@@ -167,7 +166,10 @@ static Message *handle_socket_event(Connection **from) {
     FD_ZERO(&wset);
     high = handles_collect(state->handles_write, &wset, high);
 
+    /* give up LOCK_CONNECTION while we wait */
+    worker_lock_release(LOCK_CONNECTION);
     num = select(high + 1, &rset, &wset, NULL, NULL);
+    worker_lock_acquire(LOCK_CONNECTION);
 
     /* writable socket is available--send a queued message */
     /* note: failed connects will show up here first, but they will also
@@ -175,7 +177,8 @@ static Message *handle_socket_event(Connection **from) {
     if ((fd = handles_member(state->handles_write, &wset)) > -1) {
         Connection *conn = conn_lookup_fd(fd);
         assert(conn != NULL);
-        write_message(fd, conn);
+        write_message(conn);
+
         return NULL;
     }
 
@@ -194,7 +197,7 @@ static Message *handle_socket_event(Connection **from) {
         *from = conn_lookup_fd(fd);
         assert(*from != NULL);
 
-        return read_message(fd, *from);
+        return read_message(*from);
     }
 
     /* listening socket is available--accept a new incoming connection */
@@ -233,46 +236,35 @@ void transport_init() {
     handles_add(state->handles_listen, fd);
 }
 
-Message *get_message(Connection **conn) {
-    Message *msg = NULL;
-
-    while (msg == NULL)
-        msg = handle_socket_event(conn);
-
-    printMessage(stdout, msg);
-
-    return msg;
-}
-
 void put_message(Connection *conn, Message *msg) {
     assert(conn != NULL && msg != NULL && conn->fd >= 0);
 
-    if (!conn_has_pending_write(conn))
+    worker_lock_acquire(LOCK_CONNECTION);
+    if (!conn_has_pending_write(conn)) {
         handles_add(state->handles_write, conn->fd);
+        transport_refresh();
+    }
 
     conn_queue_write(conn, msg);
+    worker_lock_release(LOCK_CONNECTION);
 }
 
 int open_connection(Address *addr) {
-    int status, flags;
-    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int flags;
+    int fd;
 
-    if (fd < 0)
-        return fd;
-    if ((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        close(fd);
-        return flags;
-    }
-    if ((status = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0) {
-        close(fd);
-        return status;
-    }
+    /* note: caller must hold LOCK_CONNECTION */
 
-    status = connect(fd, (struct sockaddr *) addr, sizeof(*addr));
-
-    if (status < 0 && errno != EINPROGRESS) {
-        close(fd);
-        return status;
+    /* create it, set it to non-blocking, and start it connecting */
+    if (    (fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ||
+            (flags = fcntl(fd, F_GETFL, 0)) < 0 ||
+            fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0 ||
+            (connect(fd, (struct sockaddr *) addr, sizeof(*addr)) < 0 &&
+             errno != EINPROGRESS))
+    {
+        if (fd >= 0)
+            close(fd);
+        return -1;
     }
 
     handles_add(state->handles_read, fd);
@@ -291,7 +283,87 @@ void transport_refresh(void) {
 }
 
 void main_loop(void) {
+    Transaction *trans;
+    Message *msg;
+    Connection *conn;
 
+    worker_lock_acquire(LOCK_CONNECTION);
+
+    for (;;) {
+        /* handle any pending errors */
+        if (!null(state->error_queue)) {
+            printf("PANIC! Unhandled error\n");
+            state->error_queue = cdr(state->error_queue);
+            continue;
+        }
+
+        /* do a read or write, possibly returning a read message */
+        while (msg == NULL)
+            msg = handle_socket_event(&conn);
+
+        printMessage(stdout, msg);
+        trans = trans_lookup_remove(conn, msg->tag);
+
+        /* what kind of request/response is this? */
+        switch (conn->type) {
+            case CONN_UNKNOWN_IN:
+            case CONN_CLIENT_IN:
+            case CONN_ENVOY_IN:
+            case CONN_STORAGE_IN:
+                /* this is a new transaction */
+                assert(trans == NULL);
+
+                trans = trans_new(conn, msg, NULL);
+
+                worker_create(dispatch, trans);
+                break;
+
+            case CONN_ENVOY_OUT:
+            case CONN_STORAGE_OUT:
+                /* this is a reply to a request we made */
+                assert(trans != NULL);
+
+                trans->in = msg;
+
+                /* wake up the handler that is waiting for this message */
+                worker_wakeup(trans);
+                break;
+
+            default:
+                assert(0);
+        }
+    }
+}
+
+int connect_envoy(Worker *worker, Connection *conn) {
+    Transaction *trans;
+    struct Rversion *res;
+
+    /* prepare a Tversion message and package it in a transaction */
+    trans = trans_new(conn, NULL, message_new());
+    trans->out->tag = NOTAG;
+    trans->out->id = TVERSION;
+    if (conn->type == CONN_ENVOY_OUT)
+        set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");
+    else if (conn->type == CONN_STORAGE_OUT)
+        set_tversion(trans->out, trans->conn->maxSize, "9P2000.storage");
+    else
+        assert(0);
+
+    send_request(trans);
+
+    /* check Rversion results and prepare a Tauth message */
+    res = &trans->in->msg.rversion;
+
+    /* blow up if the reply wasn't what we were expecting */
+    if (trans->in->id != RVERSION || strcmp(res->version, "9P2000.envoy")) {
+        handle_error(worker, trans);
+        return -1;
+    }
+
+    conn->maxSize = max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
+
+    return 0;
 }
 
 /* Public API */

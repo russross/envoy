@@ -320,7 +320,7 @@ static void oid_read_dir(struct oid_dir *dir) {
 struct oid_dir *oid_dir_lookup(Worker *worker, u64 start) {
     struct oid_dir *result;
 
-    worker_lock_acquire(OBJECT_DIRECTORY);
+    worker_lock_acquire(LOCK_DIRECTORY);
 
     assert(start == oid_dir_findstart(start));
 
@@ -341,13 +341,13 @@ struct oid_dir *oid_dir_lookup(Worker *worker, u64 start) {
         
         lru_add(state->oid_dir_lru, key, result);
 
-        worker_reserve(worker, OBJECT_DIRECTORY, result);
-        worker_lock_release(OBJECT_DIRECTORY);
+        worker_reserve(worker, LOCK_DIRECTORY, result);
+        worker_lock_release(LOCK_DIRECTORY);
 
         oid_read_dir(result);
     } else {
-        worker_reserve(worker, OBJECT_DIRECTORY, result);
-        worker_lock_release(OBJECT_DIRECTORY);
+        worker_reserve(worker, LOCK_DIRECTORY, result);
+        worker_lock_release(LOCK_DIRECTORY);
     }
 
     return result;

@@ -109,7 +109,7 @@ void handle_error(Worker *worker, Transaction *trans) {
     state->error_queue = append_elt(state->error_queue, trans);
 }
 
-static void dispatch(Worker *worker, Transaction *trans) {
+void dispatch(Worker *worker, Transaction *trans) {
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||
             trans->conn->type == CONN_ENVOY_IN);
@@ -203,82 +203,4 @@ static void dispatch(Worker *worker, Transaction *trans) {
     } else {
         assert(0);
     }
-}
-
-void main_loop(void) {
-    Transaction *trans;
-    Message *msg;
-    Connection *conn;
-
-    for (;;) {
-        /* handle any pending errors */
-        if (!null(state->error_queue)) {
-            printf("PANIC! Unhandled error\n");
-            state->error_queue = cdr(state->error_queue);
-            continue;
-        }
-
-        /* receive a new message while trying to write outgoing messages */
-        msg = get_message(&conn);
-        trans = trans_lookup_remove(conn, msg->tag);
-
-        /* what kind of request/response is this? */
-        switch (conn->type) {
-            case CONN_UNKNOWN_IN:
-            case CONN_CLIENT_IN:
-            case CONN_ENVOY_IN:
-                /* this is a new transaction */
-                assert(trans == NULL);
-
-                trans = trans_new(conn, msg, NULL);
-
-                worker_create(dispatch, trans);
-                break;
-
-            case CONN_ENVOY_OUT:
-                /* this is a reply to a request we made */
-                assert(trans != NULL);
-
-                trans->in = msg;
-
-                /* wake up the handler that is waiting for this message */
-                worker_wakeup(trans);
-                break;
-
-            case CONN_STORAGE_OUT:
-            default:
-                assert(0);
-        }
-    }
-}
-
-int connect_envoy(Worker *worker, Connection *conn) {
-    Transaction *trans;
-    struct Rversion *res;
-
-    /* prepare a Tversion message and package it in a transaction */
-    trans = trans_new(conn, NULL, message_new());
-    trans->out->tag = NOTAG;
-    trans->out->id = TVERSION;
-    if (conn->type == CONN_ENVOY_OUT)
-        set_tversion(trans->out, trans->conn->maxSize, "9P2000.envoy");
-    else if (conn->type == CONN_STORAGE_OUT)
-        set_tversion(trans->out, trans->conn->maxSize, "9P2000.storage");
-    else
-        assert(0);
-
-    send_request(trans);
-
-    /* check Rversion results and prepare a Tauth message */
-    res = &trans->in->msg.rversion;
-
-    /* blow up if the reply wasn't what we were expecting */
-    if (trans->in->id != RVERSION || strcmp(res->version, "9P2000.envoy")) {
-        handle_error(worker, trans);
-        return -1;
-    }
-
-    conn->maxSize = max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
-
-    return 0;
 }

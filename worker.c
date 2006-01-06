@@ -16,25 +16,25 @@
  * Worker threads
  */
 
-static pthread_mutex_t *locks[OBJECT_TOP];
+static pthread_mutex_t *locks[LOCK_TOP];
 
 void worker_init(void) {
     int i;
-    for (i = 0; i < OBJECT_TOP; i++) {
+    for (i = 0; i < LOCK_TOP; i++) {
         locks[i] = GC_NEW(pthread_mutex_t);
         assert(locks[i] != NULL);
         pthread_mutex_init(locks[i], NULL);
     }
 }
 
-void worker_lock_acquire(enum worker_state_types type) {
-    assert(type >= 0 && type < OBJECT_TOP);
+void worker_lock_acquire(enum lock_types type) {
+    assert(type >= 0 && type < LOCK_TOP);
 
     pthread_mutex_lock(locks[type]);
 }
 
-void worker_lock_release(enum worker_state_types type) {
-    assert(type >= 0 && type < OBJECT_TOP);
+void worker_lock_release(enum lock_types type) {
+    assert(type >= 0 && type < LOCK_TOP);
 
     pthread_mutex_unlock(locks[type]);
 }
@@ -130,15 +130,14 @@ void worker_cleanup(Worker *worker) {
     while (!null(worker->cleanup)) {
         struct oid_dir *dir;
         struct oid_fd *fd;
-        enum worker_state_types type =
-            (enum worker_state_types) caar(worker->cleanup);
+        enum lock_types type = (enum lock_types) caar(worker->cleanup);
         void *obj = cdar(worker->cleanup);
         worker->cleanup = cdr(worker->cleanup);
         worker_lock_acquire(type);
 
         switch (type) {
-            case OBJECT_DIRECTORY:      cleanup(dir);   break;
-            case OBJECT_FD:             cleanup(fd);    break;
+            case LOCK_DIRECTORY:        cleanup(dir);   break;
+            case LOCK_FD:               cleanup(fd);    break;
             default:
                 assert(0);
         }

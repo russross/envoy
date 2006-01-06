@@ -12,10 +12,11 @@
 #include "transaction.h"
 
 /* the order here is the order in which locks must be acquired */
-enum worker_state_types {
-    OBJECT_DIRECTORY,
-    OBJECT_FD,
-    OBJECT_TOP,
+enum lock_types {
+    LOCK_DIRECTORY,
+    LOCK_FD,
+    LOCK_CONNECTION,
+    LOCK_TOP,
 };
 
 enum worker_transaction_states {
@@ -54,8 +55,8 @@ struct worker {
 void worker_cleanup(Worker *worker);
 
 void worker_init(void);
-void worker_lock_acquire(enum worker_state_types type);
-void worker_lock_release(enum worker_state_types type);
+void worker_lock_acquire(enum lock_types type);
+void worker_lock_release(enum lock_types type);
 void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
 void worker_wait(Transaction *trans);
 void worker_wait_multiple(pthread_cond_t *wait);

@@ -7,10 +7,10 @@
 #include "dispatch.h"
 
 void transport_init(void);
-Message *get_message(Connection **conn);
 void put_message(Connection *conn, Message *msg);
 int open_connection(Address *addr);
 void transport_refresh(void);
 void main_loop(void);
+int connect_envoy(Worker *worker, Connection *conn);
 
 #endif
