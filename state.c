@@ -3,6 +3,7 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -18,6 +19,7 @@
 #include "config.h"
 #include "state.h"
 #include "map.h"
+#include "worker.h"
 #include "oid.h"
 
 /*
@@ -169,13 +171,29 @@ void state_dump(void) {
  * State initializer
  */
 
-void state_init(void) {
+static void state_init_common(void) {
     char *hostname;
 
     assert(state == NULL);
     state = GC_NEW(struct state);
     assert(state != NULL);
 
+    /* find out who we are */
+    hostname = GC_MALLOC_ATOMIC(MAX_HOSTNAME + 1);
+
+    assert(hostname != NULL);
+    hostname[MAX_HOSTNAME] = 0;
+    if (gethostname(hostname, MAX_HOSTNAME) < 0) {
+        perror("can't find local hostname");
+        exit(-1);
+    }
+
+    hostname = stringcopy(hostname);
+    state->my_address = make_address(hostname, ENVOY_PORT);
+
+    printf("starting up on host %s\n", hostname);
+
+    /* set up the transport state */
     state->handles_listen = handles_new();
     state->handles_read = handles_new();
     state->handles_write = handles_new();
@@ -189,32 +207,34 @@ void state_init(void) {
             (u32 (*)(const void *)) addr_hash,
             (int (*)(const void *, const void *)) addr_cmp);
 
-    assert((hostname = getenv("HOSTNAME")) != NULL);
-    state->my_address = make_address(hostname, ENVOY_PORT);
+    /* error handling */
+    state->error_queue = NULL;
 
+    /* the lock */
+    state->biglock = GC_NEW(pthread_mutex_t);
+    assert(state->biglock != NULL);
+    pthread_mutex_init(state->biglock, NULL);
+
+    state->thread_pool = NULL;
+}
+
+void state_init_envoy(void) {
+    state_init_common();
+
+    /* namespace management state */
     state->map = GC_NEW(Map);
     assert(state->map != NULL);
     state->map->prefix = NULL;
     state->map->addr = state->my_address;
     state->map->nchildren = 0;
     state->map->children = NULL;
+}
 
-    state->error_queue = NULL;
+void state_init_storage(void) {
+    state_init_common();
 
-    state->biglock = GC_NEW(pthread_mutex_t);
-    assert(state->biglock != NULL);
-    pthread_mutex_init(state->biglock, NULL);
-    pthread_mutex_lock(state->biglock);
-
-    state->wait_workers = GC_NEW(pthread_cond_t);
-    assert(state->wait_workers != NULL);
-    pthread_cond_init(state->wait_workers, NULL);
-
-    state->active_worker_count = 0;
-    state->thread_pool = NULL;
-
-    state->oid_dir_lru = oid_init_dir_lru();
-    state->oid_fd_lru = oid_init_fd_lru();
+    /* object cache state */
+    state->objectdir_lru = init_objectdir_lru();
+    state->openfile_lru = init_openfile_lru();
     state->oid_next_available = oid_find_next_available();
-
 }

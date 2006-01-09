@@ -14,9 +14,9 @@
 /* the order here is the order in which locks must be acquired */
 enum lock_types {
     LOCK_DIRECTORY,
-    LOCK_FD,
-    LOCK_CONNECTION,
-    LOCK_TOP,
+    LOCK_OPENFILE,
+    LOCK_FID,
+    LOCK_FORWARD,
 };
 
 enum worker_transaction_states {
@@ -36,32 +36,28 @@ struct worker {
     List *cleanup;
 };
 
-#define worker_reserve(work, kind, obj) do { \
+#define reserve(work, kind, obj) do { \
     while (obj->wait != NULL) \
-        pthread_cond_wait(obj->wait); \
-    obj->wait = GC_NEW_ATOMIC(pthread_cond_t); \
-    assert(obj->wait != NULL); \
-    pthread_cond_init(obj->wait, NULL); \
+        cond_wait(obj->wait); \
+    obj->wait = new_cond(); \
     work->cleanup = cons(cons(kind, obj), work->cleanup); \
 } while (0)
 
-#define worker_release(work, kind, obj) do { \
-    pthread_cond_broadcast(obj->wait); \
+#define release(work, kind, obj) do { \
+    cond_broadcast(obj->wait); \
     obj->wait = NULL; \
     assert(!null(work->cleanup) && cdar(work->cleanup) == obj); \
     work->cleanup = cdr(work->cleanup); \
 } while (0)
 
+void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
 void worker_cleanup(Worker *worker);
 
-void worker_init(void);
-void worker_lock_acquire(enum lock_types type);
-void worker_lock_release(enum lock_types type);
-void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
-void worker_wait(Transaction *trans);
-void worker_wait_multiple(pthread_cond_t *wait);
-void worker_wakeup(Transaction *trans);
-void worker_wait_for_all(void);
-
+void lock(void);
+void unlock(void);
+void cond_signal(pthread_cond_t *var);
+void cond_broadcast(pthread_cond_t *var);
+void cond_wait(pthread_cond_t *var);
+pthread_cond_t *new_cond(void);
 
 #endif

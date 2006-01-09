@@ -23,6 +23,7 @@
 #define THREAD_LIFETIME 1024
 #define OBJECTDIR_CACHE_SIZE 32
 #define FD_CACHE_SIZE 32
+#define MAX_HOSTNAME 255
 
 void print_address(Address *addr);
 int addr_cmp(const Address *a, const Address *b);
@@ -32,22 +33,27 @@ Message *message_new(void);
 
 /* persistent state */
 struct state {
-    pthread_mutex_t *biglock;
-    Vector *conn_vector;
-    Vector *forward_fids;
-    Hashtable *addr_2_conn;
+    Address *my_address;
+
     Handles *handles_listen;
     Handles *handles_read;
     Handles *handles_write;
     int *refresh_pipe;
-    Address *my_address;
-    Map *map;
+
+    Vector *conn_vector;
+    Vector *forward_fids;
+    Hashtable *addr_2_conn;
+
     List *error_queue;
+
+    pthread_mutex_t *biglock;
+
     List *thread_pool;
-    pthread_cond_t *wait_workers;
-    int active_worker_count;
-    Lru *oid_dir_lru;
-    Lru *oid_fd_lru;
+
+    Map *map;
+
+    Lru *objectdir_lru;
+    Lru *openfile_lru;
     u64 oid_next_available;
 };
 
@@ -55,7 +61,8 @@ extern pthread_mutex_t *oid_dir_lock;
 extern pthread_mutex_t *oid_fd_lock;
 
 extern struct state *state;
-void state_init(void);
+void state_init_storage(void);
+void state_init_envoy(void);
 
 void oid_lock_acquire(void);
 void oid_lock_release(void);

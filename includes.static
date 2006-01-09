@@ -68,6 +68,7 @@
 
     '<unistd.h>' => {
         'getcwd' => 1,
+        'gethostname' => 1,
         'readdir' => 1,
         'getdents' => 1,
         'readlink' => 1,

@@ -3,19 +3,15 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/select.h>
-#include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
 #include "connection.h"
 #include "transaction.h"
-#include "util.h"
-#include "config.h"
 #include "state.h"
 #include "transport.h"
 #include "fs.h"
+#include "storage.h"
 #include "dispatch.h"
 #include "worker.h"
 #include "forward.h"
@@ -27,72 +23,63 @@ void send_request(Transaction *trans) {
 
     /* allocate a condition variable */
     assert(trans->wait == NULL);
-    trans->wait = GC_NEW(pthread_cond_t);
-    assert(trans->wait != NULL);
-    pthread_cond_init(trans->wait, NULL);
+    trans->wait = new_cond();
 
     trans_insert(trans);
     put_message(trans->conn, trans->out);
-    worker_wait(trans);
+    cond_wait(trans->wait);
 
     /* we should have response when we wake up */
     assert(trans->in != NULL);
-    GC_free(trans->wait);
     trans->wait = NULL;
 }
 
 void send_requests(List *list) {
     Transaction *trans;
     List *ptr;
-    pthread_cond_t *wait;
-    int count = 0, remaining = 0;
+    pthread_cond_t *cond;
+    int done;
 
     assert(!null(list));
 
-    wait = GC_NEW(pthread_cond_t);
-    assert(wait != NULL);
-    pthread_cond_init(wait, NULL);
+    cond = new_cond();
 
     for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
-        count++;
         trans = car(ptr);
         assert(trans->conn->type == CONN_ENVOY_OUT ||
                 trans->conn->type == CONN_STORAGE_OUT);
         assert(trans->in == NULL);
         assert(trans->wait == NULL);
 
-        trans->wait = wait;
+        trans->wait = cond;
         trans_insert(trans);
         put_message(trans->conn, trans->out);
     }
-    remaining = count;
 
-    /* It's possible that multiple responses arrived and we were signalled
-     * multiple times before we woke up.  In that case, active_worker_count
-     * will be too high and the main select thread won't be scheduled.
-     * We check how many responses have arrived since we were last called,
-     * which is the number that have non-NULL wait and in fields.
-     * We subtract that number (except for one corresponding to this thread)
-     * from active_worker_count. */
-    while (remaining > 0) {
+    /* We'll wake up every time a response comes in.  Since we may get
+     * signalled multiple times before we are scheduled, we have to walk
+     * the list to see if we have gathered all the responses. */
+    
+    done = 0;
+    while (!done) {
         /* wait for at least one response */
-        worker_wait_multiple(wait);
+        cond_wait(cond);
 
-        /* this increment compensates for the extra decrement that will
-         * happen in the loop below */
-        state->active_worker_count++;
-
-        /* see how many responses came in */
+        /* check if we need to wait any longer */
+        done = 1;
         for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
             trans = car(ptr);
-            if (trans->in != NULL && trans->wait != NULL) {
-                if (--remaining == 0)
-                    GC_free(trans->wait);
-
-                trans->wait = NULL;
-                state->active_worker_count--;
+            if (trans->in == NULL) {
+                done = 0;
+                break;
             }
         }
+    }
+    
+    /* clear the wait fields */
+    for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
+        trans = car(ptr);
+        trans->wait = NULL;
     }
 }
 
@@ -112,7 +99,8 @@ void handle_error(Worker *worker, Transaction *trans) {
 void dispatch(Worker *worker, Transaction *trans) {
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||
-            trans->conn->type == CONN_ENVOY_IN);
+            trans->conn->type == CONN_ENVOY_IN ||
+            trans->conn->type == CONN_STORAGE_IN);
     assert(trans->out == NULL);
 
     trans->out = message_new();
@@ -199,6 +187,20 @@ void dispatch(Worker *worker, Transaction *trans) {
             default:
                 handle_error(worker, trans);
                 printf("\nBad request from envoy\n");
+        }
+    } else if (trans->conn->type == CONN_STORAGE_IN) {
+        switch (trans->in->id) {
+            case TSRESERVE: handle_tsreserve(worker, trans);    break;
+            case TSCREATE:  handle_tscreate(worker, trans);     break;
+            case TSCLONE:   handle_tsclone(worker, trans);      break;
+            case TSREAD:    handle_tsread(worker, trans);       break;
+            case TSWRITE:   handle_tswrite(worker, trans);      break;
+            case TSSTAT:    handle_tsstat(worker, trans);       break;
+            case TSWSTAT:   handle_tswstat(worker, trans);      break;
+
+            default:
+                handle_error(worker, trans);
+                printf("\nBad storage request\n");
         }
     } else {
         assert(0);

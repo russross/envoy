@@ -8,47 +8,26 @@
 #include "types.h"
 #include "list.h"
 #include "transaction.h"
+#include "fid.h"
 #include "state.h"
 #include "worker.h"
+#include "forward.h"
 #include "oid.h"
 
 /*
  * Worker threads
  */
 
-static pthread_mutex_t *locks[LOCK_TOP];
-
-void worker_init(void) {
-    int i;
-    for (i = 0; i < LOCK_TOP; i++) {
-        locks[i] = GC_NEW(pthread_mutex_t);
-        assert(locks[i] != NULL);
-        pthread_mutex_init(locks[i], NULL);
-    }
-}
-
-void worker_lock_acquire(enum lock_types type) {
-    assert(type >= 0 && type < LOCK_TOP);
-
-    pthread_mutex_lock(locks[type]);
-}
-
-void worker_lock_release(enum lock_types type) {
-    assert(type >= 0 && type < LOCK_TOP);
-
-    pthread_mutex_unlock(locks[type]);
-}
-
 static void *worker_loop(Worker *t) {
-    state->active_worker_count++;
-    pthread_mutex_lock(state->biglock);
-
     int i;
+
+    lock();
+
     for (i = 0; i < THREAD_LIFETIME; i++) {
         if (i > 0) {
             /* wait in the pool for a request */
             state->thread_pool = append_elt(state->thread_pool, t);
-            pthread_cond_wait(t->wait, state->biglock);
+            cond_wait(t->wait);
         }
 
         /* initialize the exception handler and catch exceptions */
@@ -64,11 +43,10 @@ static void *worker_loop(Worker *t) {
             t->func(t, t->arg);
         worker_cleanup(t);
         t->func = NULL;
-        state->active_worker_count--;
-        pthread_cond_signal(state->wait_workers);
     }
 
-    pthread_mutex_unlock(state->biglock);
+    unlock();
+
     return NULL;
 }
 
@@ -76,9 +54,7 @@ void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
     if (null(state->thread_pool)) {
         Worker *t = GC_NEW(Worker);
         assert(t != NULL);
-        t->wait = GC_NEW(pthread_cond_t);
-        assert(t->wait != NULL);
-        pthread_cond_init(t->wait, NULL);
+        t->wait = new_cond();
 
         t->func = func;
         t->arg = arg;
@@ -93,56 +69,61 @@ void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
         t->func = func;
         t->arg = arg;
 
-        state->active_worker_count++;
-        pthread_cond_signal(t->wait);
+        cond_signal(t->wait);
     }
-}
-
-void worker_wait(Transaction *trans) {
-    state->active_worker_count--;
-    pthread_cond_signal(state->wait_workers);
-    pthread_cond_wait(trans->wait, state->biglock);
-}
-
-void worker_wait_multiple(pthread_cond_t *wait) {
-    state->active_worker_count--;
-    pthread_cond_signal(state->wait_workers);
-    pthread_cond_wait(wait, state->biglock);
-}
-
-void worker_wakeup(Transaction *trans) {
-    state->active_worker_count++;
-    pthread_cond_signal(trans->wait);
-}
-
-void worker_wait_for_all(void) {
-    while (state->active_worker_count > 0)
-        pthread_cond_wait(state->wait_workers, state->biglock);
 }
 
 #define cleanup(var) do { \
     var = obj; \
-    pthread_cond_broadcast(var->wait); \
+    cond_broadcast(var->wait); \
     var->wait = NULL; \
 } while (0)
 
 void worker_cleanup(Worker *worker) {
     while (!null(worker->cleanup)) {
-        struct oid_dir *dir;
-        struct oid_fd *fd;
+        struct objectdir *dir;
+        struct openfile *file;
+        Fid *fid;
+        Forward *fwd;
         enum lock_types type = (enum lock_types) caar(worker->cleanup);
         void *obj = cdar(worker->cleanup);
         worker->cleanup = cdr(worker->cleanup);
-        worker_lock_acquire(type);
 
         switch (type) {
             case LOCK_DIRECTORY:        cleanup(dir);   break;
-            case LOCK_FD:               cleanup(fd);    break;
+            case LOCK_OPENFILE:         cleanup(file);  break;
+            case LOCK_FID:              cleanup(fid);   break;
+            case LOCK_FORWARD:          cleanup(fwd);   break;
             default:
                 assert(0);
         }
-
-        worker_lock_release(type);
     }
 }
 #undef cleanup
+
+void lock(void) {
+    pthread_mutex_lock(state->biglock);
+}
+
+void unlock(void) {
+    pthread_mutex_unlock(state->biglock);
+}
+
+void cond_signal(pthread_cond_t *cond) {
+    pthread_cond_signal(cond);
+}
+
+void cond_broadcast(pthread_cond_t *cond) {
+    pthread_cond_broadcast(cond);
+}
+
+void cond_wait(pthread_cond_t *cond) {
+    pthread_cond_wait(cond, state->biglock);
+}
+
+pthread_cond_t *new_cond(void) {
+    pthread_cond_t *cond = GC_NEW(pthread_cond_t);
+    assert(cond != NULL);
+    pthread_cond_init(cond, NULL);
+    return cond;
+}

@@ -26,6 +26,7 @@ int fid_insert_new(Connection *conn, u32 fid, char *uname, char *path) {
     res = GC_NEW(Fid);
     assert(res != NULL);
 
+    res->wait = NULL;
     res->fid = fid;
     res->uname = uname;
     res->path = path;

@@ -8,10 +8,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <string.h>
 #include "types.h"
 #include "9p.h"
+#include "list.h"
 #include "connection.h"
 #include "handles.h"
+#include "transaction.h"
+#include "util.h"
 #include "config.h"
 #include "state.h"
 #include "transport.h"
@@ -166,10 +170,10 @@ static Message *handle_socket_event(Connection **from) {
     FD_ZERO(&wset);
     high = handles_collect(state->handles_write, &wset, high);
 
-    /* give up LOCK_CONNECTION while we wait */
-    worker_lock_release(LOCK_CONNECTION);
+    /* give up the lock while we wait */
+    unlock();
     num = select(high + 1, &rset, &wset, NULL, NULL);
-    worker_lock_acquire(LOCK_CONNECTION);
+    lock();
 
     /* writable socket is available--send a queued message */
     /* note: failed connects will show up here first, but they will also
@@ -239,21 +243,17 @@ void transport_init() {
 void put_message(Connection *conn, Message *msg) {
     assert(conn != NULL && msg != NULL && conn->fd >= 0);
 
-    worker_lock_acquire(LOCK_CONNECTION);
     if (!conn_has_pending_write(conn)) {
         handles_add(state->handles_write, conn->fd);
         transport_refresh();
     }
 
     conn_queue_write(conn, msg);
-    worker_lock_release(LOCK_CONNECTION);
 }
 
 int open_connection(Address *addr) {
     int flags;
     int fd;
-
-    /* note: caller must hold LOCK_CONNECTION */
 
     /* create it, set it to non-blocking, and start it connecting */
     if (    (fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ||
@@ -287,7 +287,7 @@ void main_loop(void) {
     Message *msg;
     Connection *conn;
 
-    worker_lock_acquire(LOCK_CONNECTION);
+    lock();
 
     for (;;) {
         /* handle any pending errors */
@@ -326,7 +326,7 @@ void main_loop(void) {
                 trans->in = msg;
 
                 /* wake up the handler that is waiting for this message */
-                worker_wakeup(trans);
+                cond_signal(trans->wait);
                 break;
 
             default:

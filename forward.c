@@ -28,6 +28,7 @@ u32 forward_create_new(Connection *conn, u32 fid, Connection *rconn) {
 
     rfid = vector_alloc(state->forward_fids, fwd);
 
+    fwd->wait = NULL;
     fwd->fid = fid;
     fwd->rconn = rconn;
     fwd->rfid = rfid;

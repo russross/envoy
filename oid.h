@@ -7,6 +7,7 @@
 #include "types.h"
 #include "9p.h"
 #include "util.h"
+#include "worker.h"
 #include "lru.h"
 
 /* filenames:
@@ -21,7 +22,7 @@
 #define MAX_GID_LENGTH 8
 #define CLONE_BUFFER_SIZE 8192
 
-struct oid_fd {
+struct openfile {
     pthread_cond_t *wait;
     
     int fd;
@@ -33,7 +34,7 @@ enum oid_type {
     OID_LINK,
 };
 
-struct oid_dir {
+struct objectdir {
     pthread_cond_t *wait;
 
     u64 start;
@@ -41,19 +42,18 @@ struct oid_dir {
     char **filenames;
 };
 
-Lru *oid_init_dir_lru(void);
-Lru *oid_init_fd_lru(void);
+Lru *init_objectdir_lru(void);
+Lru *init_openfile_lru(void);
 
 u64 oid_find_next_available(void);
-struct oid_fd *oid_add_fd(u64 oid, int fd);
-struct oid_fd *oid_get_open_fd(u64 oid);
-struct objectdir *oid_read_dir(u64 start);
+Openfile *oid_add_openfile(u64 oid, int fd);
+Openfile *oid_get_openfile(Worker *worker, u64 oid);
 
 int oid_reserve_block(u64 *oid, u32 *count);
-struct p9stat *oid_stat(u64 oid);
-int oid_wstat(u64 oid, struct p9stat *info);
-int oid_create(u64 oid, struct p9stat *info);
-int oid_set_times(u64 oid, struct utimbuf *buf);
-int oid_clone(u64 oldoid, u64 newoid);
+struct p9stat *oid_stat(Worker *worker, u64 oid);
+int oid_wstat(Worker *worker, u64 oid, struct p9stat *info);
+int oid_create(Worker *worker, u64 oid, struct p9stat *info);
+int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf);
+int oid_clone(Worker *worker, u64 oldoid, u64 newoid);
 
 #endif

@@ -14,7 +14,6 @@
 #include "config.h"
 #include "state.h"
 #include "transport.h"
-#include "dispatch.h"
 #include "map.h"
 #include "worker.h"
 #include "oid.h"
@@ -180,8 +179,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    state_init();
-    worker_init();
+    state_init_storage();
     transport_init();
     config_init();
 

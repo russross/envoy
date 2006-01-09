@@ -10,7 +10,6 @@
 #include "config.h"
 #include "state.h"
 #include "transport.h"
-#include "dispatch.h"
 #include "worker.h"
 
 /*
@@ -52,10 +51,8 @@ Connection *conn_lookup_fd(int fd) {
     return vector_get(state->conn_vector, fd);
 }
 
-static Connection *get_from_addr(Worker *worker, Address *addr) {
+Connection *conn_get_from_addr(Worker *worker, Address *addr) {
     Connection *conn;
-
-    /* note: caller must hold LOCK_CONNECTION */
 
     assert(addr != NULL);
 
@@ -77,14 +74,6 @@ static Connection *get_from_addr(Worker *worker, Address *addr) {
         }
     }
 
-    return conn;
-}
-
-Connection *conn_get_from_addr(Worker *worker, Address *addr) {
-    Connection *conn;
-    worker_lock_acquire(LOCK_CONNECTION);
-    conn = get_from_addr(worker, addr);
-    worker_lock_release(LOCK_CONNECTION);
     return conn;
 }
 

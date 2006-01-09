@@ -4,7 +4,7 @@
 #include <netinet/in.h>
 #include "types.h"
 #include "connection.h"
-#include "dispatch.h"
+#include "worker.h"
 
 void transport_init(void);
 void put_message(Connection *conn, Message *msg);

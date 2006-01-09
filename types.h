@@ -15,5 +15,7 @@ typedef struct list List;
 typedef struct handles Handles;
 typedef struct heap Heap;
 typedef struct lru Lru;
+typedef struct openfile Openfile;
+typedef struct objectdir Objectdir;
 
 #endif

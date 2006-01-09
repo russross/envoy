@@ -1,6 +1,8 @@
 #ifndef _FID_H_
 #define _FID_H_
 
+#include <pthread.h>
+#include <gc/gc.h>
 #include <dirent.h>
 #include "types.h"
 #include "9p.h"
@@ -17,6 +19,7 @@ enum fd_status {
 };
 
 struct fid {
+    pthread_cond_t *wait;
     u32 fid;
     char *uname;
     char *path;
