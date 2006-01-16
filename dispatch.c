@@ -86,6 +86,7 @@ void send_requests(List *list) {
 void send_reply(Transaction *trans) {
     assert(trans->conn->type == CONN_ENVOY_IN ||
            trans->conn->type == CONN_CLIENT_IN ||
+           trans->conn->type == CONN_STORAGE_IN ||
            trans->conn->type == CONN_UNKNOWN_IN);
     assert(trans->in != NULL);
 

@@ -145,8 +145,8 @@ Address *make_address(char *host, int port) {
     assert(ent->h_addr_list[0] != NULL && ent->h_addr_list[1] == NULL);
 
     addr->sin_family = AF_INET;
-    addr->sin_port = port;
     addr->sin_addr = *((struct in_addr *) ent->h_addr_list[0]);
+    addr->sin_port = htons(port);
 
     return addr;
 }

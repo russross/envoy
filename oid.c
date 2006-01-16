@@ -163,7 +163,7 @@ u64 path_to_oid(List *path) {
     u64 oid = 0LL;
     int bitsleft = OID_BITS;
 
-    while (bitsleft > 0) {
+    while (bitsleft > BITS_PER_DIR_OBJECTS) {
         int part;
         char *elt = car(path);
         int chunkpart =
@@ -174,14 +174,11 @@ u64 path_to_oid(List *path) {
         assert(sscanf(elt, "%x", &part) == 1);
         path = cdr(path);
 
-        /* three cases:
+        /* two cases:
          * 1) odd bits at the beginning
-         * 2) odd bits at the end
-         * 3) regular sized chunks in the middle */
+         * 2) regular sized chunks in the middle */
         if (bitsleft > chunkpart + BITS_PER_DIR_OBJECTS)
             bits = bitsleft - (chunkpart + BITS_PER_DIR_OBJECTS);
-        else if (bitsleft == BITS_PER_DIR_OBJECTS)
-            break;
         else
             bits = BITS_PER_DIR_DIRS;
 

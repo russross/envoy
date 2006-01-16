@@ -153,12 +153,13 @@ void test_oid(void) {
     printf("first available: %llx\n", oid_find_next_available());
     assert(oid_reserve_block(&oid, &count) == 0);
     printf("reserved: %llx with %d entries\n", oid, count);
-    printf("first available: %llx\n", oid_find_next_available());
 }
 
 int main(int argc, char **argv) {
     char cwd[100];
     struct stat info;
+    char *name;
+    int isstorage = 0;
 
     assert(sizeof(off_t) == 8);
     assert(sizeof(u8) == 1);
@@ -179,9 +180,20 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    state_init_storage();
+    /* were we called as envoy or storage? */
+    name = strstr(argv[0], "storage");
+    if (name != NULL && !strcmp(name, "storage")) {
+        printf("starting storage server\n");
+        state_init_storage();
+        isstorage = 1;
+    } else {
+        printf("starting envoy server\n");
+        state_init_envoy();
+        isstorage = 0;
+    }
     transport_init();
-    config_init();
+    if (!isstorage)
+        config_init();
 
     /*test_dump();*/
     /*test_map();*/

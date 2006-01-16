@@ -301,14 +301,23 @@ void handle_tversion(Worker *worker, Transaction *trans) {
     res->msize = max(min(GLOBAL_MAX_SIZE, req->msize), GLOBAL_MIN_SIZE);
     trans->conn->maxSize = res->msize;
 
-    if (!strcmp(req->version, "9P2000.u")) {
-        trans->conn->type = CONN_CLIENT_IN;
-        res->version = req->version;
-    } else if (!strcmp(req->version, "9P2000.envoy")) {
-        trans->conn->type = CONN_ENVOY_IN;
-        res->version = req->version;
+    if (state->isstorage) {
+        if (!strcmp(req->version, "9P2000.envoy")) {
+            trans->conn->type = CONN_STORAGE_IN;
+            res->version = req->version;
+        } else {
+            res->version = "unknown";
+        }
     } else {
-        res->version = "unknown";
+        if (!strcmp(req->version, "9P2000.u")) {
+            trans->conn->type = CONN_CLIENT_IN;
+            res->version = req->version;
+        } else if (!strcmp(req->version, "9P2000.envoy")) {
+            trans->conn->type = CONN_ENVOY_IN;
+            res->version = req->version;
+        } else {
+            res->version = "unknown";
+        }
     }
 
     send_reply(trans);

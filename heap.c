@@ -44,7 +44,6 @@ static void heap_resize(Heap *heap, int newSize) {
     assert(heap->array != NULL);
     memcpy(heap->array, old, sizeof(void *) * (heap->count + 1));
     heap->size = newSize;
-    GC_free(old);
 }
 
 /**

@@ -116,9 +116,9 @@ void print_address(Address *addr) {
                 (addr->sin_addr.s_addr >> 16) & 0xff,
                 (addr->sin_addr.s_addr >>  8) & 0xff,
                 addr->sin_addr.s_addr        & 0xff,
-                addr->sin_port);
+                ntohs(addr->sin_port));
     } else {
-        printf("{%s:%d}", host->h_name, addr->sin_port);
+        printf("{%s:%d}", host->h_name, ntohs(addr->sin_port));
     }
 }
 
@@ -171,7 +171,7 @@ void state_dump(void) {
  * State initializer
  */
 
-static void state_init_common(void) {
+static void state_init_common(int port) {
     char *hostname;
 
     assert(state == NULL);
@@ -189,7 +189,7 @@ static void state_init_common(void) {
     }
 
     hostname = stringcopy(hostname);
-    state->my_address = make_address(hostname, ENVOY_PORT);
+    state->my_address = make_address(hostname, port);
 
     printf("starting up on host %s\n", hostname);
 
@@ -219,7 +219,8 @@ static void state_init_common(void) {
 }
 
 void state_init_envoy(void) {
-    state_init_common();
+    state_init_common(ENVOY_PORT);
+    state->isstorage = 0;
 
     /* namespace management state */
     state->map = GC_NEW(Map);
@@ -231,7 +232,8 @@ void state_init_envoy(void) {
 }
 
 void state_init_storage(void) {
-    state_init_common();
+    state_init_common(STORAGE_PORT);
+    state->isstorage = 1;
 
     /* object cache state */
     state->objectdir_lru = init_objectdir_lru();

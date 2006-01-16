@@ -84,3 +84,10 @@ List *reverse(List *list) {
 
     return prev;
 }
+
+int length(List *list) {
+    int len;
+    for (len = 0; !null(list); list = cdr(list), len++)
+        ;
+    return len;
+}

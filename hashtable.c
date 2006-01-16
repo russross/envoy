@@ -69,7 +69,6 @@ static void hash_size_double(Hashtable *table) {
         }
     }
 
-    GC_free(table->buckets);
     table->bucketCount = newBucketCount;
     table->buckets = newBuckets;
 }

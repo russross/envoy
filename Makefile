@@ -28,9 +28,10 @@ gen:	gen.ml
 
 envoy: $(OBJ)
 	$(CC) $(CCOPTS) $(LINKOPTS) -o envoy $(OBJ)
+	ln -fs envoy storage
 
 clean:
-	rm -f $(OBJ) gen.{cmo,cmi} envoy includes.dynamic
+	rm -f $(OBJ) gen.{cmo,cmi} envoy includes.dynamic storage
 
 cleanall: clean
 	rm -f 9p.{c,h} gen depend

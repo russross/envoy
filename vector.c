@@ -39,7 +39,6 @@ static void vector_double(Vector *v) {
     assert(v->array != NULL);
     memcpy(v->array, old, sizeof(void *) * v->size);
     v->size *= 2;
-    GC_free(old);
 }
 
 u32 vector_alloc(Vector *v, void *value) {

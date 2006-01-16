@@ -33,6 +33,7 @@ Message *message_new(void);
 
 /* persistent state */
 struct state {
+    int isstorage;
     Address *my_address;
 
     Handles *handles_listen;

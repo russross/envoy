@@ -24,5 +24,6 @@ void setcar(List *cons, void *car);
 void setcdr(List *cons, void *cdr);
 List *append_elt(List *list, void *elt);
 List *reverse(List *list);
+int length(List *list);
 
 #endif

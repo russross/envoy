@@ -105,11 +105,13 @@ static Message *read_message(Connection *conn) {
                 break;
             else
                 msg->size = size;
+            printf("read_message: size = %d\n", size);
         }
 
         /* have we read the whole message? */
         if (bytes == size) {
             if (unpackMessage(msg) < 0) {
+                printf("read_message: unpack failure\n");
                 break;
             } else {
                 /* success */
@@ -189,7 +191,7 @@ static Message *handle_socket_event(Connection **from) {
     /* readable socket is available--read a message */
     if ((fd = handles_member(state->handles_read, &rset)) > -1) {
         /* was this a refresh request? */
-        if (fd == state->refresh_pipe[1]) {
+        if (fd == state->refresh_pipe[0]) {
             char buff[16];
             if (read(fd, buff, 16) < 0)
                 perror("handle_socket_event failed to read pipe");
@@ -231,8 +233,11 @@ void transport_init() {
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     assert(fd >= 0);
     assert(bind(fd, (struct sockaddr *) state->my_address,
-                sizeof(*state->my_address)) >= 0);
-    assert(listen(fd, 5) >= 0);
+                sizeof(*state->my_address)) == 0);
+    assert(listen(fd, 5) == 0);
+    printf("listening at ");
+    print_address(state->my_address);
+    printf("\n");
 
     ling.l_onoff = 1;
     ling.l_linger = 0;
@@ -298,8 +303,9 @@ void main_loop(void) {
         }
 
         /* do a read or write, possibly returning a read message */
-        while (msg == NULL)
+        do
             msg = handle_socket_event(&conn);
+        while (msg == NULL);
 
         printMessage(stdout, msg);
         trans = trans_lookup_remove(conn, msg->tag);

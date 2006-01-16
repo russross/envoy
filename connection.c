@@ -86,7 +86,6 @@ Message *conn_get_pending_write(Connection *conn) {
         List *elt = conn->pending_writes;
         msg = car(elt);
         conn->pending_writes = cdr(elt);
-        GC_free(elt);
     }
 
     return msg;
