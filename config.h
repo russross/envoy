@@ -5,6 +5,7 @@ extern int GLOBAL_MAX_SIZE;
 extern int GLOBAL_MIN_SIZE;
 extern int BITS_PER_DIR_OBJECTS;
 extern int BITS_PER_DIR_DIRS;
+extern int BLOCK_SIZE;
 extern char *rootdir;
 extern char *objectroot;
 

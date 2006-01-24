@@ -72,7 +72,7 @@ void handle_tsread(Worker *worker, Transaction *trans) {
     struct Tsread *req = &trans->in->msg.tsread;
     struct Rsread *res = &trans->out->msg.rsread;
     Openfile *file;
-    struct utimbuf buf;
+    /* struct utimbuf buf; */
 
     /* make sure the requested data is small enough to transmit */
     failif(req->count > trans->conn->maxSize - RSREAD_HEADER, EMSGSIZE);
@@ -92,9 +92,9 @@ void handle_tsread(Worker *worker, Transaction *trans) {
     guard(res->count >= 0);
 
     /* set the atime */
-    buf.actime = req->atime;
+    /* buf.actime = req->atime;
     buf.modtime = 0;
-    guard(oid_set_times(worker, req->oid, &buf));
+    guard(oid_set_times(worker, req->oid, &buf)); */
 
     send_reply(trans);
 }
@@ -117,7 +117,7 @@ void handle_tswrite(Worker *worker, Transaction *trans) {
     guard(res->count >= 0);
 
     /* set the mtime */
-    buf.actime = 0;
+    buf.actime = req->mtime;
     buf.modtime = req->mtime;
     guard(oid_set_times(worker, req->oid, &buf));
 

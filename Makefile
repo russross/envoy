@@ -6,7 +6,7 @@ LINKOPTS=-lgc
 
 SRCNOGEN=9pstatic.c 9p.c
 SRCNOINC=main.c
-SRCINC=list.c vector.c hashtable.c connection.c handles.c transaction.c fid.c util.c config.c state.c transport.c fs.c storage.c dispatch.c map.c worker.c forward.c heap.c lru.c oid.c
+SRCINC=list.c vector.c hashtable.c connection.c handles.c transaction.c fid.c util.c config.c state.c transport.c fs.c storage.c dispatch.c map.c worker.c forward.c heap.c lru.c oid.c dir.c
 INCNOSRC=types.h
 
 SRC=$(SRCNOGEN) $(SRCNOINC) $(SRCINC)
@@ -44,5 +44,8 @@ includes.dynamic: extract-includes.pl includes.static $(INC)
 
 includes: includes.dynamic
 	./generate-includes.pl includes.dynamic $(SRCNOINC) $(SRCINC) $(SRCINC:.c=.h)
+
+scratch: includes cleanall
+	make all
 
 include depend

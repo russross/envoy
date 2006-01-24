@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <utime.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"
@@ -41,7 +42,7 @@ static inline int parse_filename(char *filename, unsigned int *id, u32 *mode,
     assert(group != NULL);
 
     if (sscanf(filename, "%x %x %8s %8s%c",
-                id, mode, *name, *group, &eos) != 5 ||
+                id, mode, *name, *group, &eos) != 4 ||
             name[0] == 0 || group[0] == 0)
     {
         return -1;
@@ -126,6 +127,7 @@ Openfile *oid_add_openfile(u64 oid, int fd) {
     return file;
 }
 
+/* return a list of directories for all the bits (except the end) */
 List *oid_to_path(u64 oid) {
     List *path = NULL;
     int bitsleft = OID_BITS;
@@ -260,7 +262,7 @@ int oid_reserve_block(u64 *oid, u32 *count) {
 
     path = oid_to_path(*oid);
 
-    while (!null(path) && !null(cdr(path))) {
+    while (!null(path)) {
         dir = concatname(dir, car(path));
         path = cdr(path);
         if (lstat(dir, &info) < 0) {
@@ -447,7 +449,7 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     /* mtime */
     if (info->mtime != ~(u32) 0) {
         struct utimbuf buf;
-        buf.actime = 0;
+        buf.actime = info->mtime;
         buf.modtime = info->mtime;
         if (utime(pathname, &buf) < 0)
             return -1;
@@ -521,8 +523,34 @@ int oid_create(Worker *worker, u64 oid, struct p9stat *info) {
     pathname = concatname(dir->dirname, filename);
 
     fd = creat(pathname, OBJECT_MODE);
-    if (fd < 0)
-        return -1;
+
+    /* create failed */
+    if (fd < 0) {
+        /* was it because the directory doesn't exist? */
+        if (errno != ENOENT) {
+            return -1;
+        } else {
+            /* create the directories and try again */
+            List *path = oid_to_path(oid);
+            char *prefix = objectroot;
+            struct stat info;
+
+            while (!null(path)) {
+                prefix = concatname(prefix, car(path));
+                path = cdr(path);
+                if (lstat(prefix, &info) < 0) {
+                    if (mkdir(prefix, OBJECT_DIR_MODE) < 0)
+                        return -1;
+                } else if (!S_ISDIR(info.st_mode)) {
+                    return -1;
+                }
+            }
+
+            /* try again */
+            if ((fd = creat(pathname, OBJECT_MODE)) < 0)
+                return -1;
+        }
+    }
     dir->filenames[oid - start] = filename;
     oid_add_openfile(oid, fd);
 
