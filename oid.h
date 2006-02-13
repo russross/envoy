@@ -24,7 +24,7 @@
 
 struct openfile {
     pthread_cond_t *wait;
-    
+
     int fd;
 };
 

@@ -72,11 +72,15 @@ int addr_cmp(const Address *a, const Address *b) {
     return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
 }
 
+static u32 string_hash(const char *str) {
+    return generic_hash(str, strlen(str), 0);
+}
+
 /*
  * Debugging functions
  */
 
-static void print_status(enum fd_status status) {
+static void print_status(enum fid_status status) {
     printf("%s",
             status == STATUS_CLOSED ? "STATUS_CLOSED" :
             status == STATUS_OPEN_FILE ? "STATUS_OPEN_FILE" :
@@ -223,6 +227,15 @@ void state_init_envoy(void) {
     state->isstorage = 0;
 
     /* namespace management state */
+    state->lease_owned = hash_create(
+            LEASE_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) string_hash,
+            (int (*)(const void *, const void *)) strcmp);
+    state->lease_shared = hash_create(
+            LEASE_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) string_hash,
+            (int (*)(const void *, const void *)) strcmp);
+
     state->map = GC_NEW(Map);
     assert(state->map != NULL);
     state->map->prefix = NULL;

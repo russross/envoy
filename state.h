@@ -24,6 +24,7 @@
 #define OBJECTDIR_CACHE_SIZE 32
 #define FD_CACHE_SIZE 32
 #define MAX_HOSTNAME 255
+#define LEASE_HASHTABLE_SIZE 64
 
 void print_address(Address *addr);
 int addr_cmp(const Address *a, const Address *b);
@@ -52,6 +53,8 @@ struct state {
     List *thread_pool;
 
     Map *map;
+    Hashtable *lease_owned;
+    Hashtable *lease_shared;
 
     Lru *objectdir_lru;
     Lru *openfile_lru;
@@ -64,8 +67,5 @@ extern pthread_mutex_t *oid_fd_lock;
 extern struct state *state;
 void state_init_storage(void);
 void state_init_envoy(void);
-
-void oid_lock_acquire(void);
-void oid_lock_release(void);
 
 #endif

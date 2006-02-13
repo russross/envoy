@@ -15,6 +15,8 @@
 #include "worker.h"
 #include "oid.h"
 
+/* TODO: release lock on blocking operations */
+
 /* generate an error response with Unix errno errnum */
 static void rerror(Worker *w, Message *m, char *file, int line) {
     m->id = RERROR;

@@ -17,5 +17,7 @@ typedef struct heap Heap;
 typedef struct lru Lru;
 typedef struct openfile Openfile;
 typedef struct objectdir Objectdir;
+typedef struct lease Lease;
+typedef struct claim Claim;
 
 #endif
