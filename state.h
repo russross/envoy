@@ -25,6 +25,8 @@
 #define FD_CACHE_SIZE 32
 #define MAX_HOSTNAME 255
 #define LEASE_HASHTABLE_SIZE 64
+#define LEASE_FIDS_HASHTABLE_SIZE 64
+#define LEASE_WALK_LRU_SIZE 64
 
 void print_address(Address *addr);
 int addr_cmp(const Address *a, const Address *b);

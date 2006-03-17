@@ -48,4 +48,7 @@ int fid_insert_new(Connection *conn, u32 fid, char *uname, char *path);
 Fid *fid_lookup(Connection *conn, u32 fid);
 Fid *fid_lookup_remove(Connection *conn, u32 fid);
 
+u32 fid_hash(const Fid *fid);
+int fid_cmp(const Fid *a, const Fid *b);
+
 #endif

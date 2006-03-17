@@ -54,7 +54,8 @@ void lru_add(Lru *lru, void *key, void *value) {
 
     /* clean up and replace the old version if this key already exists */
     if ((elt = hash_get(lru->table, key)) != NULL) {
-        lru->cleanup(elt->value);
+        if (lru->cleanup != NULL)
+            lru->cleanup(elt->value);
         elt->value = value;
         elt->refresh = lru->counter++;
         return;
@@ -69,14 +70,15 @@ void lru_add(Lru *lru, void *key, void *value) {
             /* re-insert it with its updated rank */
             elt->count = elt->refresh;
             heap_add(lru->heap, elt);
-        } else if (lru->resurrect(elt->value)) {
+        } else if (lru->resurrect != NULL && lru->resurrect(elt->value)) {
             /* refresh this item and keep it */
             elt->count = elt->refresh = lru->counter++;
             heap_add(lru->heap, elt);
         } else {
             /* remove it from the hashtable and destroy it */
             hash_remove(lru->table, elt->key);
-            lru->cleanup(elt->value);
+            if (lru->cleanup != NULL)
+                lru->cleanup(elt->value);
             lru->count--;
         }
     }
@@ -100,7 +102,8 @@ void lru_clear(Lru *lru) {
 
     while ((elt = heap_remove(lru->heap)) != NULL) {
         hash_remove(lru->table, elt->key);
-        lru->cleanup(elt->value);
+        if (lru->cleanup != NULL)
+            lru->cleanup(elt->value);
         lru->count--;
     }
 

@@ -52,3 +52,10 @@ Fid *fid_lookup_remove(Connection *conn, u32 fid) {
     return (Fid *) vector_get_remove(conn->fid_vector, fid);
 }
 
+u32 fid_hash(Fid *fid) {
+    return generic_hash(&fid->fid, sizeof(fid->fid), 1);
+}
+
+int fid_cmp(const Fid *a, const Fid *b) {
+    return (int) a->fid - (int) b->fid;
+}

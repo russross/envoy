@@ -30,8 +30,11 @@
 # envoy protocol extensions
 150 size[4] Tesnapshot tag[2] 
 151 size[4] Resnapshot tag[2] 
-152 size[4] Temigrate tag[2]
-153 size[4] Remigrate tag[2]
+152 size[4] Tegrant tag[2] type[1] path[s] count[4] data[count]
+
+154 size[4] Terevoke tag[2] path[s]
+
+156 size[4] Tenominate tag[2] path[s] 
 
 # object storage server protocol
 200 size[4] Tsreserve tag[2]

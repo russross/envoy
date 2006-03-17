@@ -11,6 +11,9 @@ struct walk_result {
     Claim *claim;
 };
 
+u32 walk_result_hash(struct walk_result *walk);
+int walk_result_cmp(const struct walk_result *a, const struct walk_result *b);
+
 void forward_to_envoy(Worker *worker, Transaction *trans);
 
 void handle_tversion(Worker *worker, Transaction *trans);
