@@ -531,32 +531,82 @@ void handle_topen(Worker *worker, Transaction *trans) {
     struct Topen *req = &trans->in->msg.topen;
     struct Ropen *res = &trans->out->msg.ropen;
     Fid *fid;
-    struct stat info;
+    struct p9stat *info;
+    u32 perm;
 
     require_fid_closed(fid);
-    guard(lstat(fid->path, &info));
 
-    fid->omode = req->mode;
-    fid->offset = 0;
-    fid->next_dir_entry = NULL;
+    /* we don't support remove-on-close */
+    failif(req->mode & ORCLOSE, ENOTSUP);
 
-    if (S_ISDIR(info.st_mode)) {
+    info = object_stat(worker, fid->claim->oid);
+
+    /* figure out which permissions are required based on the request */
+    if (info->type & QTDIR) {
+        /* directories can only be opened for reading */
         failif(req->mode != OREAD, EPERM);
-
-        failif((fid->dd = opendir(fid->path)) == NULL, errno);
-
-        fid->status = STATUS_OPEN_DIR;
+        perm = 0444;
     } else {
-        int flags;
-        failif((flags = unixflags(req->mode)) == -1, EINVAL);
+        /* files have a few basic modes plus optional flags */
+        switch (req->mode & (OREAD | OWRITE | ORDWR | OEXEC)) {
+            case OREAD:     perm = 0444; break;
+            case OWRITE:    perm = 0222; break;
+            case ORDWR:     perm = 0666; break;
+            case OEXEC:     perm = 0111; break;
+            default:        failif(-1, EINVAL);
+        }
 
-        guard(fid->fd = open(fid->path, flags));
-
-        fid->status = STATUS_OPEN_FILE;
+        /* truncate is ignored if the file is append-only */
+        if ((req->mode & OTRUNC) && !(info->mode & DMAPPEND))
+            perm |= 0222;
     }
 
+    /* check against the file's actual permissions */
+    if (!strcmp(fid->uname, info->uid))
+        failif(info->mode & perm & 0700 != perm & 0700, EPERM);
+    else if (groupmember(fid->uname, info->gid))
+        failif(info->mode & perm & 0070 != perm & 0070, EPERM);
+    else
+        failif(info->mode & perm & 0007 != perm & 0007, EPERM);
+
+    /* make sure the file's not in use if it has DMEXCL set */
+    if (info->mode & DMEXCL) {
+        failif(fid->claim->refcount != 0, EBUSY);
+        fid->claim->refcount = -1;
+    } else {
+        fid->claim->refcount++;
+    }
+
+    /* init the file status */
+    fid->omode = req->mode;
+    fid->readdir_offset = 0LL;
+    fid->readdir_cookie = 0;
+    fid->status = (info->type & QTDIR) ? STATUS_OPEN_DIR : STATUS_OPEN_FILE;
+
+    /* if it is opened writable, make sure we have a writable object */
+    if (req->mode & (OWRITE | ORDWR | OTRUNC))
+        require_writeaccess(fid);
+
+    /* send a hint to the cache that we are likely to access this file */
+    object_prime_cache(worker, fid->claim->oid);
+
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
-    res->qid = stat2qid(&info);
+    res->qid = info->qid;
+
+    /* use the original oid to identify the file to the client in case a CoW has happened */
+    res->qid.path = fid->client_oid;
+
+    /* do we need to truncate the file? */
+    if ((req->mode & OTRUNC) && !(info->mode & DMAPPEND) && info->length > 0LL) {
+        info->mode = ~(u32) 0;
+        info->atime = info->mtime = ~(u32) 0;
+        info->uid = info->gid = NULL;
+        info->extension = NULL;
+        info->length = 0LL;
+        info->name = NULL;
+
+        object_wstat(worker, fid->claim->oid, info);
+    }
 
     send_reply(trans);
 }
@@ -826,12 +876,13 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
 
     require_fid_remove(fid);
 
-    if (fid->status == STATUS_OPEN_FILE) {
-        guard(close(fid->fd));
-        if ((fid->omode & ORCLOSE))
-            guard(unlink(fid->path));
-    } else if (fid->status == STATUS_OPEN_DIR) {
-        guard(closedir(fid->dd));
+    /* we don't support remove-on-close */
+
+    if (fid->claim->refcount == -1 || fid->claim->refcount == 1) {
+        /* shut down this claim */
+        claim_remove(fid->claim);
+    } else {
+        fid->claim->refcount--;
     }
 
     send_reply(trans);

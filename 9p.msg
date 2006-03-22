@@ -30,11 +30,12 @@
 # envoy protocol extensions
 150 size[4] Tesnapshot tag[2] 
 151 size[4] Resnapshot tag[2] 
-152 size[4] Tegrant tag[2] type[1] path[s] count[4] data[count]
-
+152 size[4] Tegrant tag[2] type[1] path[s] count[4] data[count] rfid[4]
+153 size[4] Regrant tag[2] 
 154 size[4] Terevoke tag[2] path[s]
-
+155 size[4] Rerevoke tag[2] 
 156 size[4] Tenominate tag[2] path[s] 
+157 size[4] Renominate tag[2] 
 
 # object storage server protocol
 200 size[4] Tsreserve tag[2]

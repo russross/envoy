@@ -124,19 +124,6 @@ struct lease {
     u32 version;
 };
 
-struct claim {
-    /* the storage system object ID */
-    u64 oid;
-    /* the lease under which this object falls */
-    Lease *lease;
-    /* the version number of the lease when last checked */
-    u32 lease_version;
-    /* the level of access we have to this object */
-    enum fid_access access;
-    /* the full system path of this object */
-    char *pathname;
-};
-
 /* should these be public? */
 /* create a lease */
 void lease_new(char *pathname, Address *addr, int leaf, List *children);

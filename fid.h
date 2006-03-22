@@ -31,6 +31,8 @@ struct fid {
 
     /* the client-visible fid */
     u32 fid;
+    /* the client-visible oid--we keep the old one in the case of CoW */
+    u64 client_oid;
     /* the username of the client */
     char *uname;
     /* the file status as seen by the client */
