@@ -334,7 +334,7 @@ Objectdir *objectdir_lookup(Worker *worker, u64 start) {
         dir->start = start;
         dir->dirname = NULL;
         dir->filenames = NULL;
-        
+
         lru_add(state->objectdir_lru, key, dir);
 
         reserve(worker, LOCK_DIRECTORY, dir);
@@ -351,8 +351,9 @@ static inline struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
     struct qid qid;
     qid.type =
         (mode & DMDIR) ? QTDIR :
-        (mode & DMSYMLINK) ? QTLINK :
-        0x00;
+        (mode & DMSYMLINK) ? QTLLINK :
+        (mode & DMDEVICE) ? QTTMP :
+        QTFILE;
     qid.version = mtime ^ (size << 8);
     qid.path = oid;
 
@@ -503,13 +504,16 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     return 0;
 }
 
-int oid_create(Worker *worker, u64 oid, struct p9stat *info) {
+int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid, char *gid,
+        char *extension)
+{
     u64 start = oid_dir_findstart(oid);
     struct objectdir *dir;
     struct utimbuf buf;
     char *filename;
     char *pathname;
     int fd;
+    int length = 0;
 
     if (    /* find the place for this object and make sure it is new */
             (dir = objectdir_lookup(worker, start)) == NULL ||
@@ -519,7 +523,7 @@ int oid_create(Worker *worker, u64 oid, struct p9stat *info) {
     }
 
     /* create the file and set filename-encoded stats */
-    filename = make_filename(oid, info->mode, info->uid, info->gid);
+    filename = make_filename(oid, >mode, uid, gid);
     pathname = concatname(dir->dirname, filename);
 
     fd = creat(pathname, OBJECT_MODE);
@@ -555,21 +559,21 @@ int oid_create(Worker *worker, u64 oid, struct p9stat *info) {
     oid_add_openfile(oid, fd);
 
     /* store metadata for special file types as file contents */
-    if (!emptystring(info->extension) &&
-            (info->mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET)) &&
-            strlen(info->extension) !=
-            write(fd, info->extension, strlen(info->extension)))
+    if (!emptystring(extension) &&
+            (mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET)) &&
+            strlen(extension) !=
+            write(fd, extension, length = strlen(extension)))
     {
         return -1;
     }
 
     /* set the times */
-    buf.actime = info->atime;
-    buf.modtime = info->mtime;
+    buf.actime = ctime;
+    buf.modtime = ctime;
     if (utime(pathname, &buf) < 0)
         return -1;
 
-    return 0;
+    return length;
 }
 
 Openfile *oid_get_openfile(Worker *worker, u64 oid) {
@@ -657,6 +661,6 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
 
     buf.actime = info->atime;
     buf.modtime = info->mtime;
-    
+
     return oid_set_times(worker, newoid, &buf);
 }

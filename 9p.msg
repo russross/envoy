@@ -12,7 +12,7 @@
 111 size[4] Rwalk tag[2] nwqid[2] nwqid*(wqid[13])
 112 size[4] Topen tag[2] fid[4] mode[1]
 113 size[4] Ropen tag[2] qid[13] iounit[4]
-114 size[4] Tcreate tag[2] fid[4] name[s] perm[4] mode[1]
+114 size[4] Tcreate tag[2] fid[4] name[s] perm[4] mode[1] extension[s]
 115 size[4] Rcreate tag[2] qid[13] iounit[4]
 116 size[4] Tread tag[2] fid[4] offset[8] count[4]
 117 size[4] Rread tag[2] count[4] data[count]
@@ -40,8 +40,8 @@
 # object storage server protocol
 200 size[4] Tsreserve tag[2]
 201 size[4] Rsreserve tag[2] firstoid[8] count[4]
-202 size[4] Tscreate tag[2] oid[8] stat[n]
-203 size[4] Rscreate tag[2]
+202 size[4] Tscreate tag[2] oid[8] mode[4] ctime[4] uid[s] gid[2] extension[s]
+203 size[4] Rscreate tag[2] qid[13]
 204 size[4] Tsclone tag[2] oid[8] newoid[8]
 205 size[4] Rsclone tag[2]
 206 size[4] Tsread tag[2] oid[8] atime[4] offset[8] count[4]

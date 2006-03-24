@@ -548,7 +548,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
         perm = 0444;
     } else {
         /* files have a few basic modes plus optional flags */
-        switch (req->mode & (OREAD | OWRITE | ORDWR | OEXEC)) {
+        switch (req->mode & OMASK) {
             case OREAD:     perm = 0444; break;
             case OWRITE:    perm = 0222; break;
             case ORDWR:     perm = 0666; break;
@@ -619,6 +619,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
  * - name[s]: name of new file
  * - perm[4]: permissions for new file
  * - mode[1]: file mode for new file
+ * - extension[s]: special file details
  *
  * Return:
  * - qid[13]: qid representing newly created file
@@ -642,68 +643,61 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     struct Tcreate *req = &trans->in->msg.tcreate;
     struct Rcreate *res = &trans->out->msg.rcreate;
     Fid *fid;
-    struct stat dirinfo;
-    struct stat info;
+    struct p9stat *dirinfo;
+    struct p9stat *info;
     char *newpath;
+    u32 perm;
+    struct qid qid;
+    enum fid_status status;
 
     require_fid_closed(fid);
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
-    guard(lstat(fid->path, &dirinfo));
-    failif(!S_ISDIR(dirinfo.st_mode), ENOTDIR);
+
+    /* create can only occur in a directory */
+    dirinfo = object_stat(worker, fid->claim->oid);
+    failif(!(dirinfo->type & QTDIR), ENOTDIR);
+
     newpath = concatname(fid->path, req->name);
 
-    if ((req->perm & DMDIR)) {
-        u32 perm;
+    /* make sure the mode is valid for opening the new file */
+    if ((req->mode & DMDIR)) {
         failif(req->mode != OREAD, EINVAL);
-        perm = req->perm & (~0777 | (dirinfo.st_mode & 0777));
-
-        guard(mkdir(newpath, perm));
-        failif((fid->dd = opendir(newpath)) == NULL, errno);
-
-        fid->status = STATUS_OPEN_DIR;
-        guard(lstat(fid->path, &info));
-        res->qid = stat2qid(&info);
-    } else if ((req->perm & DMSYMLINK)) {
-        failif(lstat(newpath, &info) >= 0, EEXIST);
-        fid->status = STATUS_OPEN_SYMLINK;
-        res->qid.type = QTSLINK;
-        res->qid.version = ~0;
-        res->qid.path = ~0;
-    } else if ((req->perm & DMLINK)) {
-        failif(lstat(newpath, &info) >= 0, EEXIST);
-        fid->status = STATUS_OPEN_LINK;
-        res->qid.type = QTLINK;
-        res->qid.version = ~0;
-        res->qid.path = ~0;
-    } else if ((req->perm & DMDEVICE)) {
-        failif(lstat(newpath, &info) >= 0, EEXIST);
-        fid->status = STATUS_OPEN_DEVICE;
-
-        /* use QTTMP since there's no QTDEVICE */
-        res->qid.type = QTTMP;
-        res->qid.version = ~0;
-        res->qid.path = ~0;
-    } else if (!(req->perm & DMMASK)) {
-        u32 perm = req->perm & (~0666 | (dirinfo.st_mode & 0666));
-        int flags = unixflags(req->mode);
-        failif(flags == -1 || (req->mode & OTRUNC), EINVAL);
-        flags |= O_EXCL | O_CREAT /*| O_LARGEFILE*/;
-
-        guard(fid->fd = open(newpath, flags, perm));
-
-        fid->status = STATUS_OPEN_FILE;
-        guard(lstat(fid->path, &info));
-        res->qid = stat2qid(&info);
+        perm = req->perm & (~0777 | (dirinfo->mode & 0777));
     } else {
-        failif(-1, EINVAL);
+        failif(req->mode & OTRUNC, EINVAL);
+        perm = req->perm & (~0666 | (dirinfo->mode & 0666));
     }
 
+    /* figure out the status-to-be of the new file */
+    if ((req->perm & DMDIR))
+        status = STATUS_OPEN_DIR;
+    else if ((req->perm & DMSYMLINK))
+        status = STATUS_OPEN_SYMLINK;
+    else if ((req->perm & DMLINK))
+        status = STATUS_OPEN_LINK;
+    else if ((req->perm & DMDEVICE))
+        status = STATUS_OPEN_DEVICE;
+    else if (!(req->perm & DMMASK))
+        status = STATUS_OPEN_FILE;
+    else
+        failif(-1, EINVAL);
+
+    /* TODO: make sure the file doesn't already exist */
+
+    /* create the file */
+    qid = object_create(worker, object_reserve_oid(worker), perm, time(), fid->uid,
+            dirinfo->gid, req->extension);
+
+    /* TODO: add a directory entry for the new file */
+
+    fid->status = status;
     fid->path = newpath;
     fid->omode = req->mode;
-    fid->offset = 0;
-    fid->next_dir_entry = NULL;
+    fid->readdir_offset = 0LL;
+    fid->readdir_cookie = 0;
 
+    res->qid = qid;
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
 
     send_reply(trans);
@@ -745,20 +739,10 @@ void handle_tread(Worker *worker, Transaction *trans) {
     count = req->count;
 
     if (fid->status == STATUS_OPEN_FILE) {
-        int len;
-        if (req->offset != fid->offset) {
-            guard(lseek(fid->fd, req->offset, SEEK_SET));
-            fid->offset = req->offset;
-        }
-
-        res->data = GC_MALLOC_ATOMIC(count);
-        assert(res->data != NULL);
-
-        guard(len = read(fid->fd, res->data, count));
-
-        res->count = len;
-        fid->offset += len;
+        res->data = object_read(worker, fid->claim->oid, time(), req->offset, req->count,
+                &res->count);
     } else if (fid->status == STATUS_OPEN_DIR) {
+        /* TODO: directory reading */
         if (req->offset == 0 && fid->offset != 0) {
             rewinddir(fid->dd);
             fid->offset = 0;
@@ -840,16 +824,9 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     failif((fid->omode & OMASK) == OEXEC, EACCES);
 
     if (fid->status == STATUS_OPEN_FILE) {
-        int len;
-        if (req->offset != fid->offset) {
-            guard(lseek(fid->fd, req->offset, SEEK_SET));
-            fid->offset = req->offset;
-        }
-
         guard((len = write(fid->fd, req->data, req->count)));
-
-        res->count = len;
-        fid->offset += len;
+        res->count = object_write(worker, fid->claim->oid, time(), req->offset, req->count,
+                req->data);
     } else {
         failif(-1, EPERM);
     }

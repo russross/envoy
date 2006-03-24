@@ -52,7 +52,8 @@ Openfile *oid_get_openfile(Worker *worker, u64 oid);
 int oid_reserve_block(u64 *oid, u32 *count);
 struct p9stat *oid_stat(Worker *worker, u64 oid);
 int oid_wstat(Worker *worker, u64 oid, struct p9stat *info);
-int oid_create(Worker *worker, u64 oid, struct p9stat *info);
+int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid, char *gid,
+        char *extension);
 int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf);
 int oid_clone(Worker *worker, u64 oldoid, u64 newoid);
 

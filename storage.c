@@ -56,8 +56,14 @@ void handle_tsreserve(Worker *worker, Transaction *trans) {
 
 void handle_tscreate(Worker *worker, Transaction *trans) {
     struct Tscreate *req = &trans->in->msg.tscreate;
+    struct Rscreate *res = &trans->out->msg.rscreate;
+    int length;
 
-    failif(oid_create(worker, req->oid, req->stat) < 0, ENOMEM);
+    length = oid_create(worker, req->oid, req->mode, req->ctime, req->uid, req->gid,
+            req->extension);
+    failif(length < 0, ENOMEM);
+
+    res->qid = makeqid(req->mode, req->mtime, (u64) length, req->oid);
 
     send_reply(trans);
 }
