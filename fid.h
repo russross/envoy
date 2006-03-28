@@ -40,10 +40,14 @@ struct fid {
     /* the mode used to open this file */
     int omode;
 
-    /* the offset into a directory when in the middle of a readdir sequence */
+    /* the number of bytes returned so far in the current directory read */
+    u64 readdir_cookie;
+    /* the actual offset into the directory */
     u64 readdir_offset;
-    /* the version of the current block when in a readdir sequence */
-    u16 readdir_cookie;
+    /* the current block when in a readdir sequence */
+    List *readdir_current_block;
+    /* next dir entry */
+    struct p9stat *readdir_next;
 };
 
 int fid_insert_new(Connection *conn, u32 fid, char *uname, char *path);

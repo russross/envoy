@@ -732,60 +732,98 @@ void handle_tread(Worker *worker, Transaction *trans) {
     struct Tread *req = &trans->in->msg.tread;
     struct Rread *res = &trans->out->msg.rread;
     Fid *fid;
-    u32 count;
 
     require_fid(fid);
     failif(req->count > trans->conn->maxSize - RREAD_HEADER, EMSGSIZE);
-    count = req->count;
 
     if (fid->status == STATUS_OPEN_FILE) {
         res->data = object_read(worker, fid->claim->oid, time(), req->offset, req->count,
                 &res->count);
     } else if (fid->status == STATUS_OPEN_DIR) {
-        /* TODO: directory reading */
-        if (req->offset == 0 && fid->offset != 0) {
-            rewinddir(fid->dd);
-            fid->offset = 0;
-            fid->next_dir_entry = NULL;
+        /* allow rewinds, but no other offset changes */
+        if (req->offset == 0 && fid->readdir_cookie != 0) {
+            fid->readdir_cookie = 0;
+            fid->readdir_offset = 0;
+            fid->readdir_next = NULL;
+            fid->readdir_current_block = NULL;
         }
-        failif(req->offset != fid->offset, ESPIPE);
+        failif(req->offset != fid->readdir_cookie, ESPIPE);
 
-        res->data = GC_MALLOC_ATOMIC(count);
+        res->data = GC_MALLOC_ATOMIC(req->count);
         assert(res->data != NULL);
 
         /* read directory entries until we run out or the buffer is full */
         res->count = 0;
 
         do {
-            struct dirent *elt;
-            struct stat info;
+            /* is this an attempt to read past the end? */
+            if (fid->readdir_next == NULL && fid->readdir_offset > 0)
+                break;
 
-            /* process the next entry, which may be a leftover from earlier */
-            if (fid->next_dir_entry != NULL) {
-                /* are we going to overflow? */
-                if (res->count + statsize(fid->next_dir_entry) > count)
+            /* pack an entry if we have one */
+            if (fid->readdir_next != NULL) {
+                /* is it too big to fit in the packet? */
+                if (res->count + statsize(fid->readdir_next) > req->count)
                     break;
-                packStat(res->data, (int *) &res->count, fid->next_dir_entry);
+
+                packStat(res->data, (int *) &res->count, fid->readdir_next);
+                fid->readdir_next = NULL;
+
+                /* advance the offset appropriately */
+                fid->readdir_offset &= ~((u64) BLOCK_SIZE - 1);
+                if (null(fid->readdir_current_block)) {
+                    /* advance to the next block */
+                    fid->readdir_offset += BLOCK_SIZE;
+                } else {
+                    /* advance to the next entry in this block */
+                    struct direntry *elt = car(fid->readdir_current_block);
+                    fid->readdir_offset += elt->offset;
+                }
             }
-            fid->next_dir_entry = NULL;
 
-            elt = readdir(fid->dd);
+            /* do we need to read a new directory block? */
+            if (null(fid->readdir_current_block)) {
+                u32 bytesread;
+                void *block;
 
-            if (elt != NULL) {
-                /* gather the info for the next entry and store it in the fid;
-                 * we might not be able to fit it in this time */
-                char *path = concatname(fid->path, elt->d_name);
-                guard(lstat(path, &info));
-                failif(stat2p9stat(&info, &fid->next_dir_entry, path) < 0, EIO);
+                block = object_read(worker, fid->claim->oid, time(),
+                        fid->readdir_offset, BLOCK_SIZE, &bytesread);
+
+                /* are we at end-of-file? */
+                if (bytesread == 0)
+                    break;
+
+                fid->readdir_current_block = dir_get_entries(bytesread, block);
             }
-        } while (fid->next_dir_entry != NULL);
 
-        failif(res->count == sizeof(u16) &&
-                fid->next_dir_entry != NULL, ENAMETOOLONG);
-        failif(res->count == sizeof(u16), ENOENT);
+            /* find another entry */
+            if (!null(fid->readdir_current_block)) {
+                struct direntry *elt = car(fid->readdir_current_block);
+                char *childpath = concatname(fid->claim->pathname, elt->filename);
+
+                /* can we get stats locally? */
+                if (lease_local_read(childpath)) {
+                    fid->readdir_next = object_stat(worker, elt->oid);
+                    fid->readdir_next->name = elt->filename;
+                } else {
+                    fid->readdir_next = remote_stat(worker, childpath);
+                    fid->readdir_next->name = elt->filename;
+                }
+
+                fid->readdir_offset &= ~((u64) BLOCK_SIZE - 1);
+                fid->readdir_offset += elt->offset;
+                fid->readdir_current_block = cdr(fid->readdir_current_block);
+            }
+        } while (fid->readdir_next != NULL);
+
+        /* was a single entry too big for the return buffer? */
+        failif(res->count <= sizeof(u16) && fid->readdir_next != NULL, ENAMETOOLONG);
+
+        /* end of file? */
+        failif(res->count <= sizeof(u16), ENOENT);
 
         /* take note of how many bytes we ended up with */
-        fid->offset += res->count;
+        fid->readdir_cookie += res->count;
     } else {
         failif(-1, EPERM);
     }

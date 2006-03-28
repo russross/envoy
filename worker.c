@@ -54,7 +54,7 @@ void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
     if (null(state->thread_pool)) {
         Worker *t = GC_NEW(Worker);
         assert(t != NULL);
-        t->wait = new_cond();
+        t->wait = cond_new();
 
         t->func = func;
         t->arg = arg;
@@ -121,7 +121,7 @@ void cond_wait(pthread_cond_t *cond) {
     pthread_cond_wait(cond, state->biglock);
 }
 
-pthread_cond_t *new_cond(void) {
+pthread_cond_t *cond_new(void) {
     pthread_cond_t *cond = GC_NEW(pthread_cond_t);
     assert(cond != NULL);
     pthread_cond_init(cond, NULL);

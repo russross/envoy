@@ -12,7 +12,6 @@
 /* Directories are stored in a series of BLOCK_SIZE length blocks, with
  * the last block possibly truncated.  Each block is structured as follows:
  *
- * u16: block version number
  * u16: end-of-data offset in this block
  *
  * followed by a series of entries:
@@ -25,13 +24,11 @@
 List *dir_get_entries(u32 count, u8 *data) {
     int size = (int) count;
     int offset;
-    u16 version;
     u16 end;
     struct direntry *elt;
     List *result = NULL;
 
     offset = 0;
-    version = unpackU16(data, size, &offset);
     end = unpackU16(data, size, &offset);
 
     if (offset < 0 || end > size)
@@ -53,7 +50,7 @@ List *dir_get_entries(u32 count, u8 *data) {
     if (offset != end)
         return NULL;
 
-    return result;
+    return reverse(result);
 }
 
 /* prepare a directory block for a clone by setting all copy-on-write flags */

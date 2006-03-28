@@ -36,6 +36,10 @@
 155 size[4] Rerevoke tag[2] 
 156 size[4] Tenominate tag[2] path[s] 
 157 size[4] Renominate tag[2] 
+158 size[4] Tewalkremote tag[2] uid[s] newfid[4] path[s] nwname[2] nwname*(wname[s])
+159 size[4] Rewalkremote tag[2] nwqid[2] nwqid*(wqid[13]) address[4]
+160 size[4] Testatremote tag[2] path[s]
+161 size[4] Restatremote tag[2] stat[n]
 
 # object storage server protocol
 200 size[4] Tsreserve tag[2]

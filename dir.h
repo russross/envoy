@@ -9,7 +9,7 @@
 #define DIR_COW_OFFSET 8
 
 struct direntry {
-    int offset;
+    u32 offset;
     u64 oid;
     u8 cow;
     char *filename;

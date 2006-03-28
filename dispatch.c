@@ -23,7 +23,7 @@ void send_request(Transaction *trans) {
 
     /* allocate a condition variable */
     assert(trans->wait == NULL);
-    trans->wait = new_cond();
+    trans->wait = cond_new();
 
     trans_insert(trans);
     put_message(trans->conn, trans->out);
@@ -42,7 +42,7 @@ void send_requests(List *list) {
 
     assert(!null(list));
 
-    cond = new_cond();
+    cond = cond_new();
 
     for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
         trans = car(ptr);
@@ -59,7 +59,7 @@ void send_requests(List *list) {
     /* We'll wake up every time a response comes in.  Since we may get
      * signalled multiple times before we are scheduled, we have to walk
      * the list to see if we have gathered all the responses. */
-    
+
     done = 0;
     while (!done) {
         /* wait for at least one response */
@@ -75,7 +75,7 @@ void send_requests(List *list) {
             }
         }
     }
-    
+
     /* clear the wait fields */
     for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
         trans = car(ptr);

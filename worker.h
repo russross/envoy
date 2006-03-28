@@ -39,7 +39,7 @@ struct worker {
 #define reserve(work, kind, obj) do { \
     while (obj->wait != NULL) \
         cond_wait(obj->wait); \
-    obj->wait = new_cond(); \
+    obj->wait = cond_new(); \
     work->cleanup = cons(cons(kind, obj), work->cleanup); \
 } while (0)
 
@@ -58,6 +58,6 @@ void unlock(void);
 void cond_signal(pthread_cond_t *var);
 void cond_broadcast(pthread_cond_t *var);
 void cond_wait(pthread_cond_t *var);
-pthread_cond_t *new_cond(void);
+pthread_cond_t *cond_new(void);
 
 #endif
