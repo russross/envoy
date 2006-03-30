@@ -25,6 +25,7 @@ enum fid_access {
 };
 
 struct fid {
+    /* for operations on this file through this fid */
     pthread_cond_t *wait;
 
     Claim *claim;

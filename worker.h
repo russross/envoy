@@ -17,6 +17,7 @@ enum lock_types {
     LOCK_OPENFILE,
     LOCK_FID,
     LOCK_FORWARD,
+    LOCK_CLAIM,
 };
 
 enum worker_transaction_states {

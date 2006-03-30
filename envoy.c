@@ -539,7 +539,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     /* we don't support remove-on-close */
     failif(req->mode & ORCLOSE, ENOTSUP);
 
-    info = object_stat(worker, fid->claim->oid);
+    info = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
 
     /* figure out which permissions are required based on the request */
     if (info->type & QTDIR) {
@@ -649,13 +649,22 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     u32 perm;
     struct qid qid;
     enum fid_status status;
+    u64 newoid;
+    int blocknum;
+    int newblock;
+    u32 newcount = 0;
+    u8 *newdata = NULL;
+    Lease *lease;
 
     require_fid_closed(fid);
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
 
+    /* we'll need exclusive write access to the directory (other readers okay) */
+    reserve(worker, LOCK_CLAIM, fid->claim);
+
     /* create can only occur in a directory */
-    dirinfo = object_stat(worker, fid->claim->oid);
+    dirinfo = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
     failif(!(dirinfo->type & QTDIR), ENOTDIR);
 
     newpath = concatname(fid->path, req->name);
@@ -683,19 +692,85 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     else
         failif(-1, EINVAL);
 
-    /* TODO: make sure the file doesn't already exist */
+    /* scan the directory to make sure the file doesn't already exist */
+    for (blocknum = 0; (u64) blocknum * BLOCK_SIZE < dirinfo->length; blocknum++) {
+        u32 count;
+        void *data;
+        List *entries;
+
+        data = object_read(worker, fid->claim->oid, time(), (u64) BLOCK_SIZE * blocknum,
+                BLOCK_SIZE, &count);
+        assert(data != NULL);
+
+        entries = dir_get_entries(count, data);
+        for ( ; !null(entries); entries = cdr(entries)) {
+            struct direntry *elt = car(entries);
+            failif(!strcmp(elt->filename, req->name), EEXIST);
+        }
+
+        /* find a block with enough space for the new entry */
+        if (newdata == NULL && dir_will_fit(count, data, req->name)) {
+            newblock = blocknum;
+            newcount = count;
+            newdata = data;
+        }
+    }
 
     /* create the file */
-    qid = object_create(worker, object_reserve_oid(worker), perm, time(), fid->uid,
+    newoid = object_reserve_oid(worker);
+    qid = object_create(worker, newoid, perm, time(), fid->uid,
             dirinfo->gid, req->extension);
 
-    /* TODO: add a directory entry for the new file */
+    /* create the directory entry */
+    if (newdata == NULL) {
+        /* add a new block to the end */
+        if (dirinfo->length > 0 &&
+                dirinfo->length != (dirinfo->length & ~((u64) BLOCK_SIZE - 1)))
+        {
+            /* we need to extend the previous block before writing the new one */
+            dirinfo->mode = ~(u32) 0;
+            dirinfo->atime = ~(u32) 0;
+            dirinfo->mtime = ~(u32) 0;
+            dirinfo->length = (dirinfo->length + BLOCK_SIZE - 1) & ~((u64) BLOCK_SIZE - 1);
+            dirinfo->name = NULL;
+            dirinfo->uid = NULL;
+            dirinfo->gid = NULL;
+            dirinfo->muid = NULL;
+            dirinfo->extension = NULL;
+            dirinfo->n_uid = NULL;
+            dirinfo->n_gid = NULL;
+            dirinfo->n_muid = NULL;
 
+            object_wstat(worker, fid->claim->oid, dirinfo);
+        }
+
+        /* form the new block with a single entry */
+        newdata = dir_new_block(&newcount, newoid, req->name, 0);
+        newblock = blocknum;
+    } else {
+        /* add to the end of an existing block */
+        newdata = dir_add_entry(&newcount, newdata, newoid, req->name, 0);
+    }
+
+    /* commit the directory block to storage */
+    assert(object_write(worker, fid->claim->oid, time(), (u64) newblock * BLOCK_SIZE,
+                newcount, newdata) == newcount);
+
+    /* TODO: make sure the new file is part of the same lease... */
+    lease = fid->claim->lease;
+
+    /* move this fid to the new file */
+    claim_releae(fid->claim);
+
+    fid->claim = claim_new(newoid, lease, ACCESS_WRITEABLE, newpath);
+    fid->client_oid = newoid;
     fid->status = status;
-    fid->path = newpath;
     fid->omode = req->mode;
-    fid->readdir_offset = 0LL;
+
+    fid->readdir_offset = 0;
     fid->readdir_cookie = 0;
+    fid->readdir_next = NULL;
+    fid->readdir_current_block = NULL;
 
     res->qid = qid;
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
@@ -893,12 +968,7 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
 
     /* we don't support remove-on-close */
 
-    if (fid->claim->refcount == -1 || fid->claim->refcount == 1) {
-        /* shut down this claim */
-        claim_remove(fid->claim);
-    } else {
-        fid->claim->refcount--;
-    }
+    claim_release(fid->claim);
 
     send_reply(trans);
 }
@@ -924,20 +994,11 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     require_fid_remove(fid);
 
-    if (fid->status == STATUS_OPEN_FILE) {
-        guard(close(fid->fd));
-        guard(unlink(fid->path));
-    } else if (fid->status == STATUS_OPEN_DIR) {
-        guard(closedir(fid->dd));
-        guard(rmdir(fid->path));
-    } else {
-        struct stat info;
-        guard(lstat(fid->path, &info));
-        if (S_ISDIR(info.st_mode))
-            guard(rmdir(fid->path));
-        else
-            guard(unlink(fid->path));
-    }
+    claim_release(fid->claim);
+
+    /* do we have local control of the parent directory? */
+
+    /* remove it */
 
     send_reply(trans);
 }
@@ -961,8 +1022,7 @@ void handle_tstat(Worker *worker, Transaction *trans) {
     struct stat info;
 
     require_fid(fid);
-    guard(lstat(fid->path, &info));
-    failif(stat2p9stat(&info, &res->stat, fid->path) < 0, EIO);
+    res->stat = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
 
     send_reply(trans);
 }

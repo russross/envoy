@@ -17,5 +17,8 @@ struct direntry {
 
 List *dir_get_entries(u32 count, u8 *data);
 void dir_clone(u32 count, u8 *data);
+int dir_will_fit(u32 count, u8 *data, char *filename);
+u8 *dir_add_entry(u32 count, u8 *data, u64 oid, char *filename, u8 cow);
+u8 *dir_new_block(u32 *count, u64 oid, char *filename, u8 cow);
 
 #endif

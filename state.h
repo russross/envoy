@@ -58,8 +58,6 @@ struct state {
     Hashtable *lease_owned;
     Hashtable *lease_shared;
 
-    Hashtable *claims;
-
     Lru *objectdir_lru;
     Lru *openfile_lru;
     u64 oid_next_available;
