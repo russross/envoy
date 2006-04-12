@@ -5,20 +5,24 @@
 #include "9p.h"
 #include "vector.h"
 #include "connection.h"
-#include "state.h"
 #include "forward.h"
+#include "state.h"
 
 /*
  * Forwarded fid state.
  */
 
-u32 forward_create_new(Connection *conn, u32 fid, Connection *rconn) {
+u32 forward_create_new(Connection *conn, u32 fid, char *pathname, char *user,
+        Address *raddr)
+{
     Forward *fwd;
     u32 rfid;
 
     assert(conn != NULL);
     assert(fid != NOFID);
-    assert(rconn != NULL);
+    assert(!emptystring(pathname));
+    assert(!emptystring(user));
+    assert(raddr != NULL);
 
     if (vector_test(conn->forward_vector, fid))
         return NOFID;
@@ -30,7 +34,9 @@ u32 forward_create_new(Connection *conn, u32 fid, Connection *rconn) {
 
     fwd->wait = NULL;
     fwd->fid = fid;
-    fwd->rconn = rconn;
+    fwd->pathname = pathname;
+    fwd->user = user;
+    fwd->addr = addr;
     fwd->rfid = rfid;
 
     vector_set(conn->forward_vector, fid, fwd);
@@ -58,4 +64,3 @@ Forward *forward_lookup_remove(Connection *conn, u32 fid) {
 
     return fwd;
 }
-

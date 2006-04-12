@@ -2,8 +2,10 @@
 #define _ENVOY_H_
 
 #include "types.h"
+#include "9p.h"
 #include "transaction.h"
 #include "worker.h"
+#include "claim.h"
 
 struct walk_result {
     struct qid qid;

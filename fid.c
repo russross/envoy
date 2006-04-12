@@ -6,19 +6,21 @@
 #include "vector.h"
 #include "connection.h"
 #include "fid.h"
+#include "util.h"
 #include "state.h"
+#include "claim.h"
 
 /*
  * Fid pool state
  */
 
-int fid_insert_new(Connection *conn, u32 fid, char *uname, char *path) {
+int fid_insert_new(Connection *conn, u32 fid, char *uname, Claim *claim) {
     Fid *res;
 
     assert(conn != NULL);
     assert(fid != NOFID);
-    assert(uname != NULL && *uname);
-    assert(path != NULL && *path);
+    assert(!emptystring(uname));
+    assert(claim != NULL);
 
     if (vector_test(conn->fid_vector, fid))
         return -1;
@@ -27,11 +29,17 @@ int fid_insert_new(Connection *conn, u32 fid, char *uname, char *path) {
     assert(res != NULL);
 
     res->wait = NULL;
+    res->claim = claim;
+
     res->fid = fid;
     res->uname = uname;
-    res->path = path;
-    res->fd = -1;
     res->status = STATUS_CLOSED;
+    res->omode = 0;
+
+    res->readdir_cookie = 0;
+    res->readdir_offset = 0;
+    res->readdir_current_block = NULL;
+    res->readdir_next = NULL;
 
     vector_set(conn->fid_vector, res->fid, res);
 
@@ -52,7 +60,7 @@ Fid *fid_lookup_remove(Connection *conn, u32 fid) {
     return (Fid *) vector_get_remove(conn->fid_vector, fid);
 }
 
-u32 fid_hash(Fid *fid) {
+u32 fid_hash(const Fid *fid) {
     return generic_hash(&fid->fid, sizeof(fid->fid), 1);
 }
 

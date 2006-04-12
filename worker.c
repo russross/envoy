@@ -4,14 +4,13 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include "types.h"
 #include "list.h"
 #include "transaction.h"
 #include "fid.h"
+#include "forward.h"
 #include "state.h"
 #include "worker.h"
-#include "forward.h"
 #include "oid.h"
 
 /*
@@ -32,9 +31,8 @@ static void *worker_loop(Worker *t) {
 
         /* initialize the exception handler and catch exceptions */
         while (setjmp(t->jmp) == WORKER_RETRY) {
-            /* wait for some condition to be try and retry */
+            /* wait for some condition to be true and retry */
             printf("WORKER_RETRY invoked\n");
-            sleep(5);
             worker_cleanup(t);
         }
 
@@ -94,12 +92,22 @@ void worker_cleanup(Worker *worker) {
             case LOCK_OPENFILE:         cleanup(file);  break;
             case LOCK_FID:              cleanup(fid);   break;
             case LOCK_FORWARD:          cleanup(fwd);   break;
+            case LOCK_LEASE:
+                lease_finish_transaction((Lease *) obj);
+                break;
+            case LOCK_WALK:
+                walk_release((Walk *) obj);
+                break;
             default:
                 assert(0);
         }
     }
 }
 #undef cleanup
+
+void worker_retry(Worker *worker) {
+    longjmp(worker->jmp, WORKER_RETRY);
+}
 
 void lock(void) {
     pthread_mutex_lock(state->biglock);

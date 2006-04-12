@@ -1,14 +1,25 @@
 #ifndef _LEASE_H_
 #define _LEASE_H_
 
-#include <foo.h>
+#include <pthread.h>
+#include <gc/gc.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include "types.h"
+#include "list.h"
+#include "hashtable.h"
+#include "worker.h"
+#include "lru.h"
+#include "claim.h"
 
 /* General rules
  * - Lease and ownership requests always come from parent to child
  * - Ownership roots are always writable or readonly--never cow
       - therefore, path to every ownership is also not cow
- *    - should readonly trees just use leases? ownership so children can delegate too?
- * - Ownership roots are always unique--further grants are only of descendents in the tree
+ *    - readonly trees only use leases--the owner grants leases to everyone
+ * - Ownership roots are always unique--further grants are only of descendents
+ *   in the tree
  * - Every lease/ownership knows its exit points: other owners, leases, parent
  */
 
@@ -81,59 +92,93 @@
  *     - wait on okay_to_change_lease until inflight drops to zero
  */
 
-/* note: read-only lease + remote address => remote address is the owner
- *       the root of an owned branch is never cow */
-struct lease {
-    /* This is created when a transaction finds an out-of-date lease.  New
-     * transactions intending to stake a claim on this lease wait here, and
-     * rejected remote requests working off this version wait here until an
-     * update.  When the lease is updated a broadcast will be sent out and the
-     * claimers must recheck the lease situation.
-     *
-     * Example:
-     *    - A request comes to a remotely-owned lease
-     *    - The request is forwarded
-     *    - The remote envoy issues a readonly lease and rejects the request
-     *    - The rejected request finds that the lease hasn't been updated, so it
-     *      creates a wait variable and blocks.
-     *    - A second request comes in on this lease
-     *    - The request sees the wait variable and blocks
-     *    - The new lease comes in and is recorded
-     *    - Both client requests awaken and are handled locally
-     */
-    pthread_cond_t *wait_for_update;
-    int inflight;
-    pthread_cond_t *okay_to_change_lease;
 
-    /* the root path of this lease */
-    char *pathname;
-    /* flag indicating we have a read-only lease */
-    int readonly;
-    /* the address of the envoy that holds the lease (NULL means us) */
-    Address *addr;
-    /* flag indicating we don't know anything about the descendents of this path */
-    int leaf;
-
-    /* all the active fids with claims on this lease */
-    Hashtable *fids;
-    /* all the walk entries with claims on this lease. Note: NULL <=> remote lease */
-    Lru *walk_cache;
-    /* all known leases below this node (note: empty if leaf, else forms a wavefront) */
-    List *children;
-    /* version number of this lease--increments on every update */
-    u32 version;
+enum lease_type {
+    LEASE_GRANT,
+    LEASE_LEASE,
+    LEASE_REMOTE,
 };
 
-/* should these be public? */
+struct lease {
+    /* if this exists, transactions wait here before starting an operation */
+    pthread_cond_t *wait_for_update;
+    /* the number of active transactions using this lease */
+    int inflight;
+    /* if this exists when finishing and inflight == 0, a transaction signals
+     * it to let a lease change take place. */
+    pthread_cond_t *okay_to_change_lease;
+
+    enum lease_type type;
+
+    char *pathname;
+    /* the remote envoy, owner, or parent */
+    Address *addr;
+
+    /* these fields are not applicable for remote leases */
+
+    /* root claim */
+    Claim *claim;
+    /* all the exits from this lease */
+    List *wavefront;
+    /* all active fids using this lease */
+    Hashtable *fids;
+    /* does this lease cover a read-only region? */
+    int readonly;
+    /* cache of unused claims in this lease.  these entries also appear in the
+     * global LRU */
+    Hashtable *claim_cache;
+
+    /* this field is only applicable for grants */
+    List *subleases;
+};
+
+extern Hashtable *lease_by_root_pathname;
+extern Lru *lease_claim_cache;
+
+/* add the given claim to the claim cache */
+void lease_add_claim_to_cache(Claim *claim);
+/* remove a given claim from the cache (usually when activating it */
+void lease_remove_claim_from_cache(Claim *claim);
+/* search the cache for a claim for the given pathname */
+Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname);
+/* flush all cached claims related to the given lease */
+void lease_flush_claim_cache(Lease *lease);
+
+void lease_start_transaction(Lease *lease);
+void lease_finish_transaction(Lease *lease);
+
+void lease_state_init(void);
+
+/* This is created when a transaction finds an out-of-date lease.  New
+ * transactions intending to stake a claim on this lease wait here, and
+ * rejected remote requests working off this version wait here until an
+ * update.  When the lease is updated a broadcast will be sent out and the
+ * claimers must recheck the lease situation.
+ *
+ * Example:
+ *    - A request comes to a remotely-owned lease
+ *    - The request is forwarded
+ *    - The remote envoy issues a readonly lease and rejects the request
+ *    - The rejected request finds that the lease hasn't been updated, so
+ *      it creates a wait variable and blocks.
+ *    - A second request comes in on this lease
+ *    - The request sees the wait variable and blocks
+ *    - The new lease comes in and is recorded
+ *    - Both client requests awaken and are handled locally
+ */
+
 /* create a lease */
 void lease_new(char *pathname, Address *addr, int leaf, List *children);
 
-/* find the lease for a given path */
-Lease *lease_forward_to(char *pathname, int write);
+/* Checks if the given pathname is part of a different lease than the parent
+ * (which must be covered by the given lease) and returns it if so.  Returns
+ * NULL if the pathname is covered by the same lease. */
+Lease *lease_check_for_lease_change(Lease *lease, char *pathname);
 
-/* lease change requests (always from a parent) */
-//lease_revoke
-//lease_grant
-//lease_upgrade
+/* If the given pathname is covered by a local lease, find the root of that
+ * lease and return the lease.  Otherwise, return NULL.
+ *
+ * Does not call lease_start_transaction on the result. */
+Lease *lease_find_root(char *pathname);
 
 #endif

@@ -18,9 +18,9 @@
 #include "util.h"
 #include "config.h"
 #include "state.h"
-#include "map.h"
 #include "worker.h"
 #include "oid.h"
+#include "lease.h"
 
 /*
  * Static state
@@ -72,7 +72,7 @@ int addr_cmp(const Address *a, const Address *b) {
     return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
 }
 
-static u32 string_hash(const char *str) {
+u32 string_hash(const char *str) {
     return generic_hash(str, strlen(str), 0);
 }
 
@@ -93,16 +93,12 @@ static void print_status(enum fid_status status) {
 
 static void print_fid(Fid *fid) {
     printf("    fid:%u path:%s uname:%s\n    ",
-            fid->fid, fid->path, fid->uname);
+            fid->fid, fid->claim->pathname, fid->uname);
     print_status(fid->status);
-    if (fid->fd > 0)
-        printf(" fd[%d]", fid->fd);
-    if (fid->dd != NULL)
-        printf(" dd[%u]", (u32) fid->dd);
-    printf(" offset[%llu] omode[$%x]\n", fid->offset, fid->omode);
-    if (fid->next_dir_entry != NULL) {
+    printf(" offset[%llu] omode[$%x]\n", fid->readdir_offset, fid->omode);
+    if (fid->readdir_next != NULL) {
         printf("    next_dir_entry:\n");
-        dumpStat(stdout, "      ", fid->next_dir_entry);
+        dumpStat(stdout, "      ", fid->readdir_next);
     }
 }
 
@@ -226,8 +222,9 @@ void state_init_envoy(void) {
     state_init_common(ENVOY_PORT);
     state->isstorage = 0;
 
+    lease_state_init();
     /* namespace management state */
-    state->lease_owned = hash_create(
+    /*state->lease_owned = hash_create(
             LEASE_HASHTABLE_SIZE,
             (u32 (*)(const void *)) string_hash,
             (int (*)(const void *, const void *)) strcmp);
@@ -241,7 +238,7 @@ void state_init_envoy(void) {
     state->map->prefix = NULL;
     state->map->addr = state->my_address;
     state->map->nchildren = 0;
-    state->map->children = NULL;
+    state->map->children = NULL; */
 }
 
 void state_init_storage(void) {

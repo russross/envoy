@@ -18,6 +18,8 @@ enum lock_types {
     LOCK_FID,
     LOCK_FORWARD,
     LOCK_CLAIM,
+    LOCK_LEASE,
+    LOCK_WALK,
 };
 
 enum worker_transaction_states {
@@ -53,6 +55,7 @@ struct worker {
 
 void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
 void worker_cleanup(Worker *worker);
+void worker_retry(Worker *worker);
 
 void lock(void);
 void unlock(void);

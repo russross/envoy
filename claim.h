@@ -1,7 +1,18 @@
 #ifndef _CLAIM_H_
 #define _CLAIM_H_
 
-#include <foo.h>
+#include <pthread.h>
+#include <gc/gc.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "types.h"
+#include "9p.h"
+#include "list.h"
+#include "hashtable.h"
+#include "util.h"
+#include "worker.h"
+#include "lru.h"
+#include "lease.h"
 
 /* Claims are handles to storage objects.  At most one exists per object in the
  * local system (leases may allow read-only duplicates in the distributed
@@ -34,9 +45,17 @@
 /*****************************************************************************/
 /* High-level functions */
 
+/* Find the claim for a given pathname if it is part of a local lease, doing
+ * directory searches as necessary.  This also registers the transaction with
+ * the lease, which should be completed eventually.  In addition, the result
+ * Claim should be passed to claim_release eventually.  Returns NULL when the
+ * pathname is not under a local lease. */
+Claim *claim_find(Worker *worker, char *targetname);
+
 /* Find the parent of a given claim, possible doing directory searches as
- * necessary.  Returns NULL if the parent is not part of a local lease or does
- * not exist.  The result should be passed to claim_release eventually. */
+ * necessary.  Returns NULL if the parent is not part of the same lease or does
+ * not exist.  The result should be passed to claim_release eventually.
+ * claim_release release is always called on the child argument. */
 Claim *claim_get_parent(Worker *worker, Claim *child);
 
 /* As with claim_get_parent, but find a child of a given claim. */
@@ -55,8 +74,22 @@ void claim_thaw(Worker *worker, Claim *claim);
  * paths to child leases are cloned.  Returns the new OID of the root node. */
 u64 claim_freeze(Worker *worker, Claim *claim);
 
+/* Scan the given directory, looking for the given filename.  Returns a claim
+ * for the file if found (and if it is part of the same lease), with the
+ * side-effect of priming the cache with other entries from the same directory
+ * (excluding the returned entry and entries outside the lease). */
+Claim *claim_scan_directory(Worker *worker, Claim *dir, char *name);
+
 /*****************************************************************************/
 /* Data structures and functions */
+
+
+enum claim_access {
+    ACCESS_WRITEABLE,
+    ACCESS_READONLY,
+    ACCESS_COW,
+};
+
 struct claim {
     /* for writers to objects*/
     pthread_cond_t *wait;
@@ -64,33 +97,28 @@ struct claim {
      * exclusive */
     int refcount;
 
+    /* the context */
+    Lease *lease;
     /* tree structure */
     Claim *parent;
     /* an ordered list of children */
     List *children;
 
-    /* the lease under which this object falls */
-    Lease *lease;
-    /* the version number of the lease when last checked */
-    u32 lease_version;
-
     /* the full system path of this object */
     char *pathname;
     /* the level of access we have to this object */
-    enum fid_access access;
+    enum claim_access access;
     /* the storage system object ID */
     u64 oid;
 };
 
 /* Create a new root claim object for the given lease */
-Claim *claim_new_root(Lease *lease, char *pathname, enum fid_access access,
-        u64 oid);
+Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid);
 /* Create a new claim object in the same lease as the parent */
-Claim *claim_new(Claim *parent, char *name, enum fid_access access, u64 oid);
+Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid);
 
-/* Attach to a claim, possibly with exclusive access.
- * Returns 0 on success, -1 if the request cannot be filled because of
- * exclusive access constraints. */
+/* Attach to a claim.  Returns 0 on success, -1 if the request cannot be filled
+ * because of exclusive access constraints. */
 int claim_request(Claim *claim);
 
 /* Release a claim. */

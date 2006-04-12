@@ -3,10 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <utime.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
 #include <string.h>
@@ -16,14 +14,16 @@
 #include "connection.h"
 #include "transaction.h"
 #include "fid.h"
+#include "forward.h"
 #include "util.h"
 #include "config.h"
 #include "state.h"
-#include "fs.h"
+#include "envoy.h"
 #include "dispatch.h"
-#include "map.h"
 #include "worker.h"
-#include "forward.h"
+#include "dir.h"
+#include "claim.h"
+#include "lease.h"
 
 /* convert a u32 to a string, allocating the necessary storage */
 static inline char *u32tostr(u32 n) {
@@ -32,6 +32,15 @@ static inline char *u32tostr(u32 n) {
 
     sprintf(res, "%u", n);
     return res;
+}
+
+static int has_permission(char *uname, struct p9stat *info, u32 required) {
+    if (!strcmp(uname, info->uid))
+        return info->mode & perm & 0700 == perm & 0700;
+    else if (groupmember(uname, info->gid))
+        return info->mode & perm & 0070 == perm & 0070;
+    else
+        return info->mode & perm & 0007 == perm & 0007;
 }
 
 /*****************************************************************************/
@@ -252,64 +261,37 @@ void handle_tauth(Worker *worker, Transaction *trans) {
 void handle_tattach(Worker *worker, Transaction *trans) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
-    struct sockaddr_in *addr;
-    List *walk_req, *walk_res;
+    struct walk_response *walkres;;
+    List *names;
+    List *qids;
+    enum walk_request_type;
+    Address *addr;
 
     failif(req->afid != NOFID, EBADF);
     failif(emptystring(req->uname), EINVAL);
 
-    /* start from the global root and walk to the attach point */
-    walk_req = splitpath(req->aname);
-    walk_res = walk(get_root_address(), walk_req, req->uname);
-
-    /* was there an error on the walk? */
-    failif(length(walk_req) != length(walk_res), ENOENT);
-
-    /* set up a fid here and possibly remotely */
-
-    if ((addr = get_envoy_address(req->aname)) != NULL &&
-            !addr_cmp(addr, trans->conn->addr))
-    {
-        /* this request should be forwarded */
-        Connection *rconn;
-
-        if (trans->conn->type == CONN_ENVOY_IN) {
-            /* this request shouldn't have been sent here */
-            handle_error(worker, trans);
-            return;
-        }
-
-        rconn = conn_get_from_addr(worker, addr);
-
-        /* did we fail to connect to the remote envoy? */
-        if (rconn == NULL) {
-            handle_error(worker, trans);
-            return;
-        }
-
-        if (forward_create_new(trans->conn, req->fid, rconn) == NOFID) {
-            handle_error(worker, trans);
-            return;
-        }
-
-        forward_to_envoy(worker, trans);
-    } else {
-        /* this request can be handled locally */
-        struct stat info;
-        char *path;
-
-        if (emptystring(req->aname)) {
-            failif((path = resolvePath(rootdir, "", &info)) == NULL, ENOENT);
-        } else {
-            failif((path = resolvePath(rootdir, req->aname, &info)) == NULL,
-                    ENOENT);
-        }
-        failif(fid_insert_new(trans->conn, req->fid, req->uname, path) < 0,
-                EBADF);
-        res->qid = stat2qid(&info);
-
-        send_reply(trans);
+    /* treat this like a walk from the global root */
+    if (addr_cmp(state->root_address, state->my_address)) {
+        /* make sure walk knows how to find the remote address */
+        Walk *walk = walk_lookup("/", req->uname);
+        if (walk == NULL || addr_cmp(walk->addr, state->root_address))
+            walk_add_new("/", req->uname, NULL, state->root_address);
     }
+
+    names = splitpath(req->aname);
+    walkres = common_twalk(worker, trans, WALK_CLIENT, req->fid, names,
+            "/", req->uname);
+
+    failif(walkres->type == WALK_ERROR, walkres->errnum);
+    failif(length(walkres->qids) != length(names) + 1, ENOENT);
+
+    /* get the last qid in the result list (we know it's !NULL) */
+    qids = walkres->qids;
+    while (!null(cdr(qids)))
+        qids = cdr(qids);
+    res->qid = *((struct qid *) car(qids));
+
+    send_reply(trans);
 }
 
 /**
@@ -369,132 +351,125 @@ void handle_tflush(Worker *worker, Transaction *trans) {
  *   - walk of ".." in root directory is equivalent to walk of no elements
  *   - maximum of MAXWELEM (16) elements in a single Twalk request
  */
-//static List *walk_path_list(int n, int count, char **names, char *path) {
-//    char *newpath;
-//
-//    if (n == count || !names[n] || !*names[n] || strchr(names[n], '/'))
-//        return NULL;
-//
-//    if (!strcmp(names[n], "."))
-//        newpath = path;
-//    else if (!strcmp(names[n], ".."))
-//        newpath = dirname(path);
-//    else
-//        newpath = concatname(path, names[n]);
-//
-//    return cons(newpath, walk_path_list(n+1, count, names, newpath));
-//}
-//
-//static List *walk_qid_list(List *paths) {
-//    struct stat info;
-//
-//    if (null(paths) || lstat(car(paths), &info) < 0)
-//        return NULL;
-//
-//    return cons(stat2qid(&info), walk_qid_list(cdr(paths)));
-//}
 
+/* Handle walk requests from a client.  Do a few basic checks and format a
+ * request for the more general function. */
 void client_twalk(Worker *worker, Transaction *trans) {
     struct Twalk *req = &trans->in->msg.twalk;
     struct Rwalk *res = &trans->out->msg.rwalk;
-    Fid *fid;
-    struct stat info;
-    char *newpath;
-//    List *paths, *qids;
     int i;
+    List *names;
+    struct walk_response *walkres;
+    Forward *fwd;
+    Fid *fid;
 
+    /* verify the limit on how many names can be walked in a single request */
     failif(req->nwname > MAXWELEM, EMSGSIZE);
-    failif(req->newfid != req->fid && fid_lookup(trans->conn, req->newfid),
+
+    /* make sure the new fid isn't already in use */
+    failif(req->newfid != req->fid &&
+            (fid_lookup(trans->conn, req->newfid) ||
+             forward_lookup(trans->conn, req->newfid)),
             EBADF);
-    require_fid_closed(fid);
 
-    /* if no path elements were provided, just clone this fid */
-    if (req->nwname == 0) {
-        if (req->fid != req->newfid)
-            fid_insert_new(trans->conn, req->newfid, fid->uname, fid->path);
+    /* copy the array of names into a list */
+    names = NULL;
+    for (i = req->nwname - 1; i >= 0; i--)
+        names = cons(req->wname[i], names);
 
-        res->nwqid = 0;
-        res->wqid = NULL;
-
-        send_reply(trans);
-        return;
+    /* does this start with a remote fid? */
+    if ((forward = forward_lookup(trans->conn, req->fid)) != NULL) {
+        /* make sure there's a cache hint about where to find the start */
+        Walk *walk = walk_lookup(forward->pathname, forward->user);
+        if (walk == NULL || addr_cmp(walk->addr, forward->raddr)) {
+            walk_add_new(forward->pathname, forward->user, NULL,
+                    forward->raddr);
+        }
+        walkres = common_twalk(worker, trans, WALK_CLIENT, res->newfid,
+                names, forward->pathname, forward->user);
+    } else if ((fid = fid_lookup(trans->conn, req->fid)) != NULL) {
+        failif(fid->status != STATUS_CLOSED, ETXTBSY);
+        walkres = common_twalk(worker, trans, WALK_CLIENT, req->newfid,
+                names, fid->claim->pathname, fid->uname);
+    } else {
+        failif(-1, EBADF);
     }
+    /* TODO: update the forward pathname if necessary */
+    /* TODO: remove the starting fid if necessary */
 
-    /* make sure we're starting from a directory */
-    guard(lstat(fid->path, &info));
-    failif(!S_ISDIR(info.st_mode), ENOTDIR);
+    /* did we fail on the first step? */
+    failif(walkres->type == WALK_ERROR && length(walkres->qids) == 0,
+            walkres->errnum);
 
-    res->nwqid = 0;
-    res->wqid = GC_MALLOC_ATOMIC(sizeof(struct qid) * req->nwname);
+    res->nwqid = length(walkres->qids);
+    res->wqid = GC_MALLOC_ATOMIC(sizeof(struct qid) * res->nwqid);
     assert(res->wqid != NULL);
 
-//    /* get the list of paths to check */
-//    paths = walk_path_list(0, req->nwname, req->wname, fid->path);
-//
-//    /* gather the qids for all the paths */
-//    qids = walk_qid_list(paths);
-//
-//    /* now pack them into a reply */
-//    for (i = 0; !null(qids); qids = cdr(qids), i++) {
-//        if (i < req->nwname - 1 && !(res->wqid[i]->type & QTDIR))
-//            break;
-//        res->wqid[i] = car(qids);
-//        res->nwqid = i + 1;
-//    }
-//
-//    /* if we had qids left, it means we quit on a non-directory */
-//    failif(i == 0 && !null(qid), ENOTDIR);
-//    failif(i == 0, EINVAL);
-//
-//    /* there was an error somewhere on the way (after the first element) */
-//    if (i != req->nwname) {
-//        send_reply(trans);
-//        return;
-//    }
-
-    newpath = fid->path;
-    for (i = 0; i < req->nwname; i++) {
-        if (!req->wname[i] || !*req->wname[i] || strchr(req->wname[i], '/')) {
-            if (i == 0)
-                failif(-1, EINVAL);
-            send_reply(trans);
-            return;
-        }
-
-        /* build the revised name, watching for . and .. */
-        if (!strcmp(req->wname[i], "."))
-            /* do nothing */;
-        else if (!strcmp(req->wname[i], ".."))
-            newpath = dirname(newpath);
-        else
-            newpath = concatname(newpath, req->wname[i]);
-
-        if (lstat(newpath, &info) < 0) {
-            if (i == 0)
-                guard(-1);
-            send_reply(trans);
-            return;
-        }
-        if (i < req->nwname - 1 && !S_ISDIR(info.st_mode)) {
-            if (i == 0)
-                failif(-1, ENOTDIR);
-            send_reply(trans);
-            return;
-        }
-        res->wqid[i] = stat2qid(&info);
-        res->nwqid = i + 1;
+    /* copy the qids into the result message */
+    for (i = 0; i < res->nwqid; i++) {
+        struct qid *qid = car(walkres->qids);
+        walkres->qids = cdr(walkres->qids);
+        res->wqid[i] = *qid;
     }
-
-    if (req->fid == req->newfid)
-        fid->path = newpath;
-    else
-        fid_insert_new(trans->conn, req->newfid, fid->uname, newpath);
 
     send_reply(trans);
 }
 
 void envoy_twalk(Worker *worker, Transaction *trans) {
-    failif(-1, ENOTSUP);
+    struct Tewalkremote *req = &trans->in->msg.tewalkremote;
+    struct Rewalkremote *res = &trans->out->msg.rewalkremote;
+    int i;
+    char *pathname;
+    char *user;
+    List *names;
+    struct walk_response *walkres;
+
+    /* copy the array of names into a list */
+    names = NULL;
+    for (i = req->nwname - 1; i >= 0; i--)
+        names = cons(req->wname[i], names);
+
+    /* is this the start of the walk? */
+    if (emptystring(req->uid) || emptystring(req->path)) {
+        /* this must be from an existing, closed fid */
+        Fid *fid = fid_lookup(trans->conn, req->fid);
+        failif(fid == NULL, EBADF);
+        failif(fid->status != STATUS_CLOSED, ETXTBSY);
+        pathname = fid->claim->pathname;
+        user = fid->user;
+    } else {
+        /* this is coming here after crossing a lease boundary */
+        pathname = req->path;
+        user = req->uid;
+    }
+
+    walkres = common_twalk(worker, trans, WALK_ENVOY, req->newfid,
+            names, pathname, user);
+
+    /* did we fail on the first step? */
+    failif(walkres->type == WALK_ERROR && length(walkres->qids) <= 1,
+            walkres->errnum);
+
+    res->nwqid = length(walkres->qids);
+    res->wqid = GC_MALLOC_ATOMIC(sizeof(struct qid) * res->nwqid);
+    assert(res->wqid != NULL);
+
+    /* copy the qids into the result message */
+    for (i = 0; i < res->nwqid; i++) {
+        struct qid *qid = car(walkres->qids);
+        walkres->qids = cdr(walkres->qids);
+        res->wqid[i] = *qid;
+    }
+
+    if (walkres->addr != NULL) {
+        res->address =
+            ((walkres->addr->sin_addr.s_addr >> 24) & 0xff) |
+            ((walkres->addr->sin_addr.s_addr >> 16) & 0xff) |
+            ((walkres->addr->sin_addr.s_addr >>  8) & 0xff) |
+            ( walkres->addr->sin_addr.s_addr        & 0xff);
+    } else {
+        res->address = ~(u32) 0;
+    }
 }
 
 /**
@@ -562,12 +537,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     }
 
     /* check against the file's actual permissions */
-    if (!strcmp(fid->uname, info->uid))
-        failif(info->mode & perm & 0700 != perm & 0700, EPERM);
-    else if (groupmember(fid->uname, info->gid))
-        failif(info->mode & perm & 0070 != perm & 0070, EPERM);
-    else
-        failif(info->mode & perm & 0007 != perm & 0007, EPERM);
+    failif(!has_permission(fid->uname, info, perm), EPERM);
 
     /* make sure the file's not in use if it has DMEXCL set */
     if (info->mode & DMEXCL) {
@@ -593,11 +563,13 @@ void handle_topen(Worker *worker, Transaction *trans) {
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
     res->qid = info->qid;
 
-    /* use the original oid to identify the file to the client in case a CoW has happened */
+    /* use the original oid to identify the file to the client in case a CoW
+     * has happened */
     res->qid.path = fid->client_oid;
 
     /* do we need to truncate the file? */
-    if ((req->mode & OTRUNC) && !(info->mode & DMAPPEND) && info->length > 0LL) {
+    if ((req->mode & OTRUNC) && !(info->mode & DMAPPEND) && info->length > 0LL)
+    {
         info->mode = ~(u32) 0;
         info->atime = info->mtime = ~(u32) 0;
         info->uid = info->gid = NULL;
@@ -660,11 +632,13 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
 
-    /* we'll need exclusive write access to the directory (other readers okay) */
+    /* we'll need exclusive write access to the directory (other
+     * readers okay) */
     reserve(worker, LOCK_CLAIM, fid->claim);
 
     /* create can only occur in a directory */
-    dirinfo = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
+    dirinfo =
+        object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
     failif(!(dirinfo->type & QTDIR), ENOTDIR);
 
     newpath = concatname(fid->path, req->name);
@@ -693,13 +667,15 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         failif(-1, EINVAL);
 
     /* scan the directory to make sure the file doesn't already exist */
-    for (blocknum = 0; (u64) blocknum * BLOCK_SIZE < dirinfo->length; blocknum++) {
+    for (blocknum = 0; (u64) blocknum * BLOCK_SIZE < dirinfo->length;
+            blocknum++)
+    {
         u32 count;
         void *data;
         List *entries;
 
-        data = object_read(worker, fid->claim->oid, time(), (u64) BLOCK_SIZE * blocknum,
-                BLOCK_SIZE, &count);
+        data = object_read(worker, fid->claim->oid, time(),
+                (u64) BLOCK_SIZE * blocknum, BLOCK_SIZE, &count);
         assert(data != NULL);
 
         entries = dir_get_entries(count, data);
@@ -727,11 +703,13 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         if (dirinfo->length > 0 &&
                 dirinfo->length != (dirinfo->length & ~((u64) BLOCK_SIZE - 1)))
         {
-            /* we need to extend the previous block before writing the new one */
+            /* we need to extend the previous block before writing the
+             * new one */
             dirinfo->mode = ~(u32) 0;
             dirinfo->atime = ~(u32) 0;
             dirinfo->mtime = ~(u32) 0;
-            dirinfo->length = (dirinfo->length + BLOCK_SIZE - 1) & ~((u64) BLOCK_SIZE - 1);
+            dirinfo->length = (dirinfo->length + BLOCK_SIZE - 1) &
+                ~((u64) BLOCK_SIZE - 1);
             dirinfo->name = NULL;
             dirinfo->uid = NULL;
             dirinfo->gid = NULL;
@@ -753,14 +731,14 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     }
 
     /* commit the directory block to storage */
-    assert(object_write(worker, fid->claim->oid, time(), (u64) newblock * BLOCK_SIZE,
-                newcount, newdata) == newcount);
+    assert(object_write(worker, fid->claim->oid, time(),
+                (u64) newblock * BLOCK_SIZE, newcount, newdata) == newcount);
 
     /* TODO: make sure the new file is part of the same lease... */
     lease = fid->claim->lease;
 
     /* move this fid to the new file */
-    claim_releae(fid->claim);
+    claim_release(fid->claim);
 
     fid->claim = claim_new(newoid, lease, ACCESS_WRITEABLE, newpath);
     fid->client_oid = newoid;
@@ -812,8 +790,8 @@ void handle_tread(Worker *worker, Transaction *trans) {
     failif(req->count > trans->conn->maxSize - RREAD_HEADER, EMSGSIZE);
 
     if (fid->status == STATUS_OPEN_FILE) {
-        res->data = object_read(worker, fid->claim->oid, time(), req->offset, req->count,
-                &res->count);
+        res->data = object_read(worker, fid->claim->oid, time(), req->offset,
+                req->count, &res->count);
     } else if (fid->status == STATUS_OPEN_DIR) {
         /* allow rewinds, but no other offset changes */
         if (req->offset == 0 && fid->readdir_cookie != 0) {
@@ -874,7 +852,8 @@ void handle_tread(Worker *worker, Transaction *trans) {
             /* find another entry */
             if (!null(fid->readdir_current_block)) {
                 struct direntry *elt = car(fid->readdir_current_block);
-                char *childpath = concatname(fid->claim->pathname, elt->filename);
+                char *childpath =
+                    concatname(fid->claim->pathname, elt->filename);
 
                 /* can we get stats locally? */
                 if (lease_local_read(childpath)) {
@@ -892,7 +871,8 @@ void handle_tread(Worker *worker, Transaction *trans) {
         } while (fid->readdir_next != NULL);
 
         /* was a single entry too big for the return buffer? */
-        failif(res->count <= sizeof(u16) && fid->readdir_next != NULL, ENAMETOOLONG);
+        failif(res->count <= sizeof(u16) && fid->readdir_next != NULL,
+                ENAMETOOLONG);
 
         /* end of file? */
         failif(res->count <= sizeof(u16), ENOENT);

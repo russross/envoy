@@ -9,7 +9,7 @@
  * Generic hash tables
  */
 
- struct hashtable {
+struct hashtable {
     u32 size;
     u32 bucketCount;
     List **buckets;

@@ -10,7 +10,6 @@
 #include "vector.h"
 #include "hashtable.h"
 #include "handles.h"
-#include "map.h"
 #include "lru.h"
 
 #define CONN_HASHTABLE_SIZE 64
@@ -27,10 +26,13 @@
 #define LEASE_HASHTABLE_SIZE 64
 #define LEASE_FIDS_HASHTABLE_SIZE 64
 #define LEASE_WALK_LRU_SIZE 64
+#define LEASE_CLAIM_LRU_SIZE 64
+#define LEASE_CLAIM_HASHTABLE_SIZE 64
 
 void print_address(Address *addr);
 int addr_cmp(const Address *a, const Address *b);
 u32 generic_hash(const void *elt, int len, u32 hash);
+u32 string_hash(const char *str);
 void state_dump(void);
 Message *message_new(void);
 
@@ -38,6 +40,7 @@ Message *message_new(void);
 struct state {
     int isstorage;
     Address *my_address;
+    Address *root_address;
 
     Handles *handles_listen;
     Handles *handles_read;
@@ -53,10 +56,6 @@ struct state {
     pthread_mutex_t *biglock;
 
     List *thread_pool;
-
-    Map *map;
-    Hashtable *lease_owned;
-    Hashtable *lease_shared;
 
     Lru *objectdir_lru;
     Lru *openfile_lru;

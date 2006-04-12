@@ -16,14 +16,14 @@
 #include "connection.h"
 #include "transaction.h"
 #include "fid.h"
+#include "forward.h"
 #include "util.h"
 #include "config.h"
 #include "state.h"
 #include "fs.h"
+#include "envoy.h"
 #include "dispatch.h"
-#include "map.h"
 #include "worker.h"
-#include "forward.h"
 
 /* generate a qid record from a file stat record */
 static inline struct qid stat2qid(struct stat *info) {

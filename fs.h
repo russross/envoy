@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "transaction.h"
+#include "envoy.h"
 #include "worker.h"
 
 void forward_to_envoy(Worker *worker, Transaction *trans);

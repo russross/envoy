@@ -19,5 +19,6 @@ typedef struct openfile Openfile;
 typedef struct objectdir Objectdir;
 typedef struct lease Lease;
 typedef struct claim Claim;
+typedef struct walk Walk;
 
 #endif

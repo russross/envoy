@@ -347,7 +347,7 @@ Objectdir *objectdir_lookup(Worker *worker, u64 start) {
     return dir;
 }
 
-static inline struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
+struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
     struct qid qid;
     qid.type =
         (mode & DMDIR) ? QTDIR :
@@ -504,8 +504,8 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     return 0;
 }
 
-int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid, char *gid,
-        char *extension)
+int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
+        char *gid, char *extension)
 {
     u64 start = oid_dir_findstart(oid);
     struct objectdir *dir;

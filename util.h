@@ -17,6 +17,7 @@ char *stringcopy(char *s);
 char *substring(char *s, int start, int len);
 char *concatstrings(char *a, char *b);
 int emptystring(char *s);
+int startswith(char *s, char *sub);
 
 char *dirname(char *path);
 char *filename(char *path);

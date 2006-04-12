@@ -10,11 +10,15 @@
 struct forward {
     pthread_cond_t *wait;
     u32 fid;
-    Connection *rconn;
+    char *pathname;
+    char *user;
+    /*Connection *rconn;*/
+    Address *raddr;
     u32 rfid;
 };
 
-u32 forward_create_new(Connection *conn, u32 fid, Connection *rconn);
+u32 forward_create_new(Connection *conn, u32 fid, char *pathname, char *user,
+        Address *raddr);
 Forward *forward_lookup(Connection *conn, u32 fid);
 Forward *forward_lookup_remove(Connection *conn, u32 fid);
 

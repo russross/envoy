@@ -14,7 +14,6 @@
 #include "config.h"
 #include "state.h"
 #include "transport.h"
-#include "map.h"
 #include "worker.h"
 #include "oid.h"
 
@@ -97,6 +96,7 @@ void test_dump(void) {
     dumpBytes(stdout, "    ", m.raw, m.size);
 }
 
+/*
 void test_map(void) {
     Map *root = GC_NEW(Map);
     List *a, *b;
@@ -115,6 +115,7 @@ void test_map(void) {
     map_insert(root, a, addr);
     dumpMap(root, "");
 }
+*/
 
 /*
 void *test_connect(void *arg) {
@@ -136,6 +137,7 @@ void *test_connect(void *arg) {
 */
 
 void config_init(void) {
+/*
     map_insert(state->map, cons("home", cons("rgr22", NULL)),
             make_address("boulderdash", ENVOY_PORT));
     map_insert(state->map, cons("usr", cons("lib", NULL)),
@@ -144,6 +146,7 @@ void config_init(void) {
             make_address("donkeykong", ENVOY_PORT));
     map_insert(state->map, cons("usr", cons("bin", NULL)),
             make_address("donkeykong", ENVOY_PORT));
+*/
 }
 
 void test_oid(void) {
@@ -191,7 +194,6 @@ int main(int argc, char **argv) {
         config_init();
 
     /*test_dump();*/
-    /*test_map();*/
     /*worker_create(test_connect, NULL);*/
     printf("root directory = [%s]\n", rootdir);
 

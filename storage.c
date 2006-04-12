@@ -8,6 +8,7 @@
 #include <string.h>
 #include "types.h"
 #include "9p.h"
+#include "list.h"
 #include "transaction.h"
 #include "util.h"
 #include "storage.h"
@@ -59,11 +60,11 @@ void handle_tscreate(Worker *worker, Transaction *trans) {
     struct Rscreate *res = &trans->out->msg.rscreate;
     int length;
 
-    length = oid_create(worker, req->oid, req->mode, req->ctime, req->uid, req->gid,
-            req->extension);
+    length = oid_create(worker, req->oid, req->mode, req->time, req->uid,
+            req->gid, req->extension);
     failif(length < 0, ENOMEM);
 
-    res->qid = makeqid(req->mode, req->mtime, (u64) length, req->oid);
+    res->qid = makeqid(req->mode, req->time, (u64) length, req->oid);
 
     send_reply(trans);
 }
@@ -125,8 +126,8 @@ void handle_tswrite(Worker *worker, Transaction *trans) {
     guard(res->count >= 0);
 
     /* set the mtime */
-    buf.actime = req->mtime;
-    buf.modtime = req->mtime;
+    buf.actime = req->time;
+    buf.modtime = req->time;
     guard(oid_set_times(worker, req->oid, &buf));
 
     send_reply(trans);

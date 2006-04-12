@@ -8,13 +8,13 @@
 #include "list.h"
 #include "connection.h"
 #include "transaction.h"
+#include "forward.h"
 #include "state.h"
 #include "transport.h"
-#include "fs.h"
 #include "storage.h"
+#include "envoy.h"
 #include "dispatch.h"
 #include "worker.h"
-#include "forward.h"
 
 void send_request(Transaction *trans) {
     assert(trans->conn->type == CONN_ENVOY_OUT ||
