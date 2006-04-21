@@ -14,12 +14,12 @@
  * Fid pool state
  */
 
-int fid_insert_new(Connection *conn, u32 fid, char *uname, Claim *claim) {
+int fid_insert_new(Connection *conn, u32 fid, char *user, Claim *claim) {
     Fid *res;
 
     assert(conn != NULL);
     assert(fid != NOFID);
-    assert(!emptystring(uname));
+    assert(!emptystring(user));
     assert(claim != NULL);
 
     if (vector_test(conn->fid_vector, fid))
@@ -32,7 +32,7 @@ int fid_insert_new(Connection *conn, u32 fid, char *uname, Claim *claim) {
     res->claim = claim;
 
     res->fid = fid;
-    res->uname = uname;
+    res->user = user;
     res->status = STATUS_CLOSED;
     res->omode = 0;
 

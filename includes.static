@@ -161,6 +161,8 @@
 
     '<errno.h>' => {
         'errno' => 1,
+        'ENOENT' => 1,
+        'EBADF' => 1,
     },
 
     '<string.h>' => {

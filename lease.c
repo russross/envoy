@@ -13,6 +13,7 @@
 #include "lru.h"
 #include "claim.h"
 #include "lease.h"
+#include "walk.h"
 
 void lease_new(char *pathname, Address *addr, int leaf, List *children) {
     Lease *l = GC_NEW(Lease);

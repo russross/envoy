@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/stat.h>
-#include <netinet/in.h>
 #include <errno.h>
 #include <string.h>
 #include "types.h"
@@ -18,12 +17,14 @@
 #include "util.h"
 #include "config.h"
 #include "state.h"
+#include "object.h"
 #include "envoy.h"
 #include "dispatch.h"
 #include "worker.h"
 #include "dir.h"
 #include "claim.h"
 #include "lease.h"
+#include "walk.h"
 
 /* convert a u32 to a string, allocating the necessary storage */
 static inline char *u32tostr(u32 n) {
@@ -36,11 +37,24 @@ static inline char *u32tostr(u32 n) {
 
 static int has_permission(char *uname, struct p9stat *info, u32 required) {
     if (!strcmp(uname, info->uid))
-        return info->mode & perm & 0700 == perm & 0700;
-    else if (groupmember(uname, info->gid))
-        return info->mode & perm & 0070 == perm & 0070;
+        return (info->mode & required & 0700) == (required & 0700);
+    else if (isgroupmember(uname, info->gid))
+        return (info->mode & required & 0070) == (required & 0070);
     else
-        return info->mode & perm & 0007 == perm & 0007;
+        return (info->mode & required & 0007) == (required & 0007);
+}
+
+static void walklist_to_qids(u16 length, List *from, struct qid **to) {
+    int i;
+
+    *to = GC_MALLOC_ATOMIC(sizeof(struct qid) * length);
+    assert(*to != NULL);
+
+    for (i = length - 1; i >= 0; i--) {
+        Walk *walk = car(from);
+        from = cdr(from);
+        *to[i] = *walk->qid;
+    }
 }
 
 /*****************************************************************************/
@@ -261,35 +275,26 @@ void handle_tauth(Worker *worker, Transaction *trans) {
 void handle_tattach(Worker *worker, Transaction *trans) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
-    struct walk_response *walkres;;
+    struct walk_response *walkres;
     List *names;
-    List *qids;
     enum walk_request_type;
-    Address *addr;
 
     failif(req->afid != NOFID, EBADF);
     failif(emptystring(req->uname), EINVAL);
 
-    /* treat this like a walk from the global root */
-    if (addr_cmp(state->root_address, state->my_address)) {
-        /* make sure walk knows how to find the remote address */
-        Walk *walk = walk_lookup("/", req->uname);
-        if (walk == NULL || addr_cmp(walk->addr, state->root_address))
-            walk_add_new("/", req->uname, NULL, state->root_address);
-    }
+    /* make sure walk knows how to find the remote address */
+    if (addr_cmp(state->root_address, state->my_address))
+        walk_prime("/", req->uname, state->root_address);
 
-    names = splitpath(req->aname);
-    walkres = common_twalk(worker, trans, WALK_CLIENT, req->fid, names,
-            "/", req->uname);
+    /* treat this like a walk from the global root */
+    names = append_elt(splitpath(req->aname), NULL);
+    walkres = common_twalk(worker, trans, 1, req->fid, names, "/", req->uname);
 
     failif(walkres->type == WALK_ERROR, walkres->errnum);
-    failif(length(walkres->qids) != length(names) + 1, ENOENT);
+    failif(length(walkres->walks) != length(names), ENOENT);
 
-    /* get the last qid in the result list (we know it's !NULL) */
-    qids = walkres->qids;
-    while (!null(cdr(qids)))
-        qids = cdr(qids);
-    res->qid = *((struct qid *) car(qids));
+    /* get the last qid, which is the first in the list (we know it's !NULL) */
+    res->qid = *((Walk *) car(walkres->walks))->qid;
 
     send_reply(trans);
 }
@@ -366,51 +371,47 @@ void client_twalk(Worker *worker, Transaction *trans) {
     /* verify the limit on how many names can be walked in a single request */
     failif(req->nwname > MAXWELEM, EMSGSIZE);
 
-    /* make sure the new fid isn't already in use */
+    /* make sure the new fid isn't already in use (if it's actually new) */
     failif(req->newfid != req->fid &&
             (fid_lookup(trans->conn, req->newfid) ||
              forward_lookup(trans->conn, req->newfid)),
             EBADF);
 
-    /* copy the array of names into a list */
-    names = NULL;
-    for (i = req->nwname - 1; i >= 0; i--)
+    /* copy the array of names into a list with a blank at the end */
+    names = cons(NULL, NULL);
+    for (i = req->nwname - 1; i >= 0; i--) {
+        failif(strchr(req->wname[i], '/') != NULL, EINVAL);
         names = cons(req->wname[i], names);
+    }
 
     /* does this start with a remote fid? */
-    if ((forward = forward_lookup(trans->conn, req->fid)) != NULL) {
+    if ((fwd = forward_lookup(trans->conn, req->fid)) != NULL) {
         /* make sure there's a cache hint about where to find the start */
-        Walk *walk = walk_lookup(forward->pathname, forward->user);
-        if (walk == NULL || addr_cmp(walk->addr, forward->raddr)) {
-            walk_add_new(forward->pathname, forward->user, NULL,
-                    forward->raddr);
-        }
-        walkres = common_twalk(worker, trans, WALK_CLIENT, res->newfid,
-                names, forward->pathname, forward->user);
+        walk_prime(fwd->pathname, fwd->user, fwd->raddr);
+        walkres = common_twalk(worker, trans, 1, req->newfid,
+                names, fwd->pathname, fwd->user);
     } else if ((fid = fid_lookup(trans->conn, req->fid)) != NULL) {
         failif(fid->status != STATUS_CLOSED, ETXTBSY);
-        walkres = common_twalk(worker, trans, WALK_CLIENT, req->newfid,
-                names, fid->claim->pathname, fid->uname);
+        walkres = common_twalk(worker, trans, 1, req->newfid,
+                names, fid->claim->pathname, fid->user);
     } else {
         failif(-1, EBADF);
     }
-    /* TODO: update the forward pathname if necessary */
-    /* TODO: remove the starting fid if necessary */
 
     /* did we fail on the first step? */
-    failif(walkres->type == WALK_ERROR && length(walkres->qids) == 0,
+    failif(walkres->type == WALK_ERROR && length(walkres->walks) < 2,
             walkres->errnum);
 
-    res->nwqid = length(walkres->qids);
-    res->wqid = GC_MALLOC_ATOMIC(sizeof(struct qid) * res->nwqid);
-    assert(res->wqid != NULL);
+    /* the last walk is the starting point, so throw it away */
+    res->nwqid = length(walkres->walks) - 1;
+    walklist_to_qids(res->nwqid, walkres->walks, &res->wqid);
 
-    /* copy the qids into the result message */
-    for (i = 0; i < res->nwqid; i++) {
-        struct qid *qid = car(walkres->qids);
-        walkres->qids = cdr(walkres->qids);
-        res->wqid[i] = *qid;
+    /* TODO: update the forward pathname, fid if necessary */
+    if (walkres->type == WALK_SUCCESS &&
+            length(walkres->walks) == length(names))
+    {
     }
+    /* TODO: remove the starting fid if necessary */
 
     send_reply(trans);
 }
@@ -443,23 +444,19 @@ void envoy_twalk(Worker *worker, Transaction *trans) {
         user = req->uid;
     }
 
-    walkres = common_twalk(worker, trans, WALK_ENVOY, req->newfid,
-            names, pathname, user);
+    /* we can only handle local requests */
+    failif(lease_find_root(pathname) == NULL, EBADF);
+    walk_prime(pathname, user, NULL);
+
+    walkres = common_twalk(worker, trans, 0, req->newfid, names,
+            pathname, user);
 
     /* did we fail on the first step? */
-    failif(walkres->type == WALK_ERROR && length(walkres->qids) <= 1,
+    failif(walkres->type == WALK_ERROR && null(walkres->walks),
             walkres->errnum);
 
-    res->nwqid = length(walkres->qids);
-    res->wqid = GC_MALLOC_ATOMIC(sizeof(struct qid) * res->nwqid);
-    assert(res->wqid != NULL);
-
-    /* copy the qids into the result message */
-    for (i = 0; i < res->nwqid; i++) {
-        struct qid *qid = car(walkres->qids);
-        walkres->qids = cdr(walkres->qids);
-        res->wqid[i] = *qid;
-    }
+    res->nwqid = length(walkres->walks);
+    walklist_to_qids(res->nwqid, walkres->walks, &res->nwqid);
 
     if (walkres->addr != NULL) {
         res->address =
@@ -467,8 +464,12 @@ void envoy_twalk(Worker *worker, Transaction *trans) {
             ((walkres->addr->sin_addr.s_addr >> 16) & 0xff) |
             ((walkres->addr->sin_addr.s_addr >>  8) & 0xff) |
             ( walkres->addr->sin_addr.s_addr        & 0xff);
+        res->port =
+            ((walkres->addr->sin_addr.s_port >>  8) & 0xff) |
+            ( walkres->addr->sin_addr.s_port        & 0xff);
     } else {
         res->address = ~(u32) 0;
+        res->port = ~(u16) 0;
     }
 }
 

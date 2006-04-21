@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "vector.h"
 #include "connection.h"
 #include "forward.h"
+#include "util.h"
 #include "state.h"
 
 /*
@@ -36,7 +38,7 @@ u32 forward_create_new(Connection *conn, u32 fid, char *pathname, char *user,
     fwd->fid = fid;
     fwd->pathname = pathname;
     fwd->user = user;
-    fwd->addr = addr;
+    fwd->raddr = raddr;
     fwd->rfid = rfid;
 
     vector_set(conn->forward_vector, fid, fwd);

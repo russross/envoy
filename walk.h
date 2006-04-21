@@ -1,7 +1,15 @@
 #ifndef _WALK_H_
 #define _WALK_H_
 
-#include "foo.h"
+#include <stdlib.h>
+#include <netinet/in.h>
+#include "types.h"
+#include "9p.h"
+#include "list.h"
+#include "transaction.h"
+#include "worker.h"
+#include "lru.h"
+#include "claim.h"
 
 /* Walk requests can involve multiple hosts.  Since the client is pretty dumb
  * about caching walk requests, we do some caching here.  Walk entries that are
@@ -19,6 +27,8 @@
  *
  * In addition, for remote items, the last chunk is re-queried (meaning the
  * entire final sequence with matching addresses that includes the end path).
+ * Whenever an entry is queried from a remote host, the entire chunk leading up
+ * to it (as part of the same remote host) is queried.
  *
  * When an entry is found to be wrong (by a rejected remote request) or when
  * any lease update happens, the entire cache is flushed.
@@ -40,15 +50,12 @@ void walk_init(void);
 Walk *walk_lookup(char *pathname, char *user);
 void walk_release(Walk *walk);
 void walk_add(Walk *walk);
-void walk_add_new(char *pathname, char *user, struct qid *qid, Address *addr);
+/* TODO: make sure this modifies an existing one if it exists */
+Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr);
+void walk_prime(char *pathname, char *user, Address *addr);
 void walk_flush(void);
 
 /*****************************************************************************/
-
-enum walk_request_type {
-    WALK_CLIENT,
-    WALK_ENVOY,
-};
 
 enum walk_response_type {
     WALK_SUCCESS,
@@ -60,7 +67,9 @@ struct walk_response {
     enum walk_response_type type;
     u32 errnum;
 
+    /* names of remaining path elements */
     List *names;
+    /* result list in reverse order */
     List *walks;
 
     /* returned from a local walk when the final target is found */
@@ -68,7 +77,6 @@ struct walk_response {
 };
 
 struct walk_response *common_twalk(Worker *worker, Transaction *trans,
-        enum walk_request_type type, u32 newfid, List *names,
-        char *pathname, char *user);
+        int isclient, u32 newfid, List *names, char *pathname, char *user);
 
 #endif

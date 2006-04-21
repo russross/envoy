@@ -45,7 +45,7 @@ struct fid {
     struct p9stat *readdir_next;
 };
 
-int fid_insert_new(Connection *conn, u32 fid, char *uname, Claim *claim);
+int fid_insert_new(Connection *conn, u32 fid, char *user, Claim *claim);
 Fid *fid_lookup(Connection *conn, u32 fid);
 Fid *fid_lookup_remove(Connection *conn, u32 fid);
 

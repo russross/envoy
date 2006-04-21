@@ -1,4 +1,8 @@
+#include "types.h"
+#include "9p.h"
+#include "util.h"
 #include "object.h"
+#include "worker.h"
 
 /* Operations on storage objects.
  * These functions allow simple calls to the object storage service.  They handle

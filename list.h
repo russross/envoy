@@ -25,6 +25,7 @@ void setcdr(List *cons, void *cdr);
 List *append_elt(List *list, void *elt);
 List *append_list(List *a, List *b);
 List *reverse(List *list);
+List *reverse_copy(List *list);
 int length(List *list);
 List *insertinorder(int (*cmp)(const void *a, const void *b), List *list, void *elt);
 

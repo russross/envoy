@@ -1,7 +1,10 @@
 #ifndef _OBJECT_H_
 #define _OBJECT_H_
 
-#include "foo.h"
+#include "types.h"
+#include "9p.h"
+#include "util.h"
+#include "worker.h"
 
 /* stubs for storage calls */
 

@@ -12,6 +12,8 @@
 #include "state.h"
 #include "worker.h"
 #include "oid.h"
+#include "lease.h"
+#include "walk.h"
 
 /*
  * Worker threads

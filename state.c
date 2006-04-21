@@ -65,6 +65,8 @@ static u32 addr_hash(const Address *addr) {
 
 int addr_cmp(const Address *a, const Address *b) {
     int x;
+    if (a == NULL || b == NULL)
+        return a == b;
     if ((x = memcmp(&a->sin_family, &b->sin_family, sizeof(a->sin_family))))
         return x;
     if ((x = memcmp(&a->sin_port, &b->sin_port, sizeof(a->sin_port))))
@@ -93,7 +95,7 @@ static void print_status(enum fid_status status) {
 
 static void print_fid(Fid *fid) {
     printf("    fid:%u path:%s uname:%s\n    ",
-            fid->fid, fid->claim->pathname, fid->uname);
+            fid->fid, fid->claim->pathname, fid->user);
     print_status(fid->status);
     printf(" offset[%llu] omode[$%x]\n", fid->readdir_offset, fid->omode);
     if (fid->readdir_next != NULL) {

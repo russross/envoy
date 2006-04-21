@@ -9,9 +9,10 @@
 #include "types.h"
 #include "list.h"
 #include "hashtable.h"
-#include "worker.h"
+#include "remote.h"
 #include "lru.h"
 #include "claim.h"
+#include "walk.h"
 
 /* General rules
  * - Lease and ownership requests always come from parent to child

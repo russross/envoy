@@ -1,4 +1,22 @@
-#include "foo.h"
+#include <assert.h>
+#include <gc/gc.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include <string.h>
+#include "types.h"
+#include "9p.h"
+#include "list.h"
+#include "transaction.h"
+#include "fid.h"
+#include "util.h"
+#include "state.h"
+#include "object.h"
+#include "envoy.h"
+#include "worker.h"
+#include "oid.h"
+#include "claim.h"
+#include "walk.h"
 
 /* Do a local walk.  Walks until the end of the list of names, or until a lease
  * boundary is reached.
@@ -12,76 +30,88 @@
  * Does call claim_release on the input claim as well as any it finds, except
  * the one for the last entry found, which is returned in the result.  The
  * lease is not claimed or released. */
+#define failwith(NUM) do { \
+    res->errnum = NUM; \
+    goto error; \
+} while (0);
+
+static char *walk_pathname(char *pathname, char *name) {
+    if (name == NULL || !strcmp(name, "."))
+        return pathname;
+    if (!strcmp(name, ".."))
+        return dirname(pathname);
+    return concatname(pathname, name);
+}
+
 static void common_twalk_local(Worker *worker, Transaction *trans,
-        struct walk_response *res, char *pathname, char *user);
+        struct walk_response *res, char *pathname, char *user)
 {
     struct p9stat *info;
     struct qid *qid;
+    Walk *walk;
+    char *next;
 
-    /* note: names can be null */
     assert(res->claim != NULL);
+    assert(!null(res->names));
     assert(!emptystring(pathname));
     assert(!emptystring(user));
 
-    res->type = WALK_RACE;
-
     do {
         /* look at the current file/directory */
-        info = object_stat(worker, res->claim->oid, filename(res->pathname));
-        if (info == NULL) {
-            res->type = WALK_ERROR;
-            res->errnum = ENOENT;
-            return res;
-        }
+        info = object_stat(worker, res->claim->oid, filename(pathname));
+        if (info == NULL)
+            failwith(ENOENT);
 
-        /* record the qid */
+        /* make the qid */
         qid = GC_NEW(struct qid);
         assert(qid != NULL);
-        *qid = makeqid(info->mode, info->mtime, info->size, res->claim->oid);
-        res->qids = append_elt(res->qids, qid);
+        *qid = makeqid(info->mode, info->mtime, info->length, res->claim->oid);
+
+        /* record the walk and step down the input list */
+        walk = walk_new(pathname, user, qid, NULL);
+        res->walks = cons(walk, res->walks);
+        next = car(res->names);
+        res->names = cdr(res->names);
 
         /* is this the target? */
-        if (null(res->names)) {
+        if (next == NULL) {
+            /* the return includes the (locked) claim */
             res->type = WALK_SUCCESS;
-            return res;
+            return;
         }
 
         /* we need to keep walking, so make sure it's a directory */
-        if (!(info->mode & DMDIR)) {
-            res->type = WALK_ERROR;
-            res->errnum = ENOTDIR;
-            return res;
-        }
+        if (!(info->mode & DMDIR))
+            failwith(ENOTDIR);
 
         /* check that they have search (execute) permission for this dir */
-        if (!has_permission(req->user, info, 0111)) {
-            res->type = WALK_ERROR;
-            res->errnum = EPERM;
-            return res;
-        }
+        if (!has_permission(user, info, 0111))
+            failwith(EPERM);
 
         /* process the next name, including special cases */
-        if (!strcmp(car(res->names), ".")) {
+        if (!strcmp(next, ".")) {
             /* stay in the current directory */
-        } else if (!strcmp(car(res->names), "..")) {
+        } else if (!strcmp(next, "..")) {
             /* go back a directory */
             res->claim = claim_get_parent(worker, res->claim);
-            res->pathname = dirname(res->pathname);
-        } else if (strchr(car(res->names), '/') != NULL) {
-            /* illegal name */
-            res->type = WALK_ERROR;
-            res->errnum = EINVAL;
-            return res;
+            pathname = dirname(pathname);
         } else {
             /* walk to the next child */
-            res->claim = claim_get_child(worker, res->claim, car(res->names));
-            res->pathname = concatname(res->pathname, car(res->names));
+            res->claim = claim_get_child(worker, res->claim, next);
+            pathname = concatname(pathname, next);
         }
-
-        res->names = cdr(res->names);
     } while (res->claim != NULL);
 
-    return res;
+    res->type = WALK_SUCCESS;
+    return;
+
+    error:
+    res->type = WALK_ERROR;
+    if (res->claim != NULL) {
+        claim_release(res->claim);
+        res->claim = NULL;
+    }
+    return;
 }
 
 /* The generic walk handler.  This takes input from local attach and walk
@@ -98,101 +128,159 @@ static void common_twalk_local(Worker *worker, Transaction *trans,
  *
  * Each chunk is treated like a transaction, with locks being released after
  * the chunk is finished.
+ *
+ * A special NULL name must be present at the end of the names list.  This
+ * simplifies bookkeeping: the first walk returned is for the given pathname,
+ * and each successive walk returned is for the pathname plus a sequence of
+ * names.  The length of the initial names list and the return walk list will
+ * match if the walk is successful.
  */
+/* TODO: lease locking, walk locking */
 struct walk_response *common_twalk(Worker *worker, Transaction *trans,
-        enum walk_request_type type, u32 newfid, List *names,
-        char *pathname, char *user)
+        int isclient, u32 newfid, List *names, char *pathname, char *user)
 {
     struct walk_response *res = GC_NEW(struct walk_response);
     assert(res != NULL);
 
+    assert(!null(names));
     assert(!emptystring(pathname));
     assert(!emptystring(user));
 
     res->type = WALK_SUCCESS;
     res->names = names;
-    res->qids = NULL;
-    res->addr = NULL;
+    res->walks = NULL;
+    res->claim = NULL;
 
-    /* make sure we aren't given too much work */
-    if (length(names) > MAXWELEM) {
-        res->type = WALK_ERROR;
-        res->errnum = EMSGSIZE;
-        return res;
-    }
+    while (!null(names)) {
+        Walk *walk;
+        List *chunk = NULL;
+        List *chunknames = res->names;
+        Address *addr = NULL;
 
-    do {
-        /* note: this locks the lease and the claim */
-        Claim *claim = claim_find(work, pathname);
+        /* gather a chunk of cache entries */
+        while (!null(chunknames) &&
+                (walk = walk_lookup(pathname, user)) != NULL &&
+                walk->qid != NULL &&
+                (null(chunk) || !addr_cmp(addr, walk->addr)))
+        {
+            addr = walk->addr;
 
-        if (claim == NULL && addr == NULL) {
-            /* addr == NULL means this was supposed to be local... */
-            res->type = WALK_RACE;
-            return res;
-        } else if (claim == NULL) {
-            /* this chunk needs to be forwarded */
-            if (req->type == WALK_ENVOY_START ||
-                    req->type == WALK_ENVOY_CONTINUE)
-            {
-
-            }
-        } else {
-            /* this chunk is local */
-            Lease *lease = claim->lease;
-            struct walk_local_res *local;
-
-            local = common_twalk_local(worker, trans, claim, res->names,
-                    pathname, user);
-
-            res->names = local->names;
-            res->qids = append_list(res->qids, local->qids);
-            pathname = local->pathname;
-            claim = local->claim;
-
-            if (local->type == WALK_ERROR) {
-                lease_finish_transaction(lease);
-                res->type = WALK_ERROR;
-                res->errnum = local->errnum;
-                res->addr = NULL;
-                return res;
-            }
-            assert(local->type == WALK_SUCCESS);
-
-            if (null(res->names) && claim != NULL) {
-                /* finished, so create the target fid */
-                Fid *fid;
-                if ((fid = fid_lookup(trans->conn, req->newfid)) != NULL) {
-                    /* update the fid to the new target */
-                    claim_release(fid->claim);
-                    fid->claim = claim;
-                } else {
-                    /* create the target fid */
-                    fid_insert_new(trans->conn, req->newfid, req->user, claim);
-                }
-
-                lease_finish_transaction(lease);
-                break;
+            /* force a lookup on the last element if it's local */
+            if (car(chunknames) == NULL && addr == NULL) {
+                walk->qid = NULL;
             } else {
-                /* find the address for the next chunk */
-                lease_finish_transaction(lease);
-                assert(claim == NULL);
-
-                /* figure out where to look next */
-                /* TODO: does this check belong with the claim lookup above? */
-                lease = lease_find_root(pathname);
-                if (lease == NULL) {
-                    addr = NULL;
-                    res->type = WALK_RACE;
-                    return res;
-                }
-                if (lease->type == LEASE_REMOTE) {
-                    addr = lease->addr;
-                } else {
-                    addr = NULL;
-                }
+                chunk = cons(walk, chunk);
+                pathname = walk_pathname(pathname, car(chunknames));
+                chunknames = cdr(chunknames);
             }
         }
 
-        start = 0;
-    } while (!null(names));
+        /* peek at the cache for the next entry */
+        walk = walk_lookup(pathname, user);
+
+        /* decide if we should ignore the cached chunk we found:
+        *    a) it's remote and the request is not from a client
+        *    b) if it was the final chunk
+        *    c) if we don't know where to look after it */
+        if (!null(chunk) && addr != NULL && !isclient) {
+            break;
+        } else if (!null(chunk) && (null(chunknames) || walk == NULL)) {
+            /* clear the cached qids before we repeat the lookup, ending with
+             * walk at the start of the remote chunk */
+            while (!null(chunk)) {
+                walk = car(chunk);
+                chunk = cdr(chunk);
+                walk->qid = NULL;
+            }
+        } else if (!null(chunk)) {
+            /* successful chunk from the cache */
+            res->names = chunknames;
+            res->walks = append_list(chunk, res->walks);
+            continue;
+        }
+
+        assert(walk != NULL);
+
+        if (walk->addr == NULL) {
+            /* local chunk */
+            common_twalk_local(worker, trans, res, pathname, user);
+            if (res->type == WALK_ERROR)
+                failwith(res->errnum);
+            if (res->claim != NULL) {
+                Fid *fid;
+
+                /* this must have finished the walk */
+                assert(null(res->names));
+
+                /* create the target fid */
+                if ((fid = fid_lookup(trans->conn, newfid)) != NULL) {
+                    /* update the fid to the new target */
+                    claim_release(fid->claim);
+                    fid->claim = res->claim;
+                } else {
+                    /* create the target fid */
+                    fid_insert_new(trans->conn, newfid, user, res->claim);
+                }
+
+                res->claim = NULL;
+            }
+        } else if (isclient) {
+            /* remote chunk */
+            int i;
+            List *iternames = res->names;
+            u16 errnum = 0;
+            u16 nwqid = 0;
+            struct qid *wqid = NULL;
+            u16 nwname = length(iternames);
+            char **wname = GC_MALLOC(sizeof(char *) * nwname);
+            assert(wname != NULL);
+
+            for (i = 0; !null(iternames); iternames = cdr(iternames), i++)
+                wname[i] = car(iternames);
+
+            errnum = walkremote(worker, walk->addr, NOFID, newfid,
+                    nwname, wname, user, pathname, &nwqid, &wqid, &addr);
+
+            /* make sure we didn't get back too many results */
+            if (nwqid > nwname)
+                failwith(EMSGSIZE);
+
+            /* fill in the result walks */
+            for (i = 0; i < nwqid; i++) {
+                struct qid *qid = GC_NEW(struct qid);
+                Walk *w;
+                assert(qid != NULL);
+                *qid = wqid[i];
+                w = walk_new(pathname, user, qid, walk->addr);
+                res->walks = cons(res->walks, w);
+                pathname = walk_pathname(pathname, car(res->names));
+                res->names = cdr(res->names);
+            }
+
+            if (errnum != 0)
+                failwith(errnum);
+
+            /* prep a cache entry with the next address if there is one */
+            if (!null(res->names)) {
+                Walk *w = walk_lookup(pathname, user);
+                if (w == NULL)
+                    walk_new(pathname, user, NULL, addr);
+                else
+                    w->addr = addr;
+            }
+        } else {
+            break;
+        }
+    }
+
+    res->type = WALK_SUCCESS;
+    return res;
+
+    error:
+    res->type = WALK_ERROR;
+    if (res->claim != NULL) {
+        claim_release(res->claim);
+        res->claim = NULL;
+    }
+    return res;
 }

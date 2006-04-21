@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <gc/gc.h>
+#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "connection.h"
