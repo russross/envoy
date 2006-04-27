@@ -16,8 +16,7 @@ struct walk_result {
 u32 walk_result_hash(struct walk_result *walk);
 int walk_result_cmp(const struct walk_result *a, const struct walk_result *b);
 int has_permission(char *uname, struct p9stat *info, u32 required);
-
-void forward_to_envoy(Worker *worker, Transaction *trans);
+u32 now(void);
 
 void handle_tversion(Worker *worker, Transaction *trans);
 

@@ -54,6 +54,7 @@ void walk_add(Walk *walk);
 Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr);
 void walk_prime(char *pathname, char *user, Address *addr);
 void walk_flush(void);
+char *walk_pathname(char *pathname, char *name);
 
 /*****************************************************************************/
 

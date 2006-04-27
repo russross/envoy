@@ -48,5 +48,6 @@ Lru *lru_new(
 void *lru_get(Lru *lru, void *key);
 void lru_add(Lru *lru, void *key, void *value);
 void lru_clear(Lru *lru);
+void lru_remove(Lru *lru, void *key);
 
 #endif

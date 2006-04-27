@@ -49,8 +49,8 @@
  * directory searches as necessary.  This also registers the transaction with
  * the lease, which should be completed eventually.  In addition, the result
  * Claim should be passed to claim_release eventually.  Returns NULL when the
- * pathname is not under a local lease. */
-Claim *claim_find(Worker *worker, char *targetname);
+ * pathname is not under a local lease or does not exist. */
+Claim *claim_get_pathname(Worker *worker, char *targetname);
 
 /* Find the parent of a given claim, possible doing directory searches as
  * necessary.  Returns NULL if the parent is not part of the same lease or does
@@ -91,8 +91,9 @@ enum claim_access {
 };
 
 struct claim {
-    /* for writers to objects*/
+    /* for writers to objects */
     pthread_cond_t *wait;
+
     /* number of clients for this file (fids or directory walks), -1 if it's
      * exclusive */
     int refcount;

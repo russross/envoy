@@ -4,48 +4,63 @@
 #include <pthread.h>
 #include <gc/gc.h>
 #include <unistd.h>
+#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
-#include "list.h"
 #include "connection.h"
+#include "state.h"
+#include "dir.h"
 #include "claim.h"
 
 /* active files */
 enum fid_status {
-    STATUS_CLOSED,
+    STATUS_UNOPENNED,
     STATUS_OPEN_FILE,
     STATUS_OPEN_DIR,
-    STATUS_OPEN_SYMLINK,
-    STATUS_OPEN_LINK,
-    STATUS_OPEN_DEVICE,
+};
+
+enum fid_type {
+    FID_LOCAL,
+    FID_REMOTE,
 };
 
 struct fid {
-    /* for operations on this file through this fid */
+    /* for in-flight operations on this file through this fid */
     pthread_cond_t *wait;
-
-    Claim *claim;
 
     /* the client-visible fid */
     u32 fid;
+    /* the full pathname */
+    char *pathname;
     /* the username of the client */
     char *user;
     /* the file status as seen by the client */
     enum fid_status status;
     /* the mode used to open this file */
     int omode;
-
     /* the number of bytes returned so far in the current directory read */
     u64 readdir_cookie;
-    /* the actual offset into the directory */
-    u64 readdir_offset;
-    /* the current block when in a readdir sequence */
-    List *readdir_current_block;
-    /* next dir entry */
-    struct p9stat *readdir_next;
+
+    int isremote;
+
+    /* local fields */
+
+    /* handle to the object */
+    Claim *claim;
+    /* state for readdir operations */
+    struct dir_read_env *readdir_env;
+
+    /* remote fields */
+
+    /* address of the remote envoy */
+    Address *raddr;
+    /* fid seen by the remote envoy */
+    u32 rfid;
 };
 
-int fid_insert_new(Connection *conn, u32 fid, char *user, Claim *claim);
+int fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim);
+u32 fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
+        Address *raddr);
 Fid *fid_lookup(Connection *conn, u32 fid);
 Fid *fid_lookup_remove(Connection *conn, u32 fid);
 

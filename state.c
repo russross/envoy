@@ -84,12 +84,9 @@ u32 string_hash(const char *str) {
 
 static void print_status(enum fid_status status) {
     printf("%s",
-            status == STATUS_CLOSED ? "STATUS_CLOSED" :
+            status == STATUS_UNOPENNED ? "STATUS_UNOPENNED" :
             status == STATUS_OPEN_FILE ? "STATUS_OPEN_FILE" :
             status == STATUS_OPEN_DIR ? "STATUS_OPEN_DIR" :
-            status == STATUS_OPEN_SYMLINK ? "STATUS_OPEN_SYMLINK" :
-            status == STATUS_OPEN_LINK ? "STATUS_OPEN_LINK" :
-            status == STATUS_OPEN_DEVICE ? "STATUS_OPEN_DEVICE" :
             "(unknown status)");
 }
 
@@ -97,11 +94,9 @@ static void print_fid(Fid *fid) {
     printf("    fid:%u path:%s uname:%s\n    ",
             fid->fid, fid->claim->pathname, fid->user);
     print_status(fid->status);
-    printf(" offset[%llu] omode[$%x]\n", fid->readdir_offset, fid->omode);
-    if (fid->readdir_next != NULL) {
-        printf("    next_dir_entry:\n");
-        dumpStat(stdout, "      ", fid->readdir_next);
-    }
+    printf(" cookie[%llu] omode[$%x]\n", fid->readdir_cookie, fid->omode);
+    if (fid->readdir_env != NULL)
+        printf("    readdir in progress:\n");
 }
 
 static void print_fid_fid(u32 n, Fid *fid) {

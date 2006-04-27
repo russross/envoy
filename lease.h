@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "hashtable.h"
 #include "remote.h"
@@ -176,10 +177,18 @@ void lease_new(char *pathname, Address *addr, int leaf, List *children);
  * NULL if the pathname is covered by the same lease. */
 Lease *lease_check_for_lease_change(Lease *lease, char *pathname);
 
+Lease *lease_find_remote(char *pathname);
+
 /* If the given pathname is covered by a local lease, find the root of that
  * lease and return the lease.  Otherwise, return NULL.
  *
  * Does not call lease_start_transaction on the result. */
 Lease *lease_find_root(char *pathname);
+
+/* relies on claim_freeze and resets relevant claim cache and waits for
+ * in-flight ops to finish and prevents new ones from starting and ... */
+u64 lease_snapshot(Lease *lease);
+
+void lease_dump_graph(Lease *lease);
 
 #endif

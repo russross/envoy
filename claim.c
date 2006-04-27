@@ -7,7 +7,6 @@
 #include "9p.h"
 #include "list.h"
 #include "hashtable.h"
-#include "fid.h"
 #include "util.h"
 #include "worker.h"
 #include "lru.h"
@@ -18,7 +17,7 @@
 Hashtable *path_2_claim;
 Lru *claim_lru;
 
-Claim *claim_new_root(char *pathname, enum fid_access access, u64 oid) {
+Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     Claim *claim = GC_NEW(Claim);
     assert(claim != NULL);
 
@@ -35,13 +34,13 @@ Claim *claim_new_root(char *pathname, enum fid_access access, u64 oid) {
     return claim;
 }
 
-Claim *claim_new(Claim *parent, char *name, enum fid_access access, u64 oid) {
+Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     Claim *claim = GC_NEW(Claim);
     assert(claim != NULL);
     assert(parent != NULL);
 
     claim->wait = NULL;
-    claim->refcount = NULL;
+    claim->refcount = 0;
 
     claim->parent = parent;
     claim->children = NULL;
@@ -105,11 +104,12 @@ Claim *claim_get_parent(Worker *worker, Claim *child) {
     char *targetname;
 
     /* simple case--this is within a single lease */
-    if (child->parent != NULL)
+    if (child->parent != NULL) {
         if (claim_request(child->parent) < 0)
             return NULL;
         else
             return child->parent;
+    }
 
     /* special case--the root of the hierarchy */
     if (!strcmp(child->pathname, "/"))
@@ -239,63 +239,17 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
 
     /* check the cache */
     claim = lease_lookup_claim_from_cache(parent->lease, targetpath);
-    if (claim != NULL)
+    if (claim != NULL) {
         if (claim_request(claim) < 0)
             return NULL;
         else
             return claim;
+    }
 
     /* do a directory lookup to find this name */
-    claim = claim_scan_directory(worker, parent, name);
+    claim = dir_find_claim(worker, parent, name);
     if (claim != NULL && claim_request(claim) == 0)
         return claim;
 
     return NULL;
-}
-
-Claim *claim_scan_directory(Worker *worker, Claim *dir, char *name) {
-    List *allentries;
-    List *children;
-    Claim *result = NULL;
-
-    /* get the list of all files in the directory */
-    for (allentries = dir_scan(worker, dir->oid); !null(allentries);
-            allentries = cdr(allentries))
-    {
-        struct direntry *elt = car(allentries);
-        Claim *claim;
-        char *pathname = concatname(dir->pathname, name);
-
-        /* does this entry exit the lease? */
-        if (lease_check_for_lease_change(dir->lease, pathname) != NULL)
-            continue;
-
-        /* is it an active claim? */
-        for (children = dir->children; !null(children);
-                children = cdr(children))
-        {
-            claim = car(children);
-            if (!strcmp(pathname, claim->pathname))
-                goto next_entry;
-        }
-
-        /* is it already in the cache? */
-        claim = lease_lookup_claim_from_cache(dir->lease, pathname);
-        if (claim != NULL)
-            goto next_entry;
-
-        /* create a new claim and add it to the cache */
-        claim = claim_new(pathname, fid_access_child(dir->access, elt->cow),
-                elt->oid);
-        lease_add_claim_to_cache(claim);
-
-        next_entry:
-
-        if (!strcmp(name, elt->filename) && claim != NULL) {
-            lease_remove_claim_from_cache(claim);
-            result = claim;
-        }
-    }
-
-    return result;
 }

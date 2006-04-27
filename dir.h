@@ -4,10 +4,13 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "fid.h"
 #include "util.h"
 #include "worker.h"
+#include "claim.h"
 
 #define DIR_COW_OFFSET 8
+#define DIR_END_OFFSET 11
 
 struct direntry {
     u32 offset;
@@ -16,16 +19,23 @@ struct direntry {
     char *filename;
 };
 
-List *dir_get_entries(u32 count, u8 *data);
-void dir_clone(u32 count, u8 *data);
-int dir_will_fit(u32 count, u8 *data, char *filename);
-u8 *dir_add_entry(u32 count, u8 *data, u64 oid, char *filename, u8 cow);
-u8 *dir_new_block(u32 *count, u64 oid, char *filename, u8 cow);
+struct dir_read_env {
+    struct p9stat *next;
+    u64 offset;
+    List *entries;
+};
 
 /* high-level functions */
 
-/* scan an entire directory and return a list of direnty structs */
-List *dir_scan(Worker *worker, u64 oid);
-
+void dir_clone(u32 count, u8 *data);
+u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data);
+/* returns new OID, or NOOID if the file already exists */
+u64 dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
+        char *name);
+/* returns 0 on success, -1 if not found */
+int dir_remove_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
+        char *name);
+/* scan an entire directory and create claim for a specific target file */
+Claim *dir_find_claim(Worker *worker, Claim *dir, char *name);
 
 #endif

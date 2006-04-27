@@ -18,5 +18,6 @@ u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset, u32 count,
         void *data);
 struct p9stat *object_stat(Worker *worker, u64 oid, char *filename);
 void object_wstat(Worker *worker, u64 oid, struct p9stat *info);
+void object_prime_cache(Worker *worker, u64 oid);
 
 #endif

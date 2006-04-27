@@ -14,7 +14,7 @@
  * Fid pool state
  */
 
-int fid_insert_new(Connection *conn, u32 fid, char *user, Claim *claim) {
+int fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     Fid *res;
 
     assert(conn != NULL);
@@ -33,13 +33,11 @@ int fid_insert_new(Connection *conn, u32 fid, char *user, Claim *claim) {
 
     res->fid = fid;
     res->user = user;
-    res->status = STATUS_CLOSED;
+    res->status = STATUS_UNOPENNED;
     res->omode = 0;
 
     res->readdir_cookie = 0;
-    res->readdir_offset = 0;
-    res->readdir_current_block = NULL;
-    res->readdir_next = NULL;
+    res->readdir_env = NULL;
 
     vector_set(conn->fid_vector, res->fid, res);
 

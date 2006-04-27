@@ -16,6 +16,7 @@
 #include "worker.h"
 #include "oid.h"
 #include "claim.h"
+#include "lease.h"
 #include "walk.h"
 
 /* Do a local walk.  Walks until the end of the list of names, or until a lease
@@ -35,7 +36,7 @@
     goto error; \
 } while (0);
 
-static char *walk_pathname(char *pathname, char *name) {
+char *walk_pathname(char *pathname, char *name) {
     if (name == NULL || !strcmp(name, "."))
         return pathname;
     if (!strcmp(name, ".."))
@@ -50,6 +51,7 @@ static void common_twalk_local(Worker *worker, Transaction *trans,
     struct qid *qid;
     Walk *walk;
     char *next;
+    Lease *lease;
 
     assert(res->claim != NULL);
     assert(!null(res->names));
@@ -101,6 +103,12 @@ static void common_twalk_local(Worker *worker, Transaction *trans,
             pathname = concatname(pathname, next);
         }
     } while (res->claim != NULL);
+
+    /* prime the cache with the address for continuing */
+    lease = lease_find_remote(pathname);
+    assert(lease != NULL);
+
+    walk_prime(pathname, user, lease->addr);
 
     res->type = WALK_SUCCESS;
     return;
@@ -203,6 +211,7 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
 
         if (walk->addr == NULL) {
             /* local chunk */
+            res->claim = claim_find(worker, pathname);
             common_twalk_local(worker, trans, res, pathname, user);
             if (res->type == WALK_ERROR)
                 failwith(res->errnum);
@@ -219,7 +228,7 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
                     fid->claim = res->claim;
                 } else {
                     /* create the target fid */
-                    fid_insert_new(trans->conn, newfid, user, res->claim);
+                    fid_insert_local(trans->conn, newfid, user, res->claim);
                 }
 
                 res->claim = NULL;
@@ -261,13 +270,8 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
                 failwith(errnum);
 
             /* prep a cache entry with the next address if there is one */
-            if (!null(res->names)) {
-                Walk *w = walk_lookup(pathname, user);
-                if (w == NULL)
-                    walk_new(pathname, user, NULL, addr);
-                else
-                    w->addr = addr;
-            }
+            if (!null(res->names))
+                walk_prime(pathname, user, addr);
         } else {
             break;
         }

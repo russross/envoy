@@ -8,7 +8,6 @@
 #include "list.h"
 #include "connection.h"
 #include "transaction.h"
-#include "forward.h"
 #include "state.h"
 #include "transport.h"
 #include "storage.h"
@@ -110,7 +109,10 @@ void dispatch(Worker *worker, Transaction *trans) {
 
     if (trans->conn->type == CONN_UNKNOWN_IN) {
         switch (trans->in->id) {
-            case TVERSION:  handle_tversion(worker, trans);             break;
+            case TVERSION:
+                handle_tversion(worker, trans);
+                break;
+
             case TAUTH:
             case TREAD:
             case TWRITE:
@@ -127,48 +129,9 @@ void dispatch(Worker *worker, Transaction *trans) {
                 handle_error(worker, trans);
                 printf("\nBad request from unknown connection\n");
         }
-    } else if (trans->conn->type == CONN_CLIENT_IN) {
-
-/*
- * This macro checks if the fid for a transaction has a forwarding address,
- * and if so calls forward_to_envoy with it.  Otherwise, it calls the normal
- * handler.
- */
-#define forward_or_handle(MESSAGE,HANDLER) do { \
-    if (forward_lookup(trans->conn, trans->in->msg.MESSAGE.fid) == NULL) { \
-        HANDLER(worker, trans); \
-    } else { \
-        forward_to_envoy(worker, trans); \
-    } \
-} while(0);
-
-        switch (trans->in->id) {
-            case TOPEN:     forward_or_handle(topen, handle_topen);     break;
-            case TCREATE:   forward_or_handle(tcreate, handle_tcreate); break;
-            case TREAD:     forward_or_handle(tread, handle_tread);     break;
-            case TWRITE:    forward_or_handle(twrite, handle_twrite);   break;
-            case TCLUNK:    forward_or_handle(tclunk, handle_tclunk);   break;
-            case TREMOVE:   forward_or_handle(tremove, handle_tremove); break;
-            case TSTAT:     forward_or_handle(tstat, handle_tstat);     break;
-            case TWSTAT:    forward_or_handle(twstat, handle_twstat);   break;
-
-#undef forward_or_handle
-
-            case TATTACH:   handle_tattach(worker, trans);              break;
-
-            case TAUTH:     handle_tauth(worker, trans);                break;
-            case TFLUSH:    handle_tflush(worker, trans);               break;
-            case TWALK:     client_twalk(worker, trans);                break;
-
-            case TVERSION:
-            default:
-                handle_error(worker, trans);
-                printf("\nBad request from client\n");
-        }
-    } else if (trans->conn->type == CONN_ENVOY_IN) {
-        // This request has been forwarded to us, so pass it directly to the
-        // handler.  Behavior for objects we no longer own is
-        // not yet implemented
+    } else if (trans->conn->type == CONN_CLIENT_IN ||
+            trans->conn->type == CONN_ENVOY_IN)
+    {
         switch (trans->in->id) {
             case TATTACH:   handle_tattach(worker, trans);  break;
             case TOPEN:     handle_topen(worker, trans);    break;
@@ -182,12 +145,18 @@ void dispatch(Worker *worker, Transaction *trans) {
 
             case TAUTH:     handle_tauth(worker, trans);    break;
             case TFLUSH:    handle_tflush(worker, trans);   break;
-            case TWALK:     envoy_twalk(worker, trans);     break;
+
+            case TWALK:
+                if (trans->conn->type == CONN_CLIENT_IN)
+                    client_twalk(worker, trans);
+                else
+                    envoy_twalk(worker, trans);
+                break;
 
             case TVERSION:
             default:
                 handle_error(worker, trans);
-                printf("\nBad request from envoy\n");
+                printf("\nBad request from client\n");
         }
     } else if (trans->conn->type == CONN_STORAGE_IN) {
         switch (trans->in->id) {

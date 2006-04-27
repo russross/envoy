@@ -51,6 +51,8 @@ void lru_add(Lru *lru, void *key, void *value) {
     struct lru_elt *elt;
 
     assert(lru != NULL);
+    assert(key != NULL);
+    assert(value != NULL);
 
     /* clean up and replace the old version if this key already exists */
     if ((elt = hash_get(lru->table, key)) != NULL) {
@@ -66,7 +68,10 @@ void lru_add(Lru *lru, void *key, void *value) {
         elt = heap_remove(lru->heap);
 
         /* has this item been touched since we saw it last? */
-        if (elt->count != elt->refresh) {
+        if (elt->value == NULL) {
+            /* this item was removed, so flush it from the heap */
+            lru->count--;
+        } else if (elt->count != elt->refresh) {
             /* re-insert it with its updated rank */
             elt->count = elt->refresh;
             heap_add(lru->heap, elt);
@@ -101,11 +106,27 @@ void lru_clear(Lru *lru) {
     assert(lru != NULL);
 
     while ((elt = heap_remove(lru->heap)) != NULL) {
-        hash_remove(lru->table, elt->key);
-        if (lru->cleanup != NULL)
-            lru->cleanup(elt->value);
+        if (elt->value != NULL) {
+            hash_remove(lru->table, elt->key);
+            if (lru->cleanup != NULL)
+                lru->cleanup(elt->value);
+        }
         lru->count--;
     }
 
     assert(lru->count == 0);
+}
+
+void lru_remove(Lru *lru, void *key) {
+    struct lru_elt *elt;
+
+    assert(lru != NULL);
+
+    /* the item remains in the heap, but is removed from the hashtable */
+    if ((elt = hash_get(lru->table, key)) != NULL) {
+        if (lru->cleanup != NULL)
+            lru->cleanup(elt->value);
+        hash_remove(lru->table, elt->key);
+        elt->value = NULL;
+    }
 }

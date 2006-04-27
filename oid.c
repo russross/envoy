@@ -18,6 +18,7 @@
 #include "worker.h"
 #include "lru.h"
 #include "oid.h"
+#include "dir.h"
 
 static inline char *make_filename(u64 oid, u32 mode, char *name, char *group) {
     char *filename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
@@ -351,7 +352,7 @@ struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
     struct qid qid;
     qid.type =
         (mode & DMDIR) ? QTDIR :
-        (mode & DMSYMLINK) ? QTLLINK :
+        (mode & DMSYMLINK) ? QTSLINK :
         (mode & DMDEVICE) ? QTTMP :
         QTFILE;
     qid.version = mtime ^ (size << 8);
@@ -523,7 +524,7 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
     }
 
     /* create the file and set filename-encoded stats */
-    filename = make_filename(oid, >mode, uid, gid);
+    filename = make_filename(oid, mode, uid, gid);
     pathname = concatname(dir->dirname, filename);
 
     fd = creat(pathname, OBJECT_MODE);
@@ -627,7 +628,8 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
 
     assert(buff != NULL);
 
-    if (oid_create(worker, newoid, info) < 0)
+    if (oid_create(worker, newoid, info->mode, info->mtime, info->uid,
+                info->gid, info->extension) < 0)
         return -1;
 
     /* zero byte file? */
@@ -653,6 +655,14 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
             break;
         if (count < 0) {
             return -1;
+        }
+        if ((info->mode & DMDIR) != 0) {
+            /* it's a directory, so set all the CoW flags */
+            u32 i;
+            for (i = 0; i < count; i += BLOCK_SIZE) {
+                u32 size = min(BLOCK_SIZE, count - i);
+                dir_clone(size, buff);
+            }
         }
         if (write(new_fd->fd, buff, count) != count) {
             return -1;

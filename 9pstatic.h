@@ -14,6 +14,7 @@ typedef unsigned long long u64;
 #define NOTAG 0xffff
 #define ALLOCTAG 0xfffe
 #define NOFID 0xffffffff
+#define NOOID (~(u64) 0)
 
 enum openmodes {
     OREAD =             0x00,

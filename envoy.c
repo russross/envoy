@@ -13,7 +13,6 @@
 #include "connection.h"
 #include "transaction.h"
 #include "fid.h"
-#include "forward.h"
 #include "util.h"
 #include "config.h"
 #include "state.h"
@@ -35,7 +34,16 @@ static inline char *u32tostr(u32 n) {
     return res;
 }
 
-static int has_permission(char *uname, struct p9stat *info, u32 required) {
+u32 now(void) {
+    return (u32) time(NULL);
+}
+
+/* TODO */
+int isgroupmember(char *user, char *group) {
+    return 1;
+}
+
+int has_permission(char *uname, struct p9stat *info, u32 required) {
     if (!strcmp(uname, info->uid))
         return (info->mode & required & 0700) == (required & 0700);
     else if (isgroupmember(uname, info->gid))
@@ -111,13 +119,13 @@ static void rerror(Message *m, u16 errnum, int line) {
     } \
 } while(0)
 
-#define require_fid_closed(ptr) do { \
+#define require_fid_unopenned(ptr) do { \
     (ptr) = fid_lookup(trans->conn, req->fid); \
     if ((ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
         send_reply(trans); \
         return; \
-    } else if ((ptr)->status != STATUS_CLOSED) { \
+    } else if ((ptr)->status != STATUS_UNOPENNED) { \
         rerror(trans->out, ETXTBSY, __LINE__); \
         send_reply(trans); \
         return; \
@@ -130,15 +138,13 @@ static void rerror(Message *m, u16 errnum, int line) {
  * reply to trans->out, and send it.
  */
 #define copy_forward(MESSAGE) do { \
-    fwd = forward_lookup(trans->conn, trans->in->msg.MESSAGE.fid); \
-    env->out->msg.MESSAGE.fid = fwd->rfid; \
+    env->out->msg.MESSAGE.fid = fid->rfid; \
 } while(0);
 
-void forward_to_envoy(Worker *worker, Transaction *trans) {
+void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
     Transaction *env;
-    Forward *fwd = NULL;
 
-    assert(trans != NULL);
+    assert(fid->isremote);
 
     /* copy the whole message over */
     env = trans_new(NULL, NULL, message_new());
@@ -148,7 +154,6 @@ void forward_to_envoy(Worker *worker, Transaction *trans) {
     /* translate the fid */
     switch (trans->in->id) {
         /* look up the fid translation */
-        case TATTACH:   copy_forward(tattach);  break;
         case TOPEN:     copy_forward(topen);    break;
         case TCREATE:   copy_forward(tcreate);  break;
         case TREAD:     copy_forward(tread);    break;
@@ -163,14 +168,12 @@ void forward_to_envoy(Worker *worker, Transaction *trans) {
             assert(0);
     }
 
-    env->conn = fwd->rconn;
+    env->conn = conn_get_from_addr(worker, fid->raddr);
     send_request(env);
 
     /* now copy the response back into trans */
     memcpy(&trans->out->msg, &env->in->msg, sizeof(env->in->msg));
     trans->out->id = env->in->id;
-
-    send_reply(trans);
 }
 
 #undef copy_forward
@@ -278,6 +281,7 @@ void handle_tattach(Worker *worker, Transaction *trans) {
     struct walk_response *walkres;
     List *names;
     enum walk_request_type;
+    Walk *walk;
 
     failif(req->afid != NOFID, EBADF);
     failif(emptystring(req->uname), EINVAL);
@@ -294,7 +298,8 @@ void handle_tattach(Worker *worker, Transaction *trans) {
     failif(length(walkres->walks) != length(names), ENOENT);
 
     /* get the last qid, which is the first in the list (we know it's !NULL) */
-    res->qid = *((Walk *) car(walkres->walks))->qid;
+    walk = car(walkres->walks);
+    res->qid = *walk->qid;
 
     send_reply(trans);
 }
@@ -365,7 +370,6 @@ void client_twalk(Worker *worker, Transaction *trans) {
     int i;
     List *names;
     struct walk_response *walkres;
-    Forward *fwd;
     Fid *fid;
 
     /* verify the limit on how many names can be walked in a single request */
@@ -373,8 +377,7 @@ void client_twalk(Worker *worker, Transaction *trans) {
 
     /* make sure the new fid isn't already in use (if it's actually new) */
     failif(req->newfid != req->fid &&
-            (fid_lookup(trans->conn, req->newfid) ||
-             forward_lookup(trans->conn, req->newfid)),
+            fid_lookup(trans->conn, req->newfid) != NULL,
             EBADF);
 
     /* copy the array of names into a list with a blank at the end */
@@ -385,17 +388,16 @@ void client_twalk(Worker *worker, Transaction *trans) {
     }
 
     /* does this start with a remote fid? */
-    if ((fwd = forward_lookup(trans->conn, req->fid)) != NULL) {
+    failif((fid = fid_lookup(trans->conn, req->fid)) == NULL, EBADF);
+    if (fid->isremote) {
         /* make sure there's a cache hint about where to find the start */
-        walk_prime(fwd->pathname, fwd->user, fwd->raddr);
+        walk_prime(fid->pathname, fid->user, fid->raddr);
         walkres = common_twalk(worker, trans, 1, req->newfid,
-                names, fwd->pathname, fwd->user);
-    } else if ((fid = fid_lookup(trans->conn, req->fid)) != NULL) {
-        failif(fid->status != STATUS_CLOSED, ETXTBSY);
+                names, fid->pathname, fid->user);
+    } else {
+        failif(fid->status != STATUS_UNOPENNED, ETXTBSY);
         walkres = common_twalk(worker, trans, 1, req->newfid,
                 names, fid->claim->pathname, fid->user);
-    } else {
-        failif(-1, EBADF);
     }
 
     /* did we fail on the first step? */
@@ -424,6 +426,7 @@ void envoy_twalk(Worker *worker, Transaction *trans) {
     char *user;
     List *names;
     struct walk_response *walkres;
+    Walk *walk;
 
     /* copy the array of names into a list */
     names = NULL;
@@ -431,17 +434,17 @@ void envoy_twalk(Worker *worker, Transaction *trans) {
         names = cons(req->wname[i], names);
 
     /* is this the start of the walk? */
-    if (emptystring(req->uid) || emptystring(req->path)) {
+    if (emptystring(req->user) || emptystring(req->path)) {
         /* this must be from an existing, closed fid */
         Fid *fid = fid_lookup(trans->conn, req->fid);
         failif(fid == NULL, EBADF);
-        failif(fid->status != STATUS_CLOSED, ETXTBSY);
+        failif(fid->status != STATUS_UNOPENNED, ETXTBSY);
         pathname = fid->claim->pathname;
         user = fid->user;
     } else {
         /* this is coming here after crossing a lease boundary */
         pathname = req->path;
-        user = req->uid;
+        user = req->user;
     }
 
     /* we can only handle local requests */
@@ -456,17 +459,24 @@ void envoy_twalk(Worker *worker, Transaction *trans) {
             walkres->errnum);
 
     res->nwqid = length(walkres->walks);
-    walklist_to_qids(res->nwqid, walkres->walks, &res->nwqid);
+    walklist_to_qids(res->nwqid, walkres->walks, &res->wqid);
 
-    if (walkres->addr != NULL) {
+    /* fix the pathname to match what was walked */
+    while (names != walkres->names) {
+        pathname = walk_pathname(pathname, car(names));
+        names = cdr(names);
+    }
+
+    walk = walk_lookup(pathname, user);
+    if (walk != NULL) {
         res->address =
-            ((walkres->addr->sin_addr.s_addr >> 24) & 0xff) |
-            ((walkres->addr->sin_addr.s_addr >> 16) & 0xff) |
-            ((walkres->addr->sin_addr.s_addr >>  8) & 0xff) |
-            ( walkres->addr->sin_addr.s_addr        & 0xff);
+            ((walk->addr->sin_addr.s_addr >> 24) & 0xff) |
+            ((walk->addr->sin_addr.s_addr >> 16) & 0xff) |
+            ((walk->addr->sin_addr.s_addr >>  8) & 0xff) |
+            ( walk->addr->sin_addr.s_addr        & 0xff);
         res->port =
-            ((walkres->addr->sin_addr.s_port >>  8) & 0xff) |
-            ( walkres->addr->sin_addr.s_port        & 0xff);
+            ((walk->addr->sin_port >>  8) & 0xff) |
+            ( walk->addr->sin_port        & 0xff);
     } else {
         res->address = ~(u32) 0;
         res->port = ~(u16) 0;
@@ -510,10 +520,25 @@ void handle_topen(Worker *worker, Transaction *trans) {
     struct p9stat *info;
     u32 perm;
 
-    require_fid_closed(fid);
+    require_fid_unopenned(fid);
 
     /* we don't support remove-on-close */
     failif(req->mode & ORCLOSE, ENOTSUP);
+
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+
+        /* update local state based on the reply */
+        if (trans->out->tag == ROPEN) {
+            fid->status = (res->qid.type & QTDIR) ?
+                STATUS_OPEN_DIR : STATUS_OPEN_FILE;
+            fid->omode = req->mode;
+            fid->readdir_cookie = 0LL;
+        }
+
+        goto send_reply;
+    }
 
     info = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
 
@@ -538,7 +563,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     }
 
     /* check against the file's actual permissions */
-    failif(!has_permission(fid->uname, info, perm), EPERM);
+    failif(!has_permission(fid->user, info, perm), EPERM);
 
     /* make sure the file's not in use if it has DMEXCL set */
     if (info->mode & DMEXCL) {
@@ -550,8 +575,8 @@ void handle_topen(Worker *worker, Transaction *trans) {
 
     /* init the file status */
     fid->omode = req->mode;
-    fid->readdir_offset = 0LL;
     fid->readdir_cookie = 0;
+    fid->readdir_env = NULL;
     fid->status = (info->type & QTDIR) ? STATUS_OPEN_DIR : STATUS_OPEN_FILE;
 
     /* if it is opened writable, make sure we have a writable object */
@@ -563,10 +588,6 @@ void handle_topen(Worker *worker, Transaction *trans) {
 
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
     res->qid = info->qid;
-
-    /* use the original oid to identify the file to the client in case a CoW
-     * has happened */
-    res->qid.path = fid->client_oid;
 
     /* do we need to truncate the file? */
     if ((req->mode & OTRUNC) && !(info->mode & DMAPPEND) && info->length > 0LL)
@@ -581,6 +602,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
         object_wstat(worker, fid->claim->oid, info);
     }
 
+    send_reply:
     send_reply(trans);
 }
 
@@ -617,24 +639,42 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     struct Rcreate *res = &trans->out->msg.rcreate;
     Fid *fid;
     struct p9stat *dirinfo;
-    struct p9stat *info;
     char *newpath;
     u32 perm;
     struct qid qid;
     enum fid_status status;
     u64 newoid;
-    int blocknum;
-    int newblock;
-    u32 newcount = 0;
-    u8 *newdata = NULL;
-    Lease *lease;
 
-    require_fid_closed(fid);
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
 
-    /* we'll need exclusive write access to the directory (other
-     * readers okay) */
+    require_fid_unopenned(fid);
+
+    /* figure out the status-to-be of the new file */
+    if ((req->perm & DMDIR))
+        status = STATUS_OPEN_DIR;
+    else if (!(req->perm & DMMASK))
+        status = STATUS_OPEN_FILE;
+    else
+        status = STATUS_UNOPENNED;
+
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+
+        /* update local state based on the reply */
+        if (trans->out->tag == RCREATE) {
+            fid->pathname = concatname(fid->pathname, req->name);
+            fid->status = status;
+            fid->omode = req->mode;
+            fid->readdir_cookie = 0LL;
+        }
+
+        goto send_reply;
+    }
+
+    /* we need exclusive write access to the directory (other readers okay) */
+    require_writeaccess(fid);
     reserve(worker, LOCK_CLAIM, fid->claim);
 
     /* create can only occur in a directory */
@@ -642,7 +682,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
     failif(!(dirinfo->type & QTDIR), ENOTDIR);
 
-    newpath = concatname(fid->path, req->name);
+    newpath = concatname(fid->pathname, req->name);
 
     /* make sure the mode is valid for opening the new file */
     if ((req->mode & DMDIR)) {
@@ -653,107 +693,28 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         perm = req->perm & (~0666 | (dirinfo->mode & 0666));
     }
 
-    /* figure out the status-to-be of the new file */
-    if ((req->perm & DMDIR))
-        status = STATUS_OPEN_DIR;
-    else if ((req->perm & DMSYMLINK))
-        status = STATUS_OPEN_SYMLINK;
-    else if ((req->perm & DMLINK))
-        status = STATUS_OPEN_LINK;
-    else if ((req->perm & DMDEVICE))
-        status = STATUS_OPEN_DEVICE;
-    else if (!(req->perm & DMMASK))
-        status = STATUS_OPEN_FILE;
-    else
-        failif(-1, EINVAL);
-
-    /* scan the directory to make sure the file doesn't already exist */
-    for (blocknum = 0; (u64) blocknum * BLOCK_SIZE < dirinfo->length;
-            blocknum++)
-    {
-        u32 count;
-        void *data;
-        List *entries;
-
-        data = object_read(worker, fid->claim->oid, time(),
-                (u64) BLOCK_SIZE * blocknum, BLOCK_SIZE, &count);
-        assert(data != NULL);
-
-        entries = dir_get_entries(count, data);
-        for ( ; !null(entries); entries = cdr(entries)) {
-            struct direntry *elt = car(entries);
-            failif(!strcmp(elt->filename, req->name), EEXIST);
-        }
-
-        /* find a block with enough space for the new entry */
-        if (newdata == NULL && dir_will_fit(count, data, req->name)) {
-            newblock = blocknum;
-            newcount = count;
-            newdata = data;
-        }
-    }
-
     /* create the file */
-    newoid = object_reserve_oid(worker);
-    qid = object_create(worker, newoid, perm, time(), fid->uid,
+    newoid = dir_create_entry(worker, fid, dirinfo, req->name);
+    failif(newoid == NOOID, EEXIST);
+
+    qid = object_create(worker, newoid, perm, now(), fid->user,
             dirinfo->gid, req->extension);
-
-    /* create the directory entry */
-    if (newdata == NULL) {
-        /* add a new block to the end */
-        if (dirinfo->length > 0 &&
-                dirinfo->length != (dirinfo->length & ~((u64) BLOCK_SIZE - 1)))
-        {
-            /* we need to extend the previous block before writing the
-             * new one */
-            dirinfo->mode = ~(u32) 0;
-            dirinfo->atime = ~(u32) 0;
-            dirinfo->mtime = ~(u32) 0;
-            dirinfo->length = (dirinfo->length + BLOCK_SIZE - 1) &
-                ~((u64) BLOCK_SIZE - 1);
-            dirinfo->name = NULL;
-            dirinfo->uid = NULL;
-            dirinfo->gid = NULL;
-            dirinfo->muid = NULL;
-            dirinfo->extension = NULL;
-            dirinfo->n_uid = NULL;
-            dirinfo->n_gid = NULL;
-            dirinfo->n_muid = NULL;
-
-            object_wstat(worker, fid->claim->oid, dirinfo);
-        }
-
-        /* form the new block with a single entry */
-        newdata = dir_new_block(&newcount, newoid, req->name, 0);
-        newblock = blocknum;
-    } else {
-        /* add to the end of an existing block */
-        newdata = dir_add_entry(&newcount, newdata, newoid, req->name, 0);
-    }
-
-    /* commit the directory block to storage */
-    assert(object_write(worker, fid->claim->oid, time(),
-                (u64) newblock * BLOCK_SIZE, newcount, newdata) == newcount);
-
-    /* TODO: make sure the new file is part of the same lease... */
-    lease = fid->claim->lease;
 
     /* move this fid to the new file */
     claim_release(fid->claim);
 
-    fid->claim = claim_new(newoid, lease, ACCESS_WRITEABLE, newpath);
-    fid->client_oid = newoid;
+    fid->claim = claim_new(fid->claim, newpath, ACCESS_WRITEABLE, newoid);
     fid->status = status;
     fid->omode = req->mode;
 
-    fid->readdir_offset = 0;
     fid->readdir_cookie = 0;
-    fid->readdir_next = NULL;
-    fid->readdir_current_block = NULL;
+    fid->readdir_env = NULL;
 
+    /* prepare and send the reply */
     res->qid = qid;
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
 
+    send_reply:
     send_reply(trans);
 }
 
@@ -786,104 +747,59 @@ void handle_tread(Worker *worker, Transaction *trans) {
     struct Tread *req = &trans->in->msg.tread;
     struct Rread *res = &trans->out->msg.rread;
     Fid *fid;
+    u32 count = (req->count > trans->conn->maxSize - RREAD_HEADER) ?
+        trans->conn->maxSize - RREAD_HEADER : req->count;
 
     require_fid(fid);
-    failif(req->count > trans->conn->maxSize - RREAD_HEADER, EMSGSIZE);
+
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+
+        /* update local state based on the reply */
+        if (trans->out->tag == RREAD && fid->status == STATUS_OPEN_DIR) {
+            if (req->offset == 0)
+                fid->readdir_cookie = 0;
+            fid->readdir_cookie += res->count;
+        }
+
+        goto send_reply;
+    }
 
     if (fid->status == STATUS_OPEN_FILE) {
-        res->data = object_read(worker, fid->claim->oid, time(), req->offset,
-                req->count, &res->count);
+        res->data = object_read(worker, fid->claim->oid, now(), req->offset,
+                count, &res->count);
     } else if (fid->status == STATUS_OPEN_DIR) {
         /* allow rewinds, but no other offset changes */
         if (req->offset == 0 && fid->readdir_cookie != 0) {
             fid->readdir_cookie = 0;
-            fid->readdir_offset = 0;
-            fid->readdir_next = NULL;
-            fid->readdir_current_block = NULL;
+            fid->readdir_env = NULL;
         }
         failif(req->offset != fid->readdir_cookie, ESPIPE);
 
-        res->data = GC_MALLOC_ATOMIC(req->count);
+        res->data = GC_MALLOC_ATOMIC(count);
         assert(res->data != NULL);
 
         /* read directory entries until we run out or the buffer is full */
-        res->count = 0;
-
-        do {
-            /* is this an attempt to read past the end? */
-            if (fid->readdir_next == NULL && fid->readdir_offset > 0)
-                break;
-
-            /* pack an entry if we have one */
-            if (fid->readdir_next != NULL) {
-                /* is it too big to fit in the packet? */
-                if (res->count + statsize(fid->readdir_next) > req->count)
-                    break;
-
-                packStat(res->data, (int *) &res->count, fid->readdir_next);
-                fid->readdir_next = NULL;
-
-                /* advance the offset appropriately */
-                fid->readdir_offset &= ~((u64) BLOCK_SIZE - 1);
-                if (null(fid->readdir_current_block)) {
-                    /* advance to the next block */
-                    fid->readdir_offset += BLOCK_SIZE;
-                } else {
-                    /* advance to the next entry in this block */
-                    struct direntry *elt = car(fid->readdir_current_block);
-                    fid->readdir_offset += elt->offset;
-                }
-            }
-
-            /* do we need to read a new directory block? */
-            if (null(fid->readdir_current_block)) {
-                u32 bytesread;
-                void *block;
-
-                block = object_read(worker, fid->claim->oid, time(),
-                        fid->readdir_offset, BLOCK_SIZE, &bytesread);
-
-                /* are we at end-of-file? */
-                if (bytesread == 0)
-                    break;
-
-                fid->readdir_current_block = dir_get_entries(bytesread, block);
-            }
-
-            /* find another entry */
-            if (!null(fid->readdir_current_block)) {
-                struct direntry *elt = car(fid->readdir_current_block);
-                char *childpath =
-                    concatname(fid->claim->pathname, elt->filename);
-
-                /* can we get stats locally? */
-                if (lease_local_read(childpath)) {
-                    fid->readdir_next = object_stat(worker, elt->oid);
-                    fid->readdir_next->name = elt->filename;
-                } else {
-                    fid->readdir_next = remote_stat(worker, childpath);
-                    fid->readdir_next->name = elt->filename;
-                }
-
-                fid->readdir_offset &= ~((u64) BLOCK_SIZE - 1);
-                fid->readdir_offset += elt->offset;
-                fid->readdir_current_block = cdr(fid->readdir_current_block);
-            }
-        } while (fid->readdir_next != NULL);
+        res->count = dir_read(worker, fid, count, res->data);
 
         /* was a single entry too big for the return buffer? */
-        failif(res->count <= sizeof(u16) && fid->readdir_next != NULL,
+        failif(res->count == 0 && fid->readdir_env->next != NULL,
                 ENAMETOOLONG);
 
-        /* end of file? */
-        failif(res->count <= sizeof(u16), ENOENT);
-
-        /* take note of how many bytes we ended up with */
-        fid->readdir_cookie += res->count;
+        /* end of file is indicated by returning zero bytes */
+        if (res->count == 0) {
+            fid->readdir_cookie = 0;
+            fid->readdir_env = NULL;
+        } else {
+            /* take note of how many bytes we ended up with */
+            fid->readdir_cookie += res->count;
+        }
     } else {
         failif(-1, EPERM);
     }
 
+send_reply:
     send_reply(trans);
 }
 
@@ -916,15 +832,18 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     require_fid(fid);
     failif((fid->omode & OMASK) == OREAD, EACCES);
     failif((fid->omode & OMASK) == OEXEC, EACCES);
+    failif(fid->status != STATUS_OPEN_FILE, EPERM);
 
-    if (fid->status == STATUS_OPEN_FILE) {
-        guard((len = write(fid->fd, req->data, req->count)));
-        res->count = object_write(worker, fid->claim->oid, time(), req->offset, req->count,
-                req->data);
-    } else {
-        failif(-1, EPERM);
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+        goto send_reply;
     }
 
+    res->count = object_write(worker, fid->claim->oid, now(), req->offset,
+            req->count, req->data);
+
+    send_reply:
     send_reply(trans);
 }
 
@@ -947,10 +866,17 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
 
     require_fid_remove(fid);
 
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+        goto send_reply;
+    }
+
     /* we don't support remove-on-close */
 
     claim_release(fid->claim);
 
+    send_reply:
     send_reply(trans);
 }
 
@@ -972,15 +898,32 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
 void handle_tremove(Worker *worker, Transaction *trans) {
     struct Tremove *req = &trans->in->msg.tremove;
     Fid *fid;
+    struct p9stat *info;
+    int res;
 
     require_fid_remove(fid);
 
-    claim_release(fid->claim);
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+        goto send_reply;
+    }
 
     /* do we have local control of the parent directory? */
+    /* if not, give up ownership of this file and repeat the request remotely */
+
+    /* check permission in the parent directory */
 
     /* remove it */
+    res = dir_remove_entry(worker, fid, dirinfo, filename(fid->pathname));
 
+    /* delete the storage object? */
+
+    claim_release(fid->claim);
+
+    failif(res < 0, ENOENT);
+
+    send_reply:
     send_reply(trans);
 }
 
@@ -1000,11 +943,19 @@ void handle_tstat(Worker *worker, Transaction *trans) {
     struct Tstat *req = &trans->in->msg.tstat;
     struct Rstat *res = &trans->out->msg.rstat;
     Fid *fid;
-    struct stat info;
 
     require_fid(fid);
-    res->stat = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
 
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+        goto send_reply;
+    }
+
+    res->stat = object_stat(worker, fid->claim->oid,
+            filename(fid->claim->pathname));
+
+    send_reply:
     send_reply(trans);
 }
 
@@ -1047,61 +998,22 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     char *name;
 
     require_fid(fid);
-    failif(!strcmp(fid->path, rootdir), EPERM);
-
-    if (fid->status == STATUS_OPEN_SYMLINK) {
-        failif(emptystring(req->stat->extension), EINVAL);
-
-        guard(symlink(req->stat->extension, fid->path));
-
-        fid->status = STATUS_CLOSED;
-        send_reply(trans);
-        return;
-    } else if (fid->status == STATUS_OPEN_LINK) {
-        u32 targetfid;
-        Fid *target;
-        failif(emptystring(req->stat->extension), EINVAL);
-        failif(sscanf(req->stat->extension, "hardlink(%u)", &targetfid) != 1,
-                EINVAL);
-        failif(targetfid == NOFID, EBADF);
-        require_alt_fid(target, targetfid);
-
-        guard(link(target->path, fid->path));
-
-        fid->status = STATUS_CLOSED;
-        send_reply(trans);
-        return;
-    } else if (fid->status == STATUS_OPEN_DEVICE) {
-        char c;
-        int major, minor;
-        failif(emptystring(req->stat->extension), EINVAL);
-        failif(sscanf(req->stat->extension, "%c %d %d", &c, &major, &minor) !=
-                3, EINVAL);
-        failif(c != 'c' && c != 'b', EINVAL);
-
-        guard(mknod(fid->path,
-                    (fid->omode & 0777) | (c == 'c' ? S_IFCHR : S_IFBLK),
-                    makedev(major, minor)));
-
-        fid->status = STATUS_CLOSED;
-        send_reply(trans);
-        return;
-    }
+    failif(!strcmp(fid->pathname, rootdir), EPERM);
 
     /* regular file or directory */
-    guard(lstat(fid->path, &info));
-    name = filename(fid->path);
+    guard(lstat(fid->pathname, &info));
+    name = filename(fid->pathname);
 
     /* rename */
     if (!emptystring(req->stat->name) && strcmp(name, req->stat->name)) {
-        char *newname = concatname(dirname(fid->path), req->stat->name);
+        char *newname = concatname(dirname(fid->pathname), req->stat->name);
         struct stat newinfo;
         failif(strchr(req->stat->name, '/'), EINVAL);
         failif(lstat(newname, &newinfo) >= 0, EEXIST);
 
-        guard(rename(fid->path, newname));
+        guard(rename(fid->pathname, newname));
 
-        fid->path = newname;
+        fid->pathname = newname;
     }
 
     /* mtime */
@@ -1110,7 +1022,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         buf.actime = 0;
         buf.modtime = req->stat->mtime;
 
-        guard(utime(fid->path, &buf));
+        guard(utime(fid->pathname, &buf));
     }
 
     /* mode */
@@ -1121,20 +1033,20 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         if ((req->stat->mode & DMSETGID))
             mode |= S_ISGID;
 
-        guard(chmod(fid->path, mode));
+        guard(chmod(fid->pathname, mode));
     }
 
     /* gid */
     if (!emptystring(req->stat->gid) && req->stat->n_gid != ~(u32) 0)
-        guard(lchown(fid->path, -1, req->stat->n_gid));
+        guard(lchown(fid->pathname, -1, req->stat->n_gid));
 
     /* uid */
     if (!emptystring(req->stat->uid) && req->stat->n_uid != ~(u32) 0)
-        guard(lchown(fid->path, req->stat->n_uid, -1));
+        guard(lchown(fid->pathname, req->stat->n_uid, -1));
 
     /* truncate */
     if (req->stat->length != ~(u64) 0 && req->stat->length != info.st_size)
-        guard(truncate(fid->path, req->stat->length));
+        guard(truncate(fid->pathname, req->stat->length));
 
     send_reply(trans);
 }

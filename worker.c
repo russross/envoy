@@ -8,7 +8,6 @@
 #include "list.h"
 #include "transaction.h"
 #include "fid.h"
-#include "forward.h"
 #include "state.h"
 #include "worker.h"
 #include "oid.h"
@@ -84,7 +83,6 @@ void worker_cleanup(Worker *worker) {
         struct objectdir *dir;
         struct openfile *file;
         Fid *fid;
-        Forward *fwd;
         enum lock_types type = (enum lock_types) caar(worker->cleanup);
         void *obj = cdar(worker->cleanup);
         worker->cleanup = cdr(worker->cleanup);
@@ -93,7 +91,6 @@ void worker_cleanup(Worker *worker) {
             case LOCK_DIRECTORY:        cleanup(dir);   break;
             case LOCK_OPENFILE:         cleanup(file);  break;
             case LOCK_FID:              cleanup(fid);   break;
-            case LOCK_FORWARD:          cleanup(fwd);   break;
             case LOCK_LEASE:
                 lease_finish_transaction((Lease *) obj);
                 break;

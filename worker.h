@@ -16,7 +16,6 @@ enum lock_types {
     LOCK_DIRECTORY,
     LOCK_OPENFILE,
     LOCK_FID,
-    LOCK_FORWARD,
     LOCK_CLAIM,
     LOCK_LEASE,
     LOCK_WALK,
@@ -43,7 +42,7 @@ struct worker {
     while (obj->wait != NULL) \
         cond_wait(obj->wait); \
     obj->wait = cond_new(); \
-    work->cleanup = cons(cons(kind, obj), work->cleanup); \
+    work->cleanup = cons(cons((void *) kind, obj), work->cleanup); \
 } while (0)
 
 #define release(work, kind, obj) do { \
