@@ -10,7 +10,6 @@
 #include "transaction.h"
 #include "fid.h"
 #include "util.h"
-#include "state.h"
 #include "object.h"
 #include "envoy.h"
 #include "worker.h"
@@ -211,7 +210,7 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
 
         if (walk->addr == NULL) {
             /* local chunk */
-            res->claim = claim_find(worker, pathname);
+            res->claim = claim_get_pathname(worker, pathname);
             common_twalk_local(worker, trans, res, pathname, user);
             if (res->type == WALK_ERROR)
                 failwith(res->errnum);

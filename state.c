@@ -42,43 +42,6 @@ Message *message_new(void) {
 }
 
 /*
- * Hash and comparison functions
- */
-
-u32 generic_hash(const void *elt, int len, u32 hash) {
-    int i;
-    u8 *bytes = (u8 *) elt;
-
-    for (i = 0; i < len; i++)
-        hash = hash * 157 + *(bytes++);
-
-    return hash;
-}
-
-static u32 addr_hash(const Address *addr) {
-    u32 hash = 0;
-    hash = generic_hash(&addr->sin_family, sizeof(addr->sin_family), hash);
-    hash = generic_hash(&addr->sin_port, sizeof(addr->sin_port), hash);
-    hash = generic_hash(&addr->sin_addr, sizeof(addr->sin_addr), hash);
-    return hash;
-}
-
-int addr_cmp(const Address *a, const Address *b) {
-    int x;
-    if (a == NULL || b == NULL)
-        return a == b;
-    if ((x = memcmp(&a->sin_family, &b->sin_family, sizeof(a->sin_family))))
-        return x;
-    if ((x = memcmp(&a->sin_port, &b->sin_port, sizeof(a->sin_port))))
-        return x;
-    return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
-}
-
-u32 string_hash(const char *str) {
-    return generic_hash(str, strlen(str), 0);
-}
-
-/*
  * Debugging functions
  */
 
@@ -161,7 +124,7 @@ static void print_addr_conn(Address *addr, Connection *conn) {
 
 void state_dump(void) {
     printf("Hashtable: address -> connection\n");
-    hash_apply(state->addr_2_conn, (void (*)(void *, void *)) print_addr_conn);
+    hash_apply(addr_2_conn, (void (*)(void *, void *)) print_addr_conn);
 }
 
 /*
@@ -197,12 +160,7 @@ static void state_init_common(int port) {
     state->refresh_pipe = GC_MALLOC_ATOMIC(sizeof(int) * 2);
     assert(state->refresh_pipe != NULL);
 
-    state->conn_vector = vector_create(CONN_VECTOR_SIZE);
-    state->forward_fids = vector_create(GLOBAL_FORWARD_VECTOR_SIZE);
-    state->addr_2_conn = hash_create(
-            CONN_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) addr_hash,
-            (int (*)(const void *, const void *)) addr_cmp);
+    conn_init();
 
     /* error handling */
     state->error_queue = NULL;

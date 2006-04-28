@@ -94,7 +94,7 @@ static Message *read_message(Connection *conn) {
         /* an error or connection closed from other side? */
         if (res <= 0)
             break;
-        
+
         /* record the bytes we read */
         conn->partial_in_bytes = (bytes += res);
 

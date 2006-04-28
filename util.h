@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 
 /*
@@ -23,8 +24,12 @@ char *dirname(char *path);
 char *filename(char *path);
 char *concatname(char *path, char *name);
 char *resolvePath(char *base, char *ext, struct stat *info);
-
-Address *make_address(char *host, int port);
 List *splitpath(char *path);
+
+u32 addr_hash(const Address *addr);
+int addr_cmp(const Address *a, const Address *b);
+Address *make_address(char *host, int port);
+u32 generic_hash(const void *elt, int len, u32 hash);
+u32 string_hash(const char *str);
 
 #endif

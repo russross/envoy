@@ -7,6 +7,7 @@
 #include "list.h"
 #include "hashtable.h"
 #include "fid.h"
+#include "util.h"
 #include "state.h"
 #include "envoy.h"
 #include "worker.h"

@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "util.h"
 
@@ -133,6 +134,43 @@ char *concatname(char *path, char *name) {
     strcat(res, name);
 
     return res;
+}
+
+/*
+ * Hash and comparison functions
+ */
+
+u32 generic_hash(const void *elt, int len, u32 hash) {
+    int i;
+    u8 *bytes = (u8 *) elt;
+
+    for (i = 0; i < len; i++)
+        hash = hash * 157 + *(bytes++);
+
+    return hash;
+}
+
+u32 string_hash(const char *str) {
+    return generic_hash(str, strlen(str), 0);
+}
+
+u32 addr_hash(const Address *addr) {
+    u32 hash = 0;
+    hash = generic_hash(&addr->sin_family, sizeof(addr->sin_family), hash);
+    hash = generic_hash(&addr->sin_port, sizeof(addr->sin_port), hash);
+    hash = generic_hash(&addr->sin_addr, sizeof(addr->sin_addr), hash);
+    return hash;
+}
+
+int addr_cmp(const Address *a, const Address *b) {
+    int x;
+    if (a == NULL || b == NULL)
+        return a == b;
+    if ((x = memcmp(&a->sin_family, &b->sin_family, sizeof(a->sin_family))))
+        return x;
+    if ((x = memcmp(&a->sin_port, &b->sin_port, sizeof(a->sin_port))))
+        return x;
+    return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
 }
 
 Address *make_address(char *host, int port) {

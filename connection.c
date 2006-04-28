@@ -1,28 +1,37 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "vector.h"
 #include "hashtable.h"
 #include "connection.h"
+#include "util.h"
 #include "config.h"
 #include "state.h"
 #include "transport.h"
 #include "worker.h"
+#include "lru.h"
 
 /*
  * Connection pool state
  */
+
+
+Vector *conn_vector;
+Hashtable *addr_2_conn;
+Lru *conn_storage_lru;
 
 Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
     Connection *conn;
 
     assert(fd >= 0);
     assert(addr != NULL);
-    assert(!vector_test(state->conn_vector, fd));
-    assert(hash_get(state->addr_2_conn, addr) == NULL);
+    assert(!vector_test(conn_vector, fd));
+    assert(hash_get(addr_2_conn, addr) == NULL);
 
     conn = GC_NEW(Connection);
     assert(conn != NULL);
@@ -32,7 +41,6 @@ Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
     conn->addr = addr;
     conn->maxSize = GLOBAL_MAX_SIZE;
     conn->fid_vector = vector_create(FID_VECTOR_SIZE);
-    conn->forward_vector = vector_create(FORWARD_VECTOR_SIZE);
     conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
     conn->pending_writes = NULL;
     conn->notag_trans = NULL;
@@ -41,14 +49,14 @@ Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
     conn->partial_out = NULL;
     conn->partial_out_bytes = 0;
 
-    vector_set(state->conn_vector, conn->fd, conn);
-    hash_set(state->addr_2_conn, conn->addr, conn);
+    vector_set(conn_vector, conn->fd, conn);
+    hash_set(addr_2_conn, conn->addr, conn);
 
     return conn;
 }
 
 Connection *conn_lookup_fd(int fd) {
-    return vector_get(state->conn_vector, fd);
+    return vector_get(conn_vector, fd);
 }
 
 Connection *conn_get_from_addr(Worker *worker, Address *addr) {
@@ -56,7 +64,7 @@ Connection *conn_get_from_addr(Worker *worker, Address *addr) {
 
     assert(addr != NULL);
 
-    if ((conn = hash_get(state->addr_2_conn, addr)) == NULL) {
+    if ((conn = hash_get(addr_2_conn, addr)) == NULL) {
         int fd;
         if ((fd = open_connection(addr)) < 0)
             return NULL;
@@ -103,9 +111,41 @@ void conn_queue_write(Connection *conn, Message *msg) {
 
 void conn_remove(Connection *conn) {
     assert(conn != NULL);
-    assert(vector_test(state->conn_vector, conn->fd));
-    assert(hash_get(state->addr_2_conn, conn->addr) != NULL);
+    assert(vector_test(conn_vector, conn->fd));
+    assert(hash_get(addr_2_conn, conn->addr) != NULL);
 
-    vector_remove(state->conn_vector, conn->fd);
-    hash_remove(state->addr_2_conn, conn->addr);
+    vector_remove(conn_vector, conn->fd);
+    hash_remove(addr_2_conn, conn->addr);
 }
+
+static int conn_resurrect(Connection *conn) {
+    return
+        conn->type == CONN_CLIENT_IN ||
+        conn->type == CONN_ENVOY_IN ||
+        !null(conn->pending_writes) ||
+        conn->partial_in_bytes > 0 ||
+        conn->partial_out_bytes > 0 ||
+        conn->fid_vector != NULL ||
+        conn->tag_vector != NULL;
+}
+
+void conn_close(Connection *conn) {
+    close(conn->fd);
+    conn->fd = -1;
+}
+
+void conn_init(void) {
+    conn_vector = vector_create(CONN_VECTOR_SIZE);
+    addr_2_conn = hash_create(
+            CONN_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) addr_hash,
+            (int (*)(const void *, const void *)) addr_cmp);
+    conn_storage_lru = lru_new(
+            CONN_STORAGE_LRU_SIZE,
+            (u32 (*)(const void *)) addr_hash,
+            (int (*)(const void *, const void *)) addr_cmp,
+            (int (*)(void *)) conn_resurrect,
+            (void (*)(void *)) conn_close);
+}
+
+
