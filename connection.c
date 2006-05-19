@@ -9,10 +9,12 @@
 #include "vector.h"
 #include "hashtable.h"
 #include "connection.h"
+#include "transaction.h"
 #include "util.h"
 #include "config.h"
 #include "state.h"
 #include "transport.h"
+#include "dispatch.h"
 #include "worker.h"
 #include "lru.h"
 
@@ -60,6 +62,7 @@ Connection *conn_lookup_fd(int fd) {
 }
 
 Connection *conn_get_from_addr(Worker *worker, Address *addr) {
+    Transaction *trans;
     Connection *conn;
 
     assert(addr != NULL);
@@ -69,17 +72,32 @@ Connection *conn_get_from_addr(Worker *worker, Address *addr) {
         if ((fd = open_connection(addr)) < 0)
             return NULL;
 
-        if (addr->sin_port == ENVOY_PORT)
-            conn = conn_insert_new(fd, CONN_ENVOY_OUT, addr);
-        else if (addr->sin_port == STORAGE_PORT)
-            conn = conn_insert_new(fd, CONN_STORAGE_OUT, addr);
-        else
-            assert(0);
+        conn = conn_insert_new(fd, CONN_ENVOY_OUT, addr);
 
-        if (connect_envoy(worker, conn) < 0) {
+        if ((trans = connect_envoy(conn)) != NULL) {
+            handle_error(worker, trans);
             conn_remove(conn);
             return NULL;
         }
+    }
+
+    return conn;
+}
+
+Connection *conn_connect_to_storage(Address *addr) {
+    Connection *conn;
+    int fd;
+
+    assert(addr != NULL);
+
+    if ((fd = open_connection(addr)) < 0)
+        return NULL;
+
+    conn = conn_insert_new(fd, CONN_STORAGE_OUT, addr);
+
+    if (connect_envoy(conn) != NULL) {
+        conn_remove(conn);
+        return NULL;
     }
 
     return conn;

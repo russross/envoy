@@ -1,8 +1,13 @@
+#include <assert.h>
 #include <stdlib.h>
 #include "types.h"
 #include "9p.h"
+#include "transaction.h"
 #include "util.h"
+#include "config.h"
+#include "state.h"
 #include "object.h"
+#include "dispatch.h"
 #include "worker.h"
 
 /* Operations on storage objects.
@@ -10,8 +15,32 @@
  * local caching, find storage servers based on OID, and handle replication.
  */
 
+/* pool of reserved oids */
+static u64 object_reserve_next = ~ (u64) 0;
+static u32 object_reserve_remaining = 0;
+
 u64 object_reserve_oid(Worker *worker) {
-    return 0;
+    assert(storage_server_count > 0);
+
+    /* do we need to request a fresh batch of oids? */
+    if (object_reserve_remaining == 0) {
+        Transaction *trans;
+        struct Rsreserve *res;
+
+        /* the first storage server is considered the master */
+        trans = trans_new(storage_servers[0], NULL, message_new());
+        trans->out->tag = ALLOCTAG;
+        trans->out->id = TSRESERVE;
+
+        send_request(trans);
+        res = &trans->in->msg.rsreserve;
+
+        object_reserve_next = res->firstoid;
+        object_reserve_remaining = res->count;
+    }
+
+    object_reserve_remaining--;
+    return object_reserve_next++;
 }
 
 struct qid object_create(Worker *worker, u64 oid, u32 mode, u32 ctime,

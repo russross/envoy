@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <netinet/in.h>
+#include "types.h"
 #include "config.h"
 
 /* values that are configured at startup time */
@@ -12,3 +13,5 @@ int BLOCK_SIZE = 4096;
 char *rootdir = NULL;
 char *objectroot = NULL;
 struct sockaddr_in *my_address = NULL;
+int storage_server_count;
+Connection **storage_servers;

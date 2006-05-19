@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
@@ -14,6 +15,7 @@
 #include "config.h"
 #include "state.h"
 #include "transport.h"
+#include "envoy.h"
 #include "worker.h"
 #include "oid.h"
 
@@ -137,16 +139,71 @@ void *test_connect(void *arg) {
 */
 
 void config_init(void) {
-/*
-    map_insert(state->map, cons("home", cons("rgr22", NULL)),
-            make_address("boulderdash", ENVOY_PORT));
-    map_insert(state->map, cons("usr", cons("lib", NULL)),
-            make_address("boulderdash", ENVOY_PORT));
-    map_insert(state->map, cons("lib", NULL),
-            make_address("donkeykong", ENVOY_PORT));
-    map_insert(state->map, cons("usr", cons("bin", NULL)),
-            make_address("donkeykong", ENVOY_PORT));
-*/
+    char *in = getenv("ENVOY_STORAGE_SERVERS");
+    char *ptr;
+    List *servers = NULL;
+    int i;
+
+    storage_server_count = 0;
+    storage_servers = NULL;
+
+    if (in == NULL) {
+        fprintf(stderr, "ENVOY_STORAGE_SERVERS must be defined\n");
+        exit(-1);
+    }
+    printf("ENVOY_STORAGE_SERVERS: [%s]\n", in);
+
+    while (in != NULL && *in != 0) {
+        char *machine;
+        int port = 0;
+
+        /* extract a single address from the list */
+        if ((ptr = strchr(in, ',')) != NULL) {
+            machine = substring(in, 0, ptr - in);
+            in = ptr + 1;
+        } else {
+            machine = in;
+            in = NULL;
+        }
+
+        /* now convert it into an Address */
+        if ((ptr = strchr(machine, ':')) != NULL) {
+            port = atoi(ptr + 1);
+            if (port < 1)
+                port = STORAGE_PORT;
+            *ptr = 0;
+        } else {
+            port = STORAGE_PORT;
+        }
+        servers = cons(make_address(machine, port), servers);
+    }
+
+    /* put the servers in the original order */
+    servers = reverse(servers);
+
+    storage_server_count = length(servers);
+    storage_servers = GC_MALLOC(sizeof(Connection *) * storage_server_count);
+    assert(storage_servers != NULL);
+
+    for (i = 0; i < storage_server_count; i++) {
+        Address *addr = car(servers);
+        Connection *conn;
+
+        printf("storage server %d: ", i);
+        print_address(addr);
+        printf("\n");
+
+        conn = conn_connect_to_storage(addr);
+        if (conn == NULL) {
+            printf("Failed to connect to storage server %d\n", i);
+            assert(0);
+        }
+
+        storage_servers[i] = conn;
+        servers = cdr(servers);
+    }
+
+    assert(null(servers));
 }
 
 void test_oid(void) {

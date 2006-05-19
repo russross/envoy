@@ -94,13 +94,6 @@
  *     - wait on okay_to_change_lease until inflight drops to zero
  */
 
-
-enum lease_type {
-    LEASE_GRANT,
-    LEASE_LEASE,
-    LEASE_REMOTE,
-};
-
 struct lease {
     /* if this exists, transactions wait here before starting an operation */
     pthread_cond_t *wait_for_update;
@@ -110,10 +103,11 @@ struct lease {
      * it to let a lease change take place. */
     pthread_cond_t *okay_to_change_lease;
 
-    enum lease_type type;
+    /* is this an exit point to a remote owner, or a local grant? */
+    int isexit;
 
     char *pathname;
-    /* the remote envoy, owner, or parent */
+    /* the remote envoy or the parent */
     Address *addr;
 
     /* these fields are not applicable for remote leases */
@@ -129,9 +123,6 @@ struct lease {
     /* cache of unused claims in this lease.  these entries also appear in the
      * global LRU */
     Hashtable *claim_cache;
-
-    /* this field is only applicable for grants */
-    List *subleases;
 };
 
 extern Hashtable *lease_by_root_pathname;

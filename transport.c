@@ -341,7 +341,7 @@ void main_loop(void) {
     }
 }
 
-int connect_envoy(Worker *worker, Connection *conn) {
+Transaction *connect_envoy(Connection *conn) {
     Transaction *trans;
     struct Rversion *res;
 
@@ -362,14 +362,18 @@ int connect_envoy(Worker *worker, Connection *conn) {
     res = &trans->in->msg.rversion;
 
     /* blow up if the reply wasn't what we were expecting */
-    if (trans->in->id != RVERSION || strcmp(res->version, "9P2000.envoy")) {
-        handle_error(worker, trans);
-        return -1;
+    if (trans->in->id != RVERSION ||
+            (conn->type == CONN_ENVOY_OUT &&
+             strcmp(res->version, "9P2000.envoy")) ||
+            (conn->type == CONN_STORAGE_OUT &&
+             strcmp(res->version, "9P2000.storage")))
+    {
+        return trans;
     }
 
     conn->maxSize = max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
 
-    return 0;
+    return NULL;
 }
 
 /* Public API */

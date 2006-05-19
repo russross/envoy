@@ -42,6 +42,7 @@ extern Lru *conn_storage_lru;
 Connection *conn_insert_new(int fd, enum conn_type type, Address *addr);
 Connection *conn_lookup_fd(int fd);
 Connection *conn_get_from_addr(Worker *worker, Address *addr);
+Connection *conn_connect_to_storage(Address *addr);
 Message *conn_get_pending_write(Connection *conn);
 int conn_has_pending_write(Connection *conn);
 void conn_queue_write(Connection *conn, Message *msg);
