@@ -31,5 +31,6 @@ int addr_cmp(const Address *a, const Address *b);
 Address *make_address(char *host, int port);
 u32 generic_hash(const void *elt, int len, u32 hash);
 u32 string_hash(const char *str);
+int randInt(int range);
 
 #endif

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include "types.h"
+#include "connection.h"
 #include "config.h"
 
 /* values that are configured at startup time */

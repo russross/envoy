@@ -252,3 +252,14 @@ char *concatstrings(char *a, char *b) {
 int emptystring(char *s) {
     return s == NULL || s[0] == 0;
 }
+
+int randInt(int range) {
+    static int first = 1;
+
+    if (first) {
+        srandom(time(NULL));
+        first = 0;
+    }
+
+    return random() % range;
+}

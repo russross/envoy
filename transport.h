@@ -6,7 +6,6 @@
 #include "types.h"
 #include "connection.h"
 #include "transaction.h"
-#include "worker.h"
 
 void transport_init(void);
 void put_message(Connection *conn, Message *msg);
