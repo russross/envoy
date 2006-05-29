@@ -91,7 +91,6 @@ enum claim_access {
 };
 
 struct claim {
-    /* for writers to objects */
     pthread_cond_t *wait;
 
     /* number of clients for this file (fids or directory walks), -1 if it's

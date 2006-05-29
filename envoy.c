@@ -92,15 +92,6 @@ static void rerror(Message *m, u16 errnum, int line) {
     } \
 } while(0)
 
-#define require_alt_fid(ptr,fid) do { \
-    (ptr) = fid_lookup(trans->conn, fid); \
-    if ((ptr) == NULL) { \
-        rerror(trans->out, EBADF, __LINE__); \
-        send_reply(trans); \
-        return; \
-    } \
-} while(0)
-
 #define require_fid(ptr) do { \
     (ptr) = fid_lookup(trans->conn, req->fid); \
     if ((ptr) == NULL) { \
@@ -579,10 +570,6 @@ void handle_topen(Worker *worker, Transaction *trans) {
     fid->readdir_env = NULL;
     fid->status = (info->type & QTDIR) ? STATUS_OPEN_DIR : STATUS_OPEN_FILE;
 
-    /* if it is opened writable, make sure we have a writable object */
-    if (req->mode & (OWRITE | ORDWR | OTRUNC))
-        require_writeaccess(fid);
-
     /* send a hint to the cache that we are likely to access this file */
     object_prime_cache(worker, fid->claim->oid);
 
@@ -672,10 +659,6 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
 
         goto send_reply;
     }
-
-    /* we need exclusive write access to the directory (other readers okay) */
-    require_writeaccess(fid);
-    reserve(worker, LOCK_CLAIM, fid->claim);
 
     /* create can only occur in a directory */
     dirinfo =

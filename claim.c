@@ -253,3 +253,7 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
 
     return NULL;
 }
+
+/* ensure that the given claim is writable */
+void claim_thaw(Worker *worker, Claim *claim) {
+}

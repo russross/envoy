@@ -52,6 +52,15 @@ struct worker {
     work->cleanup = cdr(work->cleanup); \
 } while (0)
 
+#define lock_lease(work, obj) do { \
+    if (obj->wait_for_update != NULL) { \
+        cond_wait(obj->wait_for_update); \
+        worker_retry(work); \
+    } \
+    obj->inflight++; \
+    work->cleanup = cons(cons((void *) LOCK_LEASE, obj), work->cleanup); \
+} while(0)
+
 void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
 void worker_cleanup(Worker *worker);
 void worker_retry(Worker *worker);
