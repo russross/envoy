@@ -684,8 +684,6 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
             dirinfo->gid, req->extension);
 
     /* move this fid to the new file */
-    claim_release(fid->claim);
-
     fid->claim = claim_new(fid->claim, newpath, ACCESS_WRITEABLE, newoid);
     fid->status = status;
     fid->omode = req->mode;
@@ -857,8 +855,6 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
 
     /* we don't support remove-on-close */
 
-    claim_release(fid->claim);
-
     send_reply:
     send_reply(trans);
 }
@@ -892,6 +888,10 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
+    /* first make sure it's not a non-empty directory */
+    info = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
+    failif((info->type & QTDIR) && !dir_is_empty(worker, fid, info), ENOTEMPTY);
+
     /* do we have local control of the parent directory? */
     /* if not, give up ownership of this file and repeat the request remotely */
 
@@ -901,8 +901,6 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     res = dir_remove_entry(worker, fid, dirinfo, filename(fid->pathname));
 
     /* delete the storage object? */
-
-    claim_release(fid->claim);
 
     failif(res < 0, ENOENT);
 

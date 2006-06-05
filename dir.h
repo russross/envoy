@@ -37,5 +37,7 @@ int dir_remove_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
         char *name);
 /* scan an entire directory and create claim for a specific target file */
 Claim *dir_find_claim(Worker *worker, Claim *dir, char *name);
+/* check if a directory is empty */
+int dir_is_empty(Worker *worker, Fid *fid, struct p9stat *dirinfo);
 
 #endif

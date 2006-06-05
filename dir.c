@@ -456,3 +456,31 @@ Claim *dir_find_claim(Worker *worker, Claim *dir, char *name) {
 
     return env.claim;
 }
+
+struct dir_is_empty_env {
+    int isempty;
+};
+
+enum dir_iter_action dir_is_empty_iter(struct dir_is_empty_env *env,
+        List *in, List **out)
+{
+    if (!null(in)) {
+        env->isempty = 0;
+        return DIR_STOP;
+    }
+
+    return DIR_CONTINUE;
+}
+
+int dir_is_empty(Worker *worker, Fid *fid, struct p9stat *dirinfo) {
+    struct dir_is_empty_env env;
+
+    env.isempty = 1;
+
+    dir_iter(worker, fid->claim, dirinfo,
+            (enum dir_iter_action (*)(void *, List *, List **))
+            dir_is_empty_iter,
+            &env);
+
+    return env.isempty;
+}

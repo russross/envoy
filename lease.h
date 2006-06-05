@@ -17,81 +17,16 @@
 
 /* General rules
  * - Lease and ownership requests always come from parent to child
- * - Ownership roots are always writable or readonly--never cow
-      - therefore, path to every ownership is also not cow
- *    - readonly trees only use leases--the owner grants leases to everyone
- * - Ownership roots are always unique--further grants are only of descendents
- *   in the tree
- * - Every lease/ownership knows its exit points: other owners, leases, parent
- */
-
-/* When a request comes in, it can encounter the following situations:
- *
- * Variables: read/write, owned/leased/remote, cow/writable/readonly
- *
- * Read requests:
- *   - Owned or leased, cow or writable or readonly: handle locally
- *   - Remote, cow or writable or readonly: forward
- * Write requests:
- *   - Owned or lease, readonly: fail
- *   - Owned, writable:
- *       a) revoke leases
- *       b) handle locally
- *   - Owned, cow:
- *       a) revoke leases
- *       b) copy from local ownership root to this node
- *       c) handle locally
- *   - Lease or remote, cow or writable: forward
- */
-
-/* Leases are changed for the following reasons:
- *
- * - Write request comes to owner:
- *     a) owner revokes leases from children and serves request or
- *     b) owner parent grants ownership of subtree to child (after delay?)
- * - Read request comes from an envoy: owner grants lease to child (after delay?)
- * - Node shutting down:
- *     a) nominate message sent to parent
- *     b) parent revokes ownership/lease
- * - Lease/ownership expires (are they timed?):
- *     a) nominate request indicates renewal or relinquishment(?)
- */
-
-/* Lease message can find the following situations:
- *
- * Types: grant, revoke, nominate
  *
  * Grants:
- *   - grants give leases or ownership to target
+ *   - grants give ownership to target
  *   - carry payload of (wavefront) exits, fully defining the boundaries
  *   - also carry payload of active fids
- *   - grants are instantly effective--storage must be flushed before grant is issued
- *   a) Grant ownership where there was a lease (but not the other way around)
- *   b) Grant ownership where there was nothing
- *   c) Grant lease where there was nothing
- *
- *   a) Revoke lease
- *   b) Revoke ownership
- *
+ *   - grants are instantly effective--storage must be flushed before grant is
+ *     issued
  *   a) Nominate self to request renewal
  *   b) Nominate target (who must be owner of lease/owner of parent) to give up
  *   c) Nominate peer to transfer control (in response to traffic)
- */
-
-/* Overview of the lease data structures:
- */
-
-/* Example sequences:
- *
- * - Read request
- * - Write request
- * - Walk request
- * - Clone
- * - Lease given
- * - Lease revoked
- *   - set wait_for_update to prevent new transactions starting
- *   - if inflight > 0
- *     - wait on okay_to_change_lease until inflight drops to zero
  */
 
 struct lease {
@@ -141,24 +76,6 @@ void lease_start_transaction(Lease *lease);
 void lease_finish_transaction(Lease *lease);
 
 void lease_state_init(void);
-
-/* This is created when a transaction finds an out-of-date lease.  New
- * transactions intending to stake a claim on this lease wait here, and
- * rejected remote requests working off this version wait here until an
- * update.  When the lease is updated a broadcast will be sent out and the
- * claimers must recheck the lease situation.
- *
- * Example:
- *    - A request comes to a remotely-owned lease
- *    - The request is forwarded
- *    - The remote envoy issues a readonly lease and rejects the request
- *    - The rejected request finds that the lease hasn't been updated, so
- *      it creates a wait variable and blocks.
- *    - A second request comes in on this lease
- *    - The request sees the wait variable and blocks
- *    - The new lease comes in and is recorded
- *    - Both client requests awaken and are handled locally
- */
 
 /* create a lease */
 void lease_new(char *pathname, Address *addr, int leaf, List *children);
