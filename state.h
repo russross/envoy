@@ -25,6 +25,7 @@
 #define LEASE_WALK_LRU_SIZE 64
 #define LEASE_CLAIM_LRU_SIZE 64
 #define LEASE_CLAIM_HASHTABLE_SIZE 64
+#define CLAIM_HASHTABLE_SIZE 64
 
 void print_address(Address *addr);
 void state_dump(void);

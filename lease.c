@@ -4,19 +4,29 @@
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "hashtable.h"
 #include "fid.h"
 #include "util.h"
 #include "state.h"
-#include "envoy.h"
 #include "worker.h"
 #include "lru.h"
 #include "claim.h"
 #include "lease.h"
-#include "walk.h"
 
-void lease_new(char *pathname, Address *addr, int leaf, List *children) {
+static int claim_cmp(const Claim *a, const Claim *b) {
+    return strcmp(a->pathname, b->pathname);
+}
+
+static int lease_cmp(const Lease *a, const Lease *b) {
+    return strcmp(a->pathname, b->pathname);
+}
+
+
+void lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
+        List *wavefront, int readonly)
+{
     Lease *l = GC_NEW(Lease);
     assert(l != NULL);
 
@@ -24,20 +34,24 @@ void lease_new(char *pathname, Address *addr, int leaf, List *children) {
     l->inflight = 0;
     l->okay_to_change_lease = NULL;
 
-    l->pathname = pathname;
-    l->readonly = 0;
-    l->addr = addr;
-    l->leaf = leaf;
+    l->isexit = isexit;
 
-    l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE, fid_hash, fid_cmp);
-    l->walk_cache = lru_create(
-            LEASE_WALK_LRU_SIZE,
-            walk_result_hash,
-            walk_result_cmp,
-            NULL,
-            NULL);
-    l->children = children;
-    l->version = 0;
+    l->pathname = pathname;
+    l->addr = addr;
+
+    l->claim = claim;
+    l->wavefront = wavefront;
+
+    l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) fid_hash,
+            (int (*)(const void *, const void *)) fid_cmp);
+
+    l->readonly = 0;
+
+    l->claim_cache = hash_create(
+            CLAIM_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) string_hash,
+            (int (*)(const void *, const void *)) claim_cmp);
 }
 
 void lease_add_claim_to_cache(Claim *claim) {
@@ -55,24 +69,17 @@ Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname) {
     Claim *claim = hash_get(claim->lease->claim_cache, pathname);
     if (claim == NULL)
         return NULL;
+
     /* refresh the LRU entry and verify the hit */
     assert(lru_get(lease_claim_cache, pathname) == claim);
     return claim;
 }
 
-static int claim_cmp(const Claim *a, const Claim *b) {
-    return strcmp(a->pathname, b->pathname);
-}
-
-static int lease_cmp(const Lease *a, const Lease *b) {
-    return strcmp(a->pathname, b->pathname);
-}
-
 void lease_flush_claim_cache(Lease *lease) {
-    claim->lease->claim_cache = hash_create(
+    lease->claim_cache = hash_create(
             LEASE_CLAIM_HASHTABLE_SIZE,
-            string_hash,
-            claim_cmp);
+            (u32 (*)(const void *)) string_hash,
+            (int (*)(const void *, const void *)) claim_cmp);
 }
 
 static void claim_cache_cleanup(Claim *claim) {
@@ -82,15 +89,15 @@ static void claim_cache_cleanup(Claim *claim) {
 void lease_state_init(void) {
     lease_by_root_pathname = hash_create(
             LEASE_HASHTABLE_SIZE,
-            string_hash,
-            lease_cmp);
+            (u32 (*)(const void *)) string_hash,
+            (int (*)(const void *, const void *)) lease_cmp);
 
     lease_claim_cache = lru_new(
             LEASE_CLAIM_LRU_SIZE,
-            string_hash,
-            claim_cmp,
+            (u32 (*)(const void *)) string_hash,
+            (int (*)(const void *, const void *)) claim_cmp,
             NULL,
-            claim_cache_cleanup);
+            (void (*)(void *)) claim_cache_cleanup);
 }
 
 int lease_start_transaction(Lease *lease) {
@@ -110,4 +117,43 @@ void lease_finish_transaction(Lease *lease) {
 
     if (lease->inflight == 0 && lease->okay_to_change_lease != NULL)
         cond_signal(lease->okay_to_change_lease);
+}
+
+Lease *lease_check_for_lease_change(Lease *lease, char *pathname) {
+    return hash_get(lease_by_root_pathname, pathname);
+}
+
+Lease *lease_find_remote(char *pathname) {
+    Lease *lease = hash_get(lease_by_root_pathname, pathname);
+    if (lease != NULL && lease->isexit)
+        return lease;
+    return NULL;
+}
+
+Lease *lease_find_root(char *pathname) {
+    Lease *lease = NULL;
+
+    while ((lease = hash_get(lease_by_root_pathname, pathname)) == NULL &&
+            strcmp(pathname, "/"))
+    {
+        pathname = dirname(pathname);
+    }
+
+    if (lease != NULL && !lease->isexit)
+        return lease;
+    return NULL;
+}
+
+int lease_is_exit_point_parent(Lease *lease, char *pathname) {
+    List *exits = lease->wavefront;
+
+    while (!null(exits)) {
+        Lease *exit = car(exits);
+        exits = cdr(exits);
+
+        if (!strcmp(pathname, exit->pathname))
+            return 1;
+    }
+
+    return 0;
 }

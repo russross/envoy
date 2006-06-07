@@ -12,6 +12,7 @@
 #include "util.h"
 #include "object.h"
 #include "envoy.h"
+#include "remote.h"
 #include "worker.h"
 #include "oid.h"
 #include "claim.h"

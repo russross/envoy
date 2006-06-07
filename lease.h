@@ -10,10 +10,8 @@
 #include "9p.h"
 #include "list.h"
 #include "hashtable.h"
-#include "remote.h"
 #include "lru.h"
 #include "claim.h"
-#include "walk.h"
 
 /* General rules
  * - Lease and ownership requests always come from parent to child
@@ -72,13 +70,14 @@ Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname);
 /* flush all cached claims related to the given lease */
 void lease_flush_claim_cache(Lease *lease);
 
-void lease_start_transaction(Lease *lease);
+int lease_start_transaction(Lease *lease);
 void lease_finish_transaction(Lease *lease);
 
 void lease_state_init(void);
 
-/* create a lease */
-void lease_new(char *pathname, Address *addr, int leaf, List *children);
+/* create a lease object */
+void lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
+        List *wavefront, int readonly);
 
 /* Checks if the given pathname is part of a different lease than the parent
  * (which must be covered by the given lease) and returns it if so.  Returns
@@ -92,6 +91,10 @@ Lease *lease_find_remote(char *pathname);
  *
  * Does not call lease_start_transaction on the result. */
 Lease *lease_find_root(char *pathname);
+
+/* returns true if the given path has any decendents from the local lease that
+ * are exit points */
+int lease_is_exit_point_parent(Lease *lease, char *pathname);
 
 /* relies on claim_freeze and resets relevant claim cache and waits for
  * in-flight ops to finish and prevents new ones from starting and ... */

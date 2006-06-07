@@ -68,7 +68,7 @@ void claim_release(Claim *claim) {
     }
 
     /* should we close down this claim? */
-    if (!lease_is_exit_point_parent(claim->pathname)) {
+    if (!lease_is_exit_point_parent(claim->lease, claim->pathname)) {
         Claim *elt = claim;
 
         /* delete up the tree as far as we can */
@@ -100,7 +100,6 @@ Claim *claim_get_parent(Worker *worker, Claim *child) {
     Lease *lease;
     Claim *claim;
     List *pathparts;
-    char *pathname;
     char *targetname;
 
     /* simple case--this is within a single lease */
@@ -120,7 +119,7 @@ Claim *claim_get_parent(Worker *worker, Claim *child) {
     lease = lease_find_root(targetname);
 
     /* we only care about local grants and leases */
-    if (lease == NULL || lease->type == LEASE_REMOTE)
+    if (lease == NULL || lease->isexit)
         return NULL;
 
     /* walk from the root of the lease to our node */
@@ -155,7 +154,6 @@ Claim *claim_find(Worker *worker, char *targetname) {
     Lease *lease;
     Claim *claim;
     List *pathparts;
-    char *pathname;
 
     /* loop in case the lease changes before we lock it */
     do {
@@ -163,11 +161,11 @@ Claim *claim_find(Worker *worker, char *targetname) {
         lease = lease_find_root(targetname);
 
         /* we only care about local grants and leases */
-        if (lease == NULL || lease->type == LEASE_REMOTE)
+        if (lease == NULL || lease->isexit)
             return NULL;
 
         /* lock the lease */
-    } while (lease_start_transaction(worker, lease) < 0);
+    } while (lease_start_transaction(lease) < 0);
 
     /* walk from the root of the lease to our node */
     assert(startswith(targetname, lease->pathname));
@@ -199,7 +197,7 @@ Claim *claim_find(Worker *worker, char *targetname) {
     /* failed exit */
     release_lease:
 
-    lease_finish_transaction(worker, lease);
+    lease_finish_transaction(lease);
     return NULL;
 }
 
@@ -211,12 +209,12 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
     Claim *claim;
 
     /* see if we need to jump to a new lease */
-    lease = lease_check_for_lease_change(parent->lease, targetname);
+    lease = lease_check_for_lease_change(parent->lease, targetpath);
     if (lease != NULL) {
-        if (lease->type == LEASE_REMOTE)
+        if (lease->isexit)
             return NULL;
 
-        assert(!strcmp(targetname, lease->pathname));
+        assert(!strcmp(targetpath, lease->pathname));
         claim = lease->claim;
         if (claim_request(claim) < 0)
             return NULL;

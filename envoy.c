@@ -898,7 +898,8 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     /* check permission in the parent directory */
 
     /* remove it */
-    res = dir_remove_entry(worker, fid, dirinfo, filename(fid->pathname));
+    /*res = dir_remove_entry(worker, fid, dirinfo, filename(fid->pathname));*/
+    res = -1;
 
     /* delete the storage object? */
 
