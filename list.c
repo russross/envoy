@@ -62,7 +62,7 @@ void setcdr(List *list, void *cdr) {
 List *append_elt(List *list, void *elt) {
     List *res = list;
 
-    if (res == NULL)
+    if (null(res))
         return cons(elt, NULL);
 
     while (!null(cdr(list)))
@@ -70,6 +70,21 @@ List *append_elt(List *list, void *elt) {
     setcdr(list, cons(elt, NULL));
 
     return res;
+}
+
+List *append_list(List *a, List *b) {
+    List *list = a;
+
+    if (null(a))
+        return b;
+    if (null(b))
+        return a;
+
+    while (!null(cdr(list)))
+        list = cdr(list);
+    setcdr(list, b);
+
+    return a;
 }
 
 List *reverse(List *list) {
@@ -90,4 +105,32 @@ int length(List *list) {
     for (len = 0; !null(list); list = cdr(list), len++)
         ;
     return len;
+}
+
+List *insertinorder(int (*cmp)(const void *a, const void *b),
+        List *list, void *elt)
+{
+    List *prev = NULL;
+    List *cur = list;
+
+    while (!null(cur) && cmp(elt, car(cur)) < 0) {
+        prev = cur;
+        cur = cdr(cur);
+    }
+
+    if (null(prev))
+        return cons(elt, list);
+
+    setcdr(prev, cons(elt, cur));
+    return list;
+}
+
+int containsinorder(int (*cmp)(const void *a, const void *b),
+        List *list, void *elt)
+{
+    int test = 1;
+    while (!null(list) && (test = cmp(elt, car(list))) < 0)
+        list = cdr(list);
+
+    return !test;
 }

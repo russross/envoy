@@ -37,7 +37,7 @@
 156 size[4] Tenominate tag[2] path[s] 
 157 size[4] Renominate tag[2] 
 158 size[4] Tewalkremote tag[2] fid[4] newfid[4] nwname[2] nwname*(wname[s]) user[s] path[s]
-159 size[4] Rewalkremote tag[2] nwqid[2] nwqid*(wqid[13]) errnum[2] path[s] address[4] port[2]
+159 size[4] Rewalkremote tag[2] nwqid[2] nwqid*(wqid[13]) errnum[2] address[4] port[2]
 160 size[4] Testatremote tag[2] path[s]
 161 size[4] Restatremote tag[2] stat[n]
 162 size[4] Terenameremote tag[2] user[s] oldpath[s] newname[s]

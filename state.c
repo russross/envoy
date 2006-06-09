@@ -71,12 +71,13 @@ void print_address(Address *addr) {
     struct hostent *host = gethostbyaddr(&addr->sin_addr,
             sizeof(addr->sin_addr), addr->sin_family);
     if (host == NULL || host->h_name == NULL) {
+        u32 address = addr_get_address(addr);
         printf("{%d.%d.%d.%d:%d}",
-                (addr->sin_addr.s_addr >> 24) & 0xff,
-                (addr->sin_addr.s_addr >> 16) & 0xff,
-                (addr->sin_addr.s_addr >>  8) & 0xff,
-                addr->sin_addr.s_addr        & 0xff,
-                ntohs(addr->sin_port));
+                (address >> 24) & 0xff,
+                (address >> 16) & 0xff,
+                (address >>  8) & 0xff,
+                address         & 0xff,
+                addr_get_port(addr));
     } else {
         printf("{%s:%d}", host->h_name, ntohs(addr->sin_port));
     }

@@ -4,7 +4,6 @@
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
-#include "9p.h"
 #include "list.h"
 #include "hashtable.h"
 #include "fid.h"
@@ -14,6 +13,9 @@
 #include "lru.h"
 #include "claim.h"
 #include "lease.h"
+
+Hashtable *lease_by_root_pathname;
+Lru *lease_claim_cache;
 
 static int claim_cmp(const Claim *a, const Claim *b) {
     return strcmp(a->pathname, b->pathname);
@@ -43,15 +45,15 @@ void lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->wavefront = wavefront;
 
     l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) fid_hash,
-            (int (*)(const void *, const void *)) fid_cmp);
+            (Hashfunc) fid_hash,
+            (Cmpfunc) fid_cmp);
 
     l->readonly = 0;
 
     l->claim_cache = hash_create(
             CLAIM_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) string_hash,
-            (int (*)(const void *, const void *)) claim_cmp);
+            (Hashfunc) string_hash,
+            (Cmpfunc) claim_cmp);
 }
 
 void lease_add_claim_to_cache(Claim *claim) {
@@ -78,8 +80,8 @@ Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname) {
 void lease_flush_claim_cache(Lease *lease) {
     lease->claim_cache = hash_create(
             LEASE_CLAIM_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) string_hash,
-            (int (*)(const void *, const void *)) claim_cmp);
+            (Hashfunc) string_hash,
+            (Cmpfunc) claim_cmp);
 }
 
 static void claim_cache_cleanup(Claim *claim) {
@@ -89,13 +91,13 @@ static void claim_cache_cleanup(Claim *claim) {
 void lease_state_init(void) {
     lease_by_root_pathname = hash_create(
             LEASE_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) string_hash,
-            (int (*)(const void *, const void *)) lease_cmp);
+            (Hashfunc) string_hash,
+            (Cmpfunc) lease_cmp);
 
     lease_claim_cache = lru_new(
             LEASE_CLAIM_LRU_SIZE,
-            (u32 (*)(const void *)) string_hash,
-            (int (*)(const void *, const void *)) claim_cmp,
+            (Hashfunc) string_hash,
+            (Cmpfunc) claim_cmp,
             NULL,
             (void (*)(void *)) claim_cache_cleanup);
 }

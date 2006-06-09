@@ -36,7 +36,7 @@
 
 struct walk {
     char *pathname;
-    char *user;
+    List *users;
     struct qid *qid;
     Address *addr;
     int inflight;
@@ -49,9 +49,10 @@ void walk_init(void);
 /* note: does not lock the result */
 Walk *walk_lookup(char *pathname, char *user);
 void walk_release(Walk *walk);
-void walk_add(Walk *walk);
-/* TODO: make sure this modifies an existing one if it exists */
+/* modifies an existing one if it exists, else creates and caches a new entry */
 Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr);
+/* create an entry (sans qid) if none exists, otherwise refresh the current
+ * entry */
 void walk_prime(char *pathname, char *user, Address *addr);
 void walk_flush(void);
 char *walk_pathname(char *pathname, char *name);

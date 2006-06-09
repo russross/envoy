@@ -169,14 +169,22 @@ let outputSetters out fields id =
     begin
       let fieldLine elt =
         let name = fieldName elt in
-        (match elt with FData (name, _) ->
-          fprintf out "@,(m)->msg.%s.%s = (%s_v); \\" msg name name
+        (match elt with
+          FData (name, _)
+        | FStringlist (name, _)
+        | FQidlist (name, _)
+        | FInt8list (name, _) ->
+            fprintf out "@,(m)->msg.%s.%s = (%s_v); \\" msg name name
         | _ -> ());
         fprintf out "@,(m)->msg.%s.%s = (%s_v); \\" msg name name
       in
       let fieldArg elt =
-        (match elt with FData (name, _) ->
-          fprintf out ", %s_v" name
+        (match elt with
+          FData (name, _)
+        | FStringlist (name, _)
+        | FQidlist (name, _)
+        | FInt8list (name, _) ->
+            fprintf out ", %s_v" name
         | _ -> ());
         fprintf out ", %s_v" (fieldName elt)
       in

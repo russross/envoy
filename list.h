@@ -28,5 +28,6 @@ List *reverse(List *list);
 List *reverse_copy(List *list);
 int length(List *list);
 List *insertinorder(int (*cmp)(const void *a, const void *b), List *list, void *elt);
+int containsinorder(int (*cmp)(const void *a, const void *b), List *list, void *elt);
 
 #endif

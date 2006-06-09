@@ -189,6 +189,24 @@ Address *make_address(char *host, int port) {
     return addr;
 }
 
+Address *addr_decode(u32 address, u16 port) {
+    Address *addr = GC_NEW_ATOMIC(Address);
+    assert(addr != NULL);
+    addr->sin_family = AF_INET;
+    addr->sin_addr.s_addr = htonl(address);
+    addr->sin_port = htons(port);
+
+    return addr;
+}
+
+u32 addr_get_address(Address *addr) {
+    return ntohl(addr->sin_addr.s_addr);
+}
+
+u16 addr_get_port(Address *addr) {
+    return ntohs(addr->sin_port);
+}
+
 List *splitpath(char *path) {
     List *res = NULL;
 
@@ -251,6 +269,11 @@ char *concatstrings(char *a, char *b) {
 
 int emptystring(char *s) {
     return s == NULL || s[0] == 0;
+}
+
+int startswith(char *s, char *sub) {
+    int len = strlen(sub);
+    return len <= strlen(s) && !strncmp(s, sub, len);
 }
 
 int randInt(int range) {

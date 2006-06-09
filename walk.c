@@ -14,10 +14,13 @@
 #include "envoy.h"
 #include "remote.h"
 #include "worker.h"
+#include "lru.h"
 #include "oid.h"
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
+
+Lru *walk_cache;
 
 /* Do a local walk.  Walks until the end of the list of names, or until a lease
  * boundary is reached.
@@ -287,4 +290,81 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
         res->claim = NULL;
     }
     return res;
+}
+
+void walk_flush(void) {
+    lru_clear(walk_cache);
+}
+
+Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr) {
+    /* update an existing entry if one exists */
+    Walk *walk = lru_get(walk_cache, pathname);
+
+    if (walk == NULL) {
+        /* create a new entry */
+        walk = GC_NEW(Walk);
+        assert(walk != NULL);
+
+        walk->pathname = pathname;
+        walk->users = cons(user, NULL);
+        walk->qid = qid;
+        walk->addr = addr;
+        walk->inflight = 0;
+        lru_add(walk_cache, pathname, walk);
+    } else {
+        /* if we don't have a qid, we can't assume all users have passed a
+         * permission check so we clear the list */
+        if (walk->qid == NULL)
+            walk->users = cons(user, NULL);
+        else if (!containsinorder((Cmpfunc) strcmp, walk->users, user))
+            walk->users = insertinorder((Cmpfunc) strcmp, walk->users, user);
+
+        walk->qid = qid;
+        walk->addr = addr;
+    }
+
+    return walk;
+}
+
+/* this is similar to walk_new, with two differences:
+ *   1) if the entry is new, it is created with a blank qid field
+ *   2) if the user is new to this entry, the qid is cleared
+ */
+void walk_prime(char *pathname, char *user, Address *addr) {
+    Walk *walk = lru_get(walk_cache, pathname);
+
+    if (walk == NULL) {
+        /* create a new entry that knows the address */
+        walk = GC_NEW(Walk);
+        assert(walk != NULL);
+
+        walk->pathname = pathname;
+        walk->users = cons(user, NULL);
+        walk->qid = NULL;
+        walk->addr = addr;
+        walk->inflight = 0;
+        lru_add(walk_cache, pathname, walk);
+    } else {
+        /* if this user hasn't seen this entry, clear the qid to force a lookup
+         * and permissions check */
+        if (!containsinorder((Cmpfunc) strcmp, walk->users, user)) {
+            walk->users = insertinorder((Cmpfunc) strcmp, walk->users, user);
+            walk->qid = NULL;
+        }
+
+        walk->addr = addr;
+    }
+}
+
+Walk *walk_lookup(char *pathname, char *user) {
+    Walk *walk = lru_get(walk_cache, pathname);
+
+    if (walk != NULL && containsinorder((Cmpfunc) strcmp, walk->users, user))
+        return walk;
+
+    return NULL;
+}
+
+void walk_release(Walk *walk) {
+    walk->inflight--;
 }
