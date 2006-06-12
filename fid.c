@@ -65,3 +65,10 @@ u32 fid_hash(const Fid *fid) {
 int fid_cmp(const Fid *a, const Fid *b) {
     return (int) a->fid - (int) b->fid;
 }
+
+enum claim_access fid_access_child(enum claim_access access, int cowlink) {
+    if (access == ACCESS_WRITEABLE && cowlink)
+        return ACCESS_COW;
+    else
+        return access;
+}

@@ -1,7 +1,6 @@
 #ifndef _WORKER_H_
 #define _WORKER_H_
 
-#include <assert.h>
 #include <pthread.h>
 #include <setjmp.h>
 #include <gc/gc.h>
@@ -10,6 +9,7 @@
 #include "9p.h"
 #include "list.h"
 #include "transaction.h"
+#include "lease.h"
 
 /* the order here is the order in which locks must be acquired */
 enum lock_types {
@@ -42,14 +42,13 @@ struct worker {
     while (obj->wait != NULL) \
         cond_wait(obj->wait); \
     obj->wait = cond_new(); \
-    work->cleanup = cons(cons((void *) kind, obj), work->cleanup); \
+    worker_cleanup_add(work, kind, obj); \
 } while (0)
 
 #define release(work, kind, obj) do { \
     cond_broadcast(obj->wait); \
     obj->wait = NULL; \
-    assert(!null(work->cleanup) && cdar(work->cleanup) == obj); \
-    work->cleanup = cdr(work->cleanup); \
+    worker_cleanup_remove(work, kind, obj); \
 } while (0)
 
 #define lock_lease(work, obj) do { \
@@ -58,8 +57,13 @@ struct worker {
         worker_retry(work); \
     } \
     obj->inflight++; \
-    work->cleanup = cons(cons((void *) LOCK_LEASE, obj), work->cleanup); \
+    worker_cleanup_add(work, LOCK_LEASE, obj); \
 } while(0)
+
+#define unlock_lease(work, obj) do { \
+    worker_cleanup_remove(work, LOCK_LEASE, obj); \
+    lease_finish_transaction(obj); \
+} while (0)
 
 void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
 void worker_cleanup(Worker *worker);
@@ -71,5 +75,8 @@ void cond_signal(pthread_cond_t *var);
 void cond_broadcast(pthread_cond_t *var);
 void cond_wait(pthread_cond_t *var);
 pthread_cond_t *cond_new(void);
+
+void worker_cleanup_add(Worker *worker, enum lock_types type, void *object);
+void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object);
 
 #endif

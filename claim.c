@@ -155,17 +155,15 @@ Claim *claim_find(Worker *worker, char *targetname) {
     Claim *claim;
     List *pathparts;
 
-    /* loop in case the lease changes before we lock it */
-    do {
-        /* find the root of the lease */
-        lease = lease_find_root(targetname);
+    /* find the root of the lease */
+    lease = lease_find_root(targetname);
 
-        /* we only care about local grants and leases */
-        if (lease == NULL || lease->isexit)
-            return NULL;
+    /* we only care about local grants and leases */
+    if (lease == NULL || lease->isexit)
+        return NULL;
 
-        /* lock the lease */
-    } while (lease_start_transaction(lease) < 0);
+    /* lock the lease */
+    lock_lease(worker, lease);
 
     /* walk from the root of the lease to our node */
     assert(startswith(targetname, lease->pathname));
@@ -197,7 +195,7 @@ Claim *claim_find(Worker *worker, char *targetname) {
     /* failed exit */
     release_lease:
 
-    lease_finish_transaction(lease);
+    unlock_lease(worker, lease);
     return NULL;
 }
 
@@ -254,4 +252,36 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
 
 /* ensure that the given claim is writable */
 void claim_thaw(Worker *worker, Claim *claim) {
+}
+
+Claim *claim_get_pathname(Worker *worker, char *targetname) {
+    Lease *lease = lease_find_root(targetname);
+    Claim *claim;
+    List *names;
+    int len;
+
+    if (lease == NULL)
+        return NULL;
+
+    /* lock the lease */
+    lock_lease(worker, lease);
+
+    /* get a list of path parts to navigate */
+    assert(startswith(targetname, lease->pathname));
+    len = strlen(lease->pathname);
+    names = splitpath(substring(targetname, len, strlen(targetname) - len));
+    claim = lease->claim;
+
+    while (!null(names)) {
+        claim = claim_get_child(worker, claim, (char *) car(names));
+
+        if (claim == NULL) {
+            unlock_lease(worker, lease);
+            return NULL;
+        }
+
+        names = cdr(names);
+    }
+
+    return claim;
 }

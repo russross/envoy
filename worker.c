@@ -134,3 +134,29 @@ pthread_cond_t *cond_new(void) {
     pthread_cond_init(cond, NULL);
     return cond;
 }
+
+void worker_cleanup_add(Worker *worker, enum lock_types type, void *object) {
+    worker->cleanup = cons(cons((void *) type, object), worker->cleanup);
+}
+
+void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object) {
+    List *prev = NULL;
+    List *cur = worker->cleanup;
+
+    while (!null(cur)) {
+        if (caar(cur) == (void *) type && cdar(cur) == object) {
+            if (prev == NULL)
+                worker->cleanup = cdr(cur);
+            else
+                setcdr(prev, cdr(cur));
+
+            return;
+        }
+
+        prev = cur;
+        cur = cdr(cur);
+    }
+
+    /* fail if we didn't find the requested entry */
+    assert(0);
+}

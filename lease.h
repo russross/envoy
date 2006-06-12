@@ -70,7 +70,6 @@ Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname);
 /* flush all cached claims related to the given lease */
 void lease_flush_claim_cache(Lease *lease);
 
-int lease_start_transaction(Lease *lease);
 void lease_finish_transaction(Lease *lease);
 
 void lease_state_init(void);

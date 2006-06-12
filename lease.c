@@ -102,18 +102,6 @@ void lease_state_init(void) {
             (void (*)(void *)) claim_cache_cleanup);
 }
 
-int lease_start_transaction(Lease *lease) {
-    /* if the lease is changing, wait for the update and start over */
-    if (lease->wait_for_update != NULL) {
-        while (lease->wait_for_update != NULL)
-            cond_wait(lease->wait_for_update);
-        return -1;
-    }
-
-    lease->inflight++;
-    return 0;
-}
-
 void lease_finish_transaction(Lease *lease) {
     lease->inflight--;
 
