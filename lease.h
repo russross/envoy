@@ -75,8 +75,12 @@ void lease_finish_transaction(Lease *lease);
 void lease_state_init(void);
 
 /* create a lease object */
-void lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
+Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         List *wavefront, int readonly);
+/* add a lease object, including exit lease objects for its wavefront */
+void lease_add(Lease *lease);
+/* remove a lease object, including exit lease objects for its wavefront */
+void lease_remove(Lease *lease);
 
 /* Checks if the given pathname is part of a different lease than the parent
  * (which must be covered by the given lease) and returns it if so.  Returns

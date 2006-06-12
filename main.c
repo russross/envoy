@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
@@ -15,7 +14,6 @@
 #include "config.h"
 #include "state.h"
 #include "transport.h"
-#include "envoy.h"
 #include "worker.h"
 #include "oid.h"
 
@@ -138,81 +136,11 @@ void *test_connect(void *arg) {
 }
 */
 
-void config_init(void) {
-    char *in = getenv("ENVOY_STORAGE_SERVERS");
-    char *ptr;
-    List *servers = NULL;
-    int i;
-
-    storage_server_count = 0;
-    storage_servers = NULL;
-
-    if (in == NULL) {
-        fprintf(stderr, "ENVOY_STORAGE_SERVERS must be defined\n");
-        exit(-1);
-    }
-    printf("ENVOY_STORAGE_SERVERS: [%s]\n", in);
-
-    while (in != NULL && *in != 0) {
-        char *machine;
-        int port = 0;
-
-        /* extract a single address from the list */
-        if ((ptr = strchr(in, ',')) != NULL) {
-            machine = substring(in, 0, ptr - in);
-            in = ptr + 1;
-        } else {
-            machine = in;
-            in = NULL;
-        }
-
-        /* now convert it into an Address */
-        if ((ptr = strchr(machine, ':')) != NULL) {
-            port = atoi(ptr + 1);
-            if (port < 1)
-                port = STORAGE_PORT;
-            *ptr = 0;
-        } else {
-            port = STORAGE_PORT;
-        }
-        servers = cons(make_address(machine, port), servers);
-    }
-
-    /* put the servers in the original order */
-    servers = reverse(servers);
-
-    storage_server_count = length(servers);
-    storage_servers = GC_MALLOC(sizeof(Connection *) * storage_server_count);
-    assert(storage_servers != NULL);
-
-    for (i = 0; i < storage_server_count; i++) {
-        Address *addr = car(servers);
-        Connection *conn;
-
-        printf("storage server %d: ", i);
-        print_address(addr);
-        printf("\n");
-
-        conn = conn_connect_to_storage(addr);
-        if (conn == NULL) {
-            printf("Failed to connect to storage server %d\n", i);
-            assert(0);
-        }
-
-        storage_servers[i] = conn;
-        servers = cdr(servers);
-    }
-
-    assert(null(servers));
-}
-
 void test_oid(void) {
     printf("first available: %llx\n", oid_find_next_available());
 }
 
 int main(int argc, char **argv) {
-    char cwd[100];
-    struct stat info;
     char *name;
     int isstorage = 0;
 
@@ -222,39 +150,59 @@ int main(int argc, char **argv) {
     assert(sizeof(u32) == 4);
     assert(sizeof(u64) == 8);
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <root path>\n", argv[0]);
-        return -1;
-    }
-
-    objectroot = "/local/scratch/rgr22/root";
-    assert(getcwd(cwd, 100) == cwd);
-    rootdir = resolvePath(resolvePath("/", cwd, &info), argv[1], &info);
-    if (rootdir == NULL) {
-        fprintf(stderr, "Invalid path\n");
-        return -1;
-    }
 
     /* were we called as envoy or storage? */
     name = strstr(argv[0], "storage");
     if (name != NULL && !strcmp(name, "storage")) {
+        char cwd[100];
+        struct stat info;
+
+        isstorage = 1;
+        if (argc != 2) {
+            fprintf(stderr, "Usage: %s <object root path>\n", argv[0]);
+            return -1;
+        }
+
+        /* get the root directory */
+        assert(getcwd(cwd, 100) == cwd);
+        objectroot = resolvePath(resolvePath("/", cwd, &info), argv[1], &info);
+        if (objectroot == NULL) {
+            fprintf(stderr, "Invalid path\n");
+            return -1;
+        }
+        printf("object root directory = [%s]\n", objectroot);
+
         printf("starting storage server\n");
         state_init_storage();
-        isstorage = 1;
+        test_oid();
+        transport_init();
     } else {
+        Address *addr;
+
+        isstorage = 0;
+        if (argc != 2) {
+            fprintf(stderr, "Usage: %s <root server name>\n", argv[0]);
+            return -1;
+        }
+        addr = make_address(argv[1], ENVOY_PORT);
+
         printf("starting envoy server\n");
         state_init_envoy();
-        isstorage = 0;
+        if (!addr_cmp(state->my_address, addr))
+            state->root_address = NULL;
+        else
+            state->root_address = addr;
+        transport_init();
+        if (state->root_address == NULL) {
+            Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, 0LL);
+            Lease *lease = lease_new("/", NULL, 0, claim, NULL, 0);
+            lease_add(lease);
+        }
     }
-    transport_init();
-    if (!isstorage)
-        config_init();
 
     /*test_dump();*/
     /*worker_create(test_connect, NULL);*/
-    printf("root directory = [%s]\n", rootdir);
 
-    test_oid();
     main_loop();
     return 0;
 }

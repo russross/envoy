@@ -278,7 +278,7 @@ void handle_tattach(Worker *worker, Transaction *trans) {
     failif(emptystring(req->uname), EINVAL);
 
     /* make sure walk knows how to find the remote address */
-    if (addr_cmp(state->root_address, state->my_address))
+    if (!addr_cmp(state->root_address, state->my_address))
         walk_prime("/", req->uname, state->root_address);
 
     /* treat this like a walk from the global root */
@@ -980,7 +980,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     char *name;
 
     require_fid(fid);
-    failif(!strcmp(fid->pathname, rootdir), EPERM);
+    /*failif(!strcmp(fid->pathname, rootdir), EPERM);*/
 
     /* regular file or directory */
     guard(lstat(fid->pathname, &info));

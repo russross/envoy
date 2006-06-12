@@ -26,6 +26,7 @@
 #define LEASE_CLAIM_LRU_SIZE 64
 #define LEASE_CLAIM_HASHTABLE_SIZE 64
 #define CLAIM_HASHTABLE_SIZE 64
+#define WALK_CACHE_SIZE 256
 
 void print_address(Address *addr);
 void state_dump(void);
@@ -59,5 +60,6 @@ extern pthread_mutex_t *oid_fd_lock;
 extern struct state *state;
 void state_init_storage(void);
 void state_init_envoy(void);
+void storage_server_connection_init(void);
 
 #endif

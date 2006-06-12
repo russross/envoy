@@ -105,7 +105,7 @@ static Message *read_message(Connection *conn) {
                 break;
             else
                 msg->size = size;
-            printf("read_message: size = %d\n", size);
+            /*printf("read_message: size = %d\n", size);*/
         }
 
         /* have we read the whole message? */

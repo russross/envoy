@@ -21,12 +21,7 @@ static int claim_cmp(const Claim *a, const Claim *b) {
     return strcmp(a->pathname, b->pathname);
 }
 
-static int lease_cmp(const Lease *a, const Lease *b) {
-    return strcmp(a->pathname, b->pathname);
-}
-
-
-void lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
+Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         List *wavefront, int readonly)
 {
     Lease *l = GC_NEW(Lease);
@@ -36,12 +31,13 @@ void lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->inflight = 0;
     l->okay_to_change_lease = NULL;
 
-    l->isexit = isexit;
-
     l->pathname = pathname;
     l->addr = addr;
 
+    l->isexit = isexit;
+
     l->claim = claim;
+    l->claim->lease = l;
     l->wavefront = wavefront;
 
     l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
@@ -54,6 +50,8 @@ void lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
             CLAIM_HASHTABLE_SIZE,
             (Hashfunc) string_hash,
             (Cmpfunc) claim_cmp);
+
+    return l;
 }
 
 void lease_add_claim_to_cache(Claim *claim) {
@@ -92,7 +90,7 @@ void lease_state_init(void) {
     lease_by_root_pathname = hash_create(
             LEASE_HASHTABLE_SIZE,
             (Hashfunc) string_hash,
-            (Cmpfunc) lease_cmp);
+            (Cmpfunc) strcmp);
 
     lease_claim_cache = lru_new(
             LEASE_CLAIM_LRU_SIZE,
@@ -146,4 +144,18 @@ int lease_is_exit_point_parent(Lease *lease, char *pathname) {
     }
 
     return 0;
+}
+
+void lease_add(Lease *lease) {
+    List *exits = lease->wavefront;
+
+    assert(!lease->isexit);
+
+    hash_set(lease_by_root_pathname, lease->pathname, lease);
+    while (!null(exits)) {
+        Lease *exit = car(exits);
+        exits = cdr(exits);
+        assert(exit->isexit);
+        hash_set(lease_by_root_pathname, exit->pathname, exit);
+    }
 }

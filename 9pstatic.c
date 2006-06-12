@@ -325,7 +325,7 @@ void packStatn(u8 *raw, int *i, struct p9stat *elt) {
     int start = *i;
     packU16(raw, i, 0);
     packStat(raw, i, elt);
-    packU16(raw, &start, (u16) (*i - start));
+    packU16(raw, &start, (u16) (*i - start - sizeof(u16)));
 }
 
 /*

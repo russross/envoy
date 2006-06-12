@@ -24,6 +24,7 @@ Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     claim->wait = NULL;
     claim->refcount = 0;
 
+    claim->lease = NULL;
     claim->parent = NULL;
     claim->children = NULL;
 
@@ -42,6 +43,7 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     claim->wait = NULL;
     claim->refcount = 0;
 
+    claim->lease = parent->lease;
     claim->parent = parent;
     claim->children = NULL;
 

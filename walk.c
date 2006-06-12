@@ -10,6 +10,7 @@
 #include "transaction.h"
 #include "fid.h"
 #include "util.h"
+#include "state.h"
 #include "object.h"
 #include "envoy.h"
 #include "remote.h"
@@ -162,7 +163,7 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
     res->walks = NULL;
     res->claim = NULL;
 
-    while (!null(names)) {
+    while (!null(res->names)) {
         Walk *walk;
         List *chunk = NULL;
         List *chunknames = res->names;
@@ -367,4 +368,17 @@ Walk *walk_lookup(char *pathname, char *user) {
 
 void walk_release(Walk *walk) {
     walk->inflight--;
+}
+
+int walk_resurrect(Walk *walk) {
+    return walk->inflight > 0;
+}
+
+void walk_state_init(void) {
+    walk_cache = lru_new(
+            WALK_CACHE_SIZE,
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp,
+            (int (*)(void *)) walk_resurrect,
+            NULL);
 }

@@ -13,6 +13,7 @@
 #include "transaction.h"
 #include "fid.h"
 #include "util.h"
+#include "config.h"
 #include "state.h"
 #include "transport.h"
 #include "storage.h"
@@ -162,6 +163,10 @@ void dispatch(Worker *worker, Transaction *trans) {
     u32 oldfid = NOFID;
     u32 newfid = NOFID;
 
+    if (!state->isstorage && storage_server_count == 0) {
+        storage_server_connection_init();
+    }
+
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||
             trans->conn->type == CONN_ENVOY_IN ||
@@ -175,8 +180,10 @@ void dispatch(Worker *worker, Transaction *trans) {
     /* farm out handshakes and storage messages */
     if (trans->conn->type == CONN_UNKNOWN_IN) {
         dispatch_unknown(worker, trans);
+        return;
     } else if (trans->conn->type == CONN_STORAGE_IN) {
         dispatch_storage(worker, trans);
+        return;
     } else if (trans->conn->type != CONN_CLIENT_IN &&
             trans->conn->type != CONN_ENVOY_IN)
     {
