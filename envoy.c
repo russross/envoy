@@ -663,7 +663,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     /* create can only occur in a directory */
     dirinfo =
         object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
-    failif(!(dirinfo->type & QTDIR), ENOTDIR);
+    failif(!(dirinfo->mode & DMDIR), ENOTDIR);
 
     newpath = concatname(fid->pathname, req->name);
 
