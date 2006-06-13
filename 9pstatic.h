@@ -64,6 +64,9 @@ enum qidtypes {
 #define RREAD_HEADER 11
 #define RSREAD_HEADER 11
 
+/* string length that handles NULL strings */
+#define safe_strlen(x) ((x) == NULL ? 0 : strlen(x))
+
 struct qid {
     u8 type;
     u32 version;

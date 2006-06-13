@@ -32,9 +32,11 @@ int fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     res->claim = claim;
 
     res->fid = fid;
+    res->pathname = claim->pathname;
     res->user = user;
     res->status = STATUS_UNOPENNED;
     res->omode = 0;
+    res->isremote = 0;
 
     res->readdir_cookie = 0;
     res->readdir_env = NULL;

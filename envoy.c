@@ -534,7 +534,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     info = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
 
     /* figure out which permissions are required based on the request */
-    if (info->type & QTDIR) {
+    if (info->mode & DMDIR) {
         /* directories can only be opened for reading */
         failif(req->mode != OREAD, EPERM);
         perm = 0444;
@@ -568,7 +568,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     fid->omode = req->mode;
     fid->readdir_cookie = 0;
     fid->readdir_env = NULL;
-    fid->status = (info->type & QTDIR) ? STATUS_OPEN_DIR : STATUS_OPEN_FILE;
+    fid->status = (info->mode & DMDIR) ? STATUS_OPEN_DIR : STATUS_OPEN_FILE;
 
     /* send a hint to the cache that we are likely to access this file */
     object_prime_cache(worker, fid->claim->oid);
@@ -626,7 +626,6 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     struct Rcreate *res = &trans->out->msg.rcreate;
     Fid *fid;
     struct p9stat *dirinfo;
-    char *newpath;
     u32 perm;
     struct qid qid;
     enum fid_status status;
@@ -665,10 +664,8 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
     failif(!(dirinfo->mode & DMDIR), ENOTDIR);
 
-    newpath = concatname(fid->pathname, req->name);
-
     /* make sure the mode is valid for opening the new file */
-    if ((req->mode & DMDIR)) {
+    if ((req->perm & DMDIR)) {
         failif(req->mode != OREAD, EINVAL);
         perm = req->perm & (~0777 | (dirinfo->mode & 0777));
     } else {
@@ -684,7 +681,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
             dirinfo->gid, req->extension);
 
     /* move this fid to the new file */
-    fid->claim = claim_new(fid->claim, newpath, ACCESS_WRITEABLE, newoid);
+    fid->claim = claim_new(fid->claim, req->name, ACCESS_WRITEABLE, newoid);
     fid->status = status;
     fid->omode = req->mode;
 
@@ -890,7 +887,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     /* first make sure it's not a non-empty directory */
     info = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
-    failif((info->type & QTDIR) && !dir_is_empty(worker, fid, info), ENOTEMPTY);
+    failif((info->mode & DMDIR) && !dir_is_empty(worker, fid, info), ENOTEMPTY);
 
     /* do we have local control of the parent directory? */
     /* if not, give up ownership of this file and repeat the request remotely */

@@ -17,10 +17,6 @@
 Hashtable *lease_by_root_pathname;
 Lru *lease_claim_cache;
 
-static int claim_cmp(const Claim *a, const Claim *b) {
-    return strcmp(a->pathname, b->pathname);
-}
-
 Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         List *wavefront, int readonly)
 {
@@ -49,7 +45,7 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->claim_cache = hash_create(
             CLAIM_HASHTABLE_SIZE,
             (Hashfunc) string_hash,
-            (Cmpfunc) claim_cmp);
+            (Cmpfunc) strcmp);
 
     return l;
 }
@@ -66,7 +62,7 @@ void lease_remove_claim_from_cache(Claim *claim) {
 }
 
 Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname) {
-    Claim *claim = hash_get(claim->lease->claim_cache, pathname);
+    Claim *claim = hash_get(lease->claim_cache, pathname);
     if (claim == NULL)
         return NULL;
 
@@ -79,7 +75,7 @@ void lease_flush_claim_cache(Lease *lease) {
     lease->claim_cache = hash_create(
             LEASE_CLAIM_HASHTABLE_SIZE,
             (Hashfunc) string_hash,
-            (Cmpfunc) claim_cmp);
+            (Cmpfunc) strcmp);
 }
 
 static void claim_cache_cleanup(Claim *claim) {
@@ -95,7 +91,7 @@ void lease_state_init(void) {
     lease_claim_cache = lru_new(
             LEASE_CLAIM_LRU_SIZE,
             (Hashfunc) string_hash,
-            (Cmpfunc) claim_cmp,
+            (Cmpfunc) strcmp,
             NULL,
             (void (*)(void *)) claim_cache_cleanup);
 }

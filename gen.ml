@@ -311,7 +311,7 @@ let outputPacker out m =
           | FInt8 _ -> size := !size + 8
           | FString name ->
               size := !size + 2;
-              fprintf out "strlen(m->msg.%s.%s) +@ " msg name
+              fprintf out "safe_strlen(m->msg.%s.%s) +@ " msg name
           | FQid _ -> size := !size + 13
           | FStat name ->
               size := !size + 2;

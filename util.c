@@ -85,18 +85,21 @@ char *resolvePath(char *base, char *ext, struct stat *info) {
 
 char *dirname(char *path) {
     char *slash, *base;
+    int len;
+
+    assert(path != NULL && path[0] == '/');
 
     if (!strcmp(path, "/"))
         return path;
 
     slash = strrchr(path, '/');
-    if (!slash)
-        return path;
     assert(slash[1] != 0);
-    base = GC_MALLOC_ATOMIC(slash - path + 1);
+    if ((len = slash - path) == 0)
+        return "/";
+    base = GC_MALLOC_ATOMIC(len + 1);
     assert(base != NULL);
-    strncpy(base, path, slash - path);
-    base[slash - path] = 0;
+    strncpy(base, path, len);
+    base[len] = 0;
 
     return base;
 }
@@ -180,7 +183,9 @@ Address *make_address(char *host, int port) {
     assert(addr != NULL);
     assert(ent != NULL);
     assert(ent->h_addrtype == AF_INET && ent->h_length == 4);
-    assert(ent->h_addr_list[0] != NULL && ent->h_addr_list[1] == NULL);
+    assert(ent->h_addr_list[0] != NULL);
+    if (ent->h_addr_list[1] != NULL)
+        fprintf(stderr, "warning: multiple ip addresses, using the first\n");
 
     addr->sin_family = AF_INET;
     addr->sin_addr = *((struct in_addr *) ent->h_addr_list[0]);

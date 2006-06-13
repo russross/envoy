@@ -187,18 +187,26 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
             }
         }
 
+        /* prime the cache if the next step is local->local */
+        if (!null(chunknames) && !null(chunk) && addr == NULL &&
+                walk_lookup(pathname, user) == NULL &&
+                lease_find_remote(pathname) == NULL)
+        {
+            walk_prime(pathname, user, NULL);
+        }
+
         /* peek at the cache for the next entry */
         walk = walk_lookup(pathname, user);
 
         /* decide if we should ignore the cached chunk we found:
-        *    a) it's remote and the request is not from a client
-        *    b) if it was the final chunk
-        *    c) if we don't know where to look after it */
+         *    a) it's remote and the request is not from a client
+         *    b) if it was the final chunk (this implies remote b/c of above)
+         *    c) if we don't know where to look after it */
         if (!null(chunk) && addr != NULL && !isclient) {
             break;
         } else if (!null(chunk) && (null(chunknames) || walk == NULL)) {
             /* clear the cached qids before we repeat the lookup, ending with
-             * walk at the start of the remote chunk */
+             * walk at the start of the chunk */
             while (!null(chunk)) {
                 walk = car(chunk);
                 chunk = cdr(chunk);

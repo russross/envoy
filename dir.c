@@ -131,8 +131,8 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
     childpath = concatname(fid->claim->pathname, elt->filename);
 
     /* can we get stats locally? */
-    if (lease_find_root(childpath)) {
-        /* TODO: lock the lease in local case */
+    if (lease_find_remote(childpath) == NULL) {
+        /* TODO: lock the claim in local case? */
         return object_stat(worker, elt->oid, elt->filename);
     } else {
         Lease *lease = lease_find_remote(childpath);
@@ -240,7 +240,7 @@ static int dir_iter(Worker *worker, Claim *claim, struct p9stat *dirinfo,
     List *changes = NULL;
     int stop = 0;
 
-    for (num = 0; (u64) num * BLOCK_SIZE < dirinfo->length; num++) {
+    for (num = 0; (u64) num * BLOCK_SIZE <= dirinfo->length; num++) {
         u32 count;
         void *data;
         List *pre = NULL;
@@ -317,15 +317,16 @@ static int dir_iter(Worker *worker, Claim *claim, struct p9stat *dirinfo,
     return 0;
 }
 
-struct dir_add_entry_env {
+struct dir_create_entry_env {
     struct direntry *newentry;
     int added;
 };
 
-static enum dir_iter_action dir_create_entry_iter(struct dir_add_entry_env *env,
+static enum dir_iter_action dir_create_entry_iter(
+        struct dir_create_entry_env *env,
         List *in, List **out)
 {
-    List *entries;
+    List *entries = in;
     u32 offset = sizeof(u16);
 
     /* scan to see if this file already exists and find the end of the block */
@@ -350,7 +351,7 @@ static enum dir_iter_action dir_create_entry_iter(struct dir_add_entry_env *env,
 u64 dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
         char *name)
 {
-    struct dir_add_entry_env env;
+    struct dir_create_entry_env env;
     int result;
 
     env.added = 0;
