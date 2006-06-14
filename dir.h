@@ -23,6 +23,7 @@ struct dir_read_env {
     struct p9stat *next;
     u64 offset;
     List *entries;
+    int eof;
 };
 
 /* high-level functions */

@@ -131,6 +131,8 @@ char *unpackString(u8 *raw, int size, int *i) {
     int len = unpackU16(raw, size, i);
     if (*i < 0) return NULL;
     *i += len;
+    if (len == 0)
+        return NULL;
     if (*i > size || (s = GC_MALLOC_ATOMIC(len + 1)) == NULL) {
         *i = -1;
         return NULL;

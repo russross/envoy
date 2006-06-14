@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/stat.h>

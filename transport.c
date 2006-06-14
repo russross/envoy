@@ -35,7 +35,8 @@ static void write_message(Connection *conn) {
             assert(msg != NULL);
 
             packMessage(msg, conn->maxSize);
-            printMessage(stderr, msg);
+            if (state->isstorage || msg->id < TSRESERVE)
+                printMessage(stderr, msg);
         } else {
             msg = conn->partial_out;
             bytes = conn->partial_out_bytes;
@@ -307,7 +308,8 @@ void main_loop(void) {
             msg = handle_socket_event(&conn);
         while (msg == NULL);
 
-        printMessage(stdout, msg);
+        if (state->isstorage || msg->id < TSRESERVE)
+            printMessage(stdout, msg);
         trans = trans_lookup_remove(conn, msg->tag);
 
         /* what kind of request/response is this? */

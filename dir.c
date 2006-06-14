@@ -142,10 +142,15 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 }
 
 u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
-    struct p9stat *dirinfo = object_stat(worker, fid->claim->oid,
-            filename(fid->pathname));
-    struct p9stat *info = NULL;
+    struct p9stat *dirinfo;
+    struct p9stat *info;
     u32 count = 0;
+
+    /* are we at eof? */
+    if (fid->readdir_env != NULL && fid->readdir_env->eof)
+        return 0;
+
+    dirinfo = object_stat(worker, fid->claim->oid, filename(fid->pathname));
 
     /* are we starting from scratch? */
     if (fid->readdir_env == NULL) {
@@ -155,6 +160,7 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
         fid->readdir_env->next = NULL;
         fid->readdir_env->offset = 0;
         fid->readdir_env->entries = NULL;
+        fid->readdir_env->eof = 0;
 
         /* do we need to catch up (after a fid migration)? */
         if (fid->readdir_cookie > 0) {
@@ -165,8 +171,10 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
                 info = dir_read_next(worker, fid, dirinfo, fid->readdir_env);
 
                 /* are we already past the end somehow? */
-                if (info == NULL)
+                if (info == NULL) {
+                    fid->readdir_env->eof = 1;
                     return 0;
+                }
 
                 bytes += statsize(info);
             }
@@ -175,8 +183,10 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
 
     for (;;) {
         info = dir_read_next(worker, fid, dirinfo, fid->readdir_env);
-        if (info == NULL)
+        if (info == NULL) {
+            fid->readdir_env->eof = 1;
             break;
+        }
 
         if (count + statsize(info) > size) {
             /* push this entry back into the stream */

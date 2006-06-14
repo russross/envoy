@@ -11,6 +11,7 @@
 #include "state.h"
 #include "worker.h"
 #include "oid.h"
+#include "claim.h"
 #include "lease.h"
 #include "walk.h"
 
@@ -80,8 +81,8 @@ void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
 
 void worker_cleanup(Worker *worker) {
     while (!null(worker->cleanup)) {
-        struct objectdir *dir;
-        struct openfile *file;
+        Objectdir *dir;
+        Openfile *file;
         Fid *fid;
         Claim *claim;
         enum lock_types type = (enum lock_types) caar(worker->cleanup);

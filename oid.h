@@ -28,12 +28,6 @@ struct openfile {
     int fd;
 };
 
-enum oid_type {
-    OID_FILE,
-    OID_DIR,
-    OID_LINK,
-};
-
 struct objectdir {
     pthread_cond_t *wait;
 

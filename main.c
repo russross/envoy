@@ -16,6 +16,8 @@
 #include "transport.h"
 #include "worker.h"
 #include "oid.h"
+#include "claim.h"
+#include "lease.h"
 
 void test_dump(void) {
     Message m;

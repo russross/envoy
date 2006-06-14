@@ -57,7 +57,9 @@ static void common_twalk_local(Worker *worker, Transaction *trans,
     char *next;
     Lease *lease;
 
-    assert(res->claim != NULL);
+    if (res->claim == NULL)
+        failwith(ENOENT);
+
     assert(!null(res->names));
     assert(!emptystring(pathname));
     assert(!emptystring(user));

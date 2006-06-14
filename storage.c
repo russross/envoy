@@ -16,8 +16,6 @@
 #include "worker.h"
 #include "oid.h"
 
-/* TODO: release lock on blocking operations */
-
 /* generate an error response with Unix errno errnum */
 static void rerror(Worker *w, Message *m, char *file, int line) {
     m->id = RERROR;
@@ -81,6 +79,7 @@ void handle_tsread(Worker *worker, Transaction *trans) {
     struct Tsread *req = &trans->in->msg.tsread;
     struct Rsread *res = &trans->out->msg.rsread;
     Openfile *file;
+    int len;
     /* struct utimbuf buf; */
 
     /* make sure the requested data is small enough to transmit */
@@ -89,16 +88,18 @@ void handle_tsread(Worker *worker, Transaction *trans) {
     /* get a handle to the open file */
     failif((file = oid_get_openfile(worker, req->oid)) == NULL, ENOENT);
 
-    if (lseek(file->fd, req->offset, SEEK_SET) != req->offset) {
+    if (lseek(file->fd, req->offset, SEEK_SET) != req->offset)
         guard(-1);
-    }
 
     res->data = GC_MALLOC_ATOMIC(req->count);
     assert(res->data != NULL);
 
-    res->count = read(file->fd, res->data, req->count);
+    unlock();
+    len = read(file->fd, res->data, req->count);
+    lock();
 
-    guard(res->count >= 0);
+    guard(len);
+    res->count = (u32) len;
 
     /* set the atime */
     /* buf.actime = req->atime;
@@ -113,17 +114,20 @@ void handle_tswrite(Worker *worker, Transaction *trans) {
     struct Rswrite *res = &trans->out->msg.rswrite;
     Openfile *file;
     struct utimbuf buf;
+    int len;
 
     /* get a handle to the open file */
     failif((file = oid_get_openfile(worker, req->oid)) == NULL, ENOENT);
 
-    if (lseek(file->fd, req->offset, SEEK_SET) != req->offset) {
+    if (lseek(file->fd, req->offset, SEEK_SET) != req->offset)
         guard(-1);
-    }
 
-    res->count = write(file->fd, req->data, req->count);
+    unlock();
+    len = write(file->fd, req->data, req->count);
+    lock();
 
-    guard(res->count >= 0);
+    guard(len);
+    res->count = (u32) len;
 
     /* set the mtime */
     buf.actime = req->time;

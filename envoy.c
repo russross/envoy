@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <utime.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
 #include "types.h"
@@ -282,7 +280,10 @@ void handle_tattach(Worker *worker, Transaction *trans) {
         walk_prime("/", req->uname, state->root_address);
 
     /* treat this like a walk from the global root */
-    names = append_elt(splitpath(req->aname), NULL);
+    if (emptystring(req->aname))
+        names = cons(NULL, NULL);
+    else
+        names = append_elt(splitpath(req->aname), NULL);
     walkres = common_twalk(worker, trans, 1, req->fid, names, "/", req->uname);
 
     failif(walkres->type == WALK_ERROR, walkres->errnum);
@@ -765,14 +766,9 @@ void handle_tread(Worker *worker, Transaction *trans) {
         failif(res->count == 0 && fid->readdir_env->next != NULL,
                 ENAMETOOLONG);
 
-        /* end of file is indicated by returning zero bytes */
-        if (res->count == 0) {
-            fid->readdir_cookie = 0;
-            fid->readdir_env = NULL;
-        } else {
-            /* take note of how many bytes we ended up with */
-            fid->readdir_cookie += res->count;
-        }
+        /* take note of how many bytes we ended up with */
+        /* note: eof is signaled by return 0 bytes (dir_read caches this) */
+        fid->readdir_cookie += res->count;
     } else {
         failif(-1, EPERM);
     }
@@ -973,59 +969,40 @@ void handle_tstat(Worker *worker, Transaction *trans) {
 void handle_twstat(Worker *worker, Transaction *trans) {
     struct Twstat *req = &trans->in->msg.twstat;
     Fid *fid;
-    struct stat info;
-    char *name;
+    struct p9stat info;
 
     require_fid(fid);
-    /*failif(!strcmp(fid->pathname, rootdir), EPERM);*/
 
-    /* regular file or directory */
-    guard(lstat(fid->pathname, &info));
-    name = filename(fid->pathname);
+    /* TODO: check permissions */
+    info.type = ~(u16) 0;
+    info.dev = ~(u32) 0;
+    info.qid.type = ~(u8) 0;
+    info.qid.version = ~(u32) 0;
+    info.qid.path = ~(u64) 0;
+    info.mode = req->stat->mode;
+    info.atime = ~(u32) 0;
+    info.mtime = req->stat->mtime;
+    info.length = req->stat->length;
+    info.name = NULL;
+    info.uid = NULL;
+    info.gid = NULL;
+    info.muid = NULL;
+    info.extension = req->stat->extension;
+    info.n_uid = ~(u32) 0;
+    info.n_gid = ~(u32) 0;
+    info.n_muid = ~(u32) 0;
 
     /* rename */
-    if (!emptystring(req->stat->name) && strcmp(name, req->stat->name)) {
-        char *newname = concatname(dirname(fid->pathname), req->stat->name);
-        struct stat newinfo;
+    if (!emptystring(req->stat->name) &&
+            strcmp(filename(fid->pathname), req->stat->name))
+    {
         failif(strchr(req->stat->name, '/'), EINVAL);
-        failif(lstat(newname, &newinfo) >= 0, EEXIST);
+        failif(1, ENOTSUP);
 
-        guard(rename(fid->pathname, newname));
-
-        fid->pathname = newname;
+        fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
     }
 
-    /* mtime */
-    if (req->stat->mtime != ~(u32) 0) {
-        struct utimbuf buf;
-        buf.actime = 0;
-        buf.modtime = req->stat->mtime;
-
-        guard(utime(fid->pathname, &buf));
-    }
-
-    /* mode */
-    if (req->stat->mode != ~(u32) 0 && req->stat->mode != info.st_mode) {
-        int mode = req->stat->mode & 0777;
-        if ((req->stat->mode & DMSETUID))
-            mode |= S_ISUID;
-        if ((req->stat->mode & DMSETGID))
-            mode |= S_ISGID;
-
-        guard(chmod(fid->pathname, mode));
-    }
-
-    /* gid */
-    if (!emptystring(req->stat->gid) && req->stat->n_gid != ~(u32) 0)
-        guard(lchown(fid->pathname, -1, req->stat->n_gid));
-
-    /* uid */
-    if (!emptystring(req->stat->uid) && req->stat->n_uid != ~(u32) 0)
-        guard(lchown(fid->pathname, req->stat->n_uid, -1));
-
-    /* truncate */
-    if (req->stat->length != ~(u64) 0 && req->stat->length != info.st_size)
-        guard(truncate(fid->pathname, req->stat->length));
+    object_wstat(worker, fid->claim->oid, &info);
 
     send_reply(trans);
 }
