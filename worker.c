@@ -10,7 +10,6 @@
 #include "fid.h"
 #include "state.h"
 #include "worker.h"
-#include "oid.h"
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"

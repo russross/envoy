@@ -64,6 +64,9 @@ enum qidtypes {
 #define RREAD_HEADER 11
 #define RSREAD_HEADER 11
 
+/* size difference between storage and client read/write messages */
+#define STORAGE_SLUSH 8
+
 /* string length that handles NULL strings */
 #define safe_strlen(x) ((x) == NULL ? 0 : strlen(x))
 

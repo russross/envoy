@@ -557,7 +557,7 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
     filename = make_filename(oid, mode, uid, gid);
     pathname = concatname(dir->dirname, filename);
 
-    fd = creat(pathname, OBJECT_MODE);
+    fd = open(pathname, O_CREAT | O_RDWR | O_TRUNC, OBJECT_MODE);
 
     /* create failed */
     if (fd < 0) {
@@ -582,8 +582,11 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
             }
 
             /* try again */
-            if ((fd = creat(pathname, OBJECT_MODE)) < 0)
+            if ((fd = open(pathname, O_CREAT | O_RDWR | O_TRUNC,
+                            OBJECT_MODE)) < 0)
+            {
                 goto error;
+            }
         }
     }
     dir->filenames[oid - start] = filename;

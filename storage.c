@@ -88,8 +88,7 @@ void handle_tsread(Worker *worker, Transaction *trans) {
     /* get a handle to the open file */
     failif((file = oid_get_openfile(worker, req->oid)) == NULL, ENOENT);
 
-    if (lseek(file->fd, req->offset, SEEK_SET) != req->offset)
-        guard(-1);
+    guard(lseek(file->fd, req->offset, SEEK_SET));
 
     res->data = GC_MALLOC_ATOMIC(req->count);
     assert(res->data != NULL);
@@ -119,8 +118,7 @@ void handle_tswrite(Worker *worker, Transaction *trans) {
     /* get a handle to the open file */
     failif((file = oid_get_openfile(worker, req->oid)) == NULL, ENOENT);
 
-    if (lseek(file->fd, req->offset, SEEK_SET) != req->offset)
-        guard(-1);
+    guard(lseek(file->fd, req->offset, SEEK_SET));
 
     unlock();
     len = write(file->fd, req->data, req->count);

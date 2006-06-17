@@ -93,8 +93,10 @@ static Message *read_message(Connection *conn) {
             return NULL;
 
         /* an error or connection closed from other side? */
-        if (res <= 0)
+        if (res <= 0) {
+            perror("recv error");
             break;
+        }
 
         /* record the bytes we read */
         conn->partial_in_bytes = (bytes += res);
@@ -102,17 +104,21 @@ static Message *read_message(Connection *conn) {
         /* read the message length once it's available and check it */
         if (bytes == 4) {
             int index = 0;
-            if ((size = unpackU32(msg->raw, 4, &index)) > GLOBAL_MAX_SIZE)
+            if ((size = unpackU32(msg->raw, 4, &index)) > GLOBAL_MAX_SIZE) {
+                fprintf(stderr, "message too long\n");
                 break;
-            else
+            } else if (size <= 4) {
+                fprintf(stderr, "message too short\n");
+                break;
+            } else {
                 msg->size = size;
-            /*printf("read_message: size = %d\n", size);*/
+            }
         }
 
         /* have we read the whole message? */
         if (bytes == size) {
             if (unpackMessage(msg) < 0) {
-                printf("read_message: unpack failure\n");
+                fprintf(stderr, "read_message: unpack failure\n");
                 break;
             } else {
                 /* success */
@@ -226,6 +232,8 @@ void transport_init() {
 
     /* initialize a pipe that we can use to interrupt select */
     assert(pipe(state->refresh_pipe) == 0);
+    fd = state->refresh_pipe[0];
+    assert(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) == 0);
     handles_add(state->handles_read, state->refresh_pipe[0]);
 
     /* initialize a listening port */
@@ -263,7 +271,7 @@ int open_connection(Address *addr) {
 
     /* create it, set it to non-blocking, and start it connecting */
     if (    (fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ||
-            (flags = fcntl(fd, F_GETFL, 0)) < 0 ||
+            (flags = fcntl(fd, F_GETFL)) < 0 ||
             fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0 ||
             (connect(fd, (struct sockaddr *) addr, sizeof(*addr)) < 0 &&
              errno != EINPROGRESS))

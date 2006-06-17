@@ -195,13 +195,12 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
 void handle_tversion(Worker *worker, Transaction *trans) {
     struct Tversion *req = &trans->in->msg.tversion;
     struct Rversion *res = &trans->out->msg.rversion;
+    int maxsize;
 
     failif(trans->in->tag != NOTAG, ECONNREFUSED);
 
-    res->msize = max(min(GLOBAL_MAX_SIZE, req->msize), GLOBAL_MIN_SIZE);
-    trans->conn->maxSize = res->msize;
-
     if (state->isstorage) {
+        maxsize = GLOBAL_MAX_SIZE;
         if (!strcmp(req->version, "9P2000.storage")) {
             trans->conn->type = CONN_STORAGE_IN;
             res->version = req->version;
@@ -209,6 +208,7 @@ void handle_tversion(Worker *worker, Transaction *trans) {
             res->version = "unknown";
         }
     } else {
+        maxsize = GLOBAL_MAX_SIZE - STORAGE_SLUSH;
         if (!strcmp(req->version, "9P2000.u")) {
             trans->conn->type = CONN_CLIENT_IN;
             res->version = req->version;
@@ -219,6 +219,9 @@ void handle_tversion(Worker *worker, Transaction *trans) {
             res->version = "unknown";
         }
     }
+
+    res->msize = max(min(maxsize, req->msize), GLOBAL_MIN_SIZE);
+    trans->conn->maxSize = res->msize;
 
     send_reply(trans);
 }
