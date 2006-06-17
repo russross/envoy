@@ -202,7 +202,3 @@ void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
         requests = cdr(requests);
     }
 }
-
-/* a hint to load the given object into the local cache */
-void object_prime_cache(Worker *worker, u64 oid) {
-}

@@ -31,6 +31,7 @@ Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     claim->pathname = pathname;
     claim->access = access;
     claim->oid = oid;
+    claim->info = NULL;
 
     return claim;
 }
@@ -50,6 +51,7 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     claim->pathname = concatname(parent->pathname, name);
     claim->access = access;
     claim->oid = oid;
+    claim->info = NULL;
 
     return claim;
 }

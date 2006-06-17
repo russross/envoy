@@ -132,7 +132,7 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 
     /* can we get stats locally? */
     if (lease_find_remote(childpath) == NULL) {
-        /* TODO: lock the claim in local case? */
+        /* TODO: lock the claim in local case, and cache stat */
         return object_stat(worker, elt->oid, elt->filename);
     } else {
         Lease *lease = lease_find_remote(childpath);
@@ -146,11 +146,11 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
     struct p9stat *info;
     u32 count = 0;
 
-    /* are we at eof? */
-    if (fid->readdir_env != NULL && fid->readdir_env->eof)
-        return 0;
-
-    dirinfo = object_stat(worker, fid->claim->oid, filename(fid->pathname));
+    if (fid->claim->info == NULL) {
+        fid->claim->info =
+            object_stat(worker, fid->claim->oid, filename(fid->pathname));
+    }
+    dirinfo = fid->claim->info;
 
     /* are we starting from scratch? */
     if (fid->readdir_env == NULL) {
@@ -160,7 +160,6 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
         fid->readdir_env->next = NULL;
         fid->readdir_env->offset = 0;
         fid->readdir_env->entries = NULL;
-        fid->readdir_env->eof = 0;
 
         /* do we need to catch up (after a fid migration)? */
         if (fid->readdir_cookie > 0) {
@@ -171,10 +170,8 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
                 info = dir_read_next(worker, fid, dirinfo, fid->readdir_env);
 
                 /* are we already past the end somehow? */
-                if (info == NULL) {
-                    fid->readdir_env->eof = 1;
+                if (info == NULL)
                     return 0;
-                }
 
                 bytes += statsize(info);
             }
@@ -183,10 +180,8 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
 
     for (;;) {
         info = dir_read_next(worker, fid, dirinfo, fid->readdir_env);
-        if (info == NULL) {
-            fid->readdir_env->eof = 1;
+        if (info == NULL)
             break;
-        }
 
         if (count + statsize(info) > size) {
             /* push this entry back into the stream */
@@ -358,8 +353,8 @@ static enum dir_iter_action dir_create_entry_iter(
     return DIR_CONTINUE;
 }
 
-u64 dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
-        char *name)
+int dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
+        char *name, u64 oid)
 {
     struct dir_create_entry_env env;
     int result;
@@ -368,7 +363,7 @@ u64 dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
 
     env.newentry = GC_NEW(struct direntry);
     assert(env.newentry != NULL);
-    env.newentry->oid = object_reserve_oid(worker);
+    env.newentry->oid = oid;
     env.newentry->cow = 0;
     env.newentry->filename = name;
 
@@ -378,8 +373,8 @@ u64 dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
             &env);
 
     if (result < 0 || !env.added)
-        return NOOID;
-    return env.newentry->oid;
+        return -1;
+    return 0;
 }
 
 struct dir_remove_entry_env {
@@ -450,9 +445,12 @@ enum dir_iter_action dir_find_claim_iter(struct dir_find_claim_env *env,
 
 Claim *dir_find_claim(Worker *worker, Claim *dir, char *name) {
     struct dir_find_claim_env env;
-    struct p9stat *dirinfo = object_stat(worker, dir->oid,
-            filename(dir->pathname));
+    struct p9stat *dirinfo;
     int result;
+
+    if (dir->info == NULL)
+        dir->info = object_stat(worker, dir->oid, filename(dir->pathname));
+    dirinfo = dir->info;
 
     env.pathname = concatname(dir->pathname, name);
     env.lease = dir->lease;

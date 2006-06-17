@@ -40,14 +40,21 @@ u32 now(void) {
 int isgroupmember(char *user, char *group) {
     return 1;
 }
+int isgroupleader(char *user, char *group) {
+    return 1;
+}
 
 int has_permission(char *uname, struct p9stat *info, u32 required) {
-    if (!strcmp(uname, info->uid))
-        return (info->mode & required & 0700) == (required & 0700);
-    else if (isgroupmember(uname, info->gid))
-        return (info->mode & required & 0070) == (required & 0070);
-    else
-        return (info->mode & required & 0007) == (required & 0007);
+    if (!strcmp(uname, info->uid)) {
+        return (info->mode & required & 0700) == (required & 0700) &&
+            (required & 0700) != 0;
+    } else if (isgroupmember(uname, info->gid)) {
+        return (info->mode & required & 0070) == (required & 0070) &&
+            (required & 0070) != 0;
+    } else {
+        return (info->mode & required & 0007) == (required & 0007) &&
+            (required & 0007) != 0;
+    }
 }
 
 static void walklist_to_qids(u16 length, List *from, struct qid **to) {
@@ -535,7 +542,12 @@ void handle_topen(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-    info = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
+    if (fid->claim->info == NULL) {
+        fid->claim->info =
+            object_stat(worker, fid->claim->oid,
+                    filename(fid->claim->pathname));
+    }
+    info = fid->claim->info;
 
     /* figure out which permissions are required based on the request */
     if (info->mode & DMDIR) {
@@ -574,23 +586,19 @@ void handle_topen(Worker *worker, Transaction *trans) {
     fid->readdir_env = NULL;
     fid->status = (info->mode & DMDIR) ? STATUS_OPEN_DIR : STATUS_OPEN_FILE;
 
-    /* send a hint to the cache that we are likely to access this file */
-    object_prime_cache(worker, fid->claim->oid);
-
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
     res->qid = info->qid;
 
     /* do we need to truncate the file? */
     if ((req->mode & OTRUNC) && !(info->mode & DMAPPEND) && info->length > 0LL)
     {
-        info->mode = ~(u32) 0;
-        info->atime = info->mtime = ~(u32) 0;
-        info->uid = info->gid = NULL;
-        info->extension = NULL;
-        info->length = 0LL;
-        info->name = NULL;
+        struct p9stat *changes = p9stat_new();
+        changes->length = 0LL;
 
-        object_wstat(worker, fid->claim->oid, info);
+        object_wstat(worker, fid->claim->oid, changes);
+
+        /* the mtime wrong now */
+        fid->claim->info = NULL;
     }
 
     send_reply:
@@ -678,11 +686,16 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     }
 
     /* create the file */
-    newoid = dir_create_entry(worker, fid, dirinfo, req->name);
-    failif(newoid == NOOID, EEXIST);
+    newoid = object_reserve_oid(worker);
 
     qid = object_create(worker, newoid, perm, now(), fid->user,
             dirinfo->gid, req->extension);
+
+    /* note: the client normally checks to make sure this doesn't exist before
+     * trying to create it, but a race with another client could still happen */
+    failif(dir_create_entry(worker, fid, dirinfo, req->name, newoid) < 0,
+            EEXIST);
+    /* object_delete(worker, newoid); */
 
     /* move this fid to the new file */
     fid->claim = claim_new(fid->claim, req->name, ACCESS_WRITEABLE, newoid);
@@ -819,6 +832,7 @@ void handle_twrite(Worker *worker, Transaction *trans) {
 
     res->count = object_write(worker, fid->claim->oid, now(), req->offset,
             req->count, req->data);
+    fid->claim->info = NULL;
 
     send_reply:
     send_reply(trans);
@@ -885,9 +899,15 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     }
 
     /* first make sure it's not a non-empty directory */
-    info = object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
+    if (fid->claim->info == NULL) {
+        fid->claim->info =
+            object_stat(worker, fid->claim->oid,
+                    filename(fid->claim->pathname));
+    }
+    info = fid->claim->info;
     failif((info->mode & DMDIR) && !dir_is_empty(worker, fid, info), ENOTEMPTY);
 
+    /* TODO: implement this */
     /* do we have local control of the parent directory? */
     /* if not, give up ownership of this file and repeat the request remotely */
 
@@ -930,8 +950,12 @@ void handle_tstat(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-    res->stat = object_stat(worker, fid->claim->oid,
-            filename(fid->claim->pathname));
+    if (fid->claim->info == NULL) {
+        fid->claim->info =
+            object_stat(worker, fid->claim->oid,
+                    filename(fid->claim->pathname));
+    }
+    res->stat = fid->claim->info;
 
     send_reply:
     send_reply(trans);
@@ -972,40 +996,58 @@ void handle_tstat(Worker *worker, Transaction *trans) {
 void handle_twstat(Worker *worker, Transaction *trans) {
     struct Twstat *req = &trans->in->msg.twstat;
     Fid *fid;
-    struct p9stat info;
+    struct p9stat *info = NULL;
+    struct p9stat *change = p9stat_new();
 
     require_fid(fid);
 
-    /* TODO: check permissions */
-    info.type = ~(u16) 0;
-    info.dev = ~(u32) 0;
-    info.qid.type = ~(u8) 0;
-    info.qid.version = ~(u32) 0;
-    info.qid.path = ~(u64) 0;
-    info.mode = req->stat->mode;
-    info.atime = ~(u32) 0;
-    info.mtime = req->stat->mtime;
-    info.length = req->stat->length;
-    info.name = NULL;
-    info.uid = NULL;
-    info.gid = NULL;
-    info.muid = NULL;
-    info.extension = req->stat->extension;
-    info.n_uid = ~(u32) 0;
-    info.n_gid = ~(u32) 0;
-    info.n_muid = ~(u32) 0;
+    if (fid->claim->info == NULL) {
+        fid->claim->info =
+            object_stat(worker, fid->claim->oid,
+                    filename(fid->claim->pathname));
+    }
+    info = fid->claim->info;
+
+    /* mode */
+    if (req->stat->mode != ~(u32) 0) {
+        failif(strcmp(fid->user, info->uid) &&
+                !isgroupleader(fid->user, info->gid), EPERM);
+        change->mode = req->stat->mode;
+    }
+
+    /* mtime */
+    if (req->stat->mtime != ~(u32) 0) {
+        failif(strcmp(fid->user, info->uid) &&
+                !isgroupleader(fid->user, info->gid), EPERM);
+        change->mtime = req->stat->mtime;
+    }
+
+    /* length */
+    if (req->stat->length != ~(u64) 0) {
+        failif(!has_permission(fid->user, info, 0222), EPERM);
+        failif(info->mode & DMDIR, EACCES);
+        change->length = req->stat->length;
+    }
+
+    /* extension */
+    if (!emptystring(req->stat->extension)) {
+        /* no extension changes allowed? */
+        failif(1, EACCES);
+    }
 
     /* rename */
     if (!emptystring(req->stat->name) &&
             strcmp(filename(fid->pathname), req->stat->name))
     {
         failif(strchr(req->stat->name, '/'), EINVAL);
+        /* TODO: implement this */
         failif(1, ENOTSUP);
 
         fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
     }
 
-    object_wstat(worker, fid->claim->oid, &info);
+    object_wstat(worker, fid->claim->oid, change);
+    fid->claim->info = NULL;
 
     send_reply(trans);
 }

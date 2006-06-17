@@ -110,6 +110,8 @@ struct claim {
     enum claim_access access;
     /* the storage system object ID */
     u64 oid;
+    /* the file stat record */
+    struct p9stat *info;
 };
 
 /* Create a new root claim object for the given lease */

@@ -45,6 +45,32 @@ Message *message_new(void) {
     return msg;
 }
 
+struct p9stat *p9stat_new(void) {
+    struct p9stat *info = GC_NEW(struct p9stat);
+    assert(info != NULL);
+
+    /* set all fields to empty values */
+    info->type = ~(u16) 0;
+    info->dev = ~(u32) 0;
+    info->qid.type = ~(u8) 0;
+    info->qid.version = ~(u32) 0;
+    info->qid.path = ~(u64) 0;
+    info->mode = ~(u32) 0;
+    info->atime = ~(u32) 0;
+    info->mtime = ~(u32) 0;
+    info->length = ~(u64) 0;
+    info->name = NULL;
+    info->uid = NULL;
+    info->gid = NULL;
+    info->muid = NULL;
+    info->extension = NULL;
+    info->n_uid = ~(u32) 0;
+    info->n_gid = ~(u32) 0;
+    info->n_muid = ~(u32) 0;
+
+    return info;
+}
+
 /*
  * Debugging functions
  */

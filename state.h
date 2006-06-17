@@ -31,6 +31,7 @@
 void print_address(Address *addr);
 void state_dump(void);
 Message *message_new(void);
+struct p9stat *p9stat_new(void);
 
 /* persistent state */
 struct state {
@@ -53,9 +54,6 @@ struct state {
     Lru *openfile_lru;
     u64 oid_next_available;
 };
-
-extern pthread_mutex_t *oid_dir_lock;
-extern pthread_mutex_t *oid_fd_lock;
 
 extern struct state *state;
 void state_init_storage(void);
