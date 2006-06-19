@@ -66,9 +66,13 @@ static void common_twalk_local(Worker *worker, Transaction *trans,
 
     do {
         /* look at the current file/directory */
-        info = object_stat(worker, res->claim->oid, filename(pathname));
-        if (info == NULL)
-            failwith(ENOENT);
+        if (res->claim->info == NULL) {
+            res->claim->info =
+                object_stat(worker, res->claim->oid, filename(pathname));
+        }
+        info = res->claim->info;
+        /* if (info == NULL)
+            failwith(ENOENT); */
 
         /* make the qid */
         qid = GC_NEW(struct qid);
@@ -111,7 +115,7 @@ static void common_twalk_local(Worker *worker, Transaction *trans,
     } while (res->claim != NULL);
 
     /* prime the cache with the address for continuing */
-    lease = lease_find_remote(pathname);
+    lease = lease_get_remote(pathname);
     assert(lease != NULL);
 
     walk_prime(pathname, user, lease->addr);
@@ -192,7 +196,7 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
         /* prime the cache if the next step is local->local */
         if (!null(chunknames) && !null(chunk) && addr == NULL &&
                 walk_lookup(pathname, user) == NULL &&
-                lease_find_remote(pathname) == NULL)
+                lease_get_remote(pathname) == NULL)
         {
             walk_prime(pathname, user, NULL);
         }
@@ -225,7 +229,7 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
 
         if (walk->addr == NULL) {
             /* local chunk */
-            res->claim = claim_get_pathname(worker, pathname);
+            res->claim = claim_find(worker, pathname);
             common_twalk_local(worker, trans, res, pathname, user);
             if (res->type == WALK_ERROR)
                 failwith(res->errnum);
@@ -240,6 +244,7 @@ struct walk_response *common_twalk(Worker *worker, Transaction *trans,
                     /* update the fid to the new target */
                     claim_release(fid->claim);
                     fid->claim = res->claim;
+                    fid->pathname = res->claim->pathname;
                 } else {
                     /* create the target fid */
                     fid_insert_local(trans->conn, newfid, user, res->claim);
@@ -327,7 +332,7 @@ Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr) {
          * permission check so we clear the list */
         if (walk->qid == NULL)
             walk->users = cons(user, NULL);
-        else if (!containsinorder((Cmpfunc) strcmp, walk->users, user))
+        else if (findinorder((Cmpfunc) strcmp, walk->users, user) == NULL)
             walk->users = insertinorder((Cmpfunc) strcmp, walk->users, user);
 
         walk->qid = qid;
@@ -358,7 +363,7 @@ void walk_prime(char *pathname, char *user, Address *addr) {
     } else {
         /* if this user hasn't seen this entry, clear the qid to force a lookup
          * and permissions check */
-        if (!containsinorder((Cmpfunc) strcmp, walk->users, user)) {
+        if (findinorder((Cmpfunc) strcmp, walk->users, user) == NULL) {
             walk->users = insertinorder((Cmpfunc) strcmp, walk->users, user);
             walk->qid = NULL;
         }
@@ -370,7 +375,7 @@ void walk_prime(char *pathname, char *user, Address *addr) {
 Walk *walk_lookup(char *pathname, char *user) {
     Walk *walk = lru_get(walk_cache, pathname);
 
-    if (walk != NULL && containsinorder((Cmpfunc) strcmp, walk->users, user))
+    if (walk != NULL && findinorder((Cmpfunc) strcmp, walk->users, user))
         return walk;
 
     return NULL;

@@ -214,12 +214,12 @@ void state_init_envoy(void) {
     /* namespace management state */
     /*state->lease_owned = hash_create(
             LEASE_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) string_hash,
-            (int (*)(const void *, const void *)) strcmp);
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp);
     state->lease_shared = hash_create(
             LEASE_HASHTABLE_SIZE,
-            (u32 (*)(const void *)) string_hash,
-            (int (*)(const void *, const void *)) strcmp);
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp);
 
     state->map = GC_NEW(Map);
     assert(state->map != NULL);

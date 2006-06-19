@@ -95,8 +95,8 @@ static void close_openfile(Openfile *file) {
 Lru *init_objectdir_lru(void) {
     return lru_new(
             OBJECTDIR_CACHE_SIZE,
-            (u32 (*)(const void *)) u64_hash,
-            (int (*)(const void *, const void *)) u64_cmp,
+            (Hashfunc) u64_hash,
+            (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_objectdir,
             (void (*)(void *)) close_objectdir);
 }
@@ -104,8 +104,8 @@ Lru *init_objectdir_lru(void) {
 Lru *init_openfile_lru(void) {
     return lru_new(
             FD_CACHE_SIZE,
-            (u32 (*)(const void *)) u64_hash,
-            (int (*)(const void *, const void *)) u64_cmp,
+            (Hashfunc) u64_hash,
+            (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_openfile,
             (void (*)(void *)) close_openfile);
 }

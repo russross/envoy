@@ -15,9 +15,8 @@ static int lru_cmp(struct lru_elt *a, struct lru_elt *b) {
     return 1;
 }
 
-Lru *lru_new(int size, u32 (*keyhash)(const void *),
-        int (*keycmp)(const void *, const void *), int (*resurrect)(void *),
-        void (*cleanup)(void *))
+Lru *lru_new(int size, Hashfunc keyhash, Cmpfunc keycmp,
+        int (*resurrect)(void *), void (*cleanup)(void *))
 {
     Lru *lru = GC_NEW(Lru);
     assert(lru != NULL);

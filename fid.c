@@ -54,10 +54,15 @@ Fid *fid_lookup(Connection *conn, u32 fid) {
 }
 
 Fid *fid_lookup_remove(Connection *conn, u32 fid) {
+    Fid *res;
+
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    return (Fid *) vector_get_remove(conn->fid_vector, fid);
+    res = (Fid *) vector_get_remove(conn->fid_vector, fid);
+    claim_release(res->claim);
+
+    return res;
 }
 
 u32 fid_hash(const Fid *fid) {

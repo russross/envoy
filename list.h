@@ -2,6 +2,7 @@
 #define _LIST_H_
 
 #include "types.h"
+#include "9p.h"
 
 /*
  * Lisp-like lists
@@ -27,7 +28,9 @@ List *append_list(List *a, List *b);
 List *reverse(List *list);
 List *reverse_copy(List *list);
 int length(List *list);
-List *insertinorder(int (*cmp)(const void *a, const void *b), List *list, void *elt);
-int containsinorder(int (*cmp)(const void *a, const void *b), List *list, void *elt);
+/* these functions always call cmp with elt as the first arg */
+List *insertinorder(Cmpfunc cmp, List *list, void *elt);
+void *findinorder(Cmpfunc cmp, List *list, void *elt);
+List *removeinorder(Cmpfunc cmp, List *list, void *elt);
 
 #endif

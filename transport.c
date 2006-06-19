@@ -94,7 +94,8 @@ static Message *read_message(Connection *conn) {
 
         /* an error or connection closed from other side? */
         if (res <= 0) {
-            perror("recv error");
+            if (res < 0)
+                perror("recv error");
             break;
         }
 

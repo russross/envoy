@@ -2,6 +2,7 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 
 int null(List *list) {
@@ -107,9 +108,7 @@ int length(List *list) {
     return len;
 }
 
-List *insertinorder(int (*cmp)(const void *a, const void *b),
-        List *list, void *elt)
-{
+List *insertinorder(Cmpfunc cmp, List *list, void *elt) {
     List *prev = NULL;
     List *cur = list;
 
@@ -125,12 +124,29 @@ List *insertinorder(int (*cmp)(const void *a, const void *b),
     return list;
 }
 
-int containsinorder(int (*cmp)(const void *a, const void *b),
-        List *list, void *elt)
-{
+void *findinorder(Cmpfunc cmp, List *list, void *elt) {
     int test = 1;
     while (!null(list) && (test = cmp(elt, car(list))) < 0)
         list = cdr(list);
 
-    return !test;
+    return test ? NULL : car(list);
+}
+
+List *removeinorder(Cmpfunc cmp, List *list, void *elt) {
+    List *prev = NULL;
+    List *cur = list;
+
+    while (!null(cur) && cmp(elt, car(cur)) < 0) {
+        prev = cur;
+        cur = cdr(cur);
+    }
+
+    if (null(cur))
+        return list;
+
+    if (null(prev))
+        return cdr(cur);
+
+    setcdr(prev, cdr(cur));
+    return list;
 }

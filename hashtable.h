@@ -14,14 +14,14 @@ struct hashtable {
     u32 bucketCount;
     List **buckets;
 
-    u32 (*keyhash)(const void *);
-    int (*keycmp)(const void *, const void *);
+    Hashfunc keyhash;
+    Cmpfunc keycmp;
 };
 
 Hashtable *hash_create(
         int bucketCount,
-        u32 (*hash)(const void *),
-        int (*cmp)(const void *, const void *));
+        Hashfunc hash,
+        Cmpfunc cmp);
 void *hash_get(Hashtable *table, const void *key);
 void hash_set(Hashtable *table, void *key, void *value);
 void hash_remove(Hashtable *table, const void *key);

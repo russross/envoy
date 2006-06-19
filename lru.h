@@ -41,8 +41,8 @@ struct lru_elt {
 
 Lru *lru_new(
         int size,
-        u32 (*keyhash)(const void *),
-        int (*keycmp)(const void *, const void *),
+        Hashfunc keyhash,
+        Cmpfunc keycmp,
         int (*resurrect)(void *),
         void (*cleanup)(void *));
 void *lru_get(Lru *lru, void *key);

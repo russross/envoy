@@ -50,7 +50,7 @@
  * the lease, which should be completed eventually.  In addition, the result
  * Claim should be passed to claim_release eventually.  Returns NULL when the
  * pathname is not under a local lease or does not exist. */
-Claim *claim_get_pathname(Worker *worker, char *targetname);
+Claim *claim_find(Worker *worker, char *targetname);
 
 /* Find the parent of a given claim, possible doing directory searches as
  * necessary.  Returns NULL if the parent is not part of the same lease or does
@@ -110,6 +110,8 @@ struct claim {
     enum claim_access access;
     /* the storage system object ID */
     u64 oid;
+    /* the parent's oid--needed when restoring from cache */
+    u64 parent_oid;
     /* the file stat record */
     struct p9stat *info;
 };
@@ -125,6 +127,9 @@ int claim_request(Claim *claim);
 
 /* Release a claim. */
 void claim_release(Claim *claim);
+
+int claim_cmp(const Claim *a, const Claim *b);
+int claim_key_cmp(const char *key, const Claim *elt);
 
 /* Global claim data */
 

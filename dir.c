@@ -9,6 +9,7 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
+#include "state.h"
 #include "object.h"
 #include "envoy.h"
 #include "remote.h"
@@ -131,11 +132,11 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
     childpath = concatname(fid->claim->pathname, elt->filename);
 
     /* can we get stats locally? */
-    if (lease_find_remote(childpath) == NULL) {
+    if (lease_get_remote(childpath) == NULL) {
         /* TODO: lock the claim in local case, and cache stat */
         return object_stat(worker, elt->oid, elt->filename);
     } else {
-        Lease *lease = lease_find_remote(childpath);
+        Lease *lease = lease_get_remote(childpath);
         assert(lease != NULL);
         return remote_stat(worker, lease->addr, childpath);
     }
@@ -206,23 +207,14 @@ static void dir_prime_claim_cache(Claim *dir, List *entries) {
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
         char *pathname = concatname(dir->pathname, elt->filename);
-        List *children;
 
         /* does this entry exit the lease? */
-        if (lease_check_for_lease_change(dir->lease, pathname) !=
-                NULL)
-        {
+        if (lease_get_remote(pathname) != NULL)
             continue;
-        }
 
         /* is it an active claim? */
-        for (children = dir->children; !null(children);
-                children = cdr(children))
-        {
-            Claim *claim = car(children);
-            if (!strcmp(pathname, claim->pathname))
-                goto next;
-        }
+        if (findinorder((Cmpfunc) claim_key_cmp, dir->children, pathname))
+            continue;
 
         /* is it already in the cache? */
         if (lease_lookup_claim_from_cache(dir->lease, pathname) == NULL) {
@@ -231,9 +223,6 @@ static void dir_prime_claim_cache(Claim *dir, List *entries) {
                     fid_access_child(dir->access, elt->cow), elt->oid);
             lease_add_claim_to_cache(claim);
         }
-
-        next:
-        continue;
     }
 }
 
@@ -298,25 +287,15 @@ static int dir_iter(Worker *worker, Claim *claim, struct p9stat *dirinfo,
         offset = BLOCK_SIZE * num;
         if (offset > dirinfo->length) {
             /* extend the block */
-            dirinfo->mode = ~(u32) 0;
-            dirinfo->atime = ~(u32) 0;
-            dirinfo->mtime = ~(u32) 0;
-            dirinfo->length = offset + count;
-            dirinfo->name = NULL;
-            dirinfo->uid = NULL;
-            dirinfo->gid = NULL;
-            dirinfo->muid = NULL;
-            dirinfo->extension = NULL;
-            dirinfo->n_uid = 0;
-            dirinfo->n_gid = 0;
-            dirinfo->n_muid = 0;
-
-            object_wstat(worker, claim->oid, dirinfo);
+            struct p9stat *delta = p9stat_new();
+            delta->length = offset + count;
+            object_wstat(worker, claim->oid, delta);
         }
 
         /* write the block */
         assert(object_write(worker, claim->oid, now(),
                     offset, count, data) == count);
+        claim->info = NULL;
     }
 
     return 0;
@@ -436,6 +415,8 @@ struct dir_find_claim_env {
 enum dir_iter_action dir_find_claim_iter(struct dir_find_claim_env *env,
         List *in, List **out)
 {
+    /* dir iter puts everything it sees in the cache, so all we have to do is
+     * check if our target has arrived in the cache yet */
     env->claim = lease_lookup_claim_from_cache(env->lease, env->pathname);
     if (env->claim == NULL)
         return DIR_CONTINUE;

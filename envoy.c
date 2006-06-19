@@ -543,9 +543,8 @@ void handle_topen(Worker *worker, Transaction *trans) {
     }
 
     if (fid->claim->info == NULL) {
-        fid->claim->info =
-            object_stat(worker, fid->claim->oid,
-                    filename(fid->claim->pathname));
+        fid->claim->info = object_stat(worker, fid->claim->oid,
+                filename(fid->claim->pathname));
     }
     info = fid->claim->info;
 
@@ -592,12 +591,11 @@ void handle_topen(Worker *worker, Transaction *trans) {
     /* do we need to truncate the file? */
     if ((req->mode & OTRUNC) && !(info->mode & DMAPPEND) && info->length > 0LL)
     {
-        struct p9stat *changes = p9stat_new();
-        changes->length = 0LL;
+        struct p9stat *delta = p9stat_new();
+        delta->length = 0LL;
+        object_wstat(worker, fid->claim->oid, delta);
 
-        object_wstat(worker, fid->claim->oid, changes);
-
-        /* the mtime wrong now */
+        /* the mtime and length are wrong now */
         fid->claim->info = NULL;
     }
 
@@ -671,9 +669,13 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
+    if (fid->claim->info == NULL) {
+        fid->claim->info = object_stat(worker, fid->claim->oid,
+                filename(fid->claim->pathname));
+    }
+    dirinfo = fid->claim->info;
+
     /* create can only occur in a directory */
-    dirinfo =
-        object_stat(worker, fid->claim->oid, filename(fid->claim->pathname));
     failif(!(dirinfo->mode & DMDIR), ENOTDIR);
 
     /* make sure the mode is valid for opening the new file */
@@ -695,10 +697,15 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
      * trying to create it, but a race with another client could still happen */
     failif(dir_create_entry(worker, fid, dirinfo, req->name, newoid) < 0,
             EEXIST);
-    /* object_delete(worker, newoid); */
+    /* ... and object_delete(worker, newoid); on failure */
+
+    /* directory info has changed */
+    fid->claim->info = NULL;
 
     /* move this fid to the new file */
-    fid->claim = claim_new(fid->claim, req->name, ACCESS_WRITEABLE, newoid);
+    lease_add_claim_to_cache(
+            claim_new(fid->claim, req->name, ACCESS_WRITEABLE, newoid));
+    fid->claim = claim_get_child(worker, fid->claim, req->name);
     fid->status = status;
     fid->omode = req->mode;
 
@@ -762,8 +769,20 @@ void handle_tread(Worker *worker, Transaction *trans) {
     }
 
     if (fid->status == STATUS_OPEN_FILE) {
-        res->data = object_read(worker, fid->claim->oid, now(), req->offset,
-                count, &res->count);
+        struct p9stat *info;
+        if (fid->claim->info == NULL) {
+            fid->claim->info = object_stat(worker, fid->claim->oid,
+                    filename(fid->claim->pathname));
+        }
+        info = fid->claim->info;
+
+        if (req->offset >= info->length) {
+            res->count = 0;
+            res->data = NULL;
+        } else {
+            res->data = object_read(worker, fid->claim->oid, now(),
+                    req->offset, count, &res->count);
+        }
     } else if (fid->status == STATUS_OPEN_DIR) {
         /* allow rewinds, but no other offset changes */
         if (req->offset == 0 && fid->readdir_cookie != 0) {
@@ -833,6 +852,7 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     res->count = object_write(worker, fid->claim->oid, now(), req->offset,
             req->count, req->data);
     fid->claim->info = NULL;
+    printf("tswrite claim: %d\n", (int) fid->claim);
 
     send_reply:
     send_reply(trans);
@@ -950,6 +970,7 @@ void handle_tstat(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
+    printf("tstat claim: %d\n", (int) fid->claim);
     if (fid->claim->info == NULL) {
         fid->claim->info =
             object_stat(worker, fid->claim->oid,
@@ -997,7 +1018,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     struct Twstat *req = &trans->in->msg.twstat;
     Fid *fid;
     struct p9stat *info = NULL;
-    struct p9stat *change = p9stat_new();
+    struct p9stat *delta = p9stat_new();
 
     require_fid(fid);
 
@@ -1012,21 +1033,21 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     if (req->stat->mode != ~(u32) 0) {
         failif(strcmp(fid->user, info->uid) &&
                 !isgroupleader(fid->user, info->gid), EPERM);
-        change->mode = req->stat->mode;
+        delta->mode = req->stat->mode;
     }
 
     /* mtime */
     if (req->stat->mtime != ~(u32) 0) {
         failif(strcmp(fid->user, info->uid) &&
                 !isgroupleader(fid->user, info->gid), EPERM);
-        change->mtime = req->stat->mtime;
+        delta->mtime = req->stat->mtime;
     }
 
     /* length */
     if (req->stat->length != ~(u64) 0) {
         failif(!has_permission(fid->user, info, 0222), EPERM);
         failif(info->mode & DMDIR, EACCES);
-        change->length = req->stat->length;
+        delta->length = req->stat->length;
     }
 
     /* extension */
@@ -1046,7 +1067,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
     }
 
-    object_wstat(worker, fid->claim->oid, change);
+    object_wstat(worker, fid->claim->oid, delta);
     fid->claim->info = NULL;
 
     send_reply(trans);

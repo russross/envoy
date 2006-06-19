@@ -82,12 +82,9 @@ void lease_add(Lease *lease);
 /* remove a lease object, including exit lease objects for its wavefront */
 void lease_remove(Lease *lease);
 
-/* Checks if the given pathname is part of a different lease than the parent
- * (which must be covered by the given lease) and returns it if so.  Returns
- * NULL if the pathname is covered by the same lease. */
-Lease *lease_check_for_lease_change(Lease *lease, char *pathname);
-
-Lease *lease_find_remote(char *pathname);
+/* returns the remote lease rooted at the given pathname, or NULL if the given
+ * path is not a known lease exit */
+Lease *lease_get_remote(char *pathname);
 
 /* If the given pathname is covered by a local lease, find the root of that
  * lease and return the lease.  Otherwise, return NULL.

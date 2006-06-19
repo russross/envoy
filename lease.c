@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "hashtable.h"
 #include "fid.h"
@@ -34,7 +35,13 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
 
     l->claim = claim;
     l->claim->lease = l;
-    l->wavefront = wavefront;
+
+    l->wavefront = NULL;
+    while (!null(wavefront)) {
+        l->wavefront =
+            insertinorder((Cmpfunc) strcmp, l->wavefront, car(wavefront));
+        wavefront = cdr(wavefront);
+    }
 
     l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
             (Hashfunc) fid_hash,
@@ -103,11 +110,7 @@ void lease_finish_transaction(Lease *lease) {
         cond_signal(lease->okay_to_change_lease);
 }
 
-Lease *lease_check_for_lease_change(Lease *lease, char *pathname) {
-    return hash_get(lease_by_root_pathname, pathname);
-}
-
-Lease *lease_find_remote(char *pathname) {
+Lease *lease_get_remote(char *pathname) {
     Lease *lease = hash_get(lease_by_root_pathname, pathname);
     if (lease != NULL && lease->isexit)
         return lease;
@@ -129,17 +132,7 @@ Lease *lease_find_root(char *pathname) {
 }
 
 int lease_is_exit_point_parent(Lease *lease, char *pathname) {
-    List *exits = lease->wavefront;
-
-    while (!null(exits)) {
-        Lease *exit = car(exits);
-        exits = cdr(exits);
-
-        if (!strcmp(pathname, exit->pathname))
-            return 1;
-    }
-
-    return 0;
+    return findinorder((Cmpfunc) strcmp, lease->wavefront, pathname) != NULL;
 }
 
 void lease_add(Lease *lease) {

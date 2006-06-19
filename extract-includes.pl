@@ -33,6 +33,7 @@ foreach my $file (@ARGV) {
             next if $line =~ m/^#define +_\w+_/;
             $s->{$1} = 1 if $line =~ m/^#define +(\w+)/;
             $s->{$1} = 1 if $line =~ m/^typedef .* (\w+);/;
+            $s->{$1} = 1 if $line =~ m/^typedef .* \(\*(\w+)\)\(.*\);/;
             $s->{$1} = 1 if $line =~ m/^\w+ [\w \*]*\b(\w+)\(/;
             $s->{$1} = 1 if $line =~ m/^extern \w+ [\w \*]*\b(\w+);/;
             $s->{"struct $1"} = 1, $mode = 'struct'
