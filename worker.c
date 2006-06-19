@@ -4,16 +4,47 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "transaction.h"
 #include "fid.h"
 #include "state.h"
 #include "worker.h"
+#include "heap.h"
 #include "oid.h"
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
+
+/* Static data */
+u32 worker_next_priority;
+Heap *worker_ready_to_run;
+
+int worker_priority_cmp(const Worker *a, const Worker *b) {
+    if (a->priority == b->priority)
+        return 0;
+    if (a->priority < b->priority &&
+            b->priority - a->priority < WORKER_PRIORITY_THRESHOLD)
+    {
+        return -1;
+    }
+    return 1;
+}
+
+void worker_state_init(void) {
+    worker_next_priority = 0;
+    worker_ready_to_run =
+        heap_new(WORKER_READY_QUEUE_SIZE, (Cmpfunc) worker_priority_cmp);
+}
+
+void worker_wake_up_next(void) {
+    Worker *next = heap_remove(worker_ready_to_run);
+    if (next == NULL)
+        return;
+    cond_signal(next->sleep);
+}
 
 /*
  * Worker threads
@@ -28,14 +59,23 @@ static void *worker_loop(Worker *t) {
         if (i > 0) {
             /* wait in the pool for a request */
             state->thread_pool = append_elt(state->thread_pool, t);
-            cond_wait(t->wait);
+            cond_wait(t->sleep);
+        }
+        t->priority = worker_next_priority++;
+        if (!heap_isempty(worker_ready_to_run)) {
+            /* wait for older threads that are ready to run */
+            heap_add(worker_ready_to_run, car(t->blocking));
+            cond_wait(t->sleep);
         }
 
         /* initialize the exception handler and catch exceptions */
-        while (setjmp(t->jmp) == WORKER_RETRY) {
-            /* wait for some condition to be true and retry */
-            printf("WORKER_RETRY invoked\n");
+        while (setjmp(t->jmp) == WORKER_BLOCKED) {
+            /* wait for the blocking transaction to finish, then start over */
+            printf("WORKER_BLOCKED sleeping\n");
             worker_cleanup(t);
+            cond_wait(t->sleep);
+            printf("WORKER_BLOCKED waking up\n");
+            worker_wake_up_next();
         }
 
         /* service the request */
@@ -43,6 +83,15 @@ static void *worker_loop(Worker *t) {
             t->func(t, t->arg);
         worker_cleanup(t);
         t->func = NULL;
+
+        /* make anyone waiting on this transaction ready to run, then run one */
+        if (!null(t->blocking)) {
+            while (!null(t->blocking)) {
+                heap_add(worker_ready_to_run, car(t->blocking));
+                t->blocking = cdr(t->blocking);
+            }
+            worker_wake_up_next();
+        }
     }
 
     unlock();
@@ -54,10 +103,12 @@ void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
     if (null(state->thread_pool)) {
         Worker *t = GC_NEW(Worker);
         assert(t != NULL);
-        t->wait = cond_new();
+        t->sleep = cond_new();
 
         t->func = func;
         t->arg = arg;
+        t->priority = ~(u32) 0;
+        t->blocking = NULL;
 
         pthread_t newthread;
         pthread_create(&newthread, NULL,
@@ -68,15 +119,22 @@ void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
 
         t->func = func;
         t->arg = arg;
+        t->priority = ~(u32) 0;
+        t->blocking = NULL;
 
-        cond_signal(t->wait);
+        cond_signal(t->sleep);
     }
+}
+
+static void unlock_lease_cleanup(Lease *lease) {
+    if (--lease->inflight == 0 && lease->wait_for_update != NULL)
+        heap_add(worker_ready_to_run, lease->wait_for_update);
+    /* note: we leave wait_for_update set to keep the lease locked */
 }
 
 #define cleanup(var) do { \
     var = obj; \
-    cond_broadcast(var->wait); \
-    var->wait = NULL; \
+    var->lock = NULL; \
 } while (0)
 
 void worker_cleanup(Worker *worker) {
@@ -95,7 +153,7 @@ void worker_cleanup(Worker *worker) {
             case LOCK_FID:              cleanup(fid);   break;
             case LOCK_CLAIM:            cleanup(claim); break;
             case LOCK_LEASE:
-                lease_finish_transaction((Lease *) obj);
+                unlock_lease_cleanup((Lease *) obj);
                 break;
             case LOCK_WALK:
                 walk_release((Walk *) obj);
@@ -107,8 +165,15 @@ void worker_cleanup(Worker *worker) {
 }
 #undef cleanup
 
-void worker_retry(Worker *worker) {
-    longjmp(worker->jmp, WORKER_RETRY);
+Worker *worker_attempt_to_acquire(Worker *worker, Worker *other) {
+    assert(worker != NULL);
+    if (other == NULL || other == worker)
+        return worker;
+
+    /* we lose */
+    other->blocking = cons(worker, other->blocking);
+    longjmp(worker->jmp, WORKER_BLOCKED);
+    return NULL;
 }
 
 void lock(void) {
@@ -117,6 +182,17 @@ void lock(void) {
 
 void unlock(void) {
     pthread_mutex_unlock(state->biglock);
+}
+
+void lock_lease(Worker *worker, Lease *lease) {
+    worker_attempt_to_acquire(worker, lease->wait_for_update);
+    lease->inflight++;
+    worker_cleanup_add(worker, LOCK_LEASE, lease);
+}
+
+void unlock_lease(Worker *worker, Lease *lease) {
+    worker_cleanup_remove(worker, LOCK_LEASE, lease);
+    unlock_lease_cleanup(lease);
 }
 
 void cond_signal(pthread_cond_t *cond) {
@@ -147,7 +223,7 @@ void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object) {
     List *cur = worker->cleanup;
 
     while (!null(cur)) {
-        if (caar(cur) == (void *) type && cdar(cur) == object) {
+        if ((enum lock_types) caar(cur) == type && cdar(cur) == object) {
             if (prev == NULL)
                 worker->cleanup = cdr(cur);
             else

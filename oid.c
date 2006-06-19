@@ -70,11 +70,11 @@ static int u64_cmp(const u64 *a, const u64 *b) {
 }
 
 static int resurrect_objectdir(Objectdir *dir) {
-    return dir->wait != NULL;
+    return dir->lock != NULL;
 }
 
 static void close_objectdir(Objectdir *dir) {
-    assert(dir->wait == NULL);
+    assert(dir->lock == NULL);
 
     /* no cleanup is required */
     dir->start = ~0LL;
@@ -83,11 +83,11 @@ static void close_objectdir(Objectdir *dir) {
 }
 
 static int resurrect_openfile(Openfile *file) {
-    return file->wait != NULL;
+    return file->lock != NULL;
 }
 
 static void close_openfile(Openfile *file) {
-    assert(file->wait == NULL);
+    assert(file->lock == NULL);
     close(file->fd);
     file->fd = -1;
 }
@@ -120,7 +120,7 @@ Openfile *oid_add_openfile(u64 oid, int fd) {
     key = GC_NEW_ATOMIC(u64);
     assert(key != NULL);
 
-    file->wait = NULL;
+    file->lock = NULL;
     file->fd = fd;
     *key = oid;
 
@@ -333,7 +333,7 @@ Objectdir *objectdir_lookup(Worker *worker, u64 start) {
 
         dir = GC_NEW(Objectdir);
         assert(dir != NULL);
-        dir->wait = NULL;
+        dir->lock = NULL;
         dir->start = start;
         dir->dirname = NULL;
         dir->filenames = NULL;
@@ -366,7 +366,7 @@ struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
 struct p9stat *oid_stat(Worker *worker, u64 oid) {
     /* get filename */
     u64 start = oid_dir_findstart(oid);
-    struct objectdir *dir = NULL;
+    struct objectdir *dir;
     char *filename;
     struct stat info;
     struct p9stat *result;
@@ -381,10 +381,8 @@ struct p9stat *oid_stat(Worker *worker, u64 oid) {
             id != oid - start ||
             lstat(concatname(dir->dirname, filename), &info) < 0)
     {
-        goto error;
+        return NULL;
     }
-    release(worker, LOCK_DIRECTORY, dir);
-    dir = NULL;
 
     result = GC_NEW(struct p9stat);
     assert(result != NULL);
@@ -410,35 +408,31 @@ struct p9stat *oid_stat(Worker *worker, u64 oid) {
         Openfile *file = oid_get_openfile(worker, oid);
         result->extension = GC_MALLOC_ATOMIC(info.st_size + 1);
         assert(result->extension != NULL);
-        if (lseek(file->fd, 0, SEEK_SET) < 0) {
-            release(worker, LOCK_OPENFILE, file);
+        if (lseek(file->fd, 0, SEEK_SET) < 0)
             return NULL;
-        }
-        unlock();
-        for (size = 0; size < info.st_size; ) {
-            i = read(file->fd, result->extension + size,
-                    info.st_size - size);
-            if (i <= 0) {
-                lock();
-                release(worker, LOCK_OPENFILE, file);
-                return NULL;
+        {
+            int failure = 0;
+            unlock();
+            for (size = 0; size < info.st_size; ) {
+                i = read(file->fd, result->extension + size,
+                        info.st_size - size);
+                if (i <= 0) {
+                    failure = 1;
+                    break;
+                }
+                size += i;
             }
-            size += i;
+            lock();
+            if (failure)
+                return NULL;
         }
-        lock();
         result->extension[size] = 0;
-        release(worker, LOCK_OPENFILE, file);
     }
     result->n_uid = atoi(name);
     result->n_gid = atoi(group);
     result->n_muid = atoi(name);
 
     return result;
-
-    error:
-    if (dir != NULL)
-        release(worker, LOCK_DIRECTORY, dir);
-    return NULL;
 }
 
 int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
@@ -457,7 +451,7 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
             parse_filename(filename, &id, &mode, &name, &group) < 0 ||
             id != oid - start)
     {
-        goto error;
+        return -1;
     }
     pathname = concatname(dir->dirname, filename);
 
@@ -469,7 +463,7 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
         buf.actime = info->mtime;
         buf.modtime = info->mtime;
         if (utime(pathname, &buf) < 0)
-            goto error;
+            return -1;
     }
 
     /* mode */
@@ -490,29 +484,30 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     {
         Openfile *file = oid_get_openfile(worker, oid);
         int len = strlen(info->extension);
+        int failure = 0;
         unlock();
         if (ftruncate(file->fd, 0) < 0 ||
                 lseek(file->fd, 0, SEEK_SET) < 0 ||
                 write(file->fd, info->extension, len) != len)
         {
-            lock();
-            release(worker, LOCK_OPENFILE, file);
-            goto error;
+            failure = 1;
         }
         lock();
-        release(worker, LOCK_OPENFILE, file);
+        if (failure)
+            return -1;
     } else if (info->length != ~(u64) 0) {
         /* truncate */
         struct stat finfo;
         if (lstat(pathname, &finfo) < 0)
-            goto error;
+            return -1;
         if (info->length != finfo.st_size) {
+            int failure = 0;
             unlock();
-            if (truncate(pathname, info->length) < 0) {
-                lock();
-                goto error;
-            }
+            if (truncate(pathname, info->length) < 0)
+                failure = 1;
             lock();
+            if (failure)
+                return -1;
         }
     }
 
@@ -522,24 +517,18 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     if (!strcmp(filename, newfilename)) {
         newpathname = concatname(dir->dirname, newfilename);
         if (rename(pathname, newpathname) < 0)
-            goto error;
+            return -1;
         dir->filenames[oid - start] = newfilename;
     }
 
-    release(worker, LOCK_DIRECTORY, dir);
     return 0;
-
-    error:
-    if (dir != NULL)
-        release(worker, LOCK_DIRECTORY, dir);
-    return -1;
 }
 
 int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
         char *gid, char *extension)
 {
     u64 start = oid_dir_findstart(oid);
-    struct objectdir *dir = NULL;
+    struct objectdir *dir;
     struct utimbuf buf;
     char *filename;
     char *pathname;
@@ -550,7 +539,7 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
             (dir = objectdir_lookup(worker, start)) == NULL ||
             (filename = dir->filenames[oid - start]) != NULL)
     {
-        goto error;
+        return -1;
     }
 
     /* create the file and set filename-encoded stats */
@@ -563,7 +552,7 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
     if (fd < 0) {
         /* was it because the directory doesn't exist? */
         if (errno != ENOENT) {
-            goto error;
+            return -1;
         } else {
             /* create the directories and try again */
             List *path = oid_to_path(oid);
@@ -575,9 +564,9 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
                 path = cdr(path);
                 if (lstat(prefix, &info) < 0) {
                     if (mkdir(prefix, OBJECT_DIR_MODE) < 0)
-                        goto error;
+                        return -1;
                 } else if (!S_ISDIR(info.st_mode)) {
-                    goto error;
+                    return -1;
                 }
             }
 
@@ -585,14 +574,12 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
             if ((fd = open(pathname, O_CREAT | O_RDWR | O_TRUNC,
                             OBJECT_MODE)) < 0)
             {
-                goto error;
+                return -1;
             }
         }
     }
     dir->filenames[oid - start] = filename;
     oid_add_openfile(oid, fd);
-    release(worker, LOCK_DIRECTORY, dir);
-    dir = NULL;
 
     /* store metadata for special file types as file contents */
     if (!emptystring(extension) &&
@@ -600,21 +587,16 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
             strlen(extension) !=
             write(fd, extension, length = strlen(extension)))
     {
-        goto error;
+        return -1;
     }
 
     /* set the times */
     buf.actime = ctime;
     buf.modtime = ctime;
     if (utime(pathname, &buf) < 0)
-        goto error;
+        return -1;
 
     return length;
-
-    error:
-    if (dir != NULL)
-        release(worker, LOCK_DIRECTORY, dir);
-    return -1;
 }
 
 Openfile *oid_get_openfile(Worker *worker, u64 oid) {
@@ -636,7 +618,6 @@ Openfile *oid_get_openfile(Worker *worker, u64 oid) {
         {
             return NULL;
         }
-        release(worker, LOCK_DIRECTORY, dir);
         file = oid_add_openfile(oid, fd);
     }
 
@@ -649,28 +630,22 @@ Openfile *oid_get_openfile(Worker *worker, u64 oid) {
 
 int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf) {
     u64 start = oid_dir_findstart(oid);
-    struct objectdir *dir = NULL;
+    struct objectdir *dir;
     char *filename;
 
     if ((dir = objectdir_lookup(worker, start)) == NULL ||
             (filename = dir->filenames[oid - start]) == NULL ||
             utime(concatname(dir->dirname, filename), buf) < 0)
     {
-        goto error;
+        return -1;
     }
 
-    release(worker, LOCK_DIRECTORY, dir);
     return 0;
-
-    error:
-    if (dir != NULL)
-        release(worker, LOCK_DIRECTORY, dir);
-    return -1;
 }
 
 int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
     struct p9stat *info = oid_stat(worker, oldoid);
-    Openfile *new_fd = NULL, *old_fd = NULL;
+    Openfile *new_fd, *old_fd;
     void *buff = GC_MALLOC_ATOMIC(CLONE_BUFFER_SIZE);
     int count;
     struct utimbuf buf;
@@ -679,7 +654,9 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
 
     if (oid_create(worker, newoid, info->mode, info->mtime, info->uid,
                 info->gid, info->extension) < 0)
+    {
         return -1;
+    }
 
     /* zero byte file? */
     if (info->length == 0LL)
@@ -687,52 +664,47 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
 
     /* open both files and position at the start of the files */
     if ((old_fd = oid_get_openfile(worker, oldoid)) == NULL)
-        goto error;
+        return -1;
     if (lseek(old_fd->fd, 0, SEEK_SET) < 0 ||
             ((new_fd = oid_get_openfile(worker, newoid)) == NULL))
     {
-        goto error;
+        return -1;
     }
     if (lseek(new_fd->fd, 0, SEEK_SET) < 0)
-        goto error;
+        return -1;
 
     /* copy the file a chunk at a time */
-    unlock();
-    for (;;) {
-        count = read(old_fd->fd, buff, CLONE_BUFFER_SIZE);
-        if (count == 0)
-            break;
-        if (count < 0) {
-            lock();
-            goto error;
-        }
-        if ((info->mode & DMDIR) != 0) {
-            /* it's a directory, so set all the CoW flags */
-            u32 i;
-            for (i = 0; i < count; i += BLOCK_SIZE) {
-                u32 size = min(BLOCK_SIZE, count - i);
-                dir_clone(size, buff);
+    {
+        int failure = 0;
+        unlock();
+        for (;;) {
+            count = read(old_fd->fd, buff, CLONE_BUFFER_SIZE);
+            if (count == 0)
+                break;
+            if (count < 0) {
+                failure = 1;
+                break;
+            }
+            if ((info->mode & DMDIR) != 0) {
+                /* it's a directory, so set all the CoW flags */
+                u32 i;
+                for (i = 0; i < count; i += BLOCK_SIZE) {
+                    u32 size = min(BLOCK_SIZE, count - i);
+                    dir_clone(size, buff);
+                }
+            }
+            if (write(new_fd->fd, buff, count) != count) {
+                failure = 1;
+                break;
             }
         }
-        if (write(new_fd->fd, buff, count) != count) {
-            lock();
-            goto error;
-        }
+        lock();
+        if (failure)
+            return -1;
     }
-    lock();
 
     buf.actime = info->atime;
     buf.modtime = info->mtime;
 
-    release(worker, LOCK_OPENFILE, new_fd);
-    release(worker, LOCK_OPENFILE, old_fd);
-
     return oid_set_times(worker, newoid, &buf);
-
-    error:
-    if (new_fd != NULL)
-        release(worker, LOCK_OPENFILE, new_fd);
-    if (old_fd != NULL)
-        release(worker, LOCK_OPENFILE, old_fd);
-    return -1;
 }

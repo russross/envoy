@@ -169,6 +169,8 @@ static void state_init_common(int port) {
     state = GC_NEW(struct state);
     assert(state != NULL);
 
+    worker_state_init();
+
     /* find out who we are */
     hostname = GC_MALLOC_ATOMIC(MAX_HOSTNAME + 1);
 

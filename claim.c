@@ -29,7 +29,7 @@ Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     Claim *claim = GC_NEW(Claim);
     assert(claim != NULL);
 
-    claim->wait = NULL;
+    claim->lock = NULL;
     claim->refcount = 0;
 
     claim->lease = NULL;
@@ -50,7 +50,7 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     assert(claim != NULL);
     assert(parent != NULL);
 
-    claim->wait = NULL;
+    claim->lock = NULL;
     claim->refcount = 0;
 
     claim->lease = parent->lease;
@@ -86,7 +86,7 @@ void claim_release(Claim *claim) {
         return;
 
     /* delete up the tree as far as we can */
-    while (claim->wait == NULL && claim->refcount == 0 &&
+    while (claim->lock == NULL && claim->refcount == 0 &&
             null(claim->children) && claim->parent != NULL)
     {
         Claim *parent = claim->parent;

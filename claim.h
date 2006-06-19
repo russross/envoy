@@ -1,8 +1,6 @@
 #ifndef _CLAIM_H_
 #define _CLAIM_H_
 
-#include <pthread.h>
-#include <gc/gc.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "types.h"
@@ -91,7 +89,7 @@ enum claim_access {
 };
 
 struct claim {
-    pthread_cond_t *wait;
+    Worker *lock;
 
     /* number of clients for this file (fids or directory walks), -1 if it's
      * exclusive */

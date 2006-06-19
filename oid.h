@@ -1,8 +1,6 @@
 #ifndef _OID_H_
 #define _OID_H_
 
-#include <pthread.h>
-#include <gc/gc.h>
 #include <utime.h>
 #include "types.h"
 #include "9p.h"
@@ -23,13 +21,13 @@
 #define CLONE_BUFFER_SIZE 8192
 
 struct openfile {
-    pthread_cond_t *wait;
+    Worker *lock;
 
     int fd;
 };
 
 struct objectdir {
-    pthread_cond_t *wait;
+    Worker *lock;
 
     u64 start;
     char *dirname;

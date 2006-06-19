@@ -1,14 +1,13 @@
 #ifndef _FID_H_
 #define _FID_H_
 
-#include <pthread.h>
-#include <gc/gc.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "connection.h"
 #include "state.h"
+#include "worker.h"
 #include "dir.h"
 #include "claim.h"
 
@@ -26,7 +25,7 @@ enum fid_type {
 
 struct fid {
     /* for in-flight operations on this file through this fid */
-    pthread_cond_t *wait;
+    Worker *lock;
 
     /* the client-visible fid */
     u32 fid;

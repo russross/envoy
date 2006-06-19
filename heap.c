@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "types.h"
+#include "9p.h"
 #include "util.h"
 #include "heap.h"
 
@@ -21,7 +22,7 @@
  * Create a Heap with the given minimum size that will use the given
  * compare function to determine ordering.
  */
-Heap *heap_new(int minSize, int (*compare)(void *, void *)) {
+Heap *heap_new(int minSize, Cmpfunc compare) {
     Heap *heap = GC_NEW(Heap);
     assert(heap != NULL);
 
@@ -118,4 +119,8 @@ void *heap_remove(Heap *heap) {
     }
 
     return min;
+}
+
+int heap_isempty(Heap *heap) {
+    return heap->count > 0;
 }

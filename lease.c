@@ -10,7 +10,6 @@
 #include "fid.h"
 #include "util.h"
 #include "state.h"
-#include "worker.h"
 #include "lru.h"
 #include "claim.h"
 #include "lease.h"
@@ -26,7 +25,6 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
 
     l->wait_for_update = NULL;
     l->inflight = 0;
-    l->okay_to_change_lease = NULL;
 
     l->pathname = pathname;
     l->addr = addr;
@@ -101,13 +99,6 @@ void lease_state_init(void) {
             (Cmpfunc) strcmp,
             NULL,
             (void (*)(void *)) claim_cache_cleanup);
-}
-
-void lease_finish_transaction(Lease *lease) {
-    lease->inflight--;
-
-    if (lease->inflight == 0 && lease->okay_to_change_lease != NULL)
-        cond_signal(lease->okay_to_change_lease);
 }
 
 Lease *lease_get_remote(char *pathname) {

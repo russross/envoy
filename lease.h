@@ -1,8 +1,6 @@
 #ifndef _LEASE_H_
 #define _LEASE_H_
 
-#include <pthread.h>
-#include <gc/gc.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <netinet/in.h>
@@ -10,6 +8,7 @@
 #include "9p.h"
 #include "list.h"
 #include "hashtable.h"
+#include "worker.h"
 #include "lru.h"
 #include "claim.h"
 
@@ -28,13 +27,12 @@
  */
 
 struct lease {
-    /* if this exists, transactions wait here before starting an operation */
-    pthread_cond_t *wait_for_update;
+    /* if this exists, transactions wait here before starting an operation.
+     * if this exists when finishing and inflight == 0, this worker gets
+     * scheduled to let a lease change take place */
+    Worker *wait_for_update;
     /* the number of active transactions using this lease */
     int inflight;
-    /* if this exists when finishing and inflight == 0, a transaction signals
-     * it to let a lease change take place. */
-    pthread_cond_t *okay_to_change_lease;
 
     /* is this an exit point to a remote owner, or a local grant? */
     int isexit;

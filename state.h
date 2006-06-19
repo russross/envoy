@@ -27,6 +27,7 @@
 #define LEASE_CLAIM_HASHTABLE_SIZE 64
 #define CLAIM_HASHTABLE_SIZE 64
 #define WALK_CACHE_SIZE 256
+#define WORKER_READY_QUEUE_SIZE 64
 
 void print_address(Address *addr);
 void state_dump(void);

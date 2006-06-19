@@ -7,7 +7,7 @@
 #include "heap.h"
 #include "lru.h"
 
-static int lru_cmp(struct lru_elt *a, struct lru_elt *b) {
+static int lru_cmp(const struct lru_elt *a, const struct lru_elt *b) {
     if (a->count == b->count)
         return 0;
     if (a->count < b->count && b->count - a->count < HEAP_COUNTER_THRESHOLD)
@@ -22,7 +22,7 @@ Lru *lru_new(int size, Hashfunc keyhash, Cmpfunc keycmp,
     assert(lru != NULL);
 
     lru->table = hash_create((size + 1) * 3 / 2, keyhash, keycmp);
-    lru->heap = heap_new(size + 1, (int (*)(void *, void *)) lru_cmp);
+    lru->heap = heap_new(size + 1, (Cmpfunc) lru_cmp);
     lru->resurrect = resurrect;
     lru->cleanup = cleanup;
     lru->size = size;

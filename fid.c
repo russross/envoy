@@ -8,6 +8,7 @@
 #include "fid.h"
 #include "util.h"
 #include "state.h"
+#include "worker.h"
 #include "claim.h"
 
 /*
@@ -28,7 +29,7 @@ int fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     res = GC_NEW(Fid);
     assert(res != NULL);
 
-    res->wait = NULL;
+    res->lock = NULL;
     res->claim = claim;
 
     res->fid = fid;
