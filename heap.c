@@ -122,5 +122,5 @@ void *heap_remove(Heap *heap) {
 }
 
 int heap_isempty(Heap *heap) {
-    return heap->count > 0;
+    return heap->count == 0;
 }

@@ -64,7 +64,7 @@ static void *worker_loop(Worker *t) {
         t->priority = worker_next_priority++;
         if (!heap_isempty(worker_ready_to_run)) {
             /* wait for older threads that are ready to run */
-            heap_add(worker_ready_to_run, car(t->blocking));
+            heap_add(worker_ready_to_run, t);
             cond_wait(t->sleep);
         }
 

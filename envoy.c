@@ -852,7 +852,6 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     res->count = object_write(worker, fid->claim->oid, now(), req->offset,
             req->count, req->data);
     fid->claim->info = NULL;
-    printf("tswrite claim: %d\n", (int) fid->claim);
 
     send_reply:
     send_reply(trans);
@@ -970,7 +969,6 @@ void handle_tstat(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-    printf("tstat claim: %d\n", (int) fid->claim);
     if (fid->claim->info == NULL) {
         fid->claim->info =
             object_stat(worker, fid->claim->oid,
