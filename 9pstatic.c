@@ -445,7 +445,7 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
             }
         }
     } else {
-        if (i < 0) {
+        if (i < 0 || count == 0) {
             fprintf(fp, "%s[%d bytes of data]\n", prefix, size);
         } else {
             fprintf(fp, "%s[%d stat records/%d bytes of data]\n", prefix, count,

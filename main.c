@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
         if (config_storage(argc, argv) < 0)
             return -1;
         if (DEBUG_VERBOSE) {
-            printf("starting storage server with root path:\n    [%s]",
+            printf("starting storage server with root path:\n    [%s]\n",
                     objectroot);
         }
 

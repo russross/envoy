@@ -164,7 +164,7 @@ void dispatch(Worker *worker, Transaction *trans) {
     u32 oldfid = NOFID;
     u32 newfid = NOFID;
 
-    if (!isstorage && storage_server_count == 0) {
+    if (!isstorage && storage_servers == NULL) {
         storage_server_connection_init();
     }
 

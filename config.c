@@ -52,7 +52,6 @@ void print_usage(void) {
     }
     fprintf(stderr,
 "    -p, --port=<PORT>          listed on the given port (default %d)\n"
-"    -b, --background           start as a background process\n"
 "    -m, --messagesize=<SIZE>   maximum message size (default %d)\n"
 "    -d, --debug=<FLAGS>        debug options:\n"
 "                                 v: verbose debug output\n"
@@ -89,6 +88,11 @@ int config_envoy(int argc, char **argv) {
         DEBUG_STORAGE =
         DEBUG_CLIENT =
         DEBUG_ENVOY = DEBUG_ENVOY_ADMIN = 0;
+
+    if (argc < 2) {
+        print_usage();
+        return -1;
+    }
 
     while (!finished) {
         u64 rootobj;
@@ -203,6 +207,11 @@ int config_storage(int argc, char **argv) {
     PORT = STORAGE_PORT;
     DEBUG_VERBOSE =
         DEBUG_STORAGE = 0;
+
+    if (argc < 2) {
+        print_usage();
+        return -1;
+    }
 
     while (!finished) {
         int i;
