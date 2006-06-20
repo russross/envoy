@@ -6,7 +6,6 @@
 #include "transaction.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "object.h"
 #include "dispatch.h"
 #include "worker.h"

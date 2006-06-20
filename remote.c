@@ -6,7 +6,6 @@
 #include "connection.h"
 #include "transaction.h"
 #include "util.h"
-#include "state.h"
 #include "remote.h"
 #include "dispatch.h"
 #include "worker.h"

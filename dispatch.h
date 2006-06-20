@@ -12,4 +12,6 @@ void send_reply(Transaction *trans);
 void handle_error(Worker *worker, Transaction *trans);
 void dispatch(Worker *worker, Transaction *trans);
 
+extern List *dispatch_error_queue;
+
 #endif

@@ -19,6 +19,7 @@
     '<netinet/in.h>',
     '<errno.h>',
     '<string.h>',
+    '<getopt.h>',
     ],
 
 {
@@ -171,6 +172,7 @@
         'memcmp' => 1,
         'strcmp' => 1,
         'strcat' => 1,
+        'strlen' => 1,
     },
 
     '<stdio.h>' => {
@@ -178,6 +180,11 @@
         'sprintf' => 1,
         'fprintf' => 1,
         'rename' => 1,
+    },
+
+    '<getopt.h>' => {
+        'getopt_long' => 1,
+        'optarg' => 1,
     },
 }
 ]

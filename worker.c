@@ -10,7 +10,7 @@
 #include "list.h"
 #include "transaction.h"
 #include "fid.h"
-#include "state.h"
+#include "config.h"
 #include "worker.h"
 #include "heap.h"
 #include "oid.h"
@@ -21,6 +21,8 @@
 /* Static data */
 u32 worker_next_priority;
 Heap *worker_ready_to_run;
+List *worker_thread_pool;
+pthread_mutex_t *worker_biglock;
 
 int worker_priority_cmp(const Worker *a, const Worker *b) {
     if (a->priority == b->priority)
@@ -37,6 +39,10 @@ void worker_state_init(void) {
     worker_next_priority = 0;
     worker_ready_to_run =
         heap_new(WORKER_READY_QUEUE_SIZE, (Cmpfunc) worker_priority_cmp);
+    worker_thread_pool = NULL;
+    worker_biglock = GC_NEW(pthread_mutex_t);
+    assert(worker_biglock != NULL);
+    pthread_mutex_init(worker_biglock, NULL);
 }
 
 void worker_wake_up_next(void) {
@@ -58,7 +64,7 @@ static void *worker_loop(Worker *t) {
     for (i = 0; i < THREAD_LIFETIME; i++) {
         if (i > 0) {
             /* wait in the pool for a request */
-            state->thread_pool = append_elt(state->thread_pool, t);
+            worker_thread_pool = append_elt(worker_thread_pool, t);
             cond_wait(t->sleep);
         }
         t->priority = worker_next_priority++;
@@ -100,7 +106,7 @@ static void *worker_loop(Worker *t) {
 }
 
 void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
-    if (null(state->thread_pool)) {
+    if (null(worker_thread_pool)) {
         Worker *t = GC_NEW(Worker);
         assert(t != NULL);
         t->sleep = cond_new();
@@ -114,8 +120,8 @@ void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
         pthread_create(&newthread, NULL,
                 (void *(*)(void *)) worker_loop, (void *) t);
     } else {
-        Worker *t = car(state->thread_pool);
-        state->thread_pool = cdr(state->thread_pool);
+        Worker *t = car(worker_thread_pool);
+        worker_thread_pool = cdr(worker_thread_pool);
 
         t->func = func;
         t->arg = arg;
@@ -177,11 +183,11 @@ Worker *worker_attempt_to_acquire(Worker *worker, Worker *other) {
 }
 
 void lock(void) {
-    pthread_mutex_lock(state->biglock);
+    pthread_mutex_lock(worker_biglock);
 }
 
 void unlock(void) {
-    pthread_mutex_unlock(state->biglock);
+    pthread_mutex_unlock(worker_biglock);
 }
 
 void lock_lease(Worker *worker, Lease *lease) {
@@ -204,7 +210,7 @@ void cond_broadcast(pthread_cond_t *cond) {
 }
 
 void cond_wait(pthread_cond_t *cond) {
-    pthread_cond_wait(cond, state->biglock);
+    pthread_cond_wait(cond, worker_biglock);
 }
 
 pthread_cond_t *cond_new(void) {

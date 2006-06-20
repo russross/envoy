@@ -14,13 +14,14 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "transport.h"
 #include "storage.h"
 #include "envoy.h"
 #include "dispatch.h"
 #include "worker.h"
 #include "claim.h"
+
+List *dispatch_error_queue = NULL;
 
 static void rerror(Message *m, u16 errnum, int line) {
     m->id = RERROR;
@@ -116,7 +117,7 @@ void send_reply(Transaction *trans) {
 }
 
 void handle_error(Worker *worker, Transaction *trans) {
-    state->error_queue = append_elt(state->error_queue, trans);
+    dispatch_error_queue = append_elt(dispatch_error_queue, trans);
 }
 
 void dispatch_unknown(Worker *worker, Transaction *trans) {
@@ -163,7 +164,7 @@ void dispatch(Worker *worker, Transaction *trans) {
     u32 oldfid = NOFID;
     u32 newfid = NOFID;
 
-    if (!state->isstorage && storage_server_count == 0) {
+    if (!isstorage && storage_server_count == 0) {
         storage_server_connection_init();
     }
 

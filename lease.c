@@ -9,7 +9,7 @@
 #include "hashtable.h"
 #include "fid.h"
 #include "util.h"
-#include "state.h"
+#include "config.h"
 #include "lru.h"
 #include "claim.h"
 #include "lease.h"

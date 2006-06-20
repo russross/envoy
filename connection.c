@@ -12,7 +12,6 @@
 #include "transaction.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "transport.h"
 #include "dispatch.h"
 #include "worker.h"

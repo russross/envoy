@@ -4,13 +4,16 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <utime.h>
+#include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "connection.h"
 #include "transaction.h"
 #include "util.h"
+#include "config.h"
 #include "storage.h"
 #include "dispatch.h"
 #include "worker.h"
@@ -151,4 +154,28 @@ void handle_tswstat(Worker *worker, Transaction *trans) {
     failif(oid_wstat(worker, req->oid, req->stat) < 0, ENOENT);
 
     send_reply(trans);
+}
+
+void storage_server_connection_init(void) {
+    int i;
+
+    storage_servers = GC_MALLOC(sizeof(Connection *) * storage_server_count);
+    assert(storage_servers != NULL);
+
+    for (i = 0; i < storage_server_count; i++) {
+        Connection *conn;
+
+        if (DEBUG_VERBOSE) {
+            printf("storage server %d: %s\n", i,
+                    address_to_string(storage_addresses[i]));
+        }
+
+        conn = conn_connect_to_storage(storage_addresses[i]);
+        if (conn == NULL) {
+            fprintf(stderr, "Failed to connect to storage server %d\n", i);
+            assert(0);
+        }
+
+        storage_servers[i] = conn;
+    }
 }

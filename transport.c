@@ -17,10 +17,16 @@
 #include "transaction.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "transport.h"
 #include "dispatch.h"
 #include "worker.h"
+
+/* state */
+
+Handles *handles_listen;
+Handles *handles_read;
+Handles *handles_write;
+int *refresh_pipe;
 
 static void write_message(Connection *conn) {
     Message *msg;
@@ -35,8 +41,18 @@ static void write_message(Connection *conn) {
             assert(msg != NULL);
 
             packMessage(msg, conn->maxSize);
-            if (state->isstorage || msg->id < TSRESERVE)
-                printMessage(stderr, msg);
+
+            /* print the message out if the right debug flag is set */
+            if (    (DEBUG_STORAGE && msg->id >= TSRESERVE) ||
+                    (DEBUG_ENVOY_ADMIN && msg->id < TSRESERVE &&
+                     msg->id > RWSTAT) ||
+                    (DEBUG_CLIENT && conn->type == CONN_CLIENT_IN &&
+                     msg->id <= RWSTAT) ||
+                    (DEBUG_ENVOY && conn->type != CONN_CLIENT_IN &&
+                     msg->id <= RWSTAT))
+            {
+                printMessage(stdout, msg);
+            }
         } else {
             msg = conn->partial_out;
             bytes = conn->partial_out_bytes;
@@ -65,7 +81,7 @@ static void write_message(Connection *conn) {
     }
 
     /* this was the last message in the queue so stop trying to write */
-    handles_remove(state->handles_write, conn->fd);
+    handles_remove(handles_write, conn->fd);
 }
 
 static Message *read_message(Connection *conn) {
@@ -131,15 +147,14 @@ static Message *read_message(Connection *conn) {
     }
 
     /* time to shut down this connection */
-    printf("closing connection: ");
-    print_address(conn->addr);
-    printf("\n");
+    if (DEBUG_VERBOSE)
+        printf("closing connection: %s\n", address_to_string(conn->addr));
 
     /* close down the connection */
     conn_remove(conn);
-    handles_remove(state->handles_read, conn->fd);
+    handles_remove(handles_read, conn->fd);
     if (conn_has_pending_write(conn))
-        handles_remove(state->handles_write, conn->fd);
+        handles_remove(handles_write, conn->fd);
     close(conn->fd);
 
     return NULL;
@@ -159,10 +174,9 @@ static void accept_connection(int sock) {
 
     conn_insert_new(fd, CONN_UNKNOWN_IN, addr);
 
-    handles_add(state->handles_read, fd);
-    printf("accepted connection from ");
-    print_address(addr);
-    printf("\n");
+    handles_add(handles_read, fd);
+    if (DEBUG_VERBOSE)
+        printf("accepted connection from %s\n", address_to_string(addr));
 }
 
 /* select on all our open sockets and dispatch when one is ready */
@@ -171,14 +185,14 @@ static Message *handle_socket_event(Connection **from) {
     fd_set rset, wset;
 
     /* handles are guarded by connection lock */
-    assert(state->handles_listen->high >= 0);
+    assert(handles_listen->high >= 0);
 
     /* prepare and select on all active connections */
     FD_ZERO(&rset);
-    high = handles_collect(state->handles_listen, &rset, 0);
-    high = handles_collect(state->handles_read, &rset, high);
+    high = handles_collect(handles_listen, &rset, 0);
+    high = handles_collect(handles_read, &rset, high);
     FD_ZERO(&wset);
-    high = handles_collect(state->handles_write, &wset, high);
+    high = handles_collect(handles_write, &wset, high);
 
     /* give up the lock while we wait */
     unlock();
@@ -188,7 +202,7 @@ static Message *handle_socket_event(Connection **from) {
     /* writable socket is available--send a queued message */
     /* note: failed connects will show up here first, but they will also
        show up in the readable set. */
-    if ((fd = handles_member(state->handles_write, &wset)) > -1) {
+    if ((fd = handles_member(handles_write, &wset)) > -1) {
         Connection *conn = conn_lookup_fd(fd);
         assert(conn != NULL);
         write_message(conn);
@@ -197,9 +211,9 @@ static Message *handle_socket_event(Connection **from) {
     }
 
     /* readable socket is available--read a message */
-    if ((fd = handles_member(state->handles_read, &rset)) > -1) {
+    if ((fd = handles_member(handles_read, &rset)) > -1) {
         /* was this a refresh request? */
-        if (fd == state->refresh_pipe[0]) {
+        if (fd == refresh_pipe[0]) {
             char buff[16];
             if (read(fd, buff, 16) < 0)
                 perror("handle_socket_event failed to read pipe");
@@ -215,7 +229,7 @@ static Message *handle_socket_event(Connection **from) {
     }
 
     /* listening socket is available--accept a new incoming connection */
-    if ((fd = handles_member(state->handles_listen, &rset)) > -1) {
+    if ((fd = handles_member(handles_listen, &rset)) > -1) {
         accept_connection(fd);
         return NULL;
     }
@@ -231,35 +245,40 @@ void transport_init() {
     int fd;
     struct linger ling;
 
+    /* set up the transport state */
+    handles_listen = handles_new();
+    handles_read = handles_new();
+    handles_write = handles_new();
+    refresh_pipe = GC_MALLOC_ATOMIC(sizeof(int) * 2);
+    assert(refresh_pipe != NULL);
+
     /* initialize a pipe that we can use to interrupt select */
-    assert(pipe(state->refresh_pipe) == 0);
-    fd = state->refresh_pipe[0];
+    assert(pipe(refresh_pipe) == 0);
+    fd = refresh_pipe[0];
     assert(fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) == 0);
-    handles_add(state->handles_read, state->refresh_pipe[0]);
+    handles_add(handles_read, refresh_pipe[0]);
 
     /* initialize a listening port */
-    assert(state->my_address != NULL);
+    assert(my_address != NULL);
 
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     assert(fd >= 0);
-    assert(bind(fd, (struct sockaddr *) state->my_address,
-                sizeof(*state->my_address)) == 0);
+    assert(bind(fd, (struct sockaddr *) my_address, sizeof(*my_address)) == 0);
     assert(listen(fd, 5) == 0);
-    printf("listening at ");
-    print_address(state->my_address);
-    printf("\n");
+    if (DEBUG_VERBOSE)
+        printf("listening at %s\n", address_to_string(my_address));
 
     ling.l_onoff = 1;
     ling.l_linger = 0;
     setsockopt(fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
-    handles_add(state->handles_listen, fd);
+    handles_add(handles_listen, fd);
 }
 
 void put_message(Connection *conn, Message *msg) {
     assert(conn != NULL && msg != NULL && conn->fd >= 0);
 
     if (!conn_has_pending_write(conn)) {
-        handles_add(state->handles_write, conn->fd);
+        handles_add(handles_write, conn->fd);
         transport_refresh();
     }
 
@@ -282,18 +301,17 @@ int open_connection(Address *addr) {
         return -1;
     }
 
-    handles_add(state->handles_read, fd);
+    handles_add(handles_read, fd);
 
-    printf("opened connection to ");
-    print_address(addr);
-    printf("\n");
+    if (DEBUG_VERBOSE)
+        printf("opened connection to %s\n", address_to_string(addr));
 
     return fd;
 }
 
 void transport_refresh(void) {
     char *buff = "";
-    if (write(state->refresh_pipe[1], buff, 1) < 0)
+    if (write(refresh_pipe[1], buff, 1) < 0)
         perror("transport_refresh failed to write to pipe");
 }
 
@@ -306,9 +324,9 @@ void main_loop(void) {
 
     for (;;) {
         /* handle any pending errors */
-        if (!null(state->error_queue)) {
+        if (!null(dispatch_error_queue)) {
             printf("PANIC! Unhandled error\n");
-            state->error_queue = cdr(state->error_queue);
+            dispatch_error_queue = cdr(dispatch_error_queue);
             continue;
         }
 
@@ -317,8 +335,18 @@ void main_loop(void) {
             msg = handle_socket_event(&conn);
         while (msg == NULL);
 
-        if (state->isstorage || msg->id < TSRESERVE)
+        /* print the message out if the right debug flag is set */
+        if (    (DEBUG_STORAGE && msg->id >= TSRESERVE) ||
+                (DEBUG_ENVOY_ADMIN && msg->id < TSRESERVE &&
+                 msg->id > RWSTAT) ||
+                (DEBUG_CLIENT && conn->type == CONN_CLIENT_IN &&
+                 msg->id <= RWSTAT) ||
+                (DEBUG_ENVOY && conn->type != CONN_CLIENT_IN &&
+                 msg->id <= RWSTAT))
+        {
             printMessage(stdout, msg);
+        }
+
         trans = trans_lookup_remove(conn, msg->tag);
 
         /* what kind of request/response is this? */

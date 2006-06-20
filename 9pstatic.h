@@ -8,6 +8,9 @@ typedef unsigned long long u64;
 typedef int (*Cmpfunc)(const void *, const void *);
 typedef u32 (*Hashfunc)(const void *);
 
+extern int DEBUG_VERBOSE;
+extern int GLOBAL_MAX_SIZE;
+
 #define OID_BITS 64
 
 #define MAXWELEM 16
@@ -93,6 +96,9 @@ struct p9stat {
     u32 n_gid;
     u32 n_muid;
 };
+
+struct message *message_new(void);
+struct p9stat *p9stat_new(void);
 
 int statsize(struct p9stat *elt);
 int stringlistsize(u16 len, char **elt);

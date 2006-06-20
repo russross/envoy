@@ -1,8 +1,48 @@
 #include "9p.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <gc/gc.h>
+
+/*
+ * constructors
+ */
+
+struct message *message_new(void) {
+    struct message *msg = GC_NEW(struct message);
+    assert(msg != NULL);
+    msg->raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
+    assert(msg->raw != NULL);
+    msg->tag = ALLOCTAG;
+    return msg;
+}
+
+struct p9stat *p9stat_new(void) {
+    struct p9stat *info = GC_NEW(struct p9stat);
+    assert(info != NULL);
+
+    /* set all fields to empty values */
+    info->type = ~(u16) 0;
+    info->dev = ~(u32) 0;
+    info->qid.type = ~(u8) 0;
+    info->qid.version = ~(u32) 0;
+    info->qid.path = ~(u64) 0;
+    info->mode = ~(u32) 0;
+    info->atime = ~(u32) 0;
+    info->mtime = ~(u32) 0;
+    info->length = ~(u64) 0;
+    info->name = NULL;
+    info->uid = NULL;
+    info->gid = NULL;
+    info->muid = NULL;
+    info->extension = NULL;
+    info->n_uid = ~(u32) 0;
+    info->n_gid = ~(u32) 0;
+    info->n_muid = ~(u32) 0;
+
+    return info;
+}
 
 /*
  * size helpers
@@ -390,17 +430,26 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
         count++;
         unpackStat(data, size, &i);
     }
-    if (i < 0)
-        dumpBytes(fp, prefix, data, size);
-    else {
-        i = 0;
-        pre = GC_MALLOC_ATOMIC(strlen(prefix) + 5);
-        strcpy(pre, prefix);
-        strcat(pre, "    ");
-        for (n = 0; n < count; n++) {
-            stat = unpackStat(data, size, &i);
-            fprintf(fp, "%s%2d:\n", prefix, n);
-            dumpStat(fp, pre, stat);
+    if (DEBUG_VERBOSE) {
+        if (i < 0)
+            dumpBytes(fp, prefix, data, size);
+        else {
+            i = 0;
+            pre = GC_MALLOC_ATOMIC(strlen(prefix) + 5);
+            strcpy(pre, prefix);
+            strcat(pre, "    ");
+            for (n = 0; n < count; n++) {
+                stat = unpackStat(data, size, &i);
+                fprintf(fp, "%s%2d:\n", prefix, n);
+                dumpStat(fp, pre, stat);
+            }
+        }
+    } else {
+        if (i < 0) {
+            fprintf(fp, "%s[%d bytes of data]\n", prefix, size);
+        } else {
+            fprintf(fp, "%s[%d stat records/%d bytes of data]\n", prefix, count,
+                    size);
         }
     }
 }

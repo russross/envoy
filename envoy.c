@@ -13,7 +13,6 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "object.h"
 #include "envoy.h"
 #include "dispatch.h"
@@ -206,7 +205,7 @@ void handle_tversion(Worker *worker, Transaction *trans) {
 
     failif(trans->in->tag != NOTAG, ECONNREFUSED);
 
-    if (state->isstorage) {
+    if (isstorage) {
         maxsize = GLOBAL_MAX_SIZE;
         if (!strcmp(req->version, "9P2000.storage")) {
             trans->conn->type = CONN_STORAGE_IN;
@@ -286,8 +285,8 @@ void handle_tattach(Worker *worker, Transaction *trans) {
     failif(emptystring(req->uname), EINVAL);
 
     /* make sure walk knows how to find the remote address */
-    if (!addr_cmp(state->root_address, state->my_address))
-        walk_prime("/", req->uname, state->root_address);
+    if (!addr_cmp(root_address, my_address))
+        walk_prime("/", req->uname, root_address);
 
     /* treat this like a walk from the global root */
     if (emptystring(req->aname))

@@ -14,11 +14,14 @@
 #include "list.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "worker.h"
 #include "lru.h"
 #include "oid.h"
 #include "dir.h"
+
+Lru *objectdir_lru;
+Lru *openfile_lru;
+u64 oid_next_available;
 
 static inline char *make_filename(u64 oid, u32 mode, char *name, char *group) {
     char *filename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
@@ -92,22 +95,20 @@ static void close_openfile(Openfile *file) {
     file->fd = -1;
 }
 
-Lru *init_objectdir_lru(void) {
-    return lru_new(
+void oid_state_init(void) {
+    objectdir_lru = lru_new(
             OBJECTDIR_CACHE_SIZE,
             (Hashfunc) u64_hash,
             (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_objectdir,
             (void (*)(void *)) close_objectdir);
-}
-
-Lru *init_openfile_lru(void) {
-    return lru_new(
+    openfile_lru = lru_new(
             FD_CACHE_SIZE,
             (Hashfunc) u64_hash,
             (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_openfile,
             (void (*)(void *)) close_openfile);
+    oid_next_available = oid_find_next_available();
 }
 
 Openfile *oid_add_openfile(u64 oid, int fd) {
@@ -124,7 +125,7 @@ Openfile *oid_add_openfile(u64 oid, int fd) {
     file->fd = fd;
     *key = oid;
 
-    lru_add(state->openfile_lru, key, file);
+    lru_add(openfile_lru, key, file);
 
     return file;
 }
@@ -254,12 +255,12 @@ int oid_reserve_block(u64 *oid, u32 *count) {
     struct stat info;
     List *path;
 
-    *oid = state->oid_next_available;
+    *oid = oid_next_available;
     *count = 1 << BITS_PER_DIR_OBJECTS;
-    state->oid_next_available += (u64) *count;
+    oid_next_available += (u64) *count;
 
     /* just in case 64 bits isn't enough... */
-    if (state->oid_next_available < *oid)
+    if (oid_next_available < *oid)
         return -1;
 
     path = oid_to_path(*oid);
@@ -323,7 +324,7 @@ Objectdir *objectdir_lookup(Worker *worker, u64 start) {
 
     assert(start == oid_dir_findstart(start));
 
-    dir = lru_get(state->objectdir_lru, &start);
+    dir = lru_get(objectdir_lru, &start);
 
     if (dir == NULL) {
         /* create a new blank entry and reserve it */
@@ -338,7 +339,7 @@ Objectdir *objectdir_lookup(Worker *worker, u64 start) {
         dir->dirname = NULL;
         dir->filenames = NULL;
 
-        lru_add(state->objectdir_lru, key, dir);
+        lru_add(objectdir_lru, key, dir);
 
         reserve(worker, LOCK_DIRECTORY, dir);
 
@@ -603,7 +604,7 @@ Openfile *oid_get_openfile(Worker *worker, u64 oid) {
     Openfile *file;
 
     /* first check the cache */
-    file = lru_get(state->openfile_lru, &oid);
+    file = lru_get(openfile_lru, &oid);
 
     /* open the file if necessary */
     if (file == NULL) {

@@ -13,4 +13,6 @@ void handle_tswrite(Worker *worker, Transaction *trans);
 void handle_tsstat(Worker *worker, Transaction *trans);
 void handle_tswstat(Worker *worker, Transaction *trans);
 
+void storage_server_connection_init(void);
+
 #endif

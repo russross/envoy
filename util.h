@@ -28,10 +28,15 @@ List *splitpath(char *path);
 
 u32 addr_hash(const Address *addr);
 int addr_cmp(const Address *a, const Address *b);
+List *parse_address_list(char *hosts, int defaultport);
+Address *parse_address(char *host, int defaultport);
 Address *make_address(char *host, int port);
 Address *addr_decode(u32 address, u16 port);
 u32 addr_get_address(Address *addr);
 u16 addr_get_port(Address *addr);
+char *address_to_string(Address *addr);
+Address *get_my_address(void);
+
 u32 generic_hash(const void *elt, int len, u32 hash);
 u32 string_hash(const char *str);
 int randInt(int range);

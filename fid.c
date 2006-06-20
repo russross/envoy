@@ -7,7 +7,6 @@
 #include "connection.h"
 #include "fid.h"
 #include "util.h"
-#include "state.h"
 #include "worker.h"
 #include "claim.h"
 

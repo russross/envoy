@@ -10,7 +10,7 @@
 #include "transaction.h"
 #include "fid.h"
 #include "util.h"
-#include "state.h"
+#include "config.h"
 #include "object.h"
 #include "envoy.h"
 #include "remote.h"

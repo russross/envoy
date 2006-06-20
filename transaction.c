@@ -6,7 +6,6 @@
 #include "vector.h"
 #include "connection.h"
 #include "transaction.h"
-#include "state.h"
 
 /*
  * Transaction pool state

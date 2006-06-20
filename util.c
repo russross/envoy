@@ -12,6 +12,7 @@
 #include "9p.h"
 #include "list.h"
 #include "util.h"
+#include "config.h"
 
 /*****************************************************************************/
 
@@ -140,6 +141,43 @@ char *concatname(char *path, char *name) {
     return res;
 }
 
+char *address_to_string(Address *addr) {
+    struct hostent *host = gethostbyaddr(&addr->sin_addr,
+            sizeof(addr->sin_addr), addr->sin_family);
+    if (host == NULL || host->h_name == NULL) {
+        u32 address = addr_get_address(addr);
+        char *res = GC_MALLOC_ATOMIC(25);
+        assert(res != NULL);
+        sprintf(res, "%d.%d.%d.%d:%d",
+                (address >> 24) & 0xff,
+                (address >> 16) & 0xff,
+                (address >>  8) & 0xff,
+                address         & 0xff,
+                addr_get_port(addr));
+        return res;
+    } else {
+        char *res = GC_MALLOC_ATOMIC(strlen(host->h_name) + 10);
+        assert(res != NULL);
+        sprintf(res, "%s:%d", host->h_name, ntohs(addr->sin_port));
+        return res;
+    }
+}
+
+Address *get_my_address(void) {
+    char *hostname = GC_MALLOC_ATOMIC(MAX_HOSTNAME + 1);
+    assert(hostname != NULL);
+    hostname[MAX_HOSTNAME] = 0;
+    if (gethostname(hostname, MAX_HOSTNAME) < 0) {
+        perror("can't find local hostname");
+        exit(-1);
+    }
+
+    hostname = stringcopy(hostname);
+    if (DEBUG_VERBOSE)
+        printf("starting up on host %s\n", hostname);
+    return make_address(hostname, PORT);
+}
+
 /*
  * Hash and comparison functions
  */
@@ -175,6 +213,35 @@ int addr_cmp(const Address *a, const Address *b) {
     if ((x = memcmp(&a->sin_port, &b->sin_port, sizeof(a->sin_port))))
         return x;
     return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
+}
+
+List *parse_address_list(char *hosts, int defaultport) {
+    List *res = NULL;
+    do {
+        char *comma = strchr(hosts, ',');
+        char *host;
+        if (comma == NULL)
+            host = hosts;
+        else
+            host = substring(hosts, 0, comma++ - hosts);
+
+        Address *addr = parse_address(host, defaultport);
+        if (addr != NULL)
+            res = cons(addr, res);
+        hosts = comma;
+    } while (!emptystring(hosts));
+
+    return reverse(res);
+}
+
+Address *parse_address(char *host, int defaultport) {
+    char *colon = strchr(host, ':');
+    int port;
+    if (colon == NULL)
+        return make_address(host, defaultport);
+    host = substring(host, 0, colon - host);
+    port = atoi(++colon);
+    return make_address(host, port);
 }
 
 Address *make_address(char *host, int port) {

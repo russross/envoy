@@ -2,8 +2,6 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
@@ -12,12 +10,12 @@
 #include "connection.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "transport.h"
 #include "worker.h"
 #include "oid.h"
 #include "claim.h"
 #include "lease.h"
+#include "walk.h"
 
 void test_dump(void) {
     Message m;
@@ -122,7 +120,7 @@ void test_map(void) {
 /*
 void *test_connect(void *arg) {
     Address *addr = make_address("boulderdash", ENVOY_PORT);
-    if (!memcmp(&addr->sin_addr, &state->my_address->sin_addr,
+    if (!memcmp(&addr->sin_addr, &my_address->sin_addr,
                 sizeof(addr->sin_addr)))
     {
         printf("I am boulderdash\n");
@@ -144,7 +142,6 @@ void test_oid(void) {
 
 int main(int argc, char **argv) {
     char *name;
-    int isstorage = 0;
 
     assert(sizeof(off_t) == 8);
     assert(sizeof(u8) == 1);
@@ -152,58 +149,48 @@ int main(int argc, char **argv) {
     assert(sizeof(u32) == 4);
     assert(sizeof(u64) == 8);
 
-
     /* were we called as envoy or storage? */
     name = strstr(argv[0], "storage");
+
     if (name != NULL && !strcmp(name, "storage")) {
-        char cwd[100];
-        struct stat info;
-
         isstorage = 1;
-        if (argc != 2) {
-            fprintf(stderr, "Usage: %s <object root path>\n", argv[0]);
+        if (config_storage(argc, argv) < 0)
             return -1;
+        if (DEBUG_VERBOSE) {
+            printf("starting storage server with root path:\n    [%s]",
+                    objectroot);
         }
 
-        /* get the root directory */
-        assert(getcwd(cwd, 100) == cwd);
-        objectroot = resolvePath(resolvePath("/", cwd, &info), argv[1], &info);
-        if (objectroot == NULL) {
-            fprintf(stderr, "Invalid path\n");
-            return -1;
-        }
-        printf("object root directory = [%s]\n", objectroot);
-
-        printf("starting storage server\n");
-        state_init_storage();
-        test_oid();
+        my_address = get_my_address();
+        worker_state_init();
+        conn_init();
+        oid_state_init();
         transport_init();
     } else {
-        Address *addr;
-
         isstorage = 0;
-        if (argc != 2) {
-            fprintf(stderr, "Usage: %s <root server name>\n", argv[0]);
+        if (config_envoy(argc, argv) < 0)
             return -1;
+        if (DEBUG_VERBOSE) {
+            if (root_address == NULL) {
+                printf("starting envoy server: root oid = [%llu]\n", root_oid);
+            } else {
+                printf("starting envoy server: root server = [%s]\n",
+                        address_to_string(root_address));
+            }
         }
-        addr = make_address(argv[1], ENVOY_PORT);
 
-        printf("starting envoy server\n");
-        state_init_envoy();
-        if (!addr_cmp(state->my_address, addr))
-            state->root_address = NULL;
-        else
-            state->root_address = addr;
+        my_address = get_my_address();
+        worker_state_init();
+        conn_init();
+        lease_state_init();
+        walk_state_init();
         transport_init();
-        if (state->root_address == NULL) {
-            Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, 0LL);
+        if (root_address == NULL) {
+            Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, root_oid);
             Lease *lease = lease_new("/", NULL, 0, claim, NULL, 0);
             lease_add(lease);
         }
     }
-
-    /*test_dump();*/
-    /*worker_create(test_connect, NULL);*/
 
     main_loop();
     return 0;

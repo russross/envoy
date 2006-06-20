@@ -9,7 +9,6 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
-#include "state.h"
 #include "object.h"
 #include "envoy.h"
 #include "remote.h"

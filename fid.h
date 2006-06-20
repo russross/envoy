@@ -6,7 +6,6 @@
 #include "types.h"
 #include "9p.h"
 #include "connection.h"
-#include "state.h"
 #include "worker.h"
 #include "dir.h"
 #include "claim.h"
