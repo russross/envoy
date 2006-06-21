@@ -35,4 +35,6 @@ void handle_tremove(Worker *worker, Transaction *trans);
 void handle_tstat(Worker *worker, Transaction *trans);
 void handle_twstat(Worker *worker, Transaction *trans);
 
+void envoy_teclosefid(Worker *worker, Transaction *trans);
+
 #endif

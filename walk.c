@@ -378,6 +378,8 @@ void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
             } else if (env->result == WALK_ERROR) {
                 /* permissions, not found, etc. */
                 assert(env->claim == NULL);
+                if (env->newrfid != NOFID && env->newrfid != env->oldrfid)
+                    fid_release_remote(env->newrfid);
                 failwith(env->errnum);
             }
         } else if (env->newrfid == NOFID) {
@@ -413,6 +415,8 @@ void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
                 walk_build_qids(env);
                 return;
             } else if (env->result == WALK_ERROR) {
+                if (env->newrfid != NOFID && env->newrfid != env->oldrfid)
+                    fid_release_remote(env->newrfid);
                 failwith(env->errnum);
             }
             assert(!null(env->names));

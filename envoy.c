@@ -59,15 +59,13 @@ int has_permission(char *uname, struct p9stat *info, u32 required) {
 static void qid_list_to_array(List *from, u16 *len, struct qid **to) {
     int i;
 
-    /* the first qid is the starting point, so throw it away */
-    from = cdr(from);
     *len = length(from);
     *to = GC_MALLOC_ATOMIC(sizeof(struct qid) * *len);
     assert(*to != NULL);
 
     for (i = 0; i < *len; i++) {
         struct qid *qid = car(from);
-        *to[i] = *qid;
+        (*to)[i] = *qid;
         from = cdr(from);
     }
 
@@ -425,6 +423,8 @@ void client_twalk(Worker *worker, Transaction *trans) {
     /* did we fail on the first step? */
     failif(env->result == WALK_ERROR && length(env->qids) < 2, env->errnum);
 
+    /* the first qid is for the starting path, so through it away */
+    env->qids = cdr(env->qids);
     qid_list_to_array(env->qids, &res->nwqid, &res->wqid);
 
     send_reply(trans);
@@ -460,7 +460,7 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
 
     env->oldfid = req->fid;
     env->oldrfid = NOFID;
-    env->newfid = req->fid;
+    env->newfid = req->newfid;
     env->newrfid = NOFID;
     env->oldaddr = NULL;
 
@@ -469,9 +469,6 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
     walk_prime(env->pathname, env->user, NULL);
 
     common_walk(worker, trans, env);
-
-    /* did we fail on the first step? */
-    failif(env->result == WALK_ERROR && length(env->walks) < 2, env->errnum);
 
     qid_list_to_array(env->qids, &res->nwqid, &res->wqid);
 
@@ -892,6 +889,7 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
     /* handle forwarding */
     if (fid->isremote) {
         forward_to_envoy(worker, trans, fid);
+        fid_release_remote(fid->fid);
         goto send_reply;
     }
 
@@ -1080,6 +1078,15 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
     object_wstat(worker, fid->claim->oid, delta);
     fid->claim->info = NULL;
+
+    send_reply(trans);
+}
+
+void envoy_teclosefid(Worker *worker, Transaction *trans) {
+    struct Teclosefid *req = &trans->in->msg.teclosefid;
+    Fid *fid;
+
+    require_fid_remove(fid);
 
     send_reply(trans);
 }

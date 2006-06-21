@@ -194,11 +194,9 @@ void dispatch(Worker *worker, Transaction *trans) {
     /* validate the fid(s) from the request */
 #define new_fid(FIELD) do { \
     newfid = trans->in->msg.FIELD; \
-    failif(newfid == NOFID, EBADF); \
 } while(0)
 #define old_fid(FIELD) do { \
     oldfid = trans->in->msg.FIELD; \
-    failif(oldfid == NOFID, EBADF); \
 } while(0)
     switch (trans->in->id) {
         case TAUTH:
@@ -208,6 +206,9 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TATTACH:   new_fid(tattach.fid);                   break;
         case TWALK:     old_fid(twalk.fid);
                         new_fid(twalk.newfid);                  break;
+        case TEWALKREMOTE:
+                        old_fid(tewalkremote.fid);
+                        new_fid(tewalkremote.newfid);           break;
         case TOPEN:     old_fid(topen.fid);                     break;
         case TCREATE:   old_fid(tcreate.fid);                   break;
         case TREAD:     old_fid(tread.fid);                     break;
@@ -216,6 +217,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TREMOVE:   old_fid(tremove.fid);                   break;
         case TSTAT:     old_fid(tstat.fid);                     break;
         case TWSTAT:    old_fid(twstat.fid);                    break;
+        case TECLOSEFID: old_fid(teclosefid.fid);               break;
 
         case TVERSION:
         default:
@@ -291,6 +293,7 @@ void dispatch(Worker *worker, Transaction *trans) {
                         break;
 
         case TEWALKREMOTE: envoy_tewalkremote(worker, trans);   break;
+        case TECLOSEFID: envoy_teclosefid(worker, trans);       break;
 
         case TVERSION:
         default:

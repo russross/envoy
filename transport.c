@@ -410,7 +410,12 @@ Transaction *connect_envoy(Connection *conn) {
         return trans;
     }
 
-    conn->maxSize = max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
+    if (conn->type == CONN_ENVOY_OUT) {
+        conn->maxSize = max(min(GLOBAL_MAX_SIZE - STORAGE_SLUSH, res->msize),
+                GLOBAL_MIN_SIZE);
+    } else {
+        conn->maxSize = max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
+    }
 
     return NULL;
 }

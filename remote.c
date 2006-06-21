@@ -50,7 +50,10 @@ u16 remote_walk(Worker *worker, Address *target,
 
     *nwqid = res->nwqid;
     *wqid = res->wqid;
-    *address = addr_decode(res->address, res->port);
+    if (res->address == 0 && res->port == 0)
+        *address = NULL;
+    else
+        *address = addr_decode(res->address, res->port);
 
     return res->errnum;
 }

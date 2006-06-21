@@ -117,7 +117,9 @@ Fid *fid_lookup_remove(Connection *conn, u32 fid) {
     assert(fid != NOFID);
 
     res = (Fid *) vector_get_remove(conn->fid_vector, fid);
-    claim_release(res->claim);
+
+    if (res->claim != NULL)
+        claim_release(res->claim);
 
     return res;
 }
