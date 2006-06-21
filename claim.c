@@ -191,7 +191,7 @@ Claim *claim_get_parent(Worker *worker, Claim *child) {
 
     /* special case--the root of the hierarchy */
     if (!strcmp(child->pathname, "/"))
-        goto exit;
+        return child;
 
     /* simple case--this is within a single lease */
     if (child->parent != NULL) {

@@ -1,12 +1,14 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "vector.h"
 #include "connection.h"
 #include "fid.h"
 #include "util.h"
+#include "config.h"
 #include "worker.h"
 #include "claim.h"
 
@@ -14,36 +16,91 @@
  * Fid pool state
  */
 
-int fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
-    Fid *res;
+Vector *fid_remote_vector;
 
+void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
+    Fid *res = GC_NEW(Fid);
+
+    assert(res != NULL);
     assert(conn != NULL);
     assert(fid != NOFID);
     assert(!emptystring(user));
     assert(claim != NULL);
 
-    if (vector_test(conn->fid_vector, fid))
-        return -1;
-
-    res = GC_NEW(Fid);
-    assert(res != NULL);
+    assert(!vector_test(conn->fid_vector, fid));
 
     res->lock = NULL;
-    res->claim = claim;
 
     res->fid = fid;
     res->pathname = claim->pathname;
     res->user = user;
     res->status = STATUS_UNOPENNED;
     res->omode = 0;
+    res->readdir_cookie = 0;
     res->isremote = 0;
 
-    res->readdir_cookie = 0;
+    res->claim = claim;
     res->readdir_env = NULL;
 
-    vector_set(conn->fid_vector, res->fid, res);
+    res->raddr = NULL;
+    res->rfid = NOFID;
 
-    return 0;
+    vector_set(conn->fid_vector, res->fid, res);
+}
+
+void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
+        Address *raddr, u32 rfid)
+{
+    Fid *res = GC_NEW(Fid);
+
+    assert(res != NULL);
+    assert(conn != NULL);
+    assert(fid != NOFID);
+    assert(rfid != NOFID);
+    assert(!emptystring(pathname));
+    assert(!emptystring(user));
+    assert(raddr != NULL);
+
+    assert(!vector_test(conn->fid_vector, fid));
+
+    res->lock = NULL;
+
+    res->fid = fid;
+    res->pathname = pathname;
+    res->user = user;
+    res->status = STATUS_UNOPENNED;
+    res->omode = 0;
+    res->readdir_cookie = 0;
+    res->isremote = 1;
+
+    res->claim = NULL;
+    res->readdir_env = NULL;
+
+    res->raddr = raddr;
+    res->rfid = rfid;
+
+    vector_set(conn->fid_vector, res->fid, res);
+}
+
+void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
+    fid->pathname = pathname;
+    fid->isremote = 1;
+    if (fid->claim != NULL)
+        claim_release(fid->claim);
+    fid->claim = NULL;
+    fid->raddr = raddr;
+    fid->rfid = rfid;
+}
+
+void fid_update_local(Fid *fid, Claim *claim) {
+    fid->pathname = claim->pathname;
+    fid->isremote = 0;
+    if (fid->claim != NULL && fid->claim != claim)
+        claim_release(fid->claim);
+    fid->claim = claim;
+    fid->readdir_env = NULL;
+    fid->raddr = NULL;
+    fid->rfid = NOFID;
 }
 
 Fid *fid_lookup(Connection *conn, u32 fid) {
@@ -78,4 +135,16 @@ enum claim_access fid_access_child(enum claim_access access, int cowlink) {
         return ACCESS_COW;
     else
         return access;
+}
+
+void fid_state_init(void) {
+    fid_remote_vector = vector_create(FID_REMOTE_VECTOR_SIZE);
+}
+
+u32 fid_reserve_remote(void) {
+    return vector_alloc(fid_remote_vector, (void *) 0xdeadbeef);
+}
+
+void fid_release_remote(u32 fid) {
+    vector_remove(fid_remote_vector, fid);
 }

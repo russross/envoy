@@ -21,7 +21,7 @@ u32 now(void);
 void handle_tversion(Worker *worker, Transaction *trans);
 
 void client_twalk(Worker *worker, Transaction *trans);
-void envoy_twalk(Worker *worker, Transaction *trans);
+void envoy_tewalkremote(Worker *worker, Transaction *trans);
 
 void handle_tauth(Worker *worker, Transaction *trans);
 void handle_tattach(Worker *worker, Transaction *trans);

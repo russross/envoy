@@ -30,7 +30,7 @@ struct p9stat *remote_stat(Worker *worker, Address *target, char *pathname) {
     return res->stat;
 }
 
-u16 walkremote(Worker *worker, Address *target,
+u16 remote_walk(Worker *worker, Address *target,
         u32 fid, u32 newfid, u16 nwname, char **wname,
         char *user, char *pathname,
         u16 *nwqid, struct qid **wqid, Address **address)
@@ -53,4 +53,17 @@ u16 walkremote(Worker *worker, Address *target,
     *address = addr_decode(res->address, res->port);
 
     return res->errnum;
+}
+
+void remote_closefid(Worker *worker, Address *target, u32 fid) {
+    Transaction *trans;
+
+    trans = trans_new(conn_get_from_addr(worker, target), NULL, message_new());
+    trans->out->tag = ALLOCTAG;
+    trans->out->id = TECLOSEFID;
+    set_teclosefid(trans->out, fid);
+
+    send_request(trans);
+
+    assert(trans->in != NULL && trans->in->id == RECLOSEFID);
 }

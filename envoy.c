@@ -56,17 +56,22 @@ int has_permission(char *uname, struct p9stat *info, u32 required) {
     }
 }
 
-static void walklist_to_qids(u16 length, List *from, struct qid **to) {
+static void qid_list_to_array(List *from, u16 *len, struct qid **to) {
     int i;
 
-    *to = GC_MALLOC_ATOMIC(sizeof(struct qid) * length);
+    /* the first qid is the starting point, so throw it away */
+    from = cdr(from);
+    *len = length(from);
+    *to = GC_MALLOC_ATOMIC(sizeof(struct qid) * *len);
     assert(*to != NULL);
 
-    for (i = length - 1; i >= 0; i--) {
-        Walk *walk = car(from);
+    for (i = 0; i < *len; i++) {
+        struct qid *qid = car(from);
+        *to[i] = *qid;
         from = cdr(from);
-        *to[i] = *walk->qid;
     }
+
+    assert(null(from));
 }
 
 /*****************************************************************************/
@@ -276,31 +281,43 @@ void handle_tauth(Worker *worker, Transaction *trans) {
 void handle_tattach(Worker *worker, Transaction *trans) {
     struct Tattach *req = &trans->in->msg.tattach;
     struct Rattach *res = &trans->out->msg.rattach;
-    struct walk_response *walkres;
-    List *names;
+    struct walk_env *env = GC_NEW(struct walk_env);
     enum walk_request_type;
-    Walk *walk;
+    struct qid *qid;
+
+    assert(env != NULL);
 
     failif(req->afid != NOFID, EBADF);
     failif(emptystring(req->uname), EINVAL);
+    failif(fid_lookup(trans->conn, req->fid) != NULL, EBADF);
 
-    /* make sure walk knows how to find the remote address */
-    if (!addr_cmp(root_address, my_address))
-        walk_prime("/", req->uname, root_address);
+    /* make sure walk knows how to find the starting point */
+    walk_prime("/", req->uname, root_address);
 
     /* treat this like a walk from the global root */
+    env->pathname = "/";
+    env->user = req->uname;
     if (emptystring(req->aname))
-        names = cons(NULL, NULL);
+        env->names = cons(NULL, NULL);
     else
-        names = append_elt(splitpath(req->aname), NULL);
-    walkres = common_twalk(worker, trans, 1, req->fid, names, "/", req->uname);
+        env->names = append_elt(splitpath(req->aname), NULL);
 
-    failif(walkres->type == WALK_ERROR, walkres->errnum);
-    failif(length(walkres->walks) != length(names), ENOENT);
+    env->oldfid = env->oldrfid = NOFID;
+    env->newfid = req->fid;
+    env->newrfid = fid_reserve_remote();
+    env->oldaddr = NULL;
 
-    /* get the last qid, which is the first in the list (we know it's !NULL) */
-    walk = car(walkres->walks);
-    res->qid = *walk->qid;
+    common_walk(worker, trans, env);
+
+    failif(env->result == WALK_ERROR, env->errnum);
+    assert(env->result != WALK_PARTIAL);
+
+    /* get the last qid (we know it's !NULL) */
+    while (!null(cdr(env->qids)))
+        env->qids = cdr(env->qids);
+
+    qid = car(env->qids);
+    res->qid = *qid;
 
     send_reply(trans);
 }
@@ -369,9 +386,10 @@ void client_twalk(Worker *worker, Transaction *trans) {
     struct Twalk *req = &trans->in->msg.twalk;
     struct Rwalk *res = &trans->out->msg.rwalk;
     int i;
-    List *names;
-    struct walk_response *walkres;
+    struct walk_env *env = GC_NEW(struct walk_env);
     Fid *fid;
+
+    assert(env != NULL);
 
     /* verify the limit on how many names can be walked in a single request */
     failif(req->nwname > MAXWELEM, EMSGSIZE);
@@ -381,107 +399,103 @@ void client_twalk(Worker *worker, Transaction *trans) {
             fid_lookup(trans->conn, req->newfid) != NULL,
             EBADF);
 
+    require_fid_unopenned(fid);
+
+    /* make sure there's a cache hint about where to find the start */
+    walk_prime(fid->pathname, fid->user, fid->isremote ? fid->raddr : NULL);
+
+    env->pathname = fid->pathname;
+    env->user = fid->user;
+
     /* copy the array of names into a list with a blank at the end */
-    names = cons(NULL, NULL);
+    env->names = cons(NULL, NULL);
     for (i = req->nwname - 1; i >= 0; i--) {
         failif(strchr(req->wname[i], '/') != NULL, EINVAL);
-        names = cons(req->wname[i], names);
+        env->names = cons(req->wname[i], env->names);
     }
 
-    /* does this start with a remote fid? */
-    failif((fid = fid_lookup(trans->conn, req->fid)) == NULL, EBADF);
-    if (fid->isremote) {
-        /* make sure there's a cache hint about where to find the start */
-        walk_prime(fid->pathname, fid->user, fid->raddr);
-        walkres = common_twalk(worker, trans, 1, req->newfid,
-                names, fid->pathname, fid->user);
-    } else {
-        failif(fid->status != STATUS_UNOPENNED, ETXTBSY);
-        walkres = common_twalk(worker, trans, 1, req->newfid,
-                names, fid->claim->pathname, fid->user);
-    }
+    env->oldfid = req->fid;
+    env->oldrfid = (fid->isremote ? fid->rfid : NOFID);
+    env->newfid = req->newfid;
+    env->newrfid = fid_reserve_remote();
+    env->oldaddr = (fid->isremote ? fid->raddr : NULL);
+
+    common_walk(worker, trans, env);
 
     /* did we fail on the first step? */
-    failif(walkres->type == WALK_ERROR && length(walkres->walks) < 2,
-            walkres->errnum);
+    failif(env->result == WALK_ERROR && length(env->qids) < 2, env->errnum);
 
-    /* the last walk is the starting point, so throw it away */
-    res->nwqid = length(walkres->walks) - 1;
-    walklist_to_qids(res->nwqid, walkres->walks, &res->wqid);
-
-    /* TODO: update the forward pathname, fid if necessary */
-    if (walkres->type == WALK_SUCCESS &&
-            length(walkres->walks) == length(names))
-    {
-    }
-    /* TODO: remove the starting fid if necessary */
+    qid_list_to_array(env->qids, &res->nwqid, &res->wqid);
 
     send_reply(trans);
 }
 
-void envoy_twalk(Worker *worker, Transaction *trans) {
+void envoy_tewalkremote(Worker *worker, Transaction *trans) {
     struct Tewalkremote *req = &trans->in->msg.tewalkremote;
     struct Rewalkremote *res = &trans->out->msg.rewalkremote;
+    struct walk_env *env = GC_NEW(struct walk_env);
     int i;
-    char *pathname;
-    char *user;
-    List *names;
-    struct walk_response *walkres;
-    Walk *walk;
 
-    /* copy the array of names into a list */
-    names = NULL;
-    for (i = req->nwname - 1; i >= 0; i--)
-        names = cons(req->wname[i], names);
+    assert(env != NULL);
 
     /* is this the start of the walk? */
     if (emptystring(req->user) || emptystring(req->path)) {
         /* this must be from an existing, closed fid */
-        Fid *fid = fid_lookup(trans->conn, req->fid);
-        failif(fid == NULL, EBADF);
-        failif(fid->status != STATUS_UNOPENNED, ETXTBSY);
-        pathname = fid->claim->pathname;
-        user = fid->user;
+        Fid *fid;
+        require_fid_unopenned(fid);
+        failif(fid->isremote, EBADF);
+        env->pathname = fid->pathname;
+        env->user = fid->user;
     } else {
         /* this is coming here after crossing a lease boundary */
-        pathname = req->path;
-        user = req->user;
+        env->pathname = req->path;
+        env->user = req->user;
     }
+
+    /* copy the array of names into a list (which has a blank at the end) */
+    failif(req->nwname == 0 || req->wname[req->nwname - 1] != NULL, EINVAL);
+    env->names = NULL;
+    for (i = req->nwname - 1; i >= 0; i--)
+        env->names = cons(req->wname[i], env->names);
+
+    env->oldfid = req->fid;
+    env->oldrfid = NOFID;
+    env->newfid = req->fid;
+    env->newrfid = NOFID;
+    env->oldaddr = NULL;
 
     /* we can only handle local requests */
-    failif(lease_find_root(pathname) == NULL, EBADF);
-    walk_prime(pathname, user, NULL);
+    failif(lease_find_root(env->pathname) == NULL, EINVAL);
+    walk_prime(env->pathname, env->user, NULL);
 
-    walkres = common_twalk(worker, trans, 0, req->newfid, names,
-            pathname, user);
+    common_walk(worker, trans, env);
 
     /* did we fail on the first step? */
-    failif(walkres->type == WALK_ERROR && null(walkres->walks),
-            walkres->errnum);
+    failif(env->result == WALK_ERROR && length(env->walks) < 2, env->errnum);
 
-    res->nwqid = length(walkres->walks);
-    walklist_to_qids(res->nwqid, walkres->walks, &res->wqid);
+    qid_list_to_array(env->qids, &res->nwqid, &res->wqid);
 
-    /* fix the pathname to match what was walked */
-    while (names != walkres->names) {
-        pathname = walk_pathname(pathname, car(names));
-        names = cdr(names);
+    switch (env->result) {
+        case WALK_COMPLETED_LOCAL:
+            res->errnum = 0;
+            res->address = 0;
+            res->port = 0;
+            break;
+        case WALK_PARTIAL:
+            res->errnum = 0;
+            res->address = addr_get_address(env->addr);
+            res->port = addr_get_port(env->addr);
+            break;
+        case WALK_ERROR:
+            res->errnum = env->errnum;
+            res->address = 0;
+            res->port = 0;
+            break;
+        default:
+            assert(0);
     }
 
-    walk = walk_lookup(pathname, user);
-    if (walk != NULL) {
-        res->address =
-            ((walk->addr->sin_addr.s_addr >> 24) & 0xff) |
-            ((walk->addr->sin_addr.s_addr >> 16) & 0xff) |
-            ((walk->addr->sin_addr.s_addr >>  8) & 0xff) |
-            ( walk->addr->sin_addr.s_addr        & 0xff);
-        res->port =
-            ((walk->addr->sin_port >>  8) & 0xff) |
-            ( walk->addr->sin_port        & 0xff);
-    } else {
-        res->address = ~(u32) 0;
-        res->port = ~(u16) 0;
-    }
+    send_reply(trans);
 }
 
 /**

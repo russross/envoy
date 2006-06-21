@@ -27,6 +27,7 @@ enum lock_types {
 enum worker_transaction_states {
     WORKER_ZERO,
     WORKER_BLOCKED,
+    WORKER_RETRY,
 };
 
 /* worker threads */

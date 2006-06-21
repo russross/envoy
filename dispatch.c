@@ -270,25 +270,27 @@ void dispatch(Worker *worker, Transaction *trans) {
 
     /* dispatch to the individual handlers */
     switch (trans->in->id) {
-        case TATTACH:   handle_tattach(worker, trans);  break;
-        case TOPEN:     handle_topen(worker, trans);    break;
-        case TCREATE:   handle_tcreate(worker, trans);  break;
-        case TREAD:     handle_tread(worker, trans);    break;
-        case TWRITE:    handle_twrite(worker, trans);   break;
-        case TCLUNK:    handle_tclunk(worker, trans);   break;
-        case TREMOVE:   handle_tremove(worker, trans);  break;
-        case TSTAT:     handle_tstat(worker, trans);    break;
-        case TWSTAT:    handle_twstat(worker, trans);   break;
+        case TATTACH:   handle_tattach(worker, trans);          break;
+        case TOPEN:     handle_topen(worker, trans);            break;
+        case TCREATE:   handle_tcreate(worker, trans);          break;
+        case TREAD:     handle_tread(worker, trans);            break;
+        case TWRITE:    handle_twrite(worker, trans);           break;
+        case TCLUNK:    handle_tclunk(worker, trans);           break;
+        case TREMOVE:   handle_tremove(worker, trans);          break;
+        case TSTAT:     handle_tstat(worker, trans);            break;
+        case TWSTAT:    handle_twstat(worker, trans);           break;
 
-        case TAUTH:     handle_tauth(worker, trans);    break;
-        case TFLUSH:    handle_tflush(worker, trans);   break;
+        case TAUTH:     handle_tauth(worker, trans);            break;
+        case TFLUSH:    handle_tflush(worker, trans);           break;
 
         case TWALK:
                         if (trans->conn->type == CONN_CLIENT_IN)
                             client_twalk(worker, trans);
                         else
-                            envoy_twalk(worker, trans);
+                            handle_error(worker, trans);
                         break;
+
+        case TEWALKREMOTE: envoy_tewalkremote(worker, trans);   break;
 
         case TVERSION:
         default:

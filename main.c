@@ -8,6 +8,7 @@
 #include "9p.h"
 #include "list.h"
 #include "connection.h"
+#include "fid.h"
 #include "util.h"
 #include "config.h"
 #include "transport.h"
@@ -165,6 +166,7 @@ int main(int argc, char **argv) {
         worker_state_init();
         conn_init();
         oid_state_init();
+        fid_state_init();
         transport_init();
     } else {
         isstorage = 0;
@@ -184,6 +186,7 @@ int main(int argc, char **argv) {
         conn_init();
         lease_state_init();
         walk_state_init();
+        fid_state_init();
         transport_init();
         if (root_address == NULL) {
             Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, root_oid);

@@ -17,11 +17,6 @@ enum fid_status {
     STATUS_OPEN_DIR,
 };
 
-enum fid_type {
-    FID_LOCAL,
-    FID_REMOTE,
-};
-
 struct fid {
     /* for in-flight operations on this file through this fid */
     Worker *lock;
@@ -56,14 +51,20 @@ struct fid {
     u32 rfid;
 };
 
-int fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim);
-u32 fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
-        Address *raddr);
+void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim);
+void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
+        Address *raddr, u32 rfid);
+void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid);
+void fid_update_local(Fid *fid, Claim *claim);
 Fid *fid_lookup(Connection *conn, u32 fid);
 Fid *fid_lookup_remove(Connection *conn, u32 fid);
+u32 fid_reserve_remote(void);
+void fid_release_remote(u32 fid);
 
 u32 fid_hash(const Fid *fid);
 int fid_cmp(const Fid *a, const Fid *b);
 enum claim_access fid_access_child(enum claim_access access, int cowlink);
+
+void fid_state_init(void);
 
 #endif

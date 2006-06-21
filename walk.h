@@ -60,26 +60,32 @@ void walk_state_init(void);
 
 /*****************************************************************************/
 
-enum walk_response_type {
-    WALK_SUCCESS,
-    WALK_ERROR,
-    WALK_RACE,
-};
-
-struct walk_response {
-    enum walk_response_type type;
-    u32 errnum;
-
-    /* names of remaining path elements */
+struct walk_env {
+    /* the arguments */
+    char *pathname;
+    char *user;
     List *names;
-    /* result list in reverse order */
-    List *walks;
 
-    /* returned from a local walk when the final target is found */
+    u32 oldfid;
+    u32 oldrfid;
+    u32 newfid;
+    u32 newrfid;
+    Address *oldaddr;
+
+    /* the result */
+    enum {
+        WALK_COMPLETED_REMOTE,
+        WALK_COMPLETED_LOCAL,
+        WALK_PARTIAL,
+        WALK_ERROR,
+    } result;
+    u32 errnum;
     Claim *claim;
+    List *walks;
+    List *qids;
+    Address *addr;
 };
 
-struct walk_response *common_twalk(Worker *worker, Transaction *trans,
-        int isclient, u32 newfid, List *names, char *pathname, char *user);
+void common_walk(Worker *worker, Transaction *trans, struct walk_env *env);
 
 #endif

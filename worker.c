@@ -58,6 +58,7 @@ void worker_wake_up_next(void) {
 
 static void *worker_loop(Worker *t) {
     int i;
+    enum worker_transaction_states state;
 
     lock();
 
@@ -75,14 +76,21 @@ static void *worker_loop(Worker *t) {
         }
 
         /* initialize the exception handler and catch exceptions */
-        while (setjmp(t->jmp) == WORKER_BLOCKED) {
-            /* wait for the blocking transaction to finish, then start over */
-            printf("WORKER_BLOCKED sleeping\n");
-            worker_cleanup(t);
-            cond_wait(t->sleep);
-            printf("WORKER_BLOCKED waking up\n");
-            worker_wake_up_next();
-        }
+        do {
+            state = setjmp(t->jmp);
+
+            if (state == WORKER_BLOCKED) {
+                /* wait for the blocking transaction to finish,
+                 * then start over */
+                printf("WORKER_BLOCKED sleeping\n");
+                worker_cleanup(t);
+                cond_wait(t->sleep);
+                printf("WORKER_BLOCKED waking up\n");
+                worker_wake_up_next();
+            } else if (state == WORKER_RETRY) {
+                worker_cleanup(t);
+            }
+        } while (state != WORKER_ZERO);
 
         /* service the request */
         if (t->func != NULL)
@@ -180,6 +188,10 @@ Worker *worker_attempt_to_acquire(Worker *worker, Worker *other) {
     other->blocking = cons(worker, other->blocking);
     longjmp(worker->jmp, WORKER_BLOCKED);
     return NULL;
+}
+
+void worker_retry(Worker *worker) {
+    longjmp(worker->jmp, WORKER_RETRY);
 }
 
 void lock(void) {
