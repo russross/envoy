@@ -450,6 +450,9 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
         /* this is coming here after crossing a lease boundary */
         env->pathname = req->path;
         env->user = req->user;
+
+        /* make sure the request came to the right place */
+        failif(lease_find_root(env->pathname) == NULL, EPROTO);
     }
 
     /* copy the array of names into a list (which has a blank at the end) */

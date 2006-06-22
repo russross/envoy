@@ -24,29 +24,34 @@
 
 Lru *walk_cache;
 
-/* Do a local walk.  Walks until the end of the list of names, or until a lease
- * boundary is reached.
- *
- * The return struct contains a list of new walk objects including the starting
- * point and all reached names, as well as a list of remaining names not
- * reached.
- *
- * Does not query or modify fids in any way.
- *
- * Does call claim_release on the input claim as well as any it finds, except
- * the one for the last entry found, which is returned in the result.  The
- * lease is not claimed or released. */
 #define failwith(NUM) do { \
     env->errnum = NUM; \
     goto error; \
 } while (0);
 
-char *walk_pathname(char *pathname, char *name) {
+static char *walk_pathname(char *pathname, char *name) {
     if (name == NULL || !strcmp(name, "."))
         return pathname;
     if (!strcmp(name, ".."))
         return dirname(pathname);
     return concatname(pathname, name);
+}
+
+static void walk_build_qids(struct walk_env *env) {
+    env->qids = NULL;
+    while (!null(env->walks)) {
+        Walk *walk = car(env->walks);
+        struct qid *qid = walk->qid;
+        if (null(env->qids) &&
+                (env->result == WALK_COMPLETED_LOCAL ||
+                 env->result == WALK_COMPLETED_REMOTE))
+        {
+            walk->qid = NULL;
+        }
+        assert(walk->inflight-- > 0);
+        env->qids = cons(qid, env->qids);
+        env->walks = cdr(env->walks);
+    }
 }
 
 /* returns true if progress was made, false otherwise.
@@ -122,9 +127,29 @@ static int walk_from_cache(Worker *worker, Transaction *trans,
     env->names = names;
     env->walks = append_list(walks, env->walks);
     env->pathname = pathname;
+
+    /* mark the walks as in use */
+    while (!null(walks)) {
+        Walk *walk = car(walks);
+        walk->inflight++;
+        walks = cdr(walks);
+    }
+
     return 1;
 }
 
+/* Do a local walk.  Walks until the end of the list of names, or until a lease
+ * boundary is reached.
+ *
+ * The return struct contains a list of new walk objects including the starting
+ * point and all reached names, as well as a list of remaining names not
+ * reached.
+ *
+ * Does not query or modify fids in any way.
+ *
+ * Does call claim_release on the input claim as well as any it finds, except
+ * the one for the last entry found, which is returned in the result.  The
+ * lease is not claimed or released. */
 static void walk_local(Worker *worker, Transaction *trans,
         struct walk_env *env)
 {
@@ -249,6 +274,14 @@ static void walk_remote(Worker *worker, Transaction *trans,
     errnum = remote_walk(worker, addr, fid, env->newrfid, nwname, wname,
             env->user, env->pathname, &nwqid, &wqid, &next);
 
+    /* did we get a race condition? */
+    if ((fid != NOFID && errnum == EBADF) || errnum == EPROTO) {
+        fprintf(stderr, "walk error: remote envoy detected race condition\n");
+        walk_flush();
+        worker_retry(worker);
+        assert(0);
+    }
+
     /* make sure we didn't get back too many results */
     if (nwqid > nwname)
         failwith(EMSGSIZE);
@@ -283,18 +316,6 @@ static void walk_remote(Worker *worker, Transaction *trans,
     return;
 }
 
-static void walk_build_qids(struct walk_env *env) {
-    env->qids = NULL;
-    while (!null(env->walks)) {
-        Walk *walk = car(env->walks);
-        struct qid *qid = walk->qid;
-        if (null(env->qids) && env->result != WALK_ERROR)
-            walk->qid = NULL;
-        env->qids = cons(qid, env->qids);
-        env->walks = cdr(env->walks);
-    }
-}
-
 /* The generic walk handler.  This takes input from local attach and walk
  * commands (with local or remote starting points) and remote walk commands
  * (with local starting points).
@@ -307,16 +328,12 @@ static void walk_build_qids(struct walk_env *env) {
  * successful, target fid == new fid, and the same envoy hosts the old and new
  * versions.
  *
- * Each chunk is treated like a transaction, with locks being released after
- * the chunk is finished.
- *
  * A special NULL name must be present at the end of the names list.  This
  * simplifies bookkeeping: the first walk returned is for the given pathname,
  * and each successive walk returned is for the pathname plus a sequence of
  * names.  The length of the initial names list and the return walk list will
  * match if the walk is successful.
  */
-/* TODO: lease locking, walk locking */
 void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
     assert(!null(env->names));
     assert(!emptystring(env->pathname));
@@ -373,8 +390,7 @@ void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
                 if (env->newrfid != NOFID && env->newrfid != env->oldrfid)
                     fid_release_remote(env->newrfid);
 
-                walk_build_qids(env);
-                return;
+                goto finish;
             } else if (env->result == WALK_ERROR) {
                 /* permissions, not found, etc. */
                 assert(env->claim == NULL);
@@ -386,7 +402,7 @@ void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
             /* it's remote, but our client is also remote */
             env->result = WALK_PARTIAL;
             env->addr = walk->addr;
-            return;
+            goto finish;
         } else {
             /* remote chunk */
             walk_remote(worker, trans, env);
@@ -412,8 +428,7 @@ void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
                     remote_closefid(worker, env->oldaddr, env->oldrfid);
                 }
 
-                walk_build_qids(env);
-                return;
+                goto finish;
             } else if (env->result == WALK_ERROR) {
                 if (env->newrfid != NOFID && env->newrfid != env->oldrfid)
                     fid_release_remote(env->newrfid);
@@ -428,6 +443,8 @@ void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
 
     error:
     env->result = WALK_ERROR;
+
+    finish:
     if (env->claim != NULL) {
         claim_release(env->claim);
         env->claim = NULL;
@@ -452,7 +469,8 @@ Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr) {
         walk->users = cons(user, NULL);
         walk->qid = qid;
         walk->addr = addr;
-        walk->inflight = 0;
+        /* mark the new walk as being in use */
+        walk->inflight = 1;
         lru_add(walk_cache, pathname, walk);
     } else {
         /* if we don't have a qid, we can't assume all users have passed a
@@ -462,6 +480,7 @@ Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr) {
         else if (findinorder((Cmpfunc) strcmp, walk->users, user) == NULL)
             walk->users = insertinorder((Cmpfunc) strcmp, walk->users, user);
 
+        walk->inflight++;
         walk->qid = qid;
         walk->addr = addr;
     }

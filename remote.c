@@ -45,17 +45,26 @@ u16 remote_walk(Worker *worker, Address *target,
 
     send_request(trans);
 
-    assert(trans->in != NULL && trans->in->id == REWALKREMOTE);
-    res = &trans->in->msg.rewalkremote;
+    assert(trans->in != NULL);
+    if (trans->in->id == REWALKREMOTE) {
+        res = &trans->in->msg.rewalkremote;
 
-    *nwqid = res->nwqid;
-    *wqid = res->wqid;
-    if (res->address == 0 && res->port == 0)
+        *nwqid = res->nwqid;
+        *wqid = res->wqid;
+        if (res->address == 0 && res->port == 0)
+            *address = NULL;
+        else
+            *address = addr_decode(res->address, res->port);
+        return res->errnum;
+    } else if (trans->in->id == RERROR) {
+        *nwqid = 0;
+        *wqid = NULL;
         *address = NULL;
-    else
-        *address = addr_decode(res->address, res->port);
+        return trans->in->msg.rerror.errnum;
+    }
 
-    return res->errnum;
+    assert(trans->in->id == REWALKREMOTE || trans->in->id == RERROR);
+    return ~(u16) 0;
 }
 
 void remote_closefid(Worker *worker, Address *target, u32 fid) {

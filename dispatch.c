@@ -266,7 +266,7 @@ void dispatch(Worker *worker, Transaction *trans) {
             }
 
             /* finally, lock the claim */
-            /* reserve(worker, LOCK_CLAIM, fid->claim); */
+            reserve(worker, LOCK_CLAIM, fid->claim);
         }
     }
 

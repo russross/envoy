@@ -66,9 +66,10 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     return claim;
 }
 
-int claim_request(Claim *claim) {
+int claim_request(Worker *worker, Claim *claim) {
     if (claim->refcount < 0)
         return -1;
+    reserve(worker, LOCK_CLAIM, claim);
     claim->refcount++;
     return 0;
 }
@@ -86,7 +87,7 @@ void claim_release(Claim *claim) {
         return;
 
     /* delete up the tree as far as we can */
-    while (claim->lock == NULL && claim->refcount == 0 &&
+    while (claim->refcount == 0 &&
             null(claim->children) && claim->parent != NULL)
     {
         Claim *parent = claim->parent;
@@ -117,7 +118,7 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
     /* check if it's already on a live path */
     claim = findinorder((Cmpfunc) claim_key_cmp, parent->children, targetpath);
     if (claim != NULL) {
-        if (claim_request(claim) < 0)
+        if (claim_request(worker, claim) < 0)
             claim = NULL;
         goto exit;
     }
@@ -126,7 +127,7 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
     claim = lease_lookup_claim_from_cache(parent->lease, targetpath);
     if (claim != NULL) {
         /* it came from the cache, so it can't already be locked */
-        assert(claim_request(claim) == 0);
+        assert(claim_request(worker, claim) == 0);
         claim->parent = parent;
         /* if the parent oid changed, then there has been a snapshot */
         claim->access =
@@ -139,7 +140,7 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
     claim = dir_find_claim(worker, parent, name);
     if (claim != NULL) {
         /* it was just created and can't be locked */
-        assert(claim_request(claim) == 0);
+        assert(claim_request(worker, claim) == 0);
         goto addtoparent;
     }
 
@@ -165,7 +166,7 @@ static Claim *claim_walk_down_to_target(Worker *worker, Lease *lease,
     pathparts = splitpath(targetname + strlen(lease->pathname));
 
     claim = lease->claim;
-    if (claim_request(claim) < 0)
+    if (claim_request(worker, claim) < 0)
         return NULL;
 
     while (claim != NULL && !null(pathparts) &&
@@ -195,7 +196,7 @@ Claim *claim_get_parent(Worker *worker, Claim *child) {
 
     /* simple case--this is within a single lease */
     if (child->parent != NULL) {
-        if (claim_request(child->parent) == 0)
+        if (claim_request(worker, child->parent) == 0)
             claim = child->parent;
         goto exit;
     }

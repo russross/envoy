@@ -121,7 +121,7 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid);
 
 /* Attach to a claim.  Returns 0 on success, -1 if the request cannot be filled
  * because of exclusive access constraints. */
-int claim_request(Claim *claim);
+int claim_request(Worker *worker, Claim *claim);
 
 /* Release a claim. */
 void claim_release(Claim *claim);
