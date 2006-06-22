@@ -79,8 +79,10 @@ static void rerror(Message *m, u16 errnum, int line) {
     m->id = RERROR;
     m->msg.rerror.errnum = errnum;
     m->msg.rerror.ename = stringcopy(strerror(errnum));
-    fprintf(stderr, "error #%u: %s (%s line %d)\n",
-            (u32) errnum, m->msg.rerror.ename, __FILE__, line);
+    if (DEBUG_VERBOSE) {
+        printf("error #%u: %s (%s line %d)\n",
+                (u32) errnum, m->msg.rerror.ename, __FILE__, line);
+    }
 }
 
 #define failif(p,e) do { \

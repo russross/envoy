@@ -215,7 +215,7 @@ static Message *handle_socket_event(Connection **from) {
         /* was this a refresh request? */
         if (fd == refresh_pipe[0]) {
             char buff[16];
-            if (read(fd, buff, 16) < 0)
+            if (read(fd, buff, 16) < 0 && DEBUG_VERBOSE)
                 perror("handle_socket_event failed to read pipe");
 
             return NULL;

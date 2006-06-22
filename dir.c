@@ -83,6 +83,30 @@ static u32 dir_pack_entries(List *entries, u8 *data) {
     return (u32) i;
 }
 
+/* prime the claim cache for all the entries in the list */
+static void dir_prime_claim_cache(Claim *dir, List *entries) {
+    for ( ; !null(entries); entries = cdr(entries)) {
+        struct direntry *elt = car(entries);
+        char *pathname = concatname(dir->pathname, elt->filename);
+
+        /* does this entry exit the lease? */
+        if (lease_get_remote(pathname) != NULL)
+            continue;
+
+        /* is it an active claim? */
+        if (findinorder((Cmpfunc) claim_key_cmp, dir->children, pathname))
+            continue;
+
+        /* is it already in the cache? */
+        if (lease_lookup_claim_from_cache(dir->lease, pathname) == NULL) {
+            /* create a new claim and add it to the cache */
+            Claim *claim = claim_new(dir, elt->filename,
+                    fid_access_child(dir->access, elt->cow), elt->oid);
+            lease_add_claim_to_cache(claim);
+        }
+    }
+}
+
 /* prepare a directory block for a clone by setting all copy-on-write flags */
 void dir_clone(u32 count, u8 *data) {
     List *entries = dir_unpack_entries(count, data);
@@ -123,6 +147,9 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 
         /* decode the entries in this block */
         env->entries = dir_unpack_entries(bytesread, block);
+
+        /* cache these entries */
+        dir_prime_claim_cache(fid->claim, env->entries);
     }
 
     /* get stats for the next entry */
@@ -132,8 +159,26 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 
     /* can we get stats locally? */
     if (lease_get_remote(childpath) == NULL) {
-        /* TODO: lock the claim in local case, and cache stat */
-        return object_stat(worker, elt->oid, elt->filename);
+        Claim *claim;
+        struct p9stat *info;
+
+        /* make sure this can be found in cache, otherwise we get attempts
+         * the search the directory and deadlock results */
+        dir_prime_claim_cache(fid->claim, cons(elt, NULL));
+
+        /* this is messy: claim_get_child releases the parent, so we need to
+         * double up our claim on it to start out */
+        claim_request(worker, fid->claim);
+        claim = claim_get_child(worker, fid->claim, elt->filename);
+        if (claim->info == NULL)
+            claim->info = object_stat(worker, claim->oid, elt->filename);
+        info = claim->info;
+
+        /* out interest in this claim is transient */
+        claim_release(claim);
+        release(worker, LOCK_CLAIM, claim);
+
+        return info;
     } else {
         Lease *lease = lease_get_remote(childpath);
         assert(lease != NULL);
@@ -200,30 +245,6 @@ enum dir_iter_action {
     DIR_STOP,
     DIR_CONTINUE,
 };
-
-/* prime the claim cache for all the entries in the list */
-static void dir_prime_claim_cache(Claim *dir, List *entries) {
-    for ( ; !null(entries); entries = cdr(entries)) {
-        struct direntry *elt = car(entries);
-        char *pathname = concatname(dir->pathname, elt->filename);
-
-        /* does this entry exit the lease? */
-        if (lease_get_remote(pathname) != NULL)
-            continue;
-
-        /* is it an active claim? */
-        if (findinorder((Cmpfunc) claim_key_cmp, dir->children, pathname))
-            continue;
-
-        /* is it already in the cache? */
-        if (lease_lookup_claim_from_cache(dir->lease, pathname) == NULL) {
-            /* create a new claim and add it to the cache */
-            Claim *claim = claim_new(dir, elt->filename,
-                    fid_access_child(dir->access, elt->cow), elt->oid);
-            lease_add_claim_to_cache(claim);
-        }
-    }
-}
 
 static int dir_iter(Worker *worker, Claim *claim, struct p9stat *dirinfo,
         enum dir_iter_action (f)(void *env, List *in, List **out),

@@ -5,17 +5,12 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
-#include "hashtable.h"
 #include "fid.h"
 #include "util.h"
 #include "worker.h"
-#include "lru.h"
 #include "dir.h"
 #include "claim.h"
 #include "lease.h"
-
-Hashtable *path_2_claim;
-Lru *claim_lru;
 
 int claim_cmp(const Claim *a, const Claim *b) {
     return strcmp(a->pathname, b->pathname);
@@ -76,7 +71,7 @@ int claim_request(Worker *worker, Claim *claim) {
 
 void claim_release(Claim *claim) {
     if (claim->refcount == -1) {
-        claim->refcount++;
+        claim->refcount = 0;
     } else {
         assert(claim->refcount > 0);
         claim->refcount--;

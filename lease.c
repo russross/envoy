@@ -48,7 +48,7 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->readonly = 0;
 
     l->claim_cache = hash_create(
-            CLAIM_HASHTABLE_SIZE,
+            LEASE_CLAIM_HASHTABLE_SIZE,
             (Hashfunc) string_hash,
             (Cmpfunc) strcmp);
 
