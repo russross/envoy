@@ -73,6 +73,8 @@ static u32 dir_pack_entries(List *entries, u8 *data) {
 
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
+        if (elt == NULL)
+            continue;
         packU64(data, &i, elt->oid);
         packU8(data, &i, elt->cow);
         packString(data, &i, elt->filename);
@@ -261,7 +263,8 @@ static int dir_iter(Worker *worker, Claim *claim,
     }
     dirinfo = claim->info;
 
-    for (num = 0; (u64) (num - 1) * BLOCK_SIZE < dirinfo->length; num++) {
+    for (num = 0; (u64) num * BLOCK_SIZE < dirinfo->length + BLOCK_SIZE; num++)
+    {
         u32 count;
         void *data;
         List *pre = NULL;
@@ -389,28 +392,22 @@ static enum dir_iter_action dir_remove_entry_iter(
         struct dir_remove_entry_env *env, List *in, List **out, int extra)
 {
     List *entries = in;
-    List *prev = NULL;
-
-    /* end of directory and we've done nothing? */
-    if (extra && !env->removed)
-        return DIR_ABORT;
 
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
         if (!strcmp(elt->filename, env->name)) {
             /* delete the entry */
-            if (null(prev)) {
-                *out = cdr(entries);
-            } else {
-                setcdr(prev, cdr(entries));
-                *out = in;
-            }
+            setcar(entries, NULL);
+            *out = in;
             env->removed = 1;
 
             return DIR_STOP;
         }
-        prev = entries;
     }
+
+    /* end of directory and we've done nothing? */
+    if (extra && !env->removed)
+        return DIR_ABORT;
 
     return DIR_CONTINUE;
 }
@@ -503,7 +500,6 @@ static enum dir_iter_action dir_rename_iter(
         struct dir_rename_env *env, List *in, List **out, int extra)
 {
     List *entries = in;
-    List *prev = NULL;
     u32 offset = sizeof(u16);
     u32 deleted_offset = 0;
 
@@ -514,12 +510,8 @@ static enum dir_iter_action dir_rename_iter(
             return DIR_ABORT;
         } else if (!strcmp(elt->filename, env->oldname)) {
             /* delete the old entry */
-            if (null(prev)) {
-                *out = cdr(entries);
-            } else {
-                setcdr(prev, cdr(entries));
-                *out = in;
-            }
+            setcar(entries, NULL);
+            *out = in;
 
             /* note how much space we opened up */
             deleted_offset = DIR_END_OFFSET + strlen(elt->filename);
@@ -532,7 +524,6 @@ static enum dir_iter_action dir_rename_iter(
             offset = elt->offset + DIR_END_OFFSET + strlen(elt->filename) -
                 deleted_offset;
         }
-        prev = entries;
     }
 
     /* should we add it to this block? */

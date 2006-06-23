@@ -65,6 +65,8 @@ int claim_request(Worker *worker, Claim *claim) {
     if (claim->refcount < 0)
         return -1;
     reserve(worker, LOCK_CLAIM, claim);
+    if (claim->refcount == 0)
+        lease_remove_claim_from_cache(claim);
     claim->refcount++;
     return 0;
 }

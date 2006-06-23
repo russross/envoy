@@ -54,6 +54,7 @@ Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr);
 /* create an entry (sans qid) if none exists, otherwise refresh the current
  * entry */
 void walk_prime(char *pathname, char *user, Address *addr);
+void walk_remove(char *pathname);
 void walk_flush(void);
 void walk_state_init(void);
 
@@ -85,6 +86,6 @@ struct walk_env {
     Address *addr;
 };
 
-void common_walk(Worker *worker, Transaction *trans, struct walk_env *env);
+void walk_common(Worker *worker, Transaction *trans, struct walk_env *env);
 
 #endif

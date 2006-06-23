@@ -168,6 +168,13 @@ static void rerror(Message *m, u16 errnum, int line) {
     } \
 } while(0)
 
+#define require_info(_claim) do { \
+    if ((_claim)->info == NULL) { \
+        (_claim)->info = \
+            object_stat(worker, (_claim)->oid, filename((_claim)->pathname)); \
+    } \
+} while(0)
+
 /*
  * forward a request to an envoy by copying trans->in to env->out and
  * changing fids, then send the message, wait for a reply, copy the
@@ -343,7 +350,7 @@ void handle_tattach(Worker *worker, Transaction *trans) {
     env->newrfid = fid_reserve_remote();
     env->oldaddr = NULL;
 
-    common_walk(worker, trans, env);
+    walk_common(worker, trans, env);
 
     failif(env->result == WALK_ERROR, env->errnum);
     assert(env->result != WALK_PARTIAL);
@@ -456,7 +463,7 @@ void client_twalk(Worker *worker, Transaction *trans) {
     env->newrfid = fid_reserve_remote();
     env->oldaddr = (fid->isremote ? fid->raddr : NULL);
 
-    common_walk(worker, trans, env);
+    walk_common(worker, trans, env);
 
     /* did we fail on the first step? */
     failif(env->result == WALK_ERROR && length(env->qids) < 2, env->errnum);
@@ -509,7 +516,7 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
     failif(lease_find_root(env->pathname) == NULL, EINVAL);
     walk_prime(env->pathname, env->user, NULL);
 
-    common_walk(worker, trans, env);
+    walk_common(worker, trans, env);
 
     qid_list_to_array(env->qids, &res->nwqid, &res->wqid);
 
@@ -583,7 +590,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
         forward_to_envoy(worker, trans, fid);
 
         /* update local state based on the reply */
-        if (trans->out->tag == ROPEN) {
+        if (trans->out->id == ROPEN) {
             fid->status = (res->qid.type & QTDIR) ?
                 STATUS_OPEN_DIR : STATUS_OPEN_FILE;
             fid->omode = req->mode;
@@ -593,10 +600,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-    if (fid->claim->info == NULL) {
-        fid->claim->info = object_stat(worker, fid->claim->oid,
-                filename(fid->claim->pathname));
-    }
+    require_info(fid->claim);
     info = fid->claim->info;
 
     /* figure out which permissions are required based on the request */
@@ -710,7 +714,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         forward_to_envoy(worker, trans, fid);
 
         /* update local state based on the reply */
-        if (trans->out->tag == RCREATE) {
+        if (trans->out->id == RCREATE) {
             fid->pathname = concatname(fid->pathname, req->name);
             fid->status = status;
             fid->omode = req->mode;
@@ -720,14 +724,13 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-    if (fid->claim->info == NULL) {
-        fid->claim->info = object_stat(worker, fid->claim->oid,
-                filename(fid->claim->pathname));
-    }
+    require_info(fid->claim);
     dirinfo = fid->claim->info;
 
     /* create can only occur in a directory */
     failif(!(dirinfo->mode & DMDIR), ENOTDIR);
+
+    failif(!has_permission(fid->user, dirinfo, 0222), EACCES);
 
     /* make sure the mode is valid for opening the new file */
     if ((req->perm & DMDIR)) {
@@ -809,7 +812,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
         forward_to_envoy(worker, trans, fid);
 
         /* update local state based on the reply */
-        if (trans->out->tag == RREAD && fid->status == STATUS_OPEN_DIR) {
+        if (trans->out->id == RREAD && fid->status == STATUS_OPEN_DIR) {
             if (req->offset == 0)
                 fid->readdir_cookie = 0;
             fid->readdir_cookie += res->count;
@@ -820,10 +823,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
 
     if (fid->status == STATUS_OPEN_FILE) {
         struct p9stat *info;
-        if (fid->claim->info == NULL) {
-            fid->claim->info = object_stat(worker, fid->claim->oid,
-                    filename(fid->claim->pathname));
-        }
+        require_info(fid->claim);
         info = fid->claim->info;
 
         if (req->offset >= info->length) {
@@ -957,58 +957,84 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
 void handle_tremove(Worker *worker, Transaction *trans) {
     struct Tremove *req = &trans->in->msg.tremove;
     Fid *fid;
-    struct p9stat *info;
-    int res;
     Claim *parent;
+    int removed = 0;
+    u16 errnum = 0;
 
-    require_fid_remove(fid);
+    require_fid(fid);
 
     /* handle forwarding */
     if (fid->isremote) {
         forward_to_envoy(worker, trans, fid);
-        goto send_reply;
+
+        if (trans->out->id == RREMOVE)
+            removed = 1;
+
+        goto cleanup;
     }
 
     /* first make sure it's not a non-empty directory */
-    if (fid->claim->info == NULL) {
-        fid->claim->info =
-            object_stat(worker, fid->claim->oid,
-                    filename(fid->claim->pathname));
+    require_info(fid->claim);
+    if ((fid->claim->info->mode & DMDIR) && !dir_is_empty(worker, fid->claim)) {
+        errnum = ENOTEMPTY;
+        goto cleanup;
     }
-    info = fid->claim->info;
-    failif((info->mode & DMDIR) && !dir_is_empty(worker, fid->claim),
-            ENOTEMPTY);
+
+    /* double up the claim on this object before calling claim_get_parent */
+    if (claim_request(worker, fid->claim) < 0) {
+        errnum = ETXTBSY;
+        goto cleanup;
+    }
 
     /* do we have local control of the parent directory? */
-    /* double up the claim on this object before calling claim_get_parent */
-    failif(claim_request(worker, fid->claim) < 0, EPERM);
     parent = claim_get_parent(worker, fid->claim);
 
     /* if not, give up ownership of this file and repeat the request remotely */
     /* TODO: implement this */
-    if (parent == NULL)
-        failif(1, ENOTSUP);
-
-    if (parent->info == NULL) {
-        parent->info = object_stat(worker, parent->oid,
-                filename(parent->pathname));
+    if (parent == NULL) {
+        errnum = ENOTSUP;
+        goto cleanup;
     }
+
+    require_info(parent);
 
     /* check permission in the parent directory */
     if (!has_permission(fid->user, parent->info, 0222)) {
         claim_release(parent);
-        failif(1, EPERM);
+        errnum = EACCES;
+        goto cleanup;
     }
 
     /* remove it */
-    res = dir_remove_entry(worker, parent, filename(fid->pathname));
-    claim_release(parent);
+    if (dir_remove_entry(worker, parent, filename(fid->pathname)) < 0) {
+        claim_release(parent);
+        errnum = ENOENT;
+    } else {
+        /* TODO: delete the storage object? */
+        removed = 1;
+    }
 
-    /* delete the storage object? */
+    cleanup:
+    require_fid_remove(fid);
+    if (fid->isremote)
+        fid_release_remote(fid->rfid);
 
-    failif(res < 0, ENOENT);
+    if (removed) {
+        walk_remove(fid->pathname);
+        if (!fid->isremote) {
+            assert(null(fid->claim->children));
+            if (fid->claim->parent != NULL) {
+                fid->claim->parent->children =
+                    removeinorder((Cmpfunc) claim_cmp,
+                            fid->claim->parent->children, fid->claim);
+            }
+            /* TODO: what about other fids that have this open? */
+            lease_remove_claim_from_cache(fid->claim);
+        }
+    }
 
-    send_reply:
+    failif(errnum != 0, errnum);
+
     send_reply(trans);
 }
 
@@ -1037,11 +1063,7 @@ void handle_tstat(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-    if (fid->claim->info == NULL) {
-        fid->claim->info =
-            object_stat(worker, fid->claim->oid,
-                    filename(fid->claim->pathname));
-    }
+    require_info(fid->claim);
     res->stat = fid->claim->info;
 
     send_reply:
@@ -1088,11 +1110,14 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
     require_fid(fid);
 
-    if (fid->claim->info == NULL) {
-        fid->claim->info =
-            object_stat(worker, fid->claim->oid,
-                    filename(fid->claim->pathname));
+    /* handle forwarding */
+    if (fid->isremote) {
+        forward_to_envoy(worker, trans, fid);
+        /* TODO: update local state */
+        goto send_reply;
     }
+
+    require_info(fid->claim);
     info = fid->claim->info;
 
     /* mode */
@@ -1140,10 +1165,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
             failif(1, ENOTSUP);
 
         /* make sure they have write permission in the parent directory */
-        if (parent->info == NULL) {
-            parent->info =
-                object_stat(worker, parent->oid, filename(parent->pathname));
-        }
+        require_info(parent);
         if (!has_permission(fid->user, parent->info, 0444)) {
             claim_release(parent);
             failif(-1, EPERM);
@@ -1163,6 +1185,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     object_wstat(worker, fid->claim->oid, delta);
     fid->claim->info = NULL;
 
+    send_reply:
     send_reply(trans);
 }
 

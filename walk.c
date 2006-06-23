@@ -334,7 +334,7 @@ static void walk_remote(Worker *worker, Transaction *trans,
  * names.  The length of the initial names list and the return walk list will
  * match if the walk is successful.
  */
-void common_walk(Worker *worker, Transaction *trans, struct walk_env *env) {
+void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
     assert(!null(env->names));
     assert(!emptystring(env->pathname));
     assert(!emptystring(env->user));
@@ -516,6 +516,10 @@ void walk_prime(char *pathname, char *user, Address *addr) {
 
         walk->addr = addr;
     }
+}
+
+void walk_remove(char *pathname) {
+    lru_remove(walk_cache, pathname);
 }
 
 Walk *walk_lookup(char *pathname, char *user) {

@@ -61,7 +61,7 @@ extern Lru *lease_claim_cache;
 
 /* add the given claim to the claim cache */
 void lease_add_claim_to_cache(Claim *claim);
-/* remove a given claim from the cache (usually when activating it */
+/* remove a given claim from the cache (usually when activating it) */
 void lease_remove_claim_from_cache(Claim *claim);
 /* search the cache for a claim for the given pathname */
 Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname);
