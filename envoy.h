@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "9p.h"
+#include "connection.h"
 #include "transaction.h"
 #include "worker.h"
 #include "claim.h"
@@ -36,5 +37,6 @@ void handle_tstat(Worker *worker, Transaction *trans);
 void handle_twstat(Worker *worker, Transaction *trans);
 
 void envoy_teclosefid(Worker *worker, Transaction *trans);
+void client_shutdown(Worker *worker, Connection *conn);
 
 #endif

@@ -77,5 +77,7 @@ void remote_closefid(Worker *worker, Address *target, u32 fid) {
 
     send_request(trans);
 
+    /* TODO: what if this fails?  migration during the middle of a walk, or
+     * during a client shutdown */
     assert(trans->in != NULL && trans->in->id == RECLOSEFID);
 }

@@ -18,6 +18,7 @@
 #include "util.h"
 #include "config.h"
 #include "transport.h"
+#include "envoy.h"
 #include "dispatch.h"
 #include "worker.h"
 
@@ -151,11 +152,14 @@ static Message *read_message(Connection *conn) {
         printf("closing connection: %s\n", address_to_string(conn->addr));
 
     /* close down the connection */
+    if (conn->type == CONN_CLIENT_IN)
+        worker_create((void (*)(Worker *, void *)) client_shutdown, conn);
     conn_remove(conn);
     handles_remove(handles_read, conn->fd);
     if (conn_has_pending_write(conn))
         handles_remove(handles_write, conn->fd);
     close(conn->fd);
+    conn->fd = -1;
 
     return NULL;
 }
@@ -275,7 +279,14 @@ void transport_init() {
 }
 
 void put_message(Connection *conn, Message *msg) {
-    assert(conn != NULL && msg != NULL && conn->fd >= 0);
+    assert(conn != NULL && msg != NULL);
+
+    /* if the connection has died, drop the message */
+    if (conn->fd < 0) {
+        if (DEBUG_VERBOSE)
+            printf("put_message: message dropped for closed connection\n");
+        return;
+    }
 
     if (!conn_has_pending_write(conn)) {
         handles_add(handles_write, conn->fd);
@@ -360,7 +371,7 @@ void main_loop(void) {
 
                 trans = trans_new(conn, msg, NULL);
 
-                worker_create(dispatch, trans);
+                worker_create((void (*)(Worker *, void *)) dispatch, trans);
                 break;
 
             case CONN_ENVOY_OUT:

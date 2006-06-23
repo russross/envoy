@@ -8,6 +8,7 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "vector.h"
 #include "connection.h"
 #include "transaction.h"
 #include "fid.h"
@@ -15,6 +16,7 @@
 #include "config.h"
 #include "object.h"
 #include "envoy.h"
+#include "remote.h"
 #include "dispatch.h"
 #include "worker.h"
 #include "dir.h"
@@ -1089,9 +1091,22 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
 void envoy_teclosefid(Worker *worker, Transaction *trans) {
     struct Teclosefid *req = &trans->in->msg.teclosefid;
-    Fid *fid;
 
-    require_fid_remove(fid);
+    fid_lookup_remove(trans->conn, req->fid);
 
     send_reply(trans);
+}
+
+void client_shutdown(Worker *worker, Connection *conn) {
+    u32 i;
+
+    while ((i = vector_get_next(conn->fid_vector)) > 0) {
+        Fid *fid = fid_lookup(conn, --i);
+        reserve(worker, LOCK_FID, fid);
+        if (fid->isremote) {
+            remote_closefid(worker, fid->raddr, fid->rfid);
+            fid_release_remote(fid->rfid);
+        }
+        fid_lookup_remove(conn, i);
+    }
 }

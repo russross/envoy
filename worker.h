@@ -33,7 +33,7 @@ enum worker_transaction_states {
 /* worker threads */
 struct worker {
     pthread_cond_t *sleep;
-    void (*func)(Worker *, Transaction *);
+    void (*func)(Worker *, void *);
     Transaction *arg;
 
     jmp_buf jmp;
@@ -54,7 +54,7 @@ struct worker {
     worker_cleanup_remove(work, kind, obj); \
 } while (0)
 
-void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg);
+void worker_create(void (*func)(Worker *, void *), void *arg);
 void worker_cleanup(Worker *worker);
 void worker_retry(Worker *worker);
 

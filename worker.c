@@ -8,7 +8,6 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
-#include "transaction.h"
 #include "fid.h"
 #include "config.h"
 #include "worker.h"
@@ -113,7 +112,7 @@ static void *worker_loop(Worker *t) {
     return NULL;
 }
 
-void worker_create(void (*func)(Worker *, Transaction *), Transaction *arg) {
+void worker_create(void (*func)(Worker *, void *), void *arg) {
     if (null(worker_thread_pool)) {
         Worker *t = GC_NEW(Worker);
         assert(t != NULL);

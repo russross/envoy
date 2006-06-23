@@ -95,3 +95,9 @@ void vector_apply(Vector *v, void (*fun)(u32, void *)) {
         if (v->array[i] != NULL)
             fun(i, v->array[i]);
 }
+
+u32 vector_get_next(Vector *v) {
+    assert(v != NULL);
+
+    return v->next;
+}
