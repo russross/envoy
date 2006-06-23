@@ -12,6 +12,7 @@
 #include "util.h"
 #include "config.h"
 #include "transport.h"
+#include "envoy.h"
 #include "worker.h"
 #include "oid.h"
 #include "claim.h"
@@ -187,6 +188,7 @@ int main(int argc, char **argv) {
         lease_state_init();
         walk_state_init();
         fid_state_init();
+        envoy_state_init();
         transport_init();
         if (root_address == NULL) {
             Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, root_oid);

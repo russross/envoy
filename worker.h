@@ -62,6 +62,8 @@ void lock(void);
 void unlock(void);
 void lock_lease(Worker *worker, Lease *lease);
 void unlock_lease(Worker *worker, Lease *lease);
+void lock_lease_exclusive(Worker *worker, Lease *lease);
+void unlock_lease_exclusive(Worker *worker, Lease *lease);
 
 void cond_signal(pthread_cond_t *var);
 void cond_broadcast(pthread_cond_t *var);

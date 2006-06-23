@@ -6,16 +6,8 @@
 #include "connection.h"
 #include "transaction.h"
 #include "worker.h"
-#include "claim.h"
 
-struct walk_result {
-    struct qid qid;
-
-    Claim *claim;
-};
-
-u32 walk_result_hash(struct walk_result *walk);
-int walk_result_cmp(const struct walk_result *a, const struct walk_result *b);
+void envoy_state_init(void);
 int has_permission(char *uname, struct p9stat *info, u32 required);
 u32 now(void);
 

@@ -330,6 +330,10 @@ char *substring(char *s, int start, int len) {
     return res;
 }
 
+char *substring_rest(char *s, int start) {
+    return substring(s, start, strlen(s) - start);
+}
+
 char *concatstrings(char *a, char *b) {
     char *res;
     assert(a != NULL && b != NULL);

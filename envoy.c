@@ -5,10 +5,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <grp.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
 #include "vector.h"
+#include "hashtable.h"
 #include "connection.h"
 #include "transaction.h"
 #include "fid.h"
@@ -24,6 +26,8 @@
 #include "lease.h"
 #include "walk.h"
 
+Hashtable *group_info;
+
 /* convert a u32 to a string, allocating the necessary storage */
 static inline char *u32tostr(u32 n) {
     char *res = GC_MALLOC_ATOMIC(11);
@@ -37,12 +41,42 @@ u32 now(void) {
     return (u32) time(NULL);
 }
 
-/* TODO */
+void envoy_state_init(void) {
+    struct group *group;
+
+    group_info = hash_create(
+            GROUP_HASHTABLE_SIZE,
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp);
+
+    /* walk the system group table */
+    setgrent();
+    while ((group = getgrent()) != NULL) {
+        int i;
+        char *groupname = stringcopy(group->gr_name);
+        for (i = 0; group->gr_mem[i] != NULL; i++) {
+            Hashtable *user = hash_get(group_info, group->gr_mem[i]);
+            if (user == NULL) {
+                user = hash_create(
+                        GROUP_HASHTABLE_SIZE,
+                        (Hashfunc) string_hash,
+                        (Cmpfunc) strcmp);
+                hash_set(group_info, stringcopy(group->gr_mem[i]), user);
+            }
+            hash_set(user, groupname, groupname);
+        }
+    }
+    endgrent();
+}
+
 int isgroupmember(char *user, char *group) {
-    return 1;
+    Hashtable *groups = hash_get(group_info, user);
+    if (groups == NULL)
+        return 0;
+    return hash_get(groups, group) != NULL;
 }
 int isgroupleader(char *user, char *group) {
-    return 1;
+    return isgroupmember(user, group);
 }
 
 int has_permission(char *uname, struct p9stat *info, u32 required) {
@@ -712,8 +746,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
 
     /* note: the client normally checks to make sure this doesn't exist before
      * trying to create it, but a race with another client could still happen */
-    failif(dir_create_entry(worker, fid, dirinfo, req->name, newoid) < 0,
-            EEXIST);
+    failif(dir_create_entry(worker, fid->claim, req->name, newoid) < 0, EEXIST);
     /* ... and object_delete(worker, newoid); on failure */
 
     /* directory info has changed */
@@ -926,6 +959,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     Fid *fid;
     struct p9stat *info;
     int res;
+    Claim *parent;
 
     require_fid_remove(fid);
 
@@ -942,17 +976,33 @@ void handle_tremove(Worker *worker, Transaction *trans) {
                     filename(fid->claim->pathname));
     }
     info = fid->claim->info;
-    failif((info->mode & DMDIR) && !dir_is_empty(worker, fid, info), ENOTEMPTY);
+    failif((info->mode & DMDIR) && !dir_is_empty(worker, fid->claim),
+            ENOTEMPTY);
 
-    /* TODO: implement this */
     /* do we have local control of the parent directory? */
+    /* double up the claim on this object before calling claim_get_parent */
+    failif(claim_request(worker, fid->claim) < 0, EPERM);
+    parent = claim_get_parent(worker, fid->claim);
+
     /* if not, give up ownership of this file and repeat the request remotely */
+    /* TODO: implement this */
+    if (parent == NULL)
+        failif(1, ENOTSUP);
+
+    if (parent->info == NULL) {
+        parent->info = object_stat(worker, parent->oid,
+                filename(parent->pathname));
+    }
 
     /* check permission in the parent directory */
+    if (!has_permission(fid->user, parent->info, 0222)) {
+        claim_release(parent);
+        failif(1, EPERM);
+    }
 
     /* remove it */
-    /*res = dir_remove_entry(worker, fid, dirinfo, filename(fid->pathname));*/
-    res = -1;
+    res = dir_remove_entry(worker, parent, filename(fid->pathname));
+    claim_release(parent);
 
     /* delete the storage object? */
 
@@ -1076,11 +1126,38 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     if (!emptystring(req->stat->name) &&
             strcmp(filename(fid->pathname), req->stat->name))
     {
+        Claim *parent;
+        int res;
         failif(strchr(req->stat->name, '/'), EINVAL);
-        /* TODO: implement this */
-        failif(1, ENOTSUP);
+        failif(!strcmp(fid->pathname, "/"), EPERM);
 
+        /* double up the claim on the fid before calling claim_get_parent */
+        failif(claim_request(worker, fid->claim) < 0, EPERM);
+        parent = claim_get_parent(worker, fid->claim);
+
+        /* TODO: implement remote renames */
+        if (parent == NULL)
+            failif(1, ENOTSUP);
+
+        /* make sure they have write permission in the parent directory */
+        if (parent->info == NULL) {
+            parent->info =
+                object_stat(worker, parent->oid, filename(parent->pathname));
+        }
+        if (!has_permission(fid->user, parent->info, 0444)) {
+            claim_release(parent);
+            failif(-1, EPERM);
+        }
+
+        res = dir_rename(worker, parent, filename(fid->pathname),
+                req->stat->name);
+        claim_release(parent);
+
+        failif(res < 0, EPERM);
         fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
+        fid->claim->pathname = fid->pathname;
+
+        /* TODO: recursive name changes for all descendents */
     }
 
     object_wstat(worker, fid->claim->oid, delta);
@@ -1109,4 +1186,30 @@ void client_shutdown(Worker *worker, Connection *conn) {
         }
         fid_lookup_remove(conn, i);
     }
+}
+
+void envoy_terenameroot(Worker *worker, Transaction *trans) {
+    struct Terenameroot *req = &trans->in->msg.terenameroot;
+    Lease *lease = lease_find_root(req->oldpath);
+    List *stack;
+    int len = strlen(req->oldpath);
+
+    /* get exclusive use of the lease */
+    /*lock_lease_exclusive(worker, lease);*/
+    assert(!strcmp(lease->pathname, req->oldpath));
+    stack = cons(lease->claim, NULL);
+
+    /* walk the active claims in this lease */
+    while (!null(stack)) {
+        Claim *claim = car(stack);
+        List *children = claim->children;
+        stack = cdr(stack);
+        claim->pathname = concatstrings(req->newpath,
+                substring_rest(claim->pathname, len));
+        for ( ; !null(children); children = cdr(children))
+            stack = cons(car(children), stack);
+    }
+
+    /* walk the fids in this lease */
+    /* TODO: what about fid stubs? */
 }

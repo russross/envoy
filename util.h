@@ -16,6 +16,7 @@ int max(int x, int y);
 
 char *stringcopy(char *s);
 char *substring(char *s, int start, int len);
+char *substring_rest(char *s, int start);
 char *concatstrings(char *a, char *b);
 int emptystring(char *s);
 int startswith(char *s, char *sub);

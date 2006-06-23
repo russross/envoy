@@ -246,15 +246,22 @@ enum dir_iter_action {
     DIR_CONTINUE,
 };
 
-static int dir_iter(Worker *worker, Claim *claim, struct p9stat *dirinfo,
-        enum dir_iter_action (f)(void *env, List *in, List **out),
+static int dir_iter(Worker *worker, Claim *claim,
+        enum dir_iter_action (f)(void *env, List *in, List **out, int extra),
         void *env)
 {
     int num;
     List *changes = NULL;
     int stop = 0;
+    struct p9stat *dirinfo;
 
-    for (num = 0; (u64) num * BLOCK_SIZE <= dirinfo->length; num++) {
+    if (claim->info == NULL) {
+        claim->info =
+            object_stat(worker, claim->oid, filename(claim->pathname));
+    }
+    dirinfo = claim->info;
+
+    for (num = 0; (u64) (num - 1) * BLOCK_SIZE < dirinfo->length; num++) {
         u32 count;
         void *data;
         List *pre = NULL;
@@ -275,7 +282,7 @@ static int dir_iter(Worker *worker, Claim *claim, struct p9stat *dirinfo,
         dir_prime_claim_cache(claim, pre);
 
         /* process the files in this block */
-        switch (f(env, pre, &post)) {
+        switch (f(env, pre, &post, stop)) {
             case DIR_ABORT:
                 return -1;
             case DIR_STOP:
@@ -327,8 +334,7 @@ struct dir_create_entry_env {
 };
 
 static enum dir_iter_action dir_create_entry_iter(
-        struct dir_create_entry_env *env,
-        List *in, List **out)
+        struct dir_create_entry_env *env, List *in, List **out, int extra)
 {
     List *entries = in;
     u32 offset = sizeof(u16);
@@ -342,8 +348,8 @@ static enum dir_iter_action dir_create_entry_iter(
     }
 
     /* should we add it to this block? */
-    if (!env->added &&
-            strlen(env->newentry->filename) + DIR_END_OFFSET <= BLOCK_SIZE)
+    if (!env->added && BLOCK_SIZE >=
+            offset + strlen(env->newentry->filename) + DIR_END_OFFSET)
     {
         env->added = 1;
         *out = cons(env->newentry, in);
@@ -352,9 +358,7 @@ static enum dir_iter_action dir_create_entry_iter(
     return DIR_CONTINUE;
 }
 
-int dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
-        char *name, u64 oid)
-{
+int dir_create_entry(Worker *worker, Claim *dir, char *name, u64 oid) {
     struct dir_create_entry_env env;
     int result;
 
@@ -366,8 +370,8 @@ int dir_create_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
     env.newentry->cow = 0;
     env.newentry->filename = name;
 
-    result = dir_iter(worker, fid->claim, dirinfo,
-            (enum dir_iter_action (*)(void *, List *, List **))
+    result = dir_iter(worker, dir,
+            (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_create_entry_iter,
             &env);
 
@@ -381,11 +385,15 @@ struct dir_remove_entry_env {
     int removed;
 };
 
-enum dir_iter_action dir_remove_entry_iter(struct dir_remove_entry_env *env,
-        List *in, List **out)
+static enum dir_iter_action dir_remove_entry_iter(
+        struct dir_remove_entry_env *env, List *in, List **out, int extra)
 {
     List *entries = in;
     List *prev = NULL;
+
+    /* end of directory and we've done nothing? */
+    if (extra && !env->removed)
+        return DIR_ABORT;
 
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
@@ -407,23 +415,16 @@ enum dir_iter_action dir_remove_entry_iter(struct dir_remove_entry_env *env,
     return DIR_CONTINUE;
 }
 
-int dir_remove_entry(Worker *worker, Fid *fid, struct p9stat *dirinfo,
-        char *name)
-{
+int dir_remove_entry(Worker *worker, Claim *dir, char *name) {
     struct dir_remove_entry_env env;
-    int result;
 
     env.removed = 0;
     env.name = name;
 
-    result = dir_iter(worker, fid->claim, dirinfo,
-            (enum dir_iter_action (*)(void *, List *, List **))
+    return dir_iter(worker, dir,
+            (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_remove_entry_iter,
             &env);
-
-    if (result < 0 || !env.removed)
-        return -1;
-    return 0;
 }
 
 struct dir_find_claim_env {
@@ -432,8 +433,8 @@ struct dir_find_claim_env {
     Claim *claim;
 };
 
-enum dir_iter_action dir_find_claim_iter(struct dir_find_claim_env *env,
-        List *in, List **out)
+static enum dir_iter_action dir_find_claim_iter(
+        struct dir_find_claim_env *env, List *in, List **out, int extra)
 {
     /* dir iter puts everything it sees in the cache, so all we have to do is
      * check if our target has arrived in the cache yet */
@@ -446,19 +447,14 @@ enum dir_iter_action dir_find_claim_iter(struct dir_find_claim_env *env,
 
 Claim *dir_find_claim(Worker *worker, Claim *dir, char *name) {
     struct dir_find_claim_env env;
-    struct p9stat *dirinfo;
     int result;
-
-    if (dir->info == NULL)
-        dir->info = object_stat(worker, dir->oid, filename(dir->pathname));
-    dirinfo = dir->info;
 
     env.pathname = concatname(dir->pathname, name);
     env.lease = dir->lease;
     env.claim = NULL;
 
-    result = dir_iter(worker, dir, dirinfo,
-            (enum dir_iter_action (*)(void *, List *, List **))
+    result = dir_iter(worker, dir,
+            (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_find_claim_iter,
             &env);
 
@@ -472,8 +468,8 @@ struct dir_is_empty_env {
     int isempty;
 };
 
-enum dir_iter_action dir_is_empty_iter(struct dir_is_empty_env *env,
-        List *in, List **out)
+static enum dir_iter_action dir_is_empty_iter(
+        struct dir_is_empty_env *env, List *in, List **out, int extra)
 {
     if (!null(in)) {
         env->isempty = 0;
@@ -483,15 +479,95 @@ enum dir_iter_action dir_is_empty_iter(struct dir_is_empty_env *env,
     return DIR_CONTINUE;
 }
 
-int dir_is_empty(Worker *worker, Fid *fid, struct p9stat *dirinfo) {
+int dir_is_empty(Worker *worker, Claim *dir) {
     struct dir_is_empty_env env;
 
     env.isempty = 1;
 
-    dir_iter(worker, fid->claim, dirinfo,
-            (enum dir_iter_action (*)(void *, List *, List **))
+    dir_iter(worker, dir,
+            (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_is_empty_iter,
             &env);
 
     return env.isempty;
+}
+
+struct dir_rename_env {
+    char *oldname;
+    struct direntry *newentry;
+    int removed;
+    int added;
+};
+
+static enum dir_iter_action dir_rename_iter(
+        struct dir_rename_env *env, List *in, List **out, int extra)
+{
+    List *entries = in;
+    List *prev = NULL;
+    u32 offset = sizeof(u16);
+    u32 deleted_offset = 0;
+
+    for ( ; !null(entries); entries = cdr(entries)) {
+        struct direntry *elt = car(entries);
+        if (!strcmp(elt->filename, env->newentry->filename)) {
+            /* the new name already exists */
+            return DIR_ABORT;
+        } else if (!strcmp(elt->filename, env->oldname)) {
+            /* delete the old entry */
+            if (null(prev)) {
+                *out = cdr(entries);
+            } else {
+                setcdr(prev, cdr(entries));
+                *out = in;
+            }
+
+            /* note how much space we opened up */
+            deleted_offset = DIR_END_OFFSET + strlen(elt->filename);
+
+            /* copy over the other data */
+            env->newentry->oid = elt->oid;
+            env->newentry->cow = elt->cow;
+            env->removed = 1;
+        } else {
+            offset = elt->offset + DIR_END_OFFSET + strlen(elt->filename) -
+                deleted_offset;
+        }
+        prev = entries;
+    }
+
+    /* should we add it to this block? */
+    if (!env->added && BLOCK_SIZE >=
+            offset + strlen(env->newentry->filename) + DIR_END_OFFSET)
+    {
+        env->added = 1;
+        /* note: newentry may be updated later (when we find oid and cow) but
+         * that's okay--the block pack doesn't happen until the end */
+        *out = cons(env->newentry, in);
+    }
+
+    /* if this is the end of the directory, we need to be finished */
+    if (extra && (!env->removed || !env->added))
+        return DIR_ABORT;
+
+    return DIR_CONTINUE;
+}
+
+int dir_rename(Worker *worker, Claim *dir, char *oldname, char *newname) {
+    struct dir_rename_env env;
+
+    env.oldname = oldname;
+
+    env.newentry = GC_NEW(struct direntry);
+    assert(env.newentry != NULL);
+    env.newentry->oid = NOOID;
+    env.newentry->cow = -1;
+    env.newentry->filename = newname;
+
+    env.added = 0;
+    env.removed = 0;
+
+    return dir_iter(worker, dir,
+            (enum dir_iter_action (*)(void *, List *, List **, int))
+            dir_rename_iter,
+            &env);
 }
