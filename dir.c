@@ -165,20 +165,13 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
         struct p9stat *info;
 
         /* make sure this can be found in cache, otherwise we get attempts
-         * the search the directory and deadlock results */
+         * to search the directory and deadlock results */
         dir_prime_claim_cache(fid->claim, cons(elt, NULL));
 
-        /* this is messy: claim_get_child releases the parent, so we need to
-         * double up our claim on it to start out */
-        claim_request(worker, fid->claim);
         claim = claim_get_child(worker, fid->claim, elt->filename);
         if (claim->info == NULL)
             claim->info = object_stat(worker, claim->oid, elt->filename);
         info = claim->info;
-
-        /* out interest in this claim is transient */
-        claim_release(claim);
-        release(worker, LOCK_CLAIM, claim);
 
         return info;
     } else {

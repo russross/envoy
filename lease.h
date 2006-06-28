@@ -94,9 +94,10 @@ Lease *lease_find_root(char *pathname);
  * are exit points */
 int lease_is_exit_point_parent(Lease *lease, char *pathname);
 
-/* relies on claim_freeze and resets relevant claim cache and waits for
- * in-flight ops to finish and prevents new ones from starting and ... */
-u64 lease_snapshot(Lease *lease);
+/* Clones the lease root, Resets relevant claim cache, copies trails to lease
+ * exits, and snapshots child leases recursively.  Lease must be exclusive
+ * locked before the call, and the claim must be locked as well */
+u64 lease_snapshot(Worker *worker, Claim *claim);
 
 void lease_dump_graph(Lease *lease);
 

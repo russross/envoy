@@ -45,8 +45,10 @@ struct worker {
 };
 
 #define reserve(work, kind, obj) do { \
-    obj->lock = worker_attempt_to_acquire(work, obj->lock); \
-    worker_cleanup_add(work, kind, obj); \
+    if (work != obj->lock) { \
+        obj->lock = worker_attempt_to_acquire(work, obj->lock); \
+        worker_cleanup_add(work, kind, obj); \
+    } \
 } while (0)
 
 #define release(work, kind, obj) do { \

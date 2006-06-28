@@ -28,8 +28,8 @@
 127 size[4] Rwstat tag[2]
 
 # envoy protocol extensions
-150 size[4] Tesnapshot tag[2] 
-151 size[4] Resnapshot tag[2] 
+150 size[4] Tesnapshot tag[2] path[s]
+151 size[4] Resnapshot tag[2] newoid[8]
 152 size[4] Tegrant tag[2] type[1] path[s] count[4] data[count] rfid[4]
 153 size[4] Regrant tag[2] 
 154 size[4] Terevoke tag[2] path[s]

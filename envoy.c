@@ -628,10 +628,8 @@ void handle_topen(Worker *worker, Transaction *trans) {
 
     /* make sure the file's not in use if it has DMEXCL set */
     if (info->mode & DMEXCL) {
-        failif(fid->claim->refcount != 0, EBUSY);
-        fid->claim->refcount = -1;
-    } else {
-        fid->claim->refcount++;
+        failif(fid->claim->exclusive, EBUSY);
+        fid->claim->exclusive = 1;
     }
 
     /* init the file status */
@@ -741,16 +739,25 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         perm = req->perm & (~0666 | (dirinfo->mode & 0666));
     }
 
-    /* create the file */
-    newoid = object_reserve_oid(worker);
+    /* check for special administrative cases */
+    if (is_pre_admin_directory(fid->pathname)) {
+        /* only mkdir commands are allowed */
+    } else if (is_admin_directory(fid->pathname)) {
+        /* only administrative link commands allowed */
+    } else {
+        /* create the file */
+        newoid = object_reserve_oid(worker);
 
-    qid = object_create(worker, newoid, perm, now(), fid->user,
-            dirinfo->gid, req->extension);
+        qid = object_create(worker, newoid, perm, now(), fid->user,
+                dirinfo->gid, req->extension);
 
-    /* note: the client normally checks to make sure this doesn't exist before
-     * trying to create it, but a race with another client could still happen */
-    failif(dir_create_entry(worker, fid->claim, req->name, newoid) < 0, EEXIST);
-    /* ... and object_delete(worker, newoid); on failure */
+        /* note: the client normally checks to make sure this doesn't exist
+         * before trying to create it, but a race with another client could
+         * still happen */
+        failif(dir_create_entry(worker, fid->claim, req->name, newoid) < 0,
+                EEXIST);
+        /* ... and object_delete(worker, newoid); on failure */
+    }
 
     /* directory info has changed */
     fid->claim->info = NULL;
@@ -980,12 +987,6 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         goto cleanup;
     }
 
-    /* double up the claim on this object before calling claim_get_parent */
-    if (claim_request(worker, fid->claim) < 0) {
-        errnum = ETXTBSY;
-        goto cleanup;
-    }
-
     /* do we have local control of the parent directory? */
     parent = claim_get_parent(worker, fid->claim);
 
@@ -1000,14 +1001,12 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     /* check permission in the parent directory */
     if (!has_permission(fid->user, parent->info, 0222)) {
-        claim_release(parent);
         errnum = EACCES;
         goto cleanup;
     }
 
     /* remove it */
     if (dir_remove_entry(worker, parent, filename(fid->pathname)) < 0) {
-        claim_release(parent);
         errnum = ENOENT;
     } else {
         /* TODO: delete the storage object? */
@@ -1023,10 +1022,9 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         walk_remove(fid->pathname);
         if (!fid->isremote) {
             assert(null(fid->claim->children));
-            if (fid->claim->parent != NULL) {
-                fid->claim->parent->children =
-                    removeinorder((Cmpfunc) claim_cmp,
-                            fid->claim->parent->children, fid->claim);
+            if (parent != NULL) {
+                parent->children = removeinorder((Cmpfunc) claim_cmp,
+                        parent->children, fid->claim);
             }
             /* TODO: what about other fids that have this open? */
             lease_remove_claim_from_cache(fid->claim);
@@ -1154,10 +1152,10 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         Claim *parent;
         int res;
         failif(strchr(req->stat->name, '/'), EINVAL);
+        failif(!strcmp(req->stat->name, "."), EINVAL);
+        failif(!strcmp(req->stat->name, ".."), EINVAL);
         failif(!strcmp(fid->pathname, "/"), EPERM);
 
-        /* double up the claim on the fid before calling claim_get_parent */
-        failif(claim_request(worker, fid->claim) < 0, EPERM);
         parent = claim_get_parent(worker, fid->claim);
 
         /* TODO: implement remote renames */
@@ -1166,14 +1164,10 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         /* make sure they have write permission in the parent directory */
         require_info(parent);
-        if (!has_permission(fid->user, parent->info, 0444)) {
-            claim_release(parent);
-            failif(-1, EPERM);
-        }
+        failif(!has_permission(fid->user, parent->info, 0444), EPERM);
 
         res = dir_rename(worker, parent, filename(fid->pathname),
                 req->stat->name);
-        claim_release(parent);
 
         failif(res < 0, EPERM);
         fid->pathname = concatname(dirname(fid->pathname), req->stat->name);

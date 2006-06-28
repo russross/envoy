@@ -164,7 +164,10 @@ void worker_cleanup(Worker *worker) {
             case LOCK_DIRECTORY:        cleanup(dir);   break;
             case LOCK_OPENFILE:         cleanup(file);  break;
             case LOCK_FID:              cleanup(fid);   break;
-            case LOCK_CLAIM:            cleanup(claim); break;
+            case LOCK_CLAIM:
+                cleanup(claim);
+                claim_release((Claim *) obj);
+                break;
             case LOCK_LEASE:
                 unlock_lease_cleanup((Lease *) obj);
                 break;
@@ -202,6 +205,7 @@ void unlock(void) {
 }
 
 void lock_lease(Worker *worker, Lease *lease) {
+    /* FIXME: think this through--also optimize repeat lock calls */
     worker_attempt_to_acquire(worker, lease->wait_for_update);
     lease->inflight++;
     worker_cleanup_add(worker, LOCK_LEASE, lease);

@@ -45,6 +45,8 @@ void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     res->raddr = NULL;
     res->rfid = NOFID;
 
+    res->claim->refcount++;
+
     vector_set(conn->fid_vector, res->fid, res);
 }
 
@@ -86,7 +88,7 @@ void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
     fid->pathname = pathname;
     fid->isremote = 1;
     if (fid->claim != NULL)
-        claim_release(fid->claim);
+        claim->refcount--;
     fid->claim = NULL;
     fid->raddr = raddr;
     fid->rfid = rfid;
@@ -96,8 +98,9 @@ void fid_update_local(Fid *fid, Claim *claim) {
     fid->pathname = claim->pathname;
     fid->isremote = 0;
     if (fid->claim != NULL && fid->claim != claim)
-        claim_release(fid->claim);
+        fid->claim->refcount--;
     fid->claim = claim;
+    fid->claim->refcount++;
     fid->readdir_env = NULL;
     fid->raddr = NULL;
     fid->rfid = NOFID;
@@ -118,8 +121,14 @@ Fid *fid_lookup_remove(Connection *conn, u32 fid) {
 
     res = (Fid *) vector_get_remove(conn->fid_vector, fid);
 
+    if (res->claim != NULL && res->claim->exclusive &&
+            res->status != STATUS_UNOPENNED)
+    {
+        res->claim->exclusive = 0;
+    }
+
     if (res->claim != NULL)
-        claim_release(res->claim);
+        res->claim->refcount--;
 
     return res;
 }

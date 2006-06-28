@@ -164,9 +164,8 @@ void dispatch(Worker *worker, Transaction *trans) {
     u32 oldfid = NOFID;
     u32 newfid = NOFID;
 
-    if (!isstorage && storage_servers == NULL) {
+    if (!isstorage && storage_servers == NULL)
         storage_server_connection_init();
-    }
 
     assert(trans->conn->type == CONN_UNKNOWN_IN ||
             trans->conn->type == CONN_CLIENT_IN ||

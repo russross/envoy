@@ -127,7 +127,9 @@ void hash_remove(Hashtable *table, const void *key) {
     table->size--;
 }
 
-void hash_apply(Hashtable *table, void (*fun)(void *, void *)) {
+void hash_apply(Hashtable *table, void (*fun)(void *, void *, void *),
+        void *env)
+{
     int i;
     List *elt;
 
@@ -136,7 +138,7 @@ void hash_apply(Hashtable *table, void (*fun)(void *, void *)) {
     for (i = 0; i < table->bucketCount; i++) {
         elt = table->buckets[i];
         while (!null(elt)) {
-            fun(caar(elt), cdar(elt));
+            fun(env, caar(elt), cdar(elt));
             elt = cdr(elt);
         }
     }

@@ -10,12 +10,19 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
+#include "envoy.h"
+#include "remote.h"
+#include "worker.h"
 #include "lru.h"
 #include "claim.h"
 #include "lease.h"
 
 Hashtable *lease_by_root_pathname;
 Lru *lease_claim_cache;
+
+static int lease_cmp(const Lease *a, const Lease *b) {
+    return strcmp(a->pathname, b->pathname);
+}
 
 Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         List *wavefront, int readonly)
@@ -37,7 +44,7 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->wavefront = NULL;
     while (!null(wavefront)) {
         l->wavefront =
-            insertinorder((Cmpfunc) strcmp, l->wavefront, car(wavefront));
+            insertinorder((Cmpfunc) lease_cmp, l->wavefront, car(wavefront));
         wavefront = cdr(wavefront);
     }
 
@@ -123,7 +130,7 @@ Lease *lease_find_root(char *pathname) {
 }
 
 int lease_is_exit_point_parent(Lease *lease, char *pathname) {
-    return findinorder((Cmpfunc) strcmp, lease->wavefront, pathname) != NULL;
+    return findinorder((Cmpfunc) lease_cmp, lease->wavefront, pathname) != NULL;
 }
 
 void lease_add(Lease *lease) {
@@ -138,4 +145,50 @@ void lease_add(Lease *lease) {
         assert(exit->isexit);
         hash_set(lease_by_root_pathname, exit->pathname, exit);
     }
+}
+
+static void make_claim_cow(char *env, char *pathname, Claim *claim) {
+    if (startswith(pathname, env) && claim->access == ACCESS_WRITEABLE)
+        claim->access = ACCESS_COW;
+}
+
+u64 lease_snapshot(Worker *worker, Claim *claim) {
+    List *allexits = claim->lease->wavefront;
+    List *exits = NULL;
+    List *newoids;
+    char *prefix = concatstrings(claim->pathname, "/");
+
+    /* start by freezing everything */
+    claim_freeze(worker, claim);
+    hash_apply(claim->lease->claim_cache,
+            (void (*)(void *, void *, void *)) make_claim_cow,
+            prefix);
+
+    /* recursively snapshot all the child leases */
+    for ( ; !null(allexits); allexits = cdr(allexits)) {
+        Lease *lease = car(allexits);
+        if (startswith(lease->pathname, prefix))
+            exits = cons(lease, exits);
+    }
+    newoids = remote_snapshot(worker, exits);
+
+    /* next clone the root */
+    claim_thaw(worker, claim);
+
+    /* now clone paths to the exits and update the exit parent dirs */
+    while (!null(exits) && !null(newoids)) {
+        List *exit = car(exits);
+        u64 *newoid = car(newoids);
+        Claim *parent;
+
+        parent = claim_find(worker, dirname(exit->pathname));
+        claim_thaw(worker, parent);
+        assert(dir_change_oid(worker, parent,
+                filename(exit->pathname), *newoid, ACCESS_WRITEABLE) == 0);
+
+        exits = cdr(exits);
+        newoids = cdr(newoids);
+    }
+
+    return claim->oid;
 }

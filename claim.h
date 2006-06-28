@@ -67,10 +67,9 @@ int claim_make_exclusive(Claim *claim);
  * ownership to the given node. */
 void claim_thaw(Worker *worker, Claim *claim);
 
-/* Snapshot a claim, which must be the root of an ownership.  All descendents
- * within this ownership are marker CoW, the root claim is cloned, and all
- * paths to child leases are cloned.  Returns the new OID of the root node. */
-u64 claim_freeze(Worker *worker, Claim *claim);
+/* Snapshot a claim, which must be the root of a lease.  All descendents
+ * within this lease are marker CoW.  Assumes the lease is locked */
+void claim_freeze(Worker *worker, Claim *claim);
 
 /* Scan the given directory, looking for the given filename.  Returns a claim
  * for the file if found (and if it is part of the same lease), with the
@@ -95,6 +94,9 @@ struct claim {
      * exclusive */
     int refcount;
 
+    /* true if this file has been opened and has DMEXCL marked */
+    int exclusive;
+
     /* the context */
     Lease *lease;
     /* tree structure */
@@ -118,10 +120,6 @@ struct claim {
 Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid);
 /* Create a new claim object in the same lease as the parent */
 Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid);
-
-/* Attach to a claim.  Returns 0 on success, -1 if the request cannot be filled
- * because of exclusive access constraints. */
-int claim_request(Worker *worker, Claim *claim);
 
 /* Release a claim. */
 void claim_release(Claim *claim);

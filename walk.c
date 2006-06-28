@@ -145,11 +145,7 @@ static int walk_from_cache(Worker *worker, Transaction *trans,
  * point and all reached names, as well as a list of remaining names not
  * reached.
  *
- * Does not query or modify fids in any way.
- *
- * Does call claim_release on the input claim as well as any it finds, except
- * the one for the last entry found, which is returned in the result.  The
- * lease is not claimed or released. */
+ * Does not query or modify fids in any way. */
 static void walk_local(Worker *worker, Transaction *trans,
         struct walk_env *env)
 {
@@ -241,10 +237,7 @@ static void walk_local(Worker *worker, Transaction *trans,
 
     error:
     env->result = WALK_ERROR;
-    if (env->claim != NULL) {
-        claim_release(env->claim);
-        env->claim = NULL;
-    }
+    env->claim = NULL;
 }
 
 static void walk_remote(Worker *worker, Transaction *trans,
@@ -445,10 +438,7 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
     env->result = WALK_ERROR;
 
     finish:
-    if (env->claim != NULL) {
-        claim_release(env->claim);
-        env->claim = NULL;
-    }
+    env->claim = NULL;
     walk_build_qids(env);
 }
 

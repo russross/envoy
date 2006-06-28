@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
+#include "list.h"
 #include "worker.h"
 
 /* stubs for remote envoy calls */
@@ -17,5 +18,7 @@ void remote_closefid(Worker *worker, Address *target, u32 fid);
 struct p9stat *remote_stat(Worker *worker, Address *target, char *pathname);
 void remote_rename(Worker *worker, Address *target,
         char *user, char *oldpath, char *newname);
+/* tags a list of leases, returns a list of new oids in the same order */
+List *remote_snapshot(Worker *worker, List *targets);
 
 #endif
