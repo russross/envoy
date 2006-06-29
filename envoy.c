@@ -740,11 +740,11 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     }
 
     /* check for special administrative cases */
-    if (is_pre_admin_directory(fid->pathname)) {
-        /* only mkdir commands are allowed */
-    } else if (is_admin_directory(fid->pathname)) {
-        /* only administrative link commands allowed */
-    } else {
+//    if (is_pre_admin_directory(fid->pathname)) {
+//        /* only mkdir commands are allowed */
+//    } else if (is_admin_directory(fid->pathname)) {
+//        /* only administrative link commands allowed */
+//    } else {
         /* create the file */
         newoid = object_reserve_oid(worker);
 
@@ -757,7 +757,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         failif(dir_create_entry(worker, fid->claim, req->name, newoid) < 0,
                 EEXIST);
         /* ... and object_delete(worker, newoid); on failure */
-    }
+//    }
 
     /* directory info has changed */
     fid->claim->info = NULL;

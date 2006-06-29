@@ -256,8 +256,7 @@ static int dir_iter(Worker *worker, Claim *claim,
     }
     dirinfo = claim->info;
 
-    for (num = 0; (u64) num * BLOCK_SIZE < dirinfo->length + BLOCK_SIZE; num++)
-    {
+    for (num = 0; !stop; num++) {
         u32 count;
         void *data;
         List *pre = NULL;
@@ -376,45 +375,34 @@ int dir_create_entry(Worker *worker, Claim *dir, char *name, u64 oid) {
     return 0;
 }
 
-struct dir_remove_entry_env {
-    char *name;
-    int removed;
-};
-
 static enum dir_iter_action dir_remove_entry_iter(
-        struct dir_remove_entry_env *env, List *in, List **out, int extra)
+        char *env, List *in, List **out, int extra)
 {
     List *entries = in;
 
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
-        if (!strcmp(elt->filename, env->name)) {
+        if (!strcmp(elt->filename, env)) {
             /* delete the entry */
             setcar(entries, NULL);
             *out = in;
-            env->removed = 1;
 
             return DIR_STOP;
         }
     }
 
     /* end of directory and we've done nothing? */
-    if (extra && !env->removed)
+    if (extra)
         return DIR_ABORT;
 
     return DIR_CONTINUE;
 }
 
 int dir_remove_entry(Worker *worker, Claim *dir, char *name) {
-    struct dir_remove_entry_env env;
-
-    env.removed = 0;
-    env.name = name;
-
     return dir_iter(worker, dir,
             (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_remove_entry_iter,
-            &env);
+            name);
 }
 
 struct dir_find_claim_env {
@@ -529,11 +517,12 @@ static enum dir_iter_action dir_rename_iter(
         *out = cons(env->newentry, in);
     }
 
-    /* if this is the end of the directory, we need to be finished */
-    if (extra && (!env->removed || !env->added))
+    if (env->removed && env->added)
+        return DIR_STOP;
+    else if (extra)
         return DIR_ABORT;
-
-    return DIR_CONTINUE;
+    else
+        return DIR_CONTINUE;
 }
 
 int dir_rename(Worker *worker, Claim *dir, char *oldname, char *newname) {
@@ -553,5 +542,49 @@ int dir_rename(Worker *worker, Claim *dir, char *oldname, char *newname) {
     return dir_iter(worker, dir,
             (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_rename_iter,
+            &env);
+}
+
+struct dir_change_oid_env {
+    char *name;
+    u64 oid;
+    int cow;
+};
+
+static enum dir_iter_action dir_change_oid_iter(
+        struct dir_change_oid_env *env, List *in, List **out, int extra)
+{
+    List *entries = in;
+
+    for ( ; !null(entries); entries = cdr(entries)) {
+        struct direntry *elt = car(entries);
+        if (!strcmp(elt->filename, env->name)) {
+            /* update the entry */
+            elt->oid = env->oid;
+            elt->cow = env->cow;
+
+            return DIR_STOP;
+        }
+    }
+
+    /* end of direntry and we've done nothing? */
+    if (extra)
+        return DIR_ABORT;
+
+    return DIR_CONTINUE;
+}
+
+int dir_change_oid(Worker *worker, Claim *dir, char *name,
+        u64 oid, int cow)
+{
+    struct dir_change_oid_env env;
+
+    env.name = name;
+    env.oid = oid;
+    env.cow = cow;
+
+    return dir_iter(worker, dir,
+            (enum dir_iter_action (*)(void *, List *, List **, int))
+            dir_change_oid_iter,
             &env);
 }

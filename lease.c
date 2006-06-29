@@ -14,6 +14,7 @@
 #include "remote.h"
 #include "worker.h"
 #include "lru.h"
+#include "dir.h"
 #include "claim.h"
 #include "lease.h"
 
@@ -177,7 +178,7 @@ u64 lease_snapshot(Worker *worker, Claim *claim) {
 
     /* now clone paths to the exits and update the exit parent dirs */
     while (!null(exits) && !null(newoids)) {
-        List *exit = car(exits);
+        Lease *exit = car(exits);
         u64 *newoid = car(newoids);
         Claim *parent;
 

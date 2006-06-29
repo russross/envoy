@@ -120,18 +120,14 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
 }
 
 Claim *claim_get_parent(Worker *worker, Claim *child) {
-    Lease *lease;
-    Claim *claim = NULL;
-    char *targetname = dirname(child->pathname);
-
     /* special case--the root of the hierarchy */
     if (!strcmp(child->pathname, "/"))
         return child;
 
     /* is the parent within the same lease? */
-    if ((claim = child->parent) != NULL) {
-        reserve(worker, LOCK_CLAIM, claim);
-        return claim;
+    if (child->parent != NULL) {
+        reserve(worker, LOCK_CLAIM, child->parent);
+        return child->parent;
     }
 
     return NULL;
@@ -191,7 +187,7 @@ void claim_thaw(Worker *worker, Claim *claim) {
 
         if (child != NULL) {
             assert(dir_change_oid(worker, claim, filename(child->pathname),
-                        child->oid, ACCESS_WRITEABLE) == 0);
+                        child->oid, 0) == 0);
         }
 
         if (claim->access == ACCESS_COW) {

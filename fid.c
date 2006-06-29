@@ -88,7 +88,7 @@ void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
     fid->pathname = pathname;
     fid->isremote = 1;
     if (fid->claim != NULL)
-        claim->refcount--;
+        fid->claim->refcount--;
     fid->claim = NULL;
     fid->raddr = raddr;
     fid->rfid = rfid;

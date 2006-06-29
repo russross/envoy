@@ -38,5 +38,7 @@ Claim *dir_find_claim(Worker *worker, Claim *dir, char *name);
 /* check if a directory is empty */
 int dir_is_empty(Worker *worker, Claim *dir);
 int dir_rename(Worker *worker, Claim *dir, char *oldname, char *newname);
+int dir_change_oid(Worker *worker, Claim *dir, char *name,
+        u64 oid, int cow);
 
 #endif
