@@ -29,7 +29,7 @@
  * the claims in the paths to these locations.  Other claims are removed from
  * the tree immediately (on fid clunk, or child removal, etc.) and put in a LRU
  * cache where they can be reclaimed.  When objects are deleted or migrated,
- * matching cache entries are purged.  Also, CoW actionsrevise the access field
+ * matching cache entries are purged.  Also, CoW actions revise the access field
  * of cache entries as necessary.
  */
 
@@ -39,12 +39,14 @@
 struct claim {
     Worker *lock;
 
-    /* number of clients for this file (fids or directory walks), -1 if it's
-     * exclusive */
+    /* number of fids referring directly to this claim */
     int refcount;
 
     /* true if this file has been opened and has DMEXCL marked */
     int exclusive;
+
+    /* if the file has been deleted (but not necessary closed) */
+    int deleted;
 
     /* the context */
     Lease *lease;
@@ -63,8 +65,6 @@ struct claim {
     } access;
     /* the storage system object ID */
     u64 oid;
-    /* the parent's oid--needed when restoring from cache */
-    u64 parent_oid;
     /* the file stat record */
     struct p9stat *info;
 };
@@ -108,5 +108,6 @@ void claim_release(Claim *claim);
 
 int claim_cmp(const Claim *a, const Claim *b);
 int claim_key_cmp(const char *key, const Claim *elt);
+u32 claim_hash(const Claim *a);
 
 #endif

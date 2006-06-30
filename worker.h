@@ -78,5 +78,6 @@ void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object);
 
 void worker_state_init(void);
 void worker_commit(Worker *worker);
+int worker_active_count(void);
 
 #endif

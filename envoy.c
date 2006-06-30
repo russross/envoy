@@ -121,57 +121,57 @@ static void rerror(Message *m, u16 errnum, int line) {
     }
 }
 
-#define failif(p,e) do { \
-    if (p) { \
-        rerror(trans->out, e, __LINE__); \
+#define failif(_p,_e) do { \
+    if (_p) { \
+        rerror(trans->out, _e, __LINE__); \
         send_reply(trans); \
         return; \
     } \
 } while(0)
 
-#define guard(f) do { \
-    if ((f) < 0) { \
+#define guard(_f) do { \
+    if ((_f) < 0) { \
         rerror(trans->out, errno, __LINE__); \
         send_reply(trans); \
         return; \
     } \
 } while(0)
 
-#define require_fid(ptr) do { \
-    (ptr) = fid_lookup(trans->conn, req->fid); \
-    if ((ptr) == NULL) { \
+#define require_fid(_ptr) do { \
+    (_ptr) = fid_lookup(trans->conn, req->fid); \
+    if ((_ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
         send_reply(trans); \
         return; \
     } \
 } while(0)
 
-#define require_fid_remove(ptr) do { \
-    (ptr) = fid_lookup_remove(trans->conn, req->fid); \
-    if ((ptr) == NULL) { \
+#define require_fid_remove(_ptr) do { \
+    (_ptr) = fid_lookup_remove(trans->conn, req->fid); \
+    if ((_ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
         send_reply(trans); \
         return; \
     } \
 } while(0)
 
-#define require_fid_unopenned(ptr) do { \
-    (ptr) = fid_lookup(trans->conn, req->fid); \
-    if ((ptr) == NULL) { \
+#define require_fid_unopenned(_ptr) do { \
+    (_ptr) = fid_lookup(trans->conn, req->fid); \
+    if ((_ptr) == NULL) { \
         rerror(trans->out, EBADF, __LINE__); \
         send_reply(trans); \
         return; \
-    } else if ((ptr)->status != STATUS_UNOPENNED) { \
+    } else if ((_ptr)->status != STATUS_UNOPENNED) { \
         rerror(trans->out, ETXTBSY, __LINE__); \
         send_reply(trans); \
         return; \
     } \
 } while(0)
 
-#define require_info(_claim) do { \
-    if ((_claim)->info == NULL) { \
-        (_claim)->info = \
-            object_stat(worker, (_claim)->oid, filename((_claim)->pathname)); \
+#define require_info(_ptr) do { \
+    if ((_ptr)->info == NULL) { \
+        (_ptr)->info = \
+            object_stat(worker, (_ptr)->oid, filename((_ptr)->pathname)); \
     } \
 } while(0)
 
@@ -180,8 +180,8 @@ static void rerror(Message *m, u16 errnum, int line) {
  * changing fids, then send the message, wait for a reply, copy the
  * reply to trans->out, and send it.
  */
-#define copy_forward(MESSAGE) do { \
-    env->out->msg.MESSAGE.fid = fid->rfid; \
+#define copy_forward(_MESSAGE) do { \
+    env->out->msg._MESSAGE.fid = fid->rfid; \
 } while(0);
 
 void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
@@ -334,9 +334,6 @@ void handle_tattach(Worker *worker, Transaction *trans) {
     failif(emptystring(req->uname), EINVAL);
     failif(fid_lookup(trans->conn, req->fid) != NULL, EBADF);
 
-    /* make sure walk knows how to find the starting point */
-    walk_prime("/", req->uname, root_address);
-
     /* treat this like a walk from the global root */
     env->pathname = "/";
     env->user = req->uname;
@@ -344,6 +341,9 @@ void handle_tattach(Worker *worker, Transaction *trans) {
         env->names = cons(NULL, NULL);
     else
         env->names = append_elt(splitpath(req->aname), NULL);
+
+    /* make sure walk knows how to find the starting point */
+    env->nextaddr = root_address;
 
     env->oldfid = env->oldrfid = NOFID;
     env->newfid = req->fid;
@@ -444,9 +444,6 @@ void client_twalk(Worker *worker, Transaction *trans) {
 
     require_fid_unopenned(fid);
 
-    /* make sure there's a cache hint about where to find the start */
-    walk_prime(fid->pathname, fid->user, fid->isremote ? fid->raddr : NULL);
-
     env->pathname = fid->pathname;
     env->user = fid->user;
 
@@ -456,6 +453,8 @@ void client_twalk(Worker *worker, Transaction *trans) {
         failif(strchr(req->wname[i], '/') != NULL, EINVAL);
         env->names = cons(req->wname[i], env->names);
     }
+
+    env->nextaddr = fid->isremote ? fid->raddr : NULL;
 
     env->oldfid = req->fid;
     env->oldrfid = (fid->isremote ? fid->rfid : NOFID);
@@ -506,15 +505,13 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
     for (i = req->nwname - 1; i >= 0; i--)
         env->names = cons(req->wname[i], env->names);
 
+    env->nextaddr = NULL;
+
     env->oldfid = req->fid;
     env->oldrfid = NOFID;
     env->newfid = req->newfid;
     env->newrfid = NOFID;
     env->oldaddr = NULL;
-
-    /* we can only handle local requests */
-    failif(lease_find_root(env->pathname) == NULL, EINVAL);
-    walk_prime(env->pathname, env->user, NULL);
 
     walk_common(worker, trans, env);
 
@@ -528,8 +525,8 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
             break;
         case WALK_PARTIAL:
             res->errnum = 0;
-            res->address = addr_get_address(env->addr);
-            res->port = addr_get_port(env->addr);
+            res->address = addr_get_ip(env->nextaddr);
+            res->port = addr_get_port(env->nextaddr);
             break;
         case WALK_ERROR:
             res->errnum = env->errnum;
@@ -967,8 +964,12 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     Claim *parent;
     int removed = 0;
     u16 errnum = 0;
+    Walk *walk;
 
     require_fid(fid);
+
+    if ((walk = walk_lookup(worker, fid->pathname, fid->user)) != NULL)
+        walk_remove(fid->pathname);
 
     /* handle forwarding */
     if (fid->isremote) {
@@ -1010,26 +1011,13 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         errnum = ENOENT;
     } else {
         /* TODO: delete the storage object? */
-        removed = 1;
+        fid->claim->deleted = 1;
     }
 
     cleanup:
     require_fid_remove(fid);
     if (fid->isremote)
         fid_release_remote(fid->rfid);
-
-    if (removed) {
-        walk_remove(fid->pathname);
-        if (!fid->isremote) {
-            assert(null(fid->claim->children));
-            if (parent != NULL) {
-                parent->children = removeinorder((Cmpfunc) claim_cmp,
-                        parent->children, fid->claim);
-            }
-            /* TODO: what about other fids that have this open? */
-            lease_remove_claim_from_cache(fid->claim);
-        }
-    }
 
     failif(errnum != 0, errnum);
 

@@ -100,5 +100,6 @@ int lease_is_exit_point_parent(Lease *lease, char *pathname);
 u64 lease_snapshot(Worker *worker, Claim *claim);
 
 void lease_dump_graph(Lease *lease);
+void lease_audit(Lease *lease);
 
 #endif

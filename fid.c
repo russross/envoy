@@ -100,10 +100,11 @@ void fid_update_local(Fid *fid, Claim *claim) {
     if (fid->claim != NULL && fid->claim != claim)
         fid->claim->refcount--;
     fid->claim = claim;
-    fid->claim->refcount++;
     fid->readdir_env = NULL;
     fid->raddr = NULL;
     fid->rfid = NOFID;
+
+    fid->claim->refcount++;
 }
 
 Fid *fid_lookup(Connection *conn, u32 fid) {

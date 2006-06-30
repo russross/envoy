@@ -245,6 +245,9 @@ void dispatch(Worker *worker, Transaction *trans) {
             /* lock the fid only */
             reserve(worker, LOCK_FID, fid);
         } else {
+            if (DEBUG_VERBOSE && worker_active_count() == 1)
+                lease_audit(fid->claim->lease);
+
             /* lock the lease first */
             lock_lease(worker, fid->claim->lease);
 

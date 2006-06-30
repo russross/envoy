@@ -22,6 +22,7 @@ u32 worker_next_priority;
 Heap *worker_ready_to_run;
 List *worker_thread_pool;
 pthread_mutex_t *worker_biglock;
+int worker_active;
 
 int worker_priority_cmp(const Worker *a, const Worker *b) {
     if (a->priority == b->priority)
@@ -42,6 +43,7 @@ void worker_state_init(void) {
     worker_biglock = GC_NEW(pthread_mutex_t);
     assert(worker_biglock != NULL);
     pthread_mutex_init(worker_biglock, NULL);
+    worker_active = 0;
 }
 
 void worker_wake_up_next(void) {
@@ -67,6 +69,7 @@ static void *worker_loop(Worker *t) {
             worker_thread_pool = append_elt(worker_thread_pool, t);
             cond_wait(t->sleep);
         }
+        worker_active++;
         t->priority = worker_next_priority++;
         if (!heap_isempty(worker_ready_to_run)) {
             /* wait for older threads that are ready to run */
@@ -105,6 +108,7 @@ static void *worker_loop(Worker *t) {
             }
             worker_wake_up_next();
         }
+        worker_active--;
     }
 
     unlock();
@@ -156,6 +160,7 @@ void worker_cleanup(Worker *worker) {
         struct openfile *file;
         Fid *fid;
         Claim *claim;
+        Walk *walk;
         enum lock_types type = (enum lock_types) caar(worker->cleanup);
         void *obj = cdar(worker->cleanup);
         worker->cleanup = cdr(worker->cleanup);
@@ -164,15 +169,13 @@ void worker_cleanup(Worker *worker) {
             case LOCK_DIRECTORY:        cleanup(dir);   break;
             case LOCK_OPENFILE:         cleanup(file);  break;
             case LOCK_FID:              cleanup(fid);   break;
+            case LOCK_WALK:             cleanup(walk);  break;
             case LOCK_CLAIM:
                 cleanup(claim);
                 claim_release((Claim *) obj);
                 break;
             case LOCK_LEASE:
                 unlock_lease_cleanup((Lease *) obj);
-                break;
-            case LOCK_WALK:
-                walk_release((Walk *) obj);
                 break;
             default:
                 assert(0);
@@ -259,4 +262,8 @@ void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object) {
 
     /* fail if we didn't find the requested entry */
     assert(0);
+}
+
+int worker_active_count(void) {
+    return worker_active;
 }

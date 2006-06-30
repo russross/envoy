@@ -12,18 +12,13 @@
 #include "claim.h"
 
 /* Walk requests can involve multiple hosts.  Since the client is pretty dumb
- * about caching walk requests, we do some caching here.  Walk entries that are
- * part of an active request have inflight > 0, others may be evicted from the
- * LRU cache at any time.
- *
- * Entries may exist with qid == NULL, in which case they are useful for
- * pointing out the appropriate remote envoy to contact.
+ * about caching walk requests, we do some caching here.
  *
  * If addr == NULL then the object was owned locally.
  *
  * The walk cache is subject to a few rules to aim for reasonable consistency.
- * The end path of the walk is always queried for a fresh qid (and its cache
- * entry updated).
+ * The end path of the walk is always queried afresh (and its cache entry
+ * updated).
  *
  * In addition, for remote items, the last chunk is re-queried (meaning the
  * entire final sequence with matching addresses that includes the end path).
@@ -35,25 +30,22 @@
  */
 
 struct walk {
+    Worker *lock;
+
     char *pathname;
     List *users;
     struct qid *qid;
     Address *addr;
-    int inflight;
 };
 
 extern Lru *walk_cache;
 
 void walk_init(void);
 
-/* note: does not lock the result */
-Walk *walk_lookup(char *pathname, char *user);
-void walk_release(Walk *walk);
+Walk *walk_lookup(Worker *worker, char *pathname, char *user);
 /* modifies an existing one if it exists, else creates and caches a new entry */
-Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr);
-/* create an entry (sans qid) if none exists, otherwise refresh the current
- * entry */
-void walk_prime(char *pathname, char *user, Address *addr);
+Walk *walk_new(Worker *worker, char *pathname, char *user, struct qid *qid,
+        Address *addr);
 void walk_remove(char *pathname);
 void walk_flush(void);
 void walk_state_init(void);
@@ -66,6 +58,8 @@ struct walk_env {
     char *user;
     List *names;
 
+    Address *nextaddr;
+
     u32 oldfid;
     u32 oldrfid;
     u32 newfid;
@@ -74,6 +68,7 @@ struct walk_env {
 
     /* the result */
     enum {
+        WALK_ZERO,
         WALK_COMPLETED_REMOTE,
         WALK_COMPLETED_LOCAL,
         WALK_PARTIAL,
@@ -83,7 +78,8 @@ struct walk_env {
     Claim *claim;
     List *walks;
     List *qids;
-    Address *addr;
+    /* the address of the last successful qid found */
+    Address *lastaddr;
 };
 
 void walk_common(Worker *worker, Transaction *trans, struct walk_env *env);

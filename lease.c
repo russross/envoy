@@ -193,3 +193,54 @@ u64 lease_snapshot(Worker *worker, Claim *claim) {
 
     return claim->oid;
 }
+
+void lease_audit(Lease *lease) {
+    printf("lease_audit: %s\n", lease->pathname);
+    assert(lease->wait_for_update == NULL);
+    assert(lease->inflight == 0);
+    if (lease->isexit) {
+        assert(lease->claim == NULL);
+        assert(null(lease->wavefront));
+        assert(lease->fids == NULL);
+        assert(!lease->readonly);
+        assert(lease->claim_cache == NULL);
+    } else {
+        /* walk the claim tree, verifying links and gathering claims with
+         * non-zero refcounts */
+        Hashtable *inuse = hash_create(
+                64,
+                (Hashfunc) claim_hash,
+                (Cmpfunc) claim_cmp);
+        List *stack = cons(lease->claim, NULL);
+        while (!null(stack)) {
+            Claim *claim = car(stack);
+            claim = cdr(stack);
+            assert(claim->lock == NULL);
+            assert(!claim->deleted);
+            assert(claim->lease == lease);
+            if (!null(claim->children)) {
+                List *children = claim->children;
+                while (!null(children)) {
+                    Claim *child = car(children);
+                    children = cdr(children);
+                    assert(child->parent == claim);
+                    assert(!strcmp(child->pathname,
+                                concatname(claim->pathname,
+                                    filename(child->pathname))));
+                    stack = cons(child, stack);
+                }
+            } else {
+                assert(claim->refcount != 0 || claim == lease->claim);
+            }
+            if (claim->refcount != 0) {
+                int *refcount = GC_NEW_ATOMIC(int);
+                assert(refcount != NULL);
+                assert(hash_get(inuse, claim) == NULL);
+                *refcount = claim->refcount;
+                hash_set(inuse, claim, refcount);
+            }
+        }
+
+        /* step through the fids and verify refcounts */
+    }
+}

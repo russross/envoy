@@ -145,7 +145,7 @@ char *address_to_string(Address *addr) {
     struct hostent *host = gethostbyaddr(&addr->sin_addr,
             sizeof(addr->sin_addr), addr->sin_family);
     if (host == NULL || host->h_name == NULL) {
-        u32 address = addr_get_address(addr);
+        u32 address = addr_get_ip(addr);
         char *res = GC_MALLOC_ATOMIC(25);
         assert(res != NULL);
         sprintf(res, "%d.%d.%d.%d:%d",
@@ -272,7 +272,7 @@ Address *addr_decode(u32 address, u16 port) {
     return addr;
 }
 
-u32 addr_get_address(Address *addr) {
+u32 addr_get_ip(Address *addr) {
     return ntohl(addr->sin_addr.s_addr);
 }
 

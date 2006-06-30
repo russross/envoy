@@ -33,7 +33,7 @@ List *parse_address_list(char *hosts, int defaultport);
 Address *parse_address(char *host, int defaultport);
 Address *make_address(char *host, int port);
 Address *addr_decode(u32 address, u16 port);
-u32 addr_get_address(Address *addr);
+u32 addr_get_ip(Address *addr);
 u16 addr_get_port(Address *addr);
 char *address_to_string(Address *addr);
 Address *get_my_address(void);

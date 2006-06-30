@@ -2,6 +2,7 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <errno.h>
 #include <string.h>
@@ -46,36 +47,31 @@ static void walk_build_qids(struct walk_env *env) {
                 (env->result == WALK_COMPLETED_LOCAL ||
                  env->result == WALK_COMPLETED_REMOTE))
         {
-            walk->qid = NULL;
+            walk_remove(walk->pathname);
         }
-        assert(walk->inflight-- > 0);
         env->qids = cons(qid, env->qids);
         env->walks = cdr(env->walks);
     }
 }
 
 /* returns true if progress was made, false otherwise.
- * the next walk will be in the cache in either case */
+ * env->nextaddr will be valid in either case */
 static int walk_from_cache(Worker *worker, Transaction *trans,
         struct walk_env *env)
 {
     char *pathname = env->pathname;
     List *names = env->names;
     List *walks = NULL;
-    Address *addr = NULL;
     Walk *walk;
 
     /* gather a chunk of cache entries */
     while (!null(names) &&
-            (walk = walk_lookup(pathname, env->user)) != NULL &&
-            walk->qid != NULL &&
-            (null(walks) || !addr_cmp(addr, walk->addr)))
+            (walk = walk_lookup(worker, pathname, env->user)) != NULL &&
+            (!addr_cmp(walk->addr, env->nextaddr)))
     {
-        addr = walk->addr;
-
-        /* force a lookup on the last element if it's local [*] */
-        if (car(names) == NULL && addr == NULL) {
-            walk->qid = NULL;
+        /* force a lookup on the last element if it's local */
+        if (car(names) == NULL && walk->addr == NULL) {
+            walk_remove(walk->pathname);
             break;
         } else {
             walks = cons(walk, walks);
@@ -85,41 +81,48 @@ static int walk_from_cache(Worker *worker, Transaction *trans,
         }
     }
 
-    /* prime the cache if coming from a local hit */
-    if (!null(names) && !null(walks) && addr == NULL &&
-            walk_lookup(pathname, env->user) == NULL &&
-            lease_get_remote(pathname) == NULL)
-    {
-        Lease *lease = lease_get_remote(pathname);
-        if (lease == NULL)
-            walk_prime(pathname, env->user, NULL);
-        else
-            walk_prime(pathname, env->user, lease->addr);
-    }
-
-    /* peek at the cache for the next entry */
-    walk = walk_lookup(pathname, env->user);
-
-    /* did we find nothing? */
+    /* quit if we didn't find anything */
     if (null(walks))
         return 0;
 
+    /* if the chunk was local, return a successful chunk */
+    if (env->nextaddr == NULL) {
+        Lease *lease = lease_get_remote(pathname);
+
+        /* figure out where to look next */
+        env->lastaddr = env->nextaddr;
+        if (lease == NULL)
+            env->nextaddr = NULL;
+        else
+            env->nextaddr = lease->addr;
+
+        env->names = names;
+        env->walks = append_list(walks, env->walks);
+        env->pathname = pathname;
+
+        return 1;
+    }
+
+    /* chunk was remote */
+
+    /* peek at the next cache entry */
+    walk = walk_lookup(worker, pathname, env->user);
+
     /* decide if we should ignore the cached chunk we found:
-     *    a) it's remote and the request is not from a client
-     *    b) if it was the final chunk (this implies remote b/c of [*] above)
-     *    c) if we don't know where to look after it
+     *    a) the request is not from a client
+     *    b) it was the final chunk
+     *    c) we don't know where to look after it
      *    d) the next step is the same remote address as this chunk */
-    if (addr != NULL && env->newrfid == NOFID) {
+    if (env->newrfid == NOFID)
         return 0;
-    } else if (null(names) || walk == NULL) {
-        /* clear the cached qids before we repeat the lookup, ending with
-         * walk at the start of the chunk */
+
+    if (null(names) || walk == NULL || !addr_cmp(env->nextaddr, walk->addr)) {
+        /* clear the cache for this chunk before repeating the lookup */
         for ( ; !null(walks); walks = cdr(walks)) {
             walk = car(walks);
-            walk->qid = NULL;
+            walk_remove(walk->pathname);
         }
-        return 0;
-    } else if (!addr_cmp(addr, walk->addr)) {
+
         return 0;
     }
 
@@ -127,13 +130,8 @@ static int walk_from_cache(Worker *worker, Transaction *trans,
     env->names = names;
     env->walks = append_list(walks, env->walks);
     env->pathname = pathname;
-
-    /* mark the walks as in use */
-    while (!null(walks)) {
-        Walk *walk = car(walks);
-        walk->inflight++;
-        walks = cdr(walks);
-    }
+    env->lastaddr = env->nextaddr;
+    env->nextaddr = walk->addr;
 
     return 1;
 }
@@ -158,6 +156,7 @@ static void walk_local(Worker *worker, Transaction *trans,
     assert(!null(env->names));
     assert(!emptystring(env->pathname));
     assert(!emptystring(env->user));
+    assert(env->nextaddr == NULL);
 
     if (env->claim == NULL)
         failwith(ENOENT);
@@ -176,7 +175,7 @@ static void walk_local(Worker *worker, Transaction *trans,
         *qid = makeqid(info->mode, info->mtime, info->length, env->claim->oid);
 
         /* record the walk and step down the input list */
-        walk = walk_new(env->pathname, env->user, qid, NULL);
+        walk = walk_new(worker, env->pathname, env->user, qid, NULL);
         env->walks = cons(walk, env->walks);
         name = car(env->names);
         env->names = cdr(env->names);
@@ -185,7 +184,7 @@ static void walk_local(Worker *worker, Transaction *trans,
         if (name == NULL) {
             /* the return includes the (locked) claim */
             env->result = WALK_COMPLETED_LOCAL;
-            env->addr = NULL;
+            env->lastaddr = NULL;
             return;
         }
 
@@ -211,7 +210,7 @@ static void walk_local(Worker *worker, Transaction *trans,
                 lease = lease_find_root(oldpath);
                 assert(lease != NULL);
 
-                walk_prime(env->pathname, env->user, lease->addr);
+                env->nextaddr = lease->addr;
                 env->result = WALK_PARTIAL;
                 return;
             }
@@ -228,7 +227,7 @@ static void walk_local(Worker *worker, Transaction *trans,
                 if (lease == NULL)
                     failwith(ENOENT);
 
-                walk_prime(env->pathname, env->user, lease->addr);
+                env->nextaddr = lease->addr;
                 env->result = WALK_PARTIAL;
                 return;
             }
@@ -243,7 +242,6 @@ static void walk_local(Worker *worker, Transaction *trans,
 static void walk_remote(Worker *worker, Transaction *trans,
         struct walk_env *env)
 {
-    Address *addr = walk_lookup(env->pathname, env->user)->addr;
     Address *next;
     int i;
     u16 errnum;
@@ -255,17 +253,19 @@ static void walk_remote(Worker *worker, Transaction *trans,
     assert(wname != NULL);
     u32 fid;
 
+    assert(env->nextaddr != NULL);
+
     /* prepare for a remote walk message */
     for (i = 0; !null(names); names = cdr(names), i++)
         wname[i] = car(names);
 
-    if (!addr_cmp(env->oldaddr, addr))
+    if (!addr_cmp(env->oldaddr, env->nextaddr))
         fid = env->oldrfid;
     else
         fid = NOFID;
 
-    errnum = remote_walk(worker, addr, fid, env->newrfid, nwname, wname,
-            env->user, env->pathname, &nwqid, &wqid, &next);
+    errnum = remote_walk(worker, env->nextaddr, fid, env->newrfid,
+            nwname, wname, env->user, env->pathname, &nwqid, &wqid, &next);
 
     /* did we get a race condition? */
     if ((fid != NOFID && errnum == EBADF) || errnum == EPROTO) {
@@ -284,28 +284,33 @@ static void walk_remote(Worker *worker, Transaction *trans,
         struct qid *qid = GC_NEW(struct qid);
         assert(qid != NULL);
         *qid = wqid[i];
-        env->walks = cons(walk_new(env->pathname, env->user, qid, addr),
+        env->walks = cons(
+                walk_new(worker, env->pathname, env->user, qid, env->nextaddr),
                 env->walks);
         env->pathname = walk_pathname(env->pathname, car(env->names));
         env->names = cdr(env->names);
     }
 
-    if (errnum != 0)
+    if (errnum != 0) {
+        if (nwqid > 0)
+            env->lastaddr = env->nextaddr;
         failwith(errnum);
+    }
 
     if (null(env->names)) {
         env->result = WALK_COMPLETED_REMOTE;
-        env->addr = addr;
+        env->lastaddr = env->nextaddr;
+        env->nextaddr = NULL;
     } else {
         env->result = WALK_PARTIAL;
-        env->addr = next;
+        env->lastaddr = env->nextaddr;
+        env->nextaddr = next;
     }
 
     return;
 
     error:
     env->result = WALK_ERROR;
-    env->addr = NULL;
     return;
 }
 
@@ -333,25 +338,13 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
     assert(!emptystring(env->user));
 
     env->walks = NULL;
+    env->result = WALK_ZERO;
 
     while (!null(env->names)) {
-        Walk *walk;
-
-        /* go as far as we can from the cache */
-        while (walk_from_cache(worker, trans, env))
+        if (walk_from_cache(worker, trans, env)) {
+            /* cache chunk */
             continue;
-
-        walk = walk_lookup(env->pathname, env->user);
-
-        /* are we at a dead end? */
-        if (walk == NULL) {
-            fprintf(stderr, "walk error: don't know where to look\n");
-            walk_flush();
-            worker_retry(worker);
-            assert(0);
-        }
-
-        if (walk->addr == NULL) {
+        } else if (env->nextaddr == NULL) {
             /* local chunk */
             env->claim = claim_find(worker, env->pathname);
             walk_local(worker, trans, env);
@@ -361,6 +354,7 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
                 assert(env->claim != NULL);
                 assert(null(env->names));
 
+                /* create/update the fid */
                 if (env->oldfid != NOFID && env->oldfid == env->newfid) {
                     Fid *fid = fid_lookup(trans->conn, env->newfid);
                     assert(fid != NULL);
@@ -371,9 +365,9 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
                             env->claim);
                 }
 
-                /* the fid updates hold onto the claim locks */
                 env->claim = NULL;
 
+                /* close the remote fid */
                 if (env->oldrfid != NOFID) {
                     /* the walk has moved from a remote host to here */
                     assert(env->oldaddr != NULL);
@@ -387,14 +381,16 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
             } else if (env->result == WALK_ERROR) {
                 /* permissions, not found, etc. */
                 assert(env->claim == NULL);
+
+                /* we didn't use the remote fid, so cancel the reservation */
                 if (env->newrfid != NOFID && env->newrfid != env->oldrfid)
                     fid_release_remote(env->newrfid);
+
                 failwith(env->errnum);
             }
         } else if (env->newrfid == NOFID) {
             /* it's remote, but our client is also remote */
             env->result = WALK_PARTIAL;
-            env->addr = walk->addr;
             goto finish;
         } else {
             /* remote chunk */
@@ -403,34 +399,34 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
             if (env->result == WALK_COMPLETED_REMOTE) {
                 assert(null(env->names));
 
+                /* create/update the fid */
                 if (env->oldfid != NOFID && env->oldfid == env->newfid) {
                     Fid *fid = fid_lookup(trans->conn, env->newfid);
                     assert(fid != NULL);
-                    fid_update_remote(fid, env->pathname, env->addr,
+                    fid_update_remote(fid, env->pathname, env->lastaddr,
                             env->newrfid);
                 } else {
                     assert(fid_lookup(trans->conn, env->newfid) == NULL);
                     fid_insert_remote(trans->conn, env->newfid, env->pathname,
-                            env->user, env->addr, env->newrfid);
+                            env->user, env->lastaddr, env->newrfid);
                 }
 
                 /* was this a move from one remote host to another? */
                 if (env->oldrfid == env->newrfid &&
-                        addr_cmp(env->oldaddr, env->addr))
+                        addr_cmp(env->oldaddr, env->lastaddr))
                 {
                     remote_closefid(worker, env->oldaddr, env->oldrfid);
                 }
 
                 goto finish;
             } else if (env->result == WALK_ERROR) {
+                /* cancel the remote fid reservation */
                 if (env->newrfid != NOFID && env->newrfid != env->oldrfid)
                     fid_release_remote(env->newrfid);
+
                 failwith(env->errnum);
             }
             assert(!null(env->names));
-
-            /* prep a cache entry with the next address */
-            walk_prime(env->pathname, env->user, env->addr);
         }
     }
 
@@ -446,7 +442,9 @@ void walk_flush(void) {
     lru_clear(walk_cache);
 }
 
-Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr) {
+Walk *walk_new(Worker *worker, char *pathname, char *user, struct qid *qid,
+        Address *addr)
+{
     /* update an existing entry if one exists */
     Walk *walk = lru_get(walk_cache, pathname);
 
@@ -460,17 +458,14 @@ Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr) {
         walk->qid = qid;
         walk->addr = addr;
         /* mark the new walk as being in use */
-        walk->inflight = 1;
+        reserve(worker, LOCK_WALK, walk);
         lru_add(walk_cache, pathname, walk);
     } else {
-        /* if we don't have a qid, we can't assume all users have passed a
-         * permission check so we clear the list */
-        if (walk->qid == NULL)
-            walk->users = cons(user, NULL);
-        else if (findinorder((Cmpfunc) strcmp, walk->users, user) == NULL)
+        reserve(worker, LOCK_WALK, walk);
+
+        if (findinorder((Cmpfunc) strcmp, walk->users, user) == NULL)
             walk->users = insertinorder((Cmpfunc) strcmp, walk->users, user);
 
-        walk->inflight++;
         walk->qid = qid;
         walk->addr = addr;
     }
@@ -478,55 +473,23 @@ Walk *walk_new(char *pathname, char *user, struct qid *qid, Address *addr) {
     return walk;
 }
 
-/* this is similar to walk_new, with two differences:
- *   1) if the entry is new, it is created with a blank qid field
- *   2) if the user is new to this entry, the qid is cleared
- */
-void walk_prime(char *pathname, char *user, Address *addr) {
-    Walk *walk = lru_get(walk_cache, pathname);
-
-    if (walk == NULL) {
-        /* create a new entry that knows the address */
-        walk = GC_NEW(Walk);
-        assert(walk != NULL);
-
-        walk->pathname = pathname;
-        walk->users = cons(user, NULL);
-        walk->qid = NULL;
-        walk->addr = addr;
-        walk->inflight = 0;
-        lru_add(walk_cache, pathname, walk);
-    } else {
-        /* if this user hasn't seen this entry, clear the qid to force a lookup
-         * and permissions check */
-        if (findinorder((Cmpfunc) strcmp, walk->users, user) == NULL) {
-            walk->users = insertinorder((Cmpfunc) strcmp, walk->users, user);
-            walk->qid = NULL;
-        }
-
-        walk->addr = addr;
-    }
-}
-
 void walk_remove(char *pathname) {
     lru_remove(walk_cache, pathname);
 }
 
-Walk *walk_lookup(char *pathname, char *user) {
+Walk *walk_lookup(Worker *worker, char *pathname, char *user) {
     Walk *walk = lru_get(walk_cache, pathname);
 
-    if (walk != NULL && findinorder((Cmpfunc) strcmp, walk->users, user))
+    if (walk != NULL && findinorder((Cmpfunc) strcmp, walk->users, user)) {
+        reserve(worker, LOCK_WALK, walk);
         return walk;
+    }
 
     return NULL;
 }
 
-void walk_release(Walk *walk) {
-    walk->inflight--;
-}
-
 int walk_resurrect(Walk *walk) {
-    return walk->inflight > 0;
+    return walk->lock != NULL;
 }
 
 void walk_state_init(void) {

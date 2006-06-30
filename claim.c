@@ -21,6 +21,10 @@ int claim_key_cmp(const char *key, const Claim *elt) {
     return strcmp(key, elt->pathname);
 }
 
+u32 claim_hash(const Claim *a) {
+    return string_hash(a->pathname);
+}
+
 Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     Claim *claim = GC_NEW(Claim);
     assert(claim != NULL);
@@ -28,6 +32,7 @@ Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     claim->lock = NULL;
     claim->refcount = 0;
     claim->exclusive = 0;
+    claim->deleted = 0;
 
     claim->lease = NULL;
     claim->parent = NULL;
@@ -49,6 +54,7 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     claim->lock = NULL;
     claim->refcount = 0;
     claim->exclusive = 0;
+    claim->deleted = 0;
 
     claim->lease = parent->lease;
     claim->parent = parent;
@@ -79,7 +85,9 @@ void claim_release(Claim *claim) {
 
         /* put this claim in the cache */
         claim->parent = NULL;
-        lease_add_claim_to_cache(claim);
+
+        if (!claim->deleted)
+            lease_add_claim_to_cache(claim);
 
         claim = parent;
     }
@@ -97,12 +105,17 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
     } else if ((claim = findinorder((Cmpfunc) claim_key_cmp,
                     parent->children, targetpath)) != NULL)
     {
+        if (claim->deleted)
+            return NULL;
+
         /* it's already on a live path */
         reserve(worker, LOCK_CLAIM, claim);
         return claim;
     } else if ((claim = lease_lookup_claim_from_cache(parent->lease,
                     targetpath)) != NULL)
     {
+        assert(!claim->deleted);
+
         /* it's in the cache */
         reserve(worker, LOCK_CLAIM, claim);
         lease_remove_claim_from_cache(claim);
@@ -173,7 +186,7 @@ void claim_thaw(Worker *worker, Claim *claim) {
     do {
         reserve(worker, LOCK_CLAIM, child);
         child = child->parent;
-    } while (child != NULL && child->access == ACCESS_COW);
+    } while (child != NULL && child->access == ACCESS_COW && !child->deleted);
 
     child = NULL;
 
@@ -197,7 +210,10 @@ void claim_thaw(Worker *worker, Claim *claim) {
             break;
         }
 
-        claim = claim->parent;
+        if (claim->deleted)
+            claim = NULL;
+        else
+            claim = claim->parent;
     } while (claim != NULL);
 }
 
