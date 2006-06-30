@@ -100,6 +100,7 @@ void fid_update_local(Fid *fid, Claim *claim) {
     if (fid->claim != NULL && fid->claim != claim)
         fid->claim->refcount--;
     fid->claim = claim;
+    fid->readdir_cookie = 0;
     fid->readdir_env = NULL;
     fid->raddr = NULL;
     fid->rfid = NOFID;

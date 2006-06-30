@@ -86,14 +86,14 @@ void vector_remove(Vector *v, const u32 key) {
     vector_get_remove(v, key);
 }
 
-void vector_apply(Vector *v, void (*fun)(u32, void *)) {
+void vector_apply(Vector *v, void (*fun)(void *, u32, void *), void *env) {
     u32 i;
 
     assert(v != NULL && fun != NULL);
 
     for (i = 0; i < v->next; i++)
         if (v->array[i] != NULL)
-            fun(i, v->array[i]);
+            fun(env, i, v->array[i]);
 }
 
 u32 vector_get_next(Vector *v) {

@@ -1,12 +1,15 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <netinet/in.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "vector.h"
 #include "hashtable.h"
+#include "connection.h"
 #include "fid.h"
 #include "util.h"
 #include "config.h"
@@ -194,29 +197,31 @@ u64 lease_snapshot(Worker *worker, Claim *claim) {
     return claim->oid;
 }
 
-void lease_audit(Lease *lease) {
-    printf("lease_audit: %s\n", lease->pathname);
-    assert(lease->wait_for_update == NULL);
-    assert(lease->inflight == 0);
+#define eqnull(_ptr, _name) do { \
+    if ((_ptr)) \
+        printf("audit: %s is non-null for %s (line %d)\n", "_ptr", \
+                _name, __LINE__); \
+} while (0)
+
+static void lease_audit_iter(Hashtable *inuse, char *pathname, Lease *lease) {
+    printf("lease_audit: %s\n", pathname);
+    eqnull(lease->wait_for_update, pathname);
+    eqnull(lease->inflight, pathname);
     if (lease->isexit) {
-        assert(lease->claim == NULL);
-        assert(null(lease->wavefront));
-        assert(lease->fids == NULL);
-        assert(!lease->readonly);
-        assert(lease->claim_cache == NULL);
+        eqnull(lease->claim, pathname);
+        eqnull(lease->wavefront, pathname);
+        eqnull(lease->fids, pathname);
+        eqnull(lease->readonly, pathname);
+        eqnull(lease->claim_cache, pathname);
     } else {
         /* walk the claim tree, verifying links and gathering claims with
          * non-zero refcounts */
-        Hashtable *inuse = hash_create(
-                64,
-                (Hashfunc) claim_hash,
-                (Cmpfunc) claim_cmp);
         List *stack = cons(lease->claim, NULL);
         while (!null(stack)) {
             Claim *claim = car(stack);
-            claim = cdr(stack);
-            assert(claim->lock == NULL);
-            assert(!claim->deleted);
+            stack = cdr(stack);
+            eqnull(claim->lock, claim->pathname);
+            eqnull(claim->deleted, claim->pathname);
             assert(claim->lease == lease);
             if (!null(claim->children)) {
                 List *children = claim->children;
@@ -230,7 +235,10 @@ void lease_audit(Lease *lease) {
                     stack = cons(child, stack);
                 }
             } else {
-                assert(claim->refcount != 0 || claim == lease->claim);
+                if (claim->refcount == 0 && claim != lease->claim) {
+                    printf("audit: zero refcount, no children, non-root: %s\n",
+                            claim->pathname);
+                }
             }
             if (claim->refcount != 0) {
                 int *refcount = GC_NEW_ATOMIC(int);
@@ -243,4 +251,67 @@ void lease_audit(Lease *lease) {
 
         /* step through the fids and verify refcounts */
     }
+}
+
+static void lease_audit_fid_iter(Hashtable *inuse, u32 key, Fid *fid) {
+    eqnull(fid->lock, fid->pathname);
+    assert(fid->pathname != NULL && fid->user != NULL);
+    if (fid->isremote) {
+        assert(fid->raddr != NULL);
+        assert(fid->rfid != NOFID);
+    } else {
+        int *refcount;
+        assert(fid->claim != NULL);
+        if (strcmp(fid->claim->pathname, fid->pathname)) {
+            printf("audit: fid->claim->pathname = %s, fid->pathname = %s\n",
+                    fid->claim->pathname, fid->pathname);
+        }
+        refcount = hash_get(inuse, fid->claim);
+        if (refcount == NULL) {
+            assert(fid->claim->refcount == 0);
+        } else {
+            (*refcount)--;
+            if (*refcount < 0) {
+                printf("lease_audit_fid_iter: (fid count = %d) > "
+                        "(refcount = %d): %s\n",
+                        fid->claim->refcount - *refcount,
+                        fid->claim->refcount, fid->pathname);
+            }
+        }
+    }
+}
+
+static void lease_audit_conn_iter(Hashtable *inuse, u32 key, Connection *conn) {
+    vector_apply(conn->fid_vector,
+            (void (*)(void *, u32, void *)) lease_audit_fid_iter,
+            inuse);
+}
+
+static void lease_audit_count_iter(void *env, Claim *claim, int *refcount) {
+    if (*refcount > 0) {
+        printf("lease_audit_count_iter: claim refcount %d too high: %s\n",
+                *refcount, claim->pathname);
+    }
+}
+
+void lease_audit(void) {
+    Hashtable *inuse = hash_create(
+            64,
+            (Hashfunc) claim_hash,
+            (Cmpfunc) claim_cmp);
+
+    /* walk all the leases & claims, and gather claims with refcount != 0 */
+    hash_apply(lease_by_root_pathname,
+            (void (*)(void *, void *, void *)) lease_audit_iter,
+            inuse);
+
+    /* walk all the fids and decrement refcounts */
+    vector_apply(conn_vector,
+            (void (*)(void *, u32, void *)) lease_audit_conn_iter,
+            inuse);
+
+    /* see if there were any refcounts left > 0 */
+    hash_apply(inuse,
+            (void (*)(void *, void *, void *)) lease_audit_count_iter,
+            NULL);
 }

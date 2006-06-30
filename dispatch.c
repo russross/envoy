@@ -20,6 +20,7 @@
 #include "dispatch.h"
 #include "worker.h"
 #include "claim.h"
+#include "lease.h"
 
 List *dispatch_error_queue = NULL;
 
@@ -173,6 +174,9 @@ void dispatch(Worker *worker, Transaction *trans) {
             trans->conn->type == CONN_STORAGE_IN);
     assert(trans->out == NULL);
 
+    if (DEBUG_VERBOSE && worker_active_count() == 1)
+        lease_audit();
+
     trans->out = message_new();
     trans->out->tag = trans->in->tag;
     trans->out->id = trans->in->id + 1;
@@ -245,9 +249,6 @@ void dispatch(Worker *worker, Transaction *trans) {
             /* lock the fid only */
             reserve(worker, LOCK_FID, fid);
         } else {
-            if (DEBUG_VERBOSE && worker_active_count() == 1)
-                lease_audit(fid->claim->lease);
-
             /* lock the lease first */
             lock_lease(worker, fid->claim->lease);
 

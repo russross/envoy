@@ -762,12 +762,9 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     /* move this fid to the new file */
     lease_add_claim_to_cache(
             claim_new(fid->claim, req->name, ACCESS_WRITEABLE, newoid));
-    fid->claim = claim_get_child(worker, fid->claim, req->name);
+    fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
     fid->status = status;
     fid->omode = req->mode;
-
-    fid->readdir_cookie = 0;
-    fid->readdir_env = NULL;
 
     /* prepare and send the reply */
     res->qid = qid;
