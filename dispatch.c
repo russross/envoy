@@ -172,7 +172,6 @@ void dispatch(Worker *worker, Transaction *trans) {
             trans->conn->type == CONN_CLIENT_IN ||
             trans->conn->type == CONN_ENVOY_IN ||
             trans->conn->type == CONN_STORAGE_IN);
-    assert(trans->out == NULL);
 
     if (DEBUG_AUDIT && worker_active_count() == 1)
         lease_audit();

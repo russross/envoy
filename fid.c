@@ -82,6 +82,7 @@ void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
     res->rfid = rfid;
 
     vector_set(conn->fid_vector, res->fid, res);
+    fid_set_remote(rfid, res);
 }
 
 void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
@@ -92,6 +93,7 @@ void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
     fid->claim = NULL;
     fid->raddr = raddr;
     fid->rfid = rfid;
+    fid_set_remote(rfid, fid);
 }
 
 void fid_update_local(Fid *fid, Claim *claim) {
@@ -156,6 +158,11 @@ void fid_state_init(void) {
 
 u32 fid_reserve_remote(void) {
     return vector_alloc(fid_remote_vector, (void *) 0xdeadbeef);
+}
+
+void fid_set_remote(u32 rfid, Fid *fid) {
+    assert(vector_test(fid_remote_vector, rfid));
+    vector_set(fid_remote_vector, rfid, fid);
 }
 
 void fid_release_remote(u32 fid) {

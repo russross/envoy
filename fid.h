@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
+#include "vector.h"
 #include "connection.h"
 #include "worker.h"
 #include "dir.h"
@@ -60,11 +61,14 @@ Fid *fid_lookup(Connection *conn, u32 fid);
 Fid *fid_lookup_remove(Connection *conn, u32 fid);
 u32 fid_reserve_remote(void);
 void fid_release_remote(u32 fid);
+void fid_set_remote(u32 rfid, Fid *fid);
 
 u32 fid_hash(const Fid *fid);
 int fid_cmp(const Fid *a, const Fid *b);
 enum claim_access fid_access_child(enum claim_access access, int cowlink);
 
 void fid_state_init(void);
+
+extern Vector *fid_remote_vector;
 
 #endif

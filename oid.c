@@ -515,7 +515,7 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     newfilename = make_filename(oid, mode, name, group);
 
     /* see if there were any filename changes */
-    if (!strcmp(filename, newfilename)) {
+    if (strcmp(filename, newfilename)) {
         newpathname = concatname(dir->dirname, newfilename);
         if (rename(pathname, newpathname) < 0)
             return -1;

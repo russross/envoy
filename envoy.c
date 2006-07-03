@@ -57,13 +57,15 @@ static void qid_list_to_array(List *from, u16 *len, struct qid **to) {
 
 /* generate an error response with Unix errno errnum */
 static void rerror(Message *m, u16 errnum, int line) {
-    m->id = RERROR;
     m->msg.rerror.errnum = errnum;
     m->msg.rerror.ename = stringcopy(strerror(errnum));
-    if (DEBUG_VERBOSE) {
+    if (DEBUG_VERBOSE && (errnum != ENOENT ||
+            (m->id != RWALK && m->id != REWALKREMOTE)))
+    {
         printf("error #%u: %s (%s line %d)\n",
                 (u32) errnum, m->msg.rerror.ename, __FILE__, line);
     }
+    m->id = RERROR;
 }
 
 #define failif(_p,_e) do { \
@@ -329,7 +331,7 @@ void handle_tattach(Worker *worker, Transaction *trans) {
  *   server-side state change
  */
 void handle_tflush(Worker *worker, Transaction *trans) {
-    failif(-1, ENOTSUP);
+    send_reply(trans);
 }
 
 /**
@@ -875,7 +877,7 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
     /* handle forwarding */
     if (fid->isremote) {
         forward_to_envoy(worker, trans, fid);
-        fid_release_remote(fid->fid);
+        fid_release_remote(fid->rfid);
         goto send_reply;
     }
 

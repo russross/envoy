@@ -196,14 +196,20 @@ u64 lease_snapshot(Worker *worker, Claim *claim) {
     return claim->oid;
 }
 
+struct audit_env {
+    Hashtable *inuse;
+    Vector *rfids;
+};
+
 #define eqnull(_ptr, _name) do { \
     if ((_ptr)) \
         printf("audit: %s is non-null for %s (line %d)\n", "_ptr", \
                 _name, __LINE__); \
 } while (0)
 
-static void lease_audit_iter(Hashtable *inuse, char *pathname, Lease *lease) {
-    printf("lease_audit: %s\n", pathname);
+static void lease_audit_iter(struct audit_env *env, char *pathname,
+        Lease *lease)
+{
     eqnull(lease->wait_for_update, pathname);
     eqnull(lease->inflight, pathname);
     if (lease->isexit) {
@@ -242,9 +248,9 @@ static void lease_audit_iter(Hashtable *inuse, char *pathname, Lease *lease) {
             if (claim->refcount != 0) {
                 int *refcount = GC_NEW_ATOMIC(int);
                 assert(refcount != NULL);
-                assert(hash_get(inuse, claim) == NULL);
+                assert(hash_get(env->inuse, claim) == NULL);
                 *refcount = claim->refcount;
-                hash_set(inuse, claim, refcount);
+                hash_set(env->inuse, claim, refcount);
             }
         }
 
@@ -252,12 +258,14 @@ static void lease_audit_iter(Hashtable *inuse, char *pathname, Lease *lease) {
     }
 }
 
-static void lease_audit_fid_iter(Hashtable *inuse, u32 key, Fid *fid) {
+static void lease_audit_fid_iter(struct audit_env *env, u32 key, Fid *fid) {
     eqnull(fid->lock, fid->pathname);
     assert(fid->pathname != NULL && fid->user != NULL);
     if (fid->isremote) {
         assert(fid->raddr != NULL);
         assert(fid->rfid != NOFID);
+        assert(vector_get(env->rfids, fid->rfid) == fid);
+        vector_remove(env->rfids, fid->rfid);
     } else {
         int *refcount;
         assert(fid->claim != NULL);
@@ -265,7 +273,7 @@ static void lease_audit_fid_iter(Hashtable *inuse, u32 key, Fid *fid) {
             printf("audit: fid->claim->pathname = %s, fid->pathname = %s\n",
                     fid->claim->pathname, fid->pathname);
         }
-        refcount = hash_get(inuse, fid->claim);
+        refcount = hash_get(env->inuse, fid->claim);
         if (refcount == NULL) {
             assert(fid->claim->refcount == 0);
         } else {
@@ -280,10 +288,10 @@ static void lease_audit_fid_iter(Hashtable *inuse, u32 key, Fid *fid) {
     }
 }
 
-static void lease_audit_conn_iter(Hashtable *inuse, u32 key, Connection *conn) {
+static void lease_audit_conn_iter(struct audit_env *env, u32 key, Connection *conn) {
     vector_apply(conn->fid_vector,
             (void (*)(void *, u32, void *)) lease_audit_fid_iter,
-            inuse);
+            env);
 }
 
 static void lease_audit_count_iter(void *env, Claim *claim, int *refcount) {
@@ -293,24 +301,44 @@ static void lease_audit_count_iter(void *env, Claim *claim, int *refcount) {
     }
 }
 
+static void lease_audit_check_rfid(struct audit_env *env, u32 rfid, Fid *fid) {
+    assert(fid->rfid == rfid);
+    vector_set(env->rfids, rfid, fid);
+}
+
 void lease_audit(void) {
-    Hashtable *inuse = hash_create(
+    struct audit_env env;
+    env.inuse = hash_create(
             64,
             (Hashfunc) claim_hash,
             (Cmpfunc) claim_cmp);
+    env.rfids = vector_create(FID_REMOTE_VECTOR_SIZE);
+
+    /* check and clone the remote fid vector */
+    vector_apply(fid_remote_vector,
+            (void (*)(void *, u32, void *)) lease_audit_check_rfid,
+            &env);
 
     /* walk all the leases & claims, and gather claims with refcount != 0 */
     hash_apply(lease_by_root_pathname,
             (void (*)(void *, void *, void *)) lease_audit_iter,
-            inuse);
+            &env);
 
     /* walk all the fids and decrement refcounts */
     vector_apply(conn_vector,
             (void (*)(void *, u32, void *)) lease_audit_conn_iter,
-            inuse);
+            &env);
 
     /* see if there were any refcounts left > 0 */
-    hash_apply(inuse,
+    hash_apply(env.inuse,
             (void (*)(void *, void *, void *)) lease_audit_count_iter,
             NULL);
+
+    /* see if there are any orphan rfids */
+    while (vector_get_next(env.rfids) > 0) {
+        u32 rfid = vector_get_next(env.rfids) - 1;
+        Fid *fid = vector_get_remove(env.rfids, rfid);
+        printf("audit: orphan remote fid: %d -> %s\n", rfid, fid->pathname);
+        assert(0);
+    }
 }
