@@ -5,12 +5,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <grp.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
 #include "vector.h"
-#include "hashtable.h"
 #include "connection.h"
 #include "transaction.h"
 #include "fid.h"
@@ -25,59 +23,6 @@
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
-
-Hashtable *group_info;
-
-/* convert a u32 to a string, allocating the necessary storage */
-static inline char *u32tostr(u32 n) {
-    char *res = GC_MALLOC_ATOMIC(11);
-    assert(res != NULL);
-
-    sprintf(res, "%u", n);
-    return res;
-}
-
-u32 now(void) {
-    return (u32) time(NULL);
-}
-
-void envoy_state_init(void) {
-    struct group *group;
-
-    group_info = hash_create(
-            GROUP_HASHTABLE_SIZE,
-            (Hashfunc) string_hash,
-            (Cmpfunc) strcmp);
-
-    /* walk the system group table */
-    setgrent();
-    while ((group = getgrent()) != NULL) {
-        int i;
-        char *groupname = stringcopy(group->gr_name);
-        for (i = 0; group->gr_mem[i] != NULL; i++) {
-            Hashtable *user = hash_get(group_info, group->gr_mem[i]);
-            if (user == NULL) {
-                user = hash_create(
-                        GROUP_HASHTABLE_SIZE,
-                        (Hashfunc) string_hash,
-                        (Cmpfunc) strcmp);
-                hash_set(group_info, stringcopy(group->gr_mem[i]), user);
-            }
-            hash_set(user, groupname, groupname);
-        }
-    }
-    endgrent();
-}
-
-int isgroupmember(char *user, char *group) {
-    Hashtable *groups = hash_get(group_info, user);
-    if (groups == NULL)
-        return 0;
-    return hash_get(groups, group) != NULL;
-}
-int isgroupleader(char *user, char *group) {
-    return isgroupmember(user, group);
-}
 
 int has_permission(char *uname, struct p9stat *info, u32 required) {
     if (!strcmp(uname, info->uid)) {
@@ -1102,6 +1047,27 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
     require_info(fid->claim);
     info = fid->claim->info;
+
+    /* owner & group */
+    if (!emptystring(req->stat->uid) || (req->stat->n_uid != NOUID &&
+                !emptystring(uid_to_user(req->stat->n_uid))))
+    {
+        /* let anyone change the uid for now */
+        if (emptystring(req->stat->uid))
+            delta->uid = uid_to_user(req->stat->n_uid);
+        else
+            delta->uid = req->stat->uid;
+    }
+
+    if (!emptystring(req->stat->gid) || (req->stat->n_gid != NOGID &&
+                !emptystring(gid_to_group(req->stat->n_gid))))
+    {
+        /* let anyone change the gid for now */
+        if (emptystring(req->stat->gid))
+            delta->gid = gid_to_group(req->stat->n_gid);
+        else
+            delta->gid = req->stat->gid;
+    }
 
     /* mode */
     if (req->stat->mode != ~(u32) 0) {

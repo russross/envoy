@@ -26,6 +26,7 @@ int storage_server_count;
 Connection **storage_servers;
 Address **storage_addresses;
 int DEBUG_VERBOSE = 0;
+int DEBUG_AUDIT = 0;
 int DEBUG_STORAGE = 0;
 int DEBUG_CLIENT = 0;
 int DEBUG_ENVOY = 0;
@@ -55,6 +56,7 @@ void print_usage(void) {
 "    -m, --messagesize=<SIZE>   maximum message size (default %d)\n"
 "    -d, --debug=<FLAGS>        debug options:\n"
 "                                 v: verbose debug output\n"
+"                                 d: data structure audits\n"
 "                                 s: message to/from storage servers\n",
             (isstorage ? STORAGE_PORT : ENVOY_PORT), GLOBAL_MAX_SIZE);
     if (!isstorage) {
@@ -85,6 +87,7 @@ int config_envoy(int argc, char **argv) {
     storage_addresses = NULL;
     PORT = ENVOY_PORT;
     DEBUG_VERBOSE =
+        DEBUG_AUDIT =
         DEBUG_STORAGE =
         DEBUG_CLIENT =
         DEBUG_ENVOY = DEBUG_ENVOY_ADMIN = 0;
@@ -165,6 +168,7 @@ int config_envoy(int argc, char **argv) {
                         case 'e':       DEBUG_ENVOY = 1;                /* ft */
                         case 'a':       DEBUG_ENVOY_ADMIN = 1;          break;
                         case 'v':       DEBUG_VERBOSE = 1;              break;
+                        case 'd':       DEBUG_AUDIT = 1;                break;
                         default:
                             fprintf(stderr, "Unknown debug option: %c\n",
                                     optarg[i]);

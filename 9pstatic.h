@@ -19,8 +19,10 @@ extern int GLOBAL_MAX_SIZE;
 
 #define NOTAG 0xffff
 #define ALLOCTAG 0xfffe
-#define NOFID 0xffffffff
+#define NOFID (~(u32) 0)
 #define NOOID (~(u64) 0)
+#define NOUID (~(u32) 0)
+#define NOGID (~(u32) 0)
 
 enum openmodes {
     OREAD =             0x00,

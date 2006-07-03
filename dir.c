@@ -10,7 +10,6 @@
 #include "util.h"
 #include "config.h"
 #include "object.h"
-#include "envoy.h"
 #include "remote.h"
 #include "worker.h"
 #include "dir.h"

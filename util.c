@@ -8,11 +8,20 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <grp.h>
+#include <pwd.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "hashtable.h"
 #include "util.h"
 #include "config.h"
+
+Hashtable *group_info;
+Hashtable *user_to_uid_table;
+Hashtable *uid_to_user_table;
+Hashtable *group_to_gid_table;
+Hashtable *gid_to_group_table;
 
 /*****************************************************************************/
 
@@ -196,6 +205,32 @@ u32 string_hash(const char *str) {
     return generic_hash(str, strlen(str), 0);
 }
 
+/* convert a u32 to a string, allocating the necessary storage */
+char *u32tostr(u32 n) {
+    char *res = GC_MALLOC_ATOMIC(11);
+    assert(res != NULL);
+
+    sprintf(res, "%u", n);
+    return res;
+}
+
+u32 u32_hash(const u32 *elt) {
+    return generic_hash(elt, sizeof(u32), 0);
+}
+
+int u32_cmp(const u32 *a, const u32 *b) {
+    if (*a > *b)
+        return 1;
+    else if (*a < *b)
+        return -1;
+    else
+        return 0;
+}
+
+u32 now(void) {
+    return (u32) time(NULL);
+}
+
 u32 addr_hash(const Address *addr) {
     u32 hash = 0;
     hash = generic_hash(&addr->sin_family, sizeof(addr->sin_family), hash);
@@ -362,4 +397,103 @@ int randInt(int range) {
     }
 
     return random() % range;
+}
+
+void util_state_init(void) {
+    struct group *group;
+    struct passwd *passwd;
+
+    user_to_uid_table = hash_create(
+            USER_HASHTABLE_SIZE,
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp);
+
+    uid_to_user_table = hash_create(
+            USER_HASHTABLE_SIZE,
+            (Hashfunc) u32_hash,
+            (Cmpfunc) u32_cmp);
+
+    gid_to_group_table = hash_create(
+            GROUP_HASHTABLE_SIZE,
+            (Hashfunc) u32_hash,
+            (Cmpfunc) u32_cmp);
+
+    group_to_gid_table = hash_create(
+            GROUP_HASHTABLE_SIZE,
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp);
+
+    group_info = hash_create(
+            GROUP_HASHTABLE_SIZE,
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp);
+
+    /* walk the system password file */
+    setpwent();
+    while ((passwd = getpwent()) != NULL) {
+        u32 *uid = GC_NEW_ATOMIC(u32);
+        char *user = stringcopy(passwd->pw_name);
+        assert(uid != NULL);
+        *uid = passwd->pw_uid;
+        hash_set(user_to_uid_table, user, uid);
+        hash_set(uid_to_user_table, uid, user);
+    }
+    endpwent();
+
+    /* walk the system group table */
+    setgrent();
+    while ((group = getgrent()) != NULL) {
+        int i;
+        char *groupname = stringcopy(group->gr_name);
+        u32 *gid = GC_NEW_ATOMIC(u32);
+        assert(gid != NULL);
+        *gid = group->gr_gid;
+        hash_set(group_to_gid_table, groupname, gid);
+        hash_set(gid_to_group_table, gid, groupname);
+        for (i = 0; group->gr_mem[i] != NULL; i++) {
+            Hashtable *user = hash_get(group_info, group->gr_mem[i]);
+            if (user == NULL) {
+                user = hash_create(
+                        GROUP_HASHTABLE_SIZE,
+                        (Hashfunc) string_hash,
+                        (Cmpfunc) strcmp);
+                hash_set(group_info, stringcopy(group->gr_mem[i]), user);
+            }
+            hash_set(user, groupname, groupname);
+        }
+    }
+    endgrent();
+}
+
+int isgroupmember(char *user, char *group) {
+    Hashtable *groups = hash_get(group_info, user);
+    if (groups == NULL)
+        return 0;
+    return hash_get(groups, group) != NULL;
+}
+
+int isgroupleader(char *user, char *group) {
+    return isgroupmember(user, group);
+}
+
+char *uid_to_user(u32 uid) {
+    return hash_get(uid_to_user_table, &uid);
+}
+
+u32 user_to_uid(char *user) {
+    u32 *uid = hash_get(user_to_uid_table, user);
+    if (uid == NULL)
+        return NOUID;
+    return *uid;
+}
+
+char *gid_to_group(u32 gid) {
+    return hash_get(gid_to_group_table, &gid);
+}
+
+u32 group_to_gid(char *group) {
+    u32 *gid = hash_get(group_to_gid_table, group);
+    if (gid == NULL)
+        return NOGID;
+    return *gid;
 }

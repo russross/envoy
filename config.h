@@ -24,6 +24,7 @@
 #define WORKER_READY_QUEUE_SIZE 64
 #define FID_REMOTE_VECTOR_SIZE 256
 #define GROUP_HASHTABLE_SIZE 64
+#define USER_HASHTABLE_SIZE 64
 
 #define ENVOY_PORT 9922
 #define STORAGE_PORT 9923
@@ -56,6 +57,7 @@ extern Address **storage_addresses;
 extern int DEBUG_CLIENT;
 extern int DEBUG_ENVOY;
 extern int DEBUG_ENVOY_ADMIN;
+extern int DEBUG_AUDIT;
 
 int config_envoy(int argc, char **argv);
 int config_storage(int argc, char **argv);

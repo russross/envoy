@@ -7,7 +7,6 @@
 #include "list.h"
 #include "util.h"
 #include "object.h"
-#include "envoy.h"
 #include "worker.h"
 #include "dir.h"
 #include "claim.h"

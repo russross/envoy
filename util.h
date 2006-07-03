@@ -40,6 +40,19 @@ Address *get_my_address(void);
 
 u32 generic_hash(const void *elt, int len, u32 hash);
 u32 string_hash(const char *str);
+u32 u32_hash(const u32 *elt);
+int u32_cmp(const u32 *a, const u32 *b);
+char *u32tostr(u32 n);
 int randInt(int range);
+u32 now(void);
+
+int isgroupmember(char *user, char *group);
+int isgroupleader(char *user, char *group);
+u32 user_to_uid(char *user);
+char *uid_to_user(u32 uid);
+u32 group_to_gid(char *group);
+char *gid_to_group(u32 gid);
+
+void util_state_init(void);
 
 #endif

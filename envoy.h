@@ -7,9 +7,7 @@
 #include "transaction.h"
 #include "worker.h"
 
-void envoy_state_init(void);
 int has_permission(char *uname, struct p9stat *info, u32 required);
-u32 now(void);
 
 void handle_tversion(Worker *worker, Transaction *trans);
 

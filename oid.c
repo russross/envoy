@@ -429,9 +429,9 @@ struct p9stat *oid_stat(Worker *worker, u64 oid) {
         }
         result->extension[size] = 0;
     }
-    result->n_uid = atoi(name);
-    result->n_gid = atoi(group);
-    result->n_muid = atoi(name);
+    result->n_uid = user_to_uid(name);
+    result->n_gid = group_to_gid(group);
+    result->n_muid = user_to_uid(name);
 
     return result;
 }

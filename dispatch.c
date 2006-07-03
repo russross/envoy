@@ -174,7 +174,7 @@ void dispatch(Worker *worker, Transaction *trans) {
             trans->conn->type == CONN_STORAGE_IN);
     assert(trans->out == NULL);
 
-    if (DEBUG_VERBOSE && worker_active_count() == 1)
+    if (DEBUG_AUDIT && worker_active_count() == 1)
         lease_audit();
 
     trans->out = message_new();
