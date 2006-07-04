@@ -68,6 +68,10 @@ enum qidtypes {
 /* non-data size of read messages */
 #define RREAD_HEADER 11
 #define RSREAD_HEADER 11
+#define RREAD_DATA_OFFSET 11
+#define RSREAD_DATA_OFFSET 11
+#define TWRITE_DATA_OFFSET 23
+#define TSWRITE_DATA_OFFSET 23
 
 /* size difference between storage and client read/write messages */
 #define STORAGE_SLUSH 8

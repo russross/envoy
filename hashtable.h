@@ -26,5 +26,6 @@ void *hash_get(Hashtable *table, const void *key);
 void hash_set(Hashtable *table, void *key, void *value);
 void hash_remove(Hashtable *table, const void *key);
 void hash_apply(Hashtable *table, void (*fun)(void *, void *, void *), void *env);
+int hash_count(Hashtable *table);
 
 #endif

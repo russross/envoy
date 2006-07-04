@@ -16,7 +16,7 @@
 
 /* values that are configured at startup time */
 
-int GLOBAL_MAX_SIZE = 4200;
+int GLOBAL_MAX_SIZE = 32799;
 int PORT;
 int isstorage;
 char *objectroot;

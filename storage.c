@@ -93,8 +93,8 @@ void handle_tsread(Worker *worker, Transaction *trans) {
 
     guard(lseek(file->fd, req->offset, SEEK_SET));
 
-    res->data = GC_MALLOC_ATOMIC(req->count);
-    assert(res->data != NULL);
+    /* use the raw message buffer */
+    res->data = trans->out->raw + RSREAD_DATA_OFFSET;
 
     unlock();
     len = read(file->fd, res->data, req->count);

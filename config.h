@@ -34,7 +34,7 @@
 #define BLOCK_SIZE 4096
 
 extern int GLOBAL_MAX_SIZE;
-#define GLOBAL_MIN_SIZE 256
+#define GLOBAL_MIN_SIZE (BLOCK_SIZE + TSWRITE_DATA_OFFSET + 8)
 extern int PORT;
 
 extern Address *my_address;

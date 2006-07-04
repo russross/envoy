@@ -152,18 +152,21 @@ u64 *unpackU64list(u8 *raw, int size, int *i, u16 *n) {
 }
 
 u8 *unpackData(u8 *raw, int size, int *i, u32 *len) {
-    u8 *d = NULL;
+    /* u8 *d = NULL; */
     *len = unpackU32(raw, size, i) & 0x00ffffff;
     if (*i < 0) return NULL;
     *i += *len;
     if (*len == 0)
       return NULL;
+    return raw + *i - *len;
+/*
     if (*i > size || (d = GC_MALLOC_ATOMIC(*len)) == NULL) {
         *i = -1;
         return NULL;
     }
     memcpy(d, raw + *i - *len, *len);
     return d;
+*/
 }
 
 char *unpackString(u8 *raw, int size, int *i) {
@@ -310,8 +313,12 @@ void packU64list(u8 *raw, int *i, u16 len, u64 *elt) {
 
 void packData(u8 *raw, int *i, u32 len, u8 *elt) {
     packU32(raw, i, len);
+    /*
     if (len > 0)
         memcpy(raw + *i, elt, len);
+    */
+    if (len > 0)
+        assert(elt == raw + *i);
     *i += len;
 }
 

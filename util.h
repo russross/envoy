@@ -52,6 +52,8 @@ u32 user_to_uid(char *user);
 char *uid_to_user(u32 uid);
 u32 group_to_gid(char *group);
 char *gid_to_group(u32 gid);
+int is_pre_admin_directory(char *dir);
+int is_admin_directory(char *dir);
 
 void util_state_init(void);
 

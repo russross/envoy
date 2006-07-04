@@ -203,7 +203,7 @@ struct audit_env {
 
 #define eqnull(_ptr, _name) do { \
     if ((_ptr)) \
-        printf("audit: %s is non-null for %s (line %d)\n", "_ptr", \
+        printf("audit: %s is non-null for %s (line %d)\n", #_ptr, \
                 _name, __LINE__); \
 } while (0)
 

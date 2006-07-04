@@ -101,7 +101,7 @@ void object_clone(Worker *worker, u64 oid, u64 newoid) {
 }
 
 void *object_read(Worker *worker, u64 oid, u32 atime, u64 offset, u32 count,
-        u32 *bytesread)
+        u32 *bytesread, u8 **data)
 {
     Transaction *trans;
     struct Rsread *res;
@@ -119,22 +119,26 @@ void *object_read(Worker *worker, u64 oid, u32 atime, u64 offset, u32 count,
     res = &trans->in->msg.rsread;
 
     *bytesread = res->count;
-    return res->data;
+    *data = res->data;
+    return trans->in->raw;
 }
 
 u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
-        u32 count, void *data)
+        u32 count, u8 *data, void *raw)
 {
     List *requests = NULL;
     Transaction *trans;
     struct Rswrite *res;
     int i;
 
+    /* we need new raw buffers for storage_server_count > 1 */
+    assert(storage_server_count == 1);
     for (i = 0; i < storage_server_count; i++) {
         trans = trans_new(storage_servers[i], NULL, message_new());
+        trans->out->raw = raw;
         trans->out->tag = ALLOCTAG;
         trans->out->id = TSWRITE;
-        set_tswrite(trans->out, oid, mtime, offset, count, data);
+        set_tswrite(trans->out, mtime, offset, count, data, oid);
         requests = cons(trans, requests);
     }
 

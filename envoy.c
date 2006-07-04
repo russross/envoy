@@ -138,6 +138,7 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
 
     /* copy the whole message over */
     env = trans_new(NULL, NULL, message_new());
+    env->out->raw = trans->in->raw;
     memcpy(&env->out->msg, &trans->in->msg, sizeof(trans->in->msg));
     env->out->id = trans->in->id;
 
@@ -162,6 +163,7 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
     send_request(env);
 
     /* now copy the response back into trans */
+    trans->out->raw = env->in->raw;
     memcpy(&trans->out->msg, &env->in->msg, sizeof(env->in->msg));
     trans->out->id = env->in->id;
 }
@@ -679,7 +681,8 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         failif(req->mode != OREAD, EINVAL);
         perm = req->perm & (~0777 | (dirinfo->mode & 0777));
     } else {
-        failif(req->mode & OTRUNC, EINVAL);
+        req->mode &= ~OTRUNC;
+        /* failif(req->mode & OTRUNC, EINVAL); */
         perm = req->perm & (~0666 | (dirinfo->mode & 0666));
     }
 
@@ -769,6 +772,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
+
     if (fid->status == STATUS_OPEN_FILE) {
         struct p9stat *info;
         require_info(fid->claim);
@@ -776,12 +780,12 @@ void handle_tread(Worker *worker, Transaction *trans) {
 
         if (req->offset >= info->length) {
             res->count = 0;
-            res->data = NULL;
         } else {
-            res->data = object_read(worker, fid->claim->oid, now(),
-                    req->offset, count, &res->count);
+            trans->out->raw = object_read(worker, fid->claim->oid, now(),
+                    req->offset, count, &res->count, &res->data);
         }
     } else if (fid->status == STATUS_OPEN_DIR) {
+
         /* allow rewinds, but no other offset changes */
         if (req->offset == 0 && fid->readdir_cookie != 0) {
             fid->readdir_cookie = 0;
@@ -789,8 +793,8 @@ void handle_tread(Worker *worker, Transaction *trans) {
         }
         failif(req->offset != fid->readdir_cookie, ESPIPE);
 
-        res->data = GC_MALLOC_ATOMIC(count);
-        assert(res->data != NULL);
+        /* use the raw message buffer for data */
+        res->data = trans->out->raw + RREAD_DATA_OFFSET;
 
         /* read directory entries until we run out or the buffer is full */
         res->count = dir_read(worker, fid, count, res->data);
@@ -848,7 +852,7 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     }
 
     res->count = object_write(worker, fid->claim->oid, now(), req->offset,
-            req->count, req->data);
+            req->count, req->data, trans->in->raw);
     fid->claim->info = NULL;
 
     send_reply:
@@ -1122,7 +1126,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         res = dir_rename(worker, parent, filename(fid->pathname),
                 req->stat->name);
 
-        failif(res < 0, EPERM);
+        failif(res < 0, EEXIST);
         fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
         fid->claim->pathname = fid->pathname;
 

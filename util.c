@@ -497,3 +497,39 @@ u32 group_to_gid(char *group) {
         return NOGID;
     return *gid;
 }
+
+enum path_type {
+    PATH_ADMIN,
+    PATH_PRE_ADMIN,
+    PATH_CURRENT,
+    PATH_READONLY,
+};
+
+/*
+enum path_type get_admin_path_type(char *path) {
+    int inadmin = 0;
+
+    int i, j, k;
+
+    for (;;) {
+        for (i = 0; path[i] == '/'; i++);
+        for (j = i; path[j] != 0 && path[j] != '/'; j++);
+        for (k = j; path[k] == '/'; k++);
+
+        if (i == j)
+            return inadmin ? PATH_ADMIN : PATH_PRE_ADMIN;
+
+        if (inadmin) {
+            char *name = substring(path, i, j - i);
+            char *end;
+            if (!strcmp(name, "current"))
+                return PATH_CURRENT;
+            else if (strtoul(name, &end, 10) > 0 && *end == 0)
+                return PATH_READONLY;
+            else if (!isupper(path[i]))
+                inadmin = 0;
+        } else if (isupper(path[i])) {
+            inadmin = 1;
+        } else {
+            
+}*/

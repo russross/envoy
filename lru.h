@@ -23,7 +23,6 @@
  * inventory cycles.
  */
 struct lru {
-    int count;
     int size;
     u32 counter;
     Hashtable *table;

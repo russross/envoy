@@ -30,7 +30,7 @@
 # envoy protocol extensions
 150 size[4] Tesnapshot tag[2] path[s]
 151 size[4] Resnapshot tag[2] newoid[8]
-152 size[4] Tegrant tag[2] type[1] path[s] count[4] data[count] rfid[4]
+152 size[4] Tegrant tag[2] type[1] path[s] rfid[4]
 153 size[4] Regrant tag[2] 
 154 size[4] Terevoke tag[2] path[s]
 155 size[4] Rerevoke tag[2] 
@@ -56,7 +56,7 @@
 205 size[4] Rsclone tag[2]
 206 size[4] Tsread tag[2] oid[8] time[4] offset[8] count[4]
 207 size[4] Rsread tag[2] count[4] data[count]
-208 size[4] Tswrite tag[2] oid[8] time[4] offset[8] count[4] data[count]
+208 size[4] Tswrite tag[2] time[4] offset[8] count[4] data[count] oid[8]
 209 size[4] Rswrite tag[2] count[4]
 210 size[4] Tsstat tag[2] oid[8]
 211 size[4] Rsstat tag[2] stat[n]

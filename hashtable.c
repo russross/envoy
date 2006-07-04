@@ -143,3 +143,7 @@ void hash_apply(Hashtable *table, void (*fun)(void *, void *, void *),
         }
     }
 }
+
+int hash_count(Hashtable *table) {
+    return table->size;
+}

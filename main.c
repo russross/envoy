@@ -150,6 +150,8 @@ int main(int argc, char **argv) {
     assert(sizeof(u32) == 4);
     assert(sizeof(u64) == 8);
 
+    GC_init();
+
     /* were we called as envoy or storage? */
     name = strstr(argv[0], "storage");
 

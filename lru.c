@@ -26,7 +26,6 @@ Lru *lru_new(int size, Hashfunc keyhash, Cmpfunc keycmp,
     lru->resurrect = resurrect;
     lru->cleanup = cleanup;
     lru->size = size;
-    lru->count = 0;
     lru->counter = 0;
 
     return lru;
@@ -63,13 +62,12 @@ void lru_add(Lru *lru, void *key, void *value) {
     }
 
     /* if we're full, clear a space */
-    while (lru->count >= lru->size) {
+    while (hash_count(lru->table) >= lru->size) {
         elt = heap_remove(lru->heap);
 
         /* has this item been touched since we saw it last? */
         if (elt->value == NULL) {
-            /* this item was removed, so flush it from the heap */
-            lru->count--;
+            /* this item was already removed */
         } else if (elt->count != elt->refresh) {
             /* re-insert it with its updated rank */
             elt->count = elt->refresh;
@@ -83,7 +81,6 @@ void lru_add(Lru *lru, void *key, void *value) {
             hash_remove(lru->table, elt->key);
             if (lru->cleanup != NULL)
                 lru->cleanup(elt->value);
-            lru->count--;
         }
     }
 
@@ -96,7 +93,6 @@ void lru_add(Lru *lru, void *key, void *value) {
 
     heap_add(lru->heap, elt);
     hash_set(lru->table, key, elt);
-    lru->count++;
 }
 
 void lru_clear(Lru *lru) {
@@ -110,10 +106,9 @@ void lru_clear(Lru *lru) {
             if (lru->cleanup != NULL)
                 lru->cleanup(elt->value);
         }
-        lru->count--;
     }
 
-    assert(lru->count == 0);
+    assert(hash_count(lru->table) == 0);
 }
 
 void lru_remove(Lru *lru, void *key) {

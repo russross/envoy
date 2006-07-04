@@ -135,15 +135,15 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
     /* do we need to read a new block?  loop because blocks can be empty */
     while (null(env->entries)) {
         u32 bytesread;
-        void *block;
+        u8 *block;
 
         /* have we already read the last block? */
         if (env->offset >= dirinfo->length)
             return NULL;
 
         /* read a block */
-        block = object_read(worker, fid->claim->oid, now(),
-                env->offset, BLOCK_SIZE, &bytesread);
+        object_read(worker, fid->claim->oid, now(),
+                env->offset, BLOCK_SIZE, &bytesread, &block);
         env->offset += BLOCK_SIZE;
 
         /* decode the entries in this block */
@@ -257,7 +257,7 @@ static int dir_iter(Worker *worker, Claim *claim,
 
     for (num = 0; !stop; num++) {
         u32 count;
-        void *data;
+        u8 *data;
         List *pre = NULL;
         List *post = NULL;
 
@@ -266,8 +266,8 @@ static int dir_iter(Worker *worker, Claim *claim,
             stop = 1;
         } else {
             /* read a block */
-            data = object_read(worker, claim->oid, now(),
-                    (u64) num * BLOCK_SIZE, BLOCK_SIZE, &count);
+            object_read(worker, claim->oid, now(),
+                    (u64) num * BLOCK_SIZE, BLOCK_SIZE, &count, &data);
             assert(data != NULL);
             pre = dir_unpack_entries(count, data);
         }
@@ -296,11 +296,12 @@ static int dir_iter(Worker *worker, Claim *claim,
     for ( ; !null(changes); changes = cdr(changes)) {
         int num = (int) caar(changes);
         List *entries = cdar(changes);
-        void *data = GC_MALLOC_ATOMIC(BLOCK_SIZE);
+        void *raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
+        u8 *data = raw + TSWRITE_DATA_OFFSET;
         u32 count;
         u64 offset;
 
-        assert(data != NULL);
+        assert(raw != NULL);
 
         count = dir_pack_entries(entries, data);
 
@@ -315,7 +316,7 @@ static int dir_iter(Worker *worker, Claim *claim,
 
         /* write the block */
         assert(object_write(worker, claim->oid, now(),
-                    offset, count, data) == count);
+                    offset, count, data, raw) == count);
         claim->info = NULL;
     }
 
