@@ -45,6 +45,8 @@ struct lease {
 
     /* root claim */
     Claim *claim;
+    /* claims that are deleted but still open */
+    List *deleted;
     /* all the exits from this lease */
     List *wavefront;
     /* all active fids using this lease */

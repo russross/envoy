@@ -50,6 +50,7 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
             insertinorder((Cmpfunc) lease_cmp, l->wavefront, car(wavefront));
         wavefront = cdr(wavefront);
     }
+    l->deleted = NULL;
 
     l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
             (Hashfunc) fid_hash,
@@ -253,8 +254,20 @@ static void lease_audit_iter(struct audit_env *env, char *pathname,
                 hash_set(env->inuse, claim, refcount);
             }
         }
-
-        /* step through the fids and verify refcounts */
+        stack = lease->deleted;
+        while (!null(stack)) {
+            int *refcount = GC_NEW_ATOMIC(int);
+            Claim *claim = car(stack);
+            stack = cdr(stack);
+            assert(claim->deleted);
+            eqnull(claim->parent, claim->pathname);
+            eqnull(claim->children, claim->pathname);
+            assert(claim->refcount != 0);
+            assert(refcount != NULL);
+            assert(hash_get(env->inuse, claim) == NULL);
+            *refcount = claim->refcount;
+            hash_set(env->inuse, claim, refcount);
+        }
     }
 }
 

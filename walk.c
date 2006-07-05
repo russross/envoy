@@ -202,6 +202,11 @@ static void walk_local(Worker *worker, Transaction *trans,
         } else if (!strcmp(name, "..")) {
             /* go back a directory */
             char *oldpath = env->pathname;
+
+            /* are we in a deleted directory? */
+            if (env->claim->deleted)
+                failwith(EEXIST);
+
             env->pathname = dirname(env->pathname);
             env->claim = claim_get_parent(worker, env->claim);
 

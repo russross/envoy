@@ -488,14 +488,18 @@ static enum dir_iter_action dir_rename_iter(
         struct direntry *elt = car(entries);
         if (!strcmp(elt->filename, env->newentry->filename)) {
             /* the new name already exists */
-            return DIR_ABORT;
+            setcar(entries, NULL);
+            *out = in;
+
+            /* note how much space we opened up */
+            deleted_offset += DIR_END_OFFSET + strlen(elt->filename);
         } else if (!strcmp(elt->filename, env->oldname)) {
             /* delete the old entry */
             setcar(entries, NULL);
             *out = in;
 
             /* note how much space we opened up */
-            deleted_offset = DIR_END_OFFSET + strlen(elt->filename);
+            deleted_offset += DIR_END_OFFSET + strlen(elt->filename);
 
             /* copy over the other data */
             env->newentry->oid = elt->oid;

@@ -929,6 +929,10 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         goto cleanup;
     }
 
+    /* succeed if it has already been deleted */
+    if (fid->claim->deleted)
+        goto cleanup;
+
     /* first make sure it's not a non-empty directory */
     require_info(fid->claim);
     if ((fid->claim->info->mode & DMDIR) && !dir_is_empty(worker, fid->claim)) {
@@ -959,7 +963,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         errnum = ENOENT;
     } else {
         /* TODO: delete the storage object? */
-        fid->claim->deleted = 1;
+        claim_delete(fid->claim);
     }
 
     cleanup:
@@ -999,6 +1003,10 @@ void handle_tstat(Worker *worker, Transaction *trans) {
 
     require_info(fid->claim);
     res->stat = fid->claim->info;
+
+    /* symlinks should show up as 0777 */
+    if ((res->stat->mode & DMSYMLINK))
+        res->stat->mode |= 0777;
 
     send_reply:
     send_reply(trans);
@@ -1107,7 +1115,9 @@ void handle_twstat(Worker *worker, Transaction *trans) {
             strcmp(filename(fid->pathname), req->stat->name))
     {
         Claim *parent;
+        Claim *oldfile;
         int res;
+        char *newpathname;
         failif(strchr(req->stat->name, '/'), EINVAL);
         failif(!strcmp(req->stat->name, "."), EINVAL);
         failif(!strcmp(req->stat->name, ".."), EINVAL);
@@ -1116,19 +1126,36 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         parent = claim_get_parent(worker, fid->claim);
 
         /* TODO: implement remote renames */
-        if (parent == NULL)
-            failif(1, ENOTSUP);
+        failif(parent == NULL, ENOTSUP);
 
         /* make sure they have write permission in the parent directory */
         require_info(parent);
         failif(!has_permission(fid->user, parent->info, 0444), EPERM);
 
+        newpathname = concatname(parent->pathname, req->stat->name);
+
+        /* check if the target name already exists */
+        /* TODO: implement remote renames */
+        failif(lease_get_remote(newpathname) != NULL, ENOTSUP);
+        oldfile = claim_get_child(worker, parent, req->stat->name);
+        if (oldfile != NULL) {
+            /* make sure it's not a directory */
+            require_info(oldfile);
+            failif((oldfile->info->mode & DMDIR), EEXIST);
+        }
+
         res = dir_rename(worker, parent, filename(fid->pathname),
                 req->stat->name);
 
-        failif(res < 0, EEXIST);
+        failif(res < 0, EPERM);
+        if (oldfile != NULL)
+            claim_delete(oldfile);
+        parent->children =
+            removeinorder((Cmpfunc) claim_cmp, parent->children, fid->claim);
         fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
         fid->claim->pathname = fid->pathname;
+        parent->children =
+            insertinorder((Cmpfunc) claim_cmp, parent->children, fid->claim);
 
         /* TODO: recursive name changes for all descendents */
     }

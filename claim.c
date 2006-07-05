@@ -67,10 +67,34 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     return claim;
 }
 
+void claim_delete(Claim *claim) {
+    assert(null(claim->children));
+    assert(!claim->deleted);
+    assert(claim->parent != NULL);
+
+    /* remove from the parent's children list */
+    claim->parent->children =
+        removeinorder((Cmpfunc) claim_cmp, claim->parent->children, claim);
+
+    claim->parent = NULL;
+    claim->deleted = 1;
+
+    if (claim->refcount > 0) {
+        claim->lease->deleted = insertinorder((Cmpfunc) claim_cmp,
+                claim->lease->deleted, claim);
+    }
+}
+
 void claim_release(Claim *claim) {
     /* keep the claim alive if there is an exit point immediately below it */
     if (lease_is_exit_point_parent(claim->lease, claim->pathname))
         return;
+
+    /* is this a deleted entry being clunked? */
+    if (claim->deleted && claim->lock == NULL && claim->refcount == 0) {
+        claim->lease->deleted = removeinorder((Cmpfunc) claim_cmp,
+                claim->lease->deleted, claim);
+    }
 
     /* delete up the tree as far as we can */
     while (claim->lock == NULL && claim->refcount == 0 &&

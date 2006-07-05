@@ -103,6 +103,7 @@ Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid);
 /* Create a new claim object in the same lease as the parent */
 Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid);
 
+void claim_delete(Claim *claim);
 /* Release a claim. */
 void claim_release(Claim *claim);
 
