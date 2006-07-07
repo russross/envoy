@@ -351,19 +351,6 @@ Objectdir *objectdir_lookup(Worker *worker, u64 start) {
     return dir;
 }
 
-struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
-    struct qid qid;
-    qid.type =
-        (mode & DMDIR) ? QTDIR :
-        (mode & DMSYMLINK) ? QTSLINK :
-        (mode & DMDEVICE) ? QTTMP :
-        QTFILE;
-    qid.version = mtime ^ (size << 8);
-    qid.path = oid;
-
-    return qid;
-}
-
 struct p9stat *oid_stat(Worker *worker, u64 oid) {
     /* get filename */
     u64 start = oid_dir_findstart(oid);

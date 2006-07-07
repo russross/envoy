@@ -62,6 +62,8 @@ enum path_type {
 };
 
 enum path_type get_admin_path_type(char *path);
+struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid);
+
 void util_state_init(void);
 
 #endif

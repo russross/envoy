@@ -223,7 +223,7 @@ void claim_thaw(Worker *worker, Claim *claim) {
 
         if (child != NULL) {
             assert(dir_change_oid(worker, claim, filename(child->pathname),
-                        child->oid, 0) == 0);
+                        child->oid, 0) != NOOID);
         }
 
         if (claim->access == ACCESS_COW) {

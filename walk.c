@@ -18,7 +18,6 @@
 #include "remote.h"
 #include "worker.h"
 #include "lru.h"
-#include "oid.h"
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"

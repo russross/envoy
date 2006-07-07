@@ -48,7 +48,6 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
         char *gid, char *extension);
 int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf);
 int oid_clone(Worker *worker, u64 oldoid, u64 newoid);
-struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid);
 
 void oid_state_init(void);
 

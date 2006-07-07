@@ -159,7 +159,8 @@ static void make_claim_cow(char *env, char *pathname, Claim *claim) {
 u64 lease_snapshot(Worker *worker, Claim *claim) {
     List *allexits = claim->lease->wavefront;
     List *exits = NULL;
-    List *newoids;
+    List *newoids = NULL;
+    List *stack;
     char *prefix = concatstrings(claim->pathname, "/");
 
     /* start by freezing everything */
@@ -167,6 +168,17 @@ u64 lease_snapshot(Worker *worker, Claim *claim) {
     hash_apply(claim->lease->claim_cache,
             (void (*)(void *, void *, void *)) make_claim_cow,
             prefix);
+    stack = cons(claim, NULL);
+    while (!null(stack)) {
+        List *children;
+        Claim *node = car(stack);
+        stack = cdr(stack);
+        if (node->access == ACCESS_WRITEABLE)
+            node->access = ACCESS_COW;
+        children = node->children;
+        for ( ; !null(children); children = cdr(children))
+            stack = cons(car(children), stack);
+    }
 
     /* recursively snapshot all the child leases */
     for ( ; !null(allexits); allexits = cdr(allexits)) {
@@ -174,7 +186,8 @@ u64 lease_snapshot(Worker *worker, Claim *claim) {
         if (startswith(lease->pathname, prefix))
             exits = cons(lease, exits);
     }
-    newoids = remote_snapshot(worker, exits);
+    if (!null(exits))
+        newoids = remote_snapshot(worker, exits);
 
     /* next clone the root */
     claim_thaw(worker, claim);
@@ -188,7 +201,7 @@ u64 lease_snapshot(Worker *worker, Claim *claim) {
         parent = claim_find(worker, dirname(exit->pathname));
         claim_thaw(worker, parent);
         assert(dir_change_oid(worker, parent,
-                filename(exit->pathname), *newoid, ACCESS_WRITEABLE) == 0);
+                filename(exit->pathname), *newoid, ACCESS_WRITEABLE) != NOOID);
 
         exits = cdr(exits);
         newoids = cdr(newoids);

@@ -540,3 +540,16 @@ enum path_type get_admin_path_type(char *path) {
 
     return PATH_ADMIN;
 }
+
+struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
+    struct qid qid;
+    qid.type =
+        (mode & DMDIR) ? QTDIR :
+        (mode & DMSYMLINK) ? QTSLINK :
+        (mode & DMDEVICE) ? QTTMP :
+        QTFILE;
+    qid.version = mtime ^ (size << 8);
+    qid.path = oid;
+
+    return qid;
+}

@@ -553,6 +553,7 @@ struct dir_change_oid_env {
     char *name;
     u64 oid;
     int cow;
+    u64 oldoid;
 };
 
 static enum dir_iter_action dir_change_oid_iter(
@@ -564,6 +565,7 @@ static enum dir_iter_action dir_change_oid_iter(
         struct direntry *elt = car(entries);
         if (!strcmp(elt->filename, env->name)) {
             /* update the entry */
+            env->oldoid = elt->oid;
             elt->oid = env->oid;
             elt->cow = env->cow;
 
@@ -578,7 +580,7 @@ static enum dir_iter_action dir_change_oid_iter(
     return DIR_CONTINUE;
 }
 
-int dir_change_oid(Worker *worker, Claim *dir, char *name,
+u64 dir_change_oid(Worker *worker, Claim *dir, char *name,
         u64 oid, int cow)
 {
     struct dir_change_oid_env env;
@@ -587,8 +589,13 @@ int dir_change_oid(Worker *worker, Claim *dir, char *name,
     env.oid = oid;
     env.cow = cow;
 
-    return dir_iter(worker, dir,
+    if (dir_iter(worker, dir,
             (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_change_oid_iter,
-            &env);
+            &env) < 0)
+    {
+        return NOOID;
+    } else {
+        return env.oldoid;
+    }
 }
