@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <ctype.h>
 #include <grp.h>
 #include <pwd.h>
 #include "types.h"
@@ -498,38 +499,44 @@ u32 group_to_gid(char *group) {
     return *gid;
 }
 
-enum path_type {
-    PATH_ADMIN,
-    PATH_PRE_ADMIN,
-    PATH_CURRENT,
-    PATH_READONLY,
-};
+int ispositiveint(char *s) {
+    int i;
+    for (i = 0; s[i] != 0; i++)
+        if (!isdigit(s[i]) || (i == 0 && s[i] == '0'))
+            return 0;
+    return 1;
+}
 
-/*
+#define CURRENT_LEN 7
+
 enum path_type get_admin_path_type(char *path) {
-    int inadmin = 0;
+    int i = 0, j, k;
+    int len;
+    char *name;
 
-    int i, j, k;
-
-    for (;;) {
-        for (i = 0; path[i] == '/'; i++);
+    while (path[i] != 0) {
+        /* pick out the next path element */
+        for ( ; path[i] == '/'; i++);
         for (j = i; path[j] != 0 && path[j] != '/'; j++);
-        for (k = j; path[k] == '/'; k++);
 
-        if (i == j)
-            return inadmin ? PATH_ADMIN : PATH_PRE_ADMIN;
+        /* at the end? */
+        if ((len = j - i) == 0)
+            break;
 
-        if (inadmin) {
-            char *name = substring(path, i, j - i);
-            char *end;
-            if (!strcmp(name, "current"))
-                return PATH_CURRENT;
-            else if (strtoul(name, &end, 10) > 0 && *end == 0)
-                return PATH_READONLY;
-            else if (!isupper(path[i]))
-                inadmin = 0;
-        } else if (isupper(path[i])) {
-            inadmin = 1;
-        } else {
-            
-}*/
+        name = &path[i];
+        i = j;
+
+        if (len == CURRENT_LEN && !strncmp(name, "current", CURRENT_LEN))
+            return PATH_CURRENT;
+
+        /* is it a positive integer? */
+        for (k = 0; k < len; k++)
+            if (!isdigit(name[k]) || (k == 0 && name[k] == '0'))
+                break;
+
+        if (k == len)
+            return PATH_SNAPSHOT;
+    }
+
+    return PATH_ADMIN;
+}

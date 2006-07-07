@@ -30,7 +30,7 @@ struct dir_read_env {
 void dir_clone(u32 count, u8 *data);
 u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data);
 /* returns 0 on success, -1 if the file already exists */
-int dir_create_entry(Worker *worker, Claim *dir, char *name, u64 oid);
+int dir_create_entry(Worker *worker, Claim *dir, char *name, u64 oid, int cow);
 /* returns 0 on success, -1 if not found */
 int dir_remove_entry(Worker *worker, Claim *dir, char *name);
 /* scan an entire directory and create claim for a specific target file */

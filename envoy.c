@@ -639,6 +639,8 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     struct qid qid;
     enum fid_status status;
     u64 newoid;
+    int cow = 0;
+    char *name;
 
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
@@ -680,38 +682,88 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     if ((req->perm & DMDIR)) {
         failif(req->mode != OREAD, EINVAL);
         perm = req->perm & (~0777 | (dirinfo->mode & 0777));
+    } else if (req->perm & DMSYMLINK) {
+        failif(req->mode != OREAD, EINVAL);
+        perm = req->perm & (~0777 | (dirinfo->mode & 0777));
     } else {
         req->mode &= ~OTRUNC;
         /* failif(req->mode & OTRUNC, EINVAL); */
         perm = req->perm & (~0666 | (dirinfo->mode & 0666));
     }
 
-    /* check for special administrative cases */
-//    if (is_pre_admin_directory(fid->pathname)) {
-//        /* only mkdir commands are allowed */
-//    } else if (is_admin_directory(fid->pathname)) {
-//        /* only administrative link commands allowed */
-//    } else {
+    /* is the an administrative op? */
+    if (get_admin_path_type(fid->pathname) == PATH_ADMIN &&
+            (!strcmp(req->name, "snapshot") ||
+            (!strcmp(req->name, "current") && !(req->perm & DMDIR)) ||
+            ispositiveint(req->name)))
+    {
+        /* snapshot is a reserved name */
+        failif(!strcmp(req->name, "snapshot"), EPERM);
+
+        /* admin commands are all symlinks */
+        failif(!(req->perm & DMSYMLINK), EPERM);
+
+        if (!strcmp(req->name, "current")) {
+            /* fork */
+            Claim *claim;
+
+            /* target of the link must be the full path of a valid snapshot */
+            failif(emptystring(req->extension), EINVAL);
+            claim = claim_find(worker, req->extension);
+            failif(claim == NULL, EINVAL);
+            failif(get_admin_path_type(dirname(claim->pathname)) != PATH_ADMIN,
+                    EINVAL);
+
+            /* is the target a symlink? */
+            require_info(claim);
+            name = filename(claim->pathname);
+            if ((claim->info->mode & DMSYMLINK) &&
+                    !ispositiveint(name) &&
+                    strcmp("current", name))
+            {
+                name = claim->info->extension;
+                failif(emptystring(name), EINVAL);
+                /* we only know how to handle symlinks to the current dir */
+                failif(!ispositiveint(name), EINVAL);
+                claim = claim_get_parent(worker, claim);
+                failif(claim == NULL, EIO);
+                claim = claim_get_child(worker, claim, name);
+                failif(claim == NULL, EINVAL);
+                require_info(claim);
+                name = filename(claim->pathname);
+            }
+
+            /* make sure this is a valid target */
+            failif(!ispositiveint(name), EINVAL);
+            failif(!(claim->info->mode & DMDIR), EINVAL);
+
+            newoid = claim->oid;
+            cow = 1;
+            perm = DMDIR | (dirinfo->mode & 0777);
+        } else {
+            /* snapshot */
+            failif(1, ENOTSUP);
+        }
+    } else {
         /* create the file */
         newoid = object_reserve_oid(worker);
-
         qid = object_create(worker, newoid, perm, now(), fid->user,
                 dirinfo->gid, req->extension);
+        name = req->name;
+    }
 
-        /* note: the client normally checks to make sure this doesn't exist
-         * before trying to create it, but a race with another client could
-         * still happen */
-        failif(dir_create_entry(worker, fid->claim, req->name, newoid) < 0,
-                EEXIST);
-        /* ... and object_delete(worker, newoid); on failure */
-//    }
+    /* note: the client normally checks to make sure this doesn't exist
+     * before trying to create it, but a race with another client could
+     * still happen */
+    failif(dir_create_entry(worker, fid->claim, name, newoid, cow) < 0,
+            EEXIST);
 
     /* directory info has changed */
     fid->claim->info = NULL;
 
     /* move this fid to the new file */
-    lease_add_claim_to_cache(
-            claim_new(fid->claim, req->name, ACCESS_WRITEABLE, newoid));
+    lease_add_claim_to_cache(claim_new(fid->claim, req->name,
+                cow ? ACCESS_COW : ACCESS_WRITEABLE, newoid));
     fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
     fid->status = status;
     fid->omode = req->mode;

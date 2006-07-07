@@ -52,9 +52,16 @@ u32 user_to_uid(char *user);
 char *uid_to_user(u32 uid);
 u32 group_to_gid(char *group);
 char *gid_to_group(u32 gid);
-int is_pre_admin_directory(char *dir);
+int ispositiveint(char *s);
 int is_admin_directory(char *dir);
 
+enum path_type {
+    PATH_ADMIN,
+    PATH_CURRENT,
+    PATH_SNAPSHOT,
+};
+
+enum path_type get_admin_path_type(char *path);
 void util_state_init(void);
 
 #endif

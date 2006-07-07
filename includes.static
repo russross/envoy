@@ -19,6 +19,7 @@
     '<netinet/in.h>',
     '<errno.h>',
     '<string.h>',
+    '<ctype.h>',
     '<getopt.h>',
     '<grp.h>',
     '<pwd.h>',
@@ -175,6 +176,10 @@
         'strcmp' => 1,
         'strcat' => 1,
         'strlen' => 1,
+    },
+
+    '<ctype.h>' => {
+        'isdigit' => 1,
     },
 
     '<stdio.h>' => {

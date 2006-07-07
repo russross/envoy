@@ -353,7 +353,7 @@ static enum dir_iter_action dir_create_entry_iter(
     return DIR_CONTINUE;
 }
 
-int dir_create_entry(Worker *worker, Claim *dir, char *name, u64 oid) {
+int dir_create_entry(Worker *worker, Claim *dir, char *name, u64 oid, int cow) {
     struct dir_create_entry_env env;
     int result;
 
@@ -362,7 +362,7 @@ int dir_create_entry(Worker *worker, Claim *dir, char *name, u64 oid) {
     env.newentry = GC_NEW(struct direntry);
     assert(env.newentry != NULL);
     env.newentry->oid = oid;
-    env.newentry->cow = 0;
+    env.newentry->cow = cow;
     env.newentry->filename = name;
 
     result = dir_iter(worker, dir,
