@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include "types.h"
-#include "9p.h"
 #include "list.h"
 #include "hashtable.h"
 #include "worker.h"
@@ -96,10 +95,11 @@ Lease *lease_find_root(char *pathname);
  * are exit points */
 int lease_is_exit_point_parent(Lease *lease, char *pathname);
 
-/* Clones the lease root, Resets relevant claim cache, copies trails to lease
- * exits, and snapshots child leases recursively.  Lease must be exclusive
- * locked before the call, and the claim must be locked as well */
-u64 lease_snapshot(Worker *worker, Claim *claim);
+/* Freezes the given claim and its children, including relevant claim cache,
+ * copies trails to lease exits, and snapshots child leases recursively.
+ * Lease must be exclusive locked before the call.  The new oid and the cow
+ * status can be queried from the claim; there is no return value. */
+void lease_snapshot(Worker *worker, Claim *claim);
 
 void lease_dump_graph(Lease *lease);
 void lease_audit(void);

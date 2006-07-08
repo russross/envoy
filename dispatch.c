@@ -252,7 +252,7 @@ void dispatch(Worker *worker, Transaction *trans) {
                     get_admin_path_type(fid->pathname) == PATH_ADMIN &&
                     (!strcmp(trans->in->msg.tcreate.name, "snapshot") ||
                      (!strcmp(trans->in->msg.tcreate.name, "current") &&
-                      (!trans->in->msg.tcreate.perm & DMDIR)) ||
+                      !(trans->in->msg.tcreate.perm & DMDIR)) ||
                      ispositiveint(trans->in->msg.tcreate.name)))
             {
                 isadmincreate = 1;

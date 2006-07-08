@@ -203,15 +203,16 @@ Claim *claim_find(Worker *worker, char *targetname) {
 
 /* ensure that the given claim (which must be active) is writable */
 void claim_thaw(Worker *worker, Claim *claim) {
-    Claim *child = claim;
+    Claim *branch = claim;
+    Claim *child = NULL;
 
     /* start by locking all the claims we'll need */
-    do {
-        reserve(worker, LOCK_CLAIM, child);
-        child = child->parent;
-    } while (child != NULL && child->access == ACCESS_COW && !child->deleted);
-
-    child = NULL;
+    while (branch != NULL && !branch->deleted) {
+        reserve(worker, LOCK_CLAIM, branch);
+        if (branch->access == ACCESS_WRITEABLE)
+            break;
+        branch = branch->parent;
+    }
 
     /* now clone up the tree, updating parent directories as we go */
     do {
@@ -222,8 +223,9 @@ void claim_thaw(Worker *worker, Claim *claim) {
         }
 
         if (child != NULL) {
-            assert(dir_change_oid(worker, claim, filename(child->pathname),
-                        child->oid, 0) != NOOID);
+            u64 oldoid = dir_change_oid(worker, claim,
+                    filename(child->pathname), child->oid, 0);
+            assert(oldoid != NOOID);
         }
 
         if (claim->access == ACCESS_COW) {

@@ -641,11 +641,6 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         failif(get_admin_path_type(dirname(target->pathname)) != PATH_ADMIN,
                 EINVAL);
 
-        if (DEBUG_VERBOSE) {
-            printf("fork from %s to %s/current\n", target->pathname,
-                    fid->pathname);
-        }
-
         /* is the target a symlink? */
         require_info(target);
         targetname = filename(target->pathname);
@@ -663,9 +658,6 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
             failif(target == NULL, EINVAL);
             require_info(target);
             targetname = filename(target->pathname);
-            if (DEBUG_VERBOSE) {
-                printf("symlink to %s\n", targetname);
-            }
         }
 
         /* make sure this is a valid target */
@@ -685,7 +677,8 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
 
         /* the target of the request must be current */
         failif(emptystring(req->extension), EINVAL);
-        failif(strcmp(req->extension, "current"), EINVAL);
+        failif(strcmp(req->extension, "current") &&
+                strcmp(req->extension, "current/"), EINVAL);
 
         /* make sure the new snapshot is the right number */
         snapshot = claim_get_child(worker, fid->claim, "snapshot");
@@ -704,26 +697,22 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
             List *targets;
             List *newoids;
 
-            if (DEBUG_VERBOSE) {
-                printf("snapshot remote: %s/current\n", fid->pathname);
-            }
             Lease *lease =
                 lease_get_remote(concatname(fid->pathname, "current"));
             failif(lease == NULL, EINVAL);
             targets = cons(lease, NULL);
             newoids = remote_snapshot(worker, targets);
             newoid = *(u64 *) car(newoids);
+            cow = 0;
         } else {
             /* we own current */
-            newoid = lease_snapshot(worker, current);
-            if (DEBUG_VERBOSE) {
-                printf("snapshot local: %s -> current [%llu]\n", req->name,
-                        newoid);
-            }
+            lease_snapshot(worker, current);
+            newoid = current->oid;
+            cow = current->access == ACCESS_COW;
             assert(current->oid == newoid);
             current->info = NULL;
         }
-        oldoid = dir_change_oid(worker, fid->claim, "current", newoid, 0);
+        oldoid = dir_change_oid(worker, fid->claim, "current", newoid, cow);
         failif(oldoid == NOOID, EIO);
 
         /* create/update snapshot */
@@ -745,10 +734,6 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         qid = makeqid(info->mode, info->mtime, info->length, oldoid);
         newoid = oldoid;
         cow = 0;
-    }
-
-    if (DEBUG_VERBOSE) {
-        printf("creating %s with oid=%llu cow=%d\n", req->name, newoid, cow);
     }
 
     /* note: the client normally checks to make sure this doesn't exist

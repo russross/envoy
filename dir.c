@@ -86,6 +86,8 @@ static u32 dir_pack_entries(List *entries, u8 *data) {
 
 /* prime the claim cache for all the entries in the list */
 static void dir_prime_claim_cache(Claim *dir, List *entries) {
+    enum path_type type = get_admin_path_type(dir->pathname);
+
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
         char *pathname = concatname(dir->pathname, elt->filename);
@@ -101,8 +103,10 @@ static void dir_prime_claim_cache(Claim *dir, List *entries) {
         /* is it already in the cache? */
         if (lease_lookup_claim_from_cache(dir->lease, pathname) == NULL) {
             /* create a new claim and add it to the cache */
-            Claim *claim = claim_new(dir, elt->filename,
-                    fid_access_child(dir->access, elt->cow), elt->oid);
+            enum claim_access access = fid_access_child(dir->access, elt->cow);
+            if (type == PATH_ADMIN && ispositiveint(elt->filename))
+                access = ACCESS_READONLY;
+            Claim *claim = claim_new(dir, elt->filename, access, elt->oid);
             lease_add_claim_to_cache(claim);
         }
     }
@@ -568,6 +572,7 @@ static enum dir_iter_action dir_change_oid_iter(
             env->oldoid = elt->oid;
             elt->oid = env->oid;
             elt->cow = env->cow;
+            *out = in;
 
             return DIR_STOP;
         }

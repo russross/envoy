@@ -53,7 +53,6 @@ char *uid_to_user(u32 uid);
 u32 group_to_gid(char *group);
 char *gid_to_group(u32 gid);
 int ispositiveint(char *s);
-int is_admin_directory(char *dir);
 
 enum path_type {
     PATH_ADMIN,
