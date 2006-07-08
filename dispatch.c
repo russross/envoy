@@ -164,6 +164,8 @@ void dispatch_storage(Worker *worker, Transaction *trans) {
 void dispatch(Worker *worker, Transaction *trans) {
     u32 oldfid = NOFID;
     u32 newfid = NOFID;
+    Fid *fid = NULL;
+    int isadmincreate = 0;
 
     if (!isstorage && storage_servers == NULL)
         storage_server_connection_init();
@@ -230,15 +232,12 @@ void dispatch(Worker *worker, Transaction *trans) {
 #undef new_fid
 
     /* if a new fid is required, make sure it isn't already in use */
-    if (newfid != NOFID && newfid != oldfid &&
-            fid_lookup(trans->conn, newfid) != NULL)
-    {
-        failif(fid_lookup(trans->conn, newfid) == NULL, EBADF);
-    }
+    if (newfid != NOFID && newfid != oldfid)
+        failif(fid_lookup(trans->conn, newfid) != NULL, EBADF);
 
     /* check and possibly lock the fid */
     if (oldfid != NOFID) {
-        Fid *fid = fid_lookup(trans->conn, oldfid);
+        fid = fid_lookup(trans->conn, oldfid);
 
         /* make sure it's a valid fid */
         failif(fid == NULL, EBADF);
@@ -248,6 +247,17 @@ void dispatch(Worker *worker, Transaction *trans) {
             /* lock the fid only */
             reserve(worker, LOCK_FID, fid);
         } else {
+            /* is this a special admin operation? */
+            if (trans->in->id == TCREATE &&
+                    get_admin_path_type(fid->pathname) == PATH_ADMIN &&
+                    (!strcmp(trans->in->msg.tcreate.name, "snapshot") ||
+                     (!strcmp(trans->in->msg.tcreate.name, "current") &&
+                      (!trans->in->msg.tcreate.perm & DMDIR)) ||
+                     ispositiveint(trans->in->msg.tcreate.name)))
+            {
+                isadmincreate = 1;
+            }
+
             /* lock the lease first */
             lock_lease(worker, fid->claim->lease);
 
@@ -276,7 +286,12 @@ void dispatch(Worker *worker, Transaction *trans) {
     switch (trans->in->id) {
         case TATTACH:   handle_tattach(worker, trans);          break;
         case TOPEN:     handle_topen(worker, trans);            break;
-        case TCREATE:   handle_tcreate(worker, trans);          break;
+        case TCREATE:
+                        if (isadmincreate)
+                            handle_tcreate_admin(worker, trans);
+                        else
+                            handle_tcreate(worker, trans);
+                        break;
         case TREAD:     handle_tread(worker, trans);            break;
         case TWRITE:    handle_twrite(worker, trans);           break;
         case TCLUNK:    handle_tclunk(worker, trans);           break;

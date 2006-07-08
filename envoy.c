@@ -602,6 +602,179 @@ void handle_topen(Worker *worker, Transaction *trans) {
     send_reply(trans);
 }
 
+void handle_tcreate_admin(Worker *worker, Transaction *trans) {
+    struct Tcreate *req = &trans->in->msg.tcreate;
+    struct Rcreate *res = &trans->out->msg.rcreate;
+    Fid *fid;
+    struct p9stat *dirinfo;
+    u32 perm;
+    struct qid qid;
+    u64 newoid;
+    int cow;
+
+    /* snapshot is a reserved name */
+    failif(!strcmp(req->name, "snapshot"), EPERM);
+
+    /* all admin commands are symlinks */
+    failif(!(req->perm & DMSYMLINK), EPERM);
+
+    require_fid_unopenned(fid);
+    require_info(fid->claim);
+
+    /* create can only occur in a directory */
+    dirinfo = fid->claim->info;
+    failif(!(dirinfo->mode & DMDIR), ENOTDIR);
+    failif(!has_permission(fid->user, dirinfo, 0222), EACCES);
+
+    failif(req->mode != OREAD, EINVAL);
+    perm = req->perm & (~0777 | (dirinfo->mode & 0777));
+
+    if (!strcmp(req->name, "current")) {
+        /* fork */
+        Claim *target;
+        char *targetname;
+
+        /* target of the link must be the full path of a valid snapshot */
+        failif(emptystring(req->extension), EINVAL);
+        target = claim_find(worker, req->extension);
+        failif(target == NULL, EINVAL);
+        failif(get_admin_path_type(dirname(target->pathname)) != PATH_ADMIN,
+                EINVAL);
+
+        if (DEBUG_VERBOSE) {
+            printf("fork from %s to %s/current\n", target->pathname,
+                    fid->pathname);
+        }
+
+        /* is the target a symlink? */
+        require_info(target);
+        targetname = filename(target->pathname);
+        if ((target->info->mode & DMSYMLINK) &&
+                !ispositiveint(targetname) &&
+                strcmp("current", targetname))
+        {
+            targetname = target->info->extension;
+            failif(emptystring(targetname), EINVAL);
+            /* we only know how to handle symlinks to the current dir */
+            failif(!ispositiveint(targetname), EINVAL);
+            target = claim_get_parent(worker, target);
+            failif(target == NULL, EIO);
+            target = claim_get_child(worker, target, targetname);
+            failif(target == NULL, EINVAL);
+            require_info(target);
+            targetname = filename(target->pathname);
+            if (DEBUG_VERBOSE) {
+                printf("symlink to %s\n", targetname);
+            }
+        }
+
+        /* make sure this is a valid target */
+        failif(!ispositiveint(targetname), EINVAL);
+        failif(!(target->info->mode & DMDIR), EINVAL);
+
+        qid = makeqid(target->info->mode, target->info->mtime,
+                target->info->length, target->oid);
+        newoid = target->oid;
+        cow = 1;
+    } else {
+        /* snapshot */
+        Claim *snapshot, *current;
+        u64 oldoid;
+        u32 n = 1;
+        struct p9stat *info;
+
+        /* the target of the request must be current */
+        failif(emptystring(req->extension), EINVAL);
+        failif(strcmp(req->extension, "current"), EINVAL);
+
+        /* make sure the new snapshot is the right number */
+        snapshot = claim_get_child(worker, fid->claim, "snapshot");
+        if (snapshot != NULL) {
+            require_info(snapshot);
+            failif(!(snapshot->info->mode & DMSYMLINK), EINVAL);
+            failif(emptystring(snapshot->info->extension), EINVAL);
+            failif(!ispositiveint(snapshot->info->extension), EINVAL);
+            n = atoi(snapshot->info->extension) + 1;
+        }
+        failif(strcmp(u32tostr(n), req->name), EINVAL);
+
+        current = claim_get_child(worker, fid->claim, "current");
+        if (current == NULL) {
+            /* someone else owns current */
+            List *targets;
+            List *newoids;
+
+            if (DEBUG_VERBOSE) {
+                printf("snapshot remote: %s/current\n", fid->pathname);
+            }
+            Lease *lease =
+                lease_get_remote(concatname(fid->pathname, "current"));
+            failif(lease == NULL, EINVAL);
+            targets = cons(lease, NULL);
+            newoids = remote_snapshot(worker, targets);
+            newoid = *(u64 *) car(newoids);
+        } else {
+            /* we own current */
+            newoid = lease_snapshot(worker, current);
+            if (DEBUG_VERBOSE) {
+                printf("snapshot local: %s -> current [%llu]\n", req->name,
+                        newoid);
+            }
+            assert(current->oid == newoid);
+            current->info = NULL;
+        }
+        oldoid = dir_change_oid(worker, fid->claim, "current", newoid, 0);
+        failif(oldoid == NOOID, EIO);
+
+        /* create/update snapshot */
+        if (snapshot == NULL) {
+            u64 snapoid = object_reserve_oid(worker);
+            object_create(worker, snapoid, DMSYMLINK | 0777, now(),
+                    fid->user, dirinfo->gid, req->name);
+            failif(dir_create_entry(worker, fid->claim, "snapshot",
+                        snapoid, 0) < 0, EIO);
+        } else {
+            struct p9stat *delta = p9stat_new();
+            delta->extension = req->name;
+            object_wstat(worker, snapshot->oid, delta);
+            snapshot->info = NULL;
+        }
+
+        /* get the qid */
+        info = object_stat(worker, oldoid, req->name);
+        qid = makeqid(info->mode, info->mtime, info->length, oldoid);
+        newoid = oldoid;
+        cow = 0;
+    }
+
+    if (DEBUG_VERBOSE) {
+        printf("creating %s with oid=%llu cow=%d\n", req->name, newoid, cow);
+    }
+
+    /* note: the client normally checks to make sure this doesn't exist
+     * before trying to create it, but a race with another client could
+     * still happen */
+    failif(dir_create_entry(worker, fid->claim, req->name, newoid, cow) < 0,
+            EEXIST);
+
+    /* directory info has changed */
+    fid->claim->info = NULL;
+
+    /* move this fid to the new file */
+    lease_add_claim_to_cache(claim_new(fid->claim, req->name,
+                cow ? ACCESS_COW : ACCESS_READONLY, newoid));
+    fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
+
+    fid->status = STATUS_UNOPENNED;
+    fid->omode = req->mode;
+
+    /* prepare and send the reply */
+    res->qid = qid;
+    res->iounit = trans->conn->maxSize - RREAD_HEADER;
+
+    send_reply(trans);
+}
+
 /**
  * tcreate: prepare a fid for i/o on a new file
  *
@@ -639,7 +812,6 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     struct qid qid;
     enum fid_status status;
     u64 newoid;
-    int cow = 0;
 
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
@@ -690,131 +862,15 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
         perm = req->perm & (~0666 | (dirinfo->mode & 0666));
     }
 
-    /* is the an administrative op? */
-    if (get_admin_path_type(fid->pathname) == PATH_ADMIN &&
-            (!strcmp(req->name, "snapshot") ||
-            (!strcmp(req->name, "current") && !(req->perm & DMDIR)) ||
-            ispositiveint(req->name)))
-    {
-        /* snapshot is a reserved name */
-        failif(!strcmp(req->name, "snapshot"), EPERM);
-
-        /* admin commands are all symlinks */
-        failif(!(req->perm & DMSYMLINK), EPERM);
-
-        if (!strcmp(req->name, "current")) {
-            /* fork */
-            Claim *target;
-            char *targetname;
-
-            /* target of the link must be the full path of a valid snapshot */
-            failif(emptystring(req->extension), EINVAL);
-            target = claim_find(worker, req->extension);
-            failif(target == NULL, EINVAL);
-            failif(get_admin_path_type(dirname(target->pathname)) != PATH_ADMIN,
-                    EINVAL);
-
-            /* is the target a symlink? */
-            require_info(target);
-            targetname = filename(target->pathname);
-            if ((target->info->mode & DMSYMLINK) &&
-                    !ispositiveint(targetname) &&
-                    strcmp("current", targetname))
-            {
-                targetname = target->info->extension;
-                failif(emptystring(targetname), EINVAL);
-                /* we only know how to handle symlinks to the current dir */
-                failif(!ispositiveint(targetname), EINVAL);
-                target = claim_get_parent(worker, target);
-                failif(target == NULL, EIO);
-                target = claim_get_child(worker, target, targetname);
-                failif(target == NULL, EINVAL);
-                require_info(target);
-                targetname = filename(target->pathname);
-            }
-
-            /* make sure this is a valid target */
-            failif(!ispositiveint(targetname), EINVAL);
-            failif(!(target->info->mode & DMDIR), EINVAL);
-
-            qid = makeqid(target->info->mode, target->info->mtime,
-                    target->info->length, target->oid);
-            newoid = target->oid;
-            cow = 1;
-        } else {
-            /* snapshot */
-            Claim *snapshot, *current;
-            u64 oldoid;
-            u32 n = 1;
-            struct p9stat *info;
-
-            /* the target of the request must be current */
-            failif(emptystring(req->extension), EINVAL);
-            failif(strcmp(req->extension, "current"), EINVAL);
-
-            /* make sure the new snapshot is the right number */
-            snapshot = claim_get_child(worker, fid->claim, "snapshot");
-            if (snapshot != NULL) {
-                require_info(snapshot);
-                failif(!(snapshot->info->mode & DMSYMLINK), EINVAL);
-                failif(emptystring(snapshot->info->extension), EINVAL);
-                failif(!ispositiveint(snapshot->info->extension), EINVAL);
-                n = atoi(snapshot->info->extension) + 1;
-            }
-            failif(strcmp(u32tostr(n), req->name), EINVAL);
-
-            current = claim_get_child(worker, fid->claim, "current");
-            if (current == NULL) {
-                /* someone else owns current */
-                List *targets;
-                List *newoids;
-
-                Lease *lease =
-                    lease_get_remote(concatname(fid->pathname, "current"));
-                failif(lease == NULL, EINVAL);
-                targets = cons(lease, NULL);
-                newoids = remote_snapshot(worker, targets);
-                newoid = *(u64 *) car(newoids);
-            } else {
-                /* we own current */
-                newoid = lease_snapshot(worker, current);
-                assert(current->oid == newoid);
-                current->info = NULL;
-            }
-            oldoid = dir_change_oid(worker, fid->claim, "current", newoid, 0);
-            failif(oldoid == NOOID, EIO);
-
-            /* create/update snapshot */
-            if (snapshot == NULL) {
-                u64 snapoid = object_reserve_oid(worker);
-                object_create(worker, snapoid, DMSYMLINK | 0777, now(),
-                        fid->user, dirinfo->gid, req->name);
-                failif(dir_create_entry(worker, fid->claim, "snapshot",
-                            snapoid, 0) < 0, EIO);
-            } else {
-                struct p9stat *delta = p9stat_new();
-                delta->extension = req->name;
-                object_wstat(worker, snapshot->oid, delta);
-                snapshot->info = NULL;
-            }
-
-            /* get the qid */
-            info = object_stat(worker, oldoid, req->name);
-            qid = makeqid(info->mode, info->mtime, info->length, oldoid);
-            newoid = oldoid;
-            cow = 0;
-        }
-    } else {
-        /* create the file */
-        newoid = object_reserve_oid(worker);
-        qid = object_create(worker, newoid, perm, now(), fid->user,
-                dirinfo->gid, req->extension);
-    }
+    /* create the file */
+    newoid = object_reserve_oid(worker);
+    qid = object_create(worker, newoid, perm, now(), fid->user,
+            dirinfo->gid, req->extension);
 
     /* note: the client normally checks to make sure this doesn't exist
      * before trying to create it, but a race with another client could
      * still happen */
-    failif(dir_create_entry(worker, fid->claim, req->name, newoid, cow) < 0,
+    failif(dir_create_entry(worker, fid->claim, req->name, newoid, 0) < 0,
             EEXIST);
 
     /* directory info has changed */
@@ -822,7 +878,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
 
     /* move this fid to the new file */
     lease_add_claim_to_cache(claim_new(fid->claim, req->name,
-                cow ? ACCESS_COW : ACCESS_WRITEABLE, newoid));
+                ACCESS_WRITEABLE, newoid));
     fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
     fid->status = status;
     fid->omode = req->mode;
