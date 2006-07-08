@@ -96,9 +96,9 @@ Lease *lease_find_root(char *pathname);
 int lease_is_exit_point_parent(Lease *lease, char *pathname);
 
 /* Freezes the given claim and its children, including relevant claim cache,
- * copies trails to lease exits, and snapshots child leases recursively.
- * Lease must be exclusive locked before the call.  The new oid and the cow
- * status can be queried from the claim; there is no return value. */
+ * copies trails to lease exits, and snapshots child leases recursively.  This
+ * call obtains an exclusive lock on the lease.  The new oid and the cow status
+ * can be queried from the claim; there is no return value. */
 void lease_snapshot(Worker *worker, Claim *claim);
 
 void lease_dump_graph(Lease *lease);

@@ -149,33 +149,30 @@ static void unlock_lease_cleanup(Lease *lease) {
     /* note: we leave wait_for_update set to keep the lease locked */
 }
 
-#define cleanup(var) do { \
-    var = obj; \
-    var->lock = NULL; \
+#define cleanup(_type) do { \
+    ((_type *) obj)->lock = NULL; \
 } while (0)
 
 void worker_cleanup(Worker *worker) {
     while (!null(worker->cleanup)) {
-        struct objectdir *dir;
-        struct openfile *file;
-        Fid *fid;
-        Claim *claim;
-        Walk *walk;
         enum lock_types type = (enum lock_types) caar(worker->cleanup);
         void *obj = cdar(worker->cleanup);
         worker->cleanup = cdr(worker->cleanup);
 
         switch (type) {
-            case LOCK_DIRECTORY:        cleanup(dir);   break;
-            case LOCK_OPENFILE:         cleanup(file);  break;
-            case LOCK_FID:              cleanup(fid);   break;
-            case LOCK_WALK:             cleanup(walk);  break;
+            case LOCK_DIRECTORY:        cleanup(struct objectdir);      break;
+            case LOCK_OPENFILE:         cleanup(struct openfile);       break;
+            case LOCK_FID:              cleanup(Fid);                   break;
+            case LOCK_WALK:             cleanup(Walk);                  break;
             case LOCK_CLAIM:
-                cleanup(claim);
+                cleanup(Claim);
                 claim_release((Claim *) obj);
                 break;
             case LOCK_LEASE:
                 unlock_lease_cleanup((Lease *) obj);
+                break;
+            case LOCK_LEASE_EXCLUSIVE:
+                ((Lease *) obj)->wait_for_update = NULL;
                 break;
             default:
                 assert(0);
@@ -192,7 +189,7 @@ Worker *worker_attempt_to_acquire(Worker *worker, Worker *other) {
     /* we lose */
     other->blocking = cons(worker, other->blocking);
     longjmp(worker->jmp, WORKER_BLOCKED);
-    return NULL;
+    assert(0);
 }
 
 void worker_retry(Worker *worker) {
@@ -208,15 +205,42 @@ void unlock(void) {
 }
 
 void lock_lease(Worker *worker, Lease *lease) {
-    /* FIXME: think this through--also optimize repeat lock calls */
+    if (lease->wait_for_update == worker)
+        return;
     worker_attempt_to_acquire(worker, lease->wait_for_update);
     lease->inflight++;
     worker_cleanup_add(worker, LOCK_LEASE, lease);
 }
 
-void unlock_lease(Worker *worker, Lease *lease) {
-    worker_cleanup_remove(worker, LOCK_LEASE, lease);
-    unlock_lease_cleanup(lease);
+void lock_lease_exclusive(Worker *worker, Lease *lease) {
+    List *cleanup = worker->cleanup;
+    List *prev = NULL;
+
+    if (lease->wait_for_update == worker)
+        return;
+    worker_attempt_to_acquire(worker, lease->wait_for_update);
+
+    /* clean out any regular locks that we hold on this lease */
+    while (lease->inflight > 0 && !null(cleanup)) {
+        if (caar(cleanup) == (void *) LOCK_LEASE && cdar(cleanup) == lease) {
+            lease->inflight--;
+            if (prev == NULL)
+                worker->cleanup = cdr(cleanup);
+            else
+                setcdr(prev, cdr(cleanup));
+        }
+        cleanup = cdr(cleanup);
+    }
+
+    /* prevent any new transactions starting and signal our interest */
+    lease->wait_for_update = worker;
+
+    /* want for existing inflight transactions to finish */
+    if (lease->inflight > 0)
+        longjmp(worker->jmp, WORKER_BLOCKED);
+
+    /* only add to the cleanup list once we've succeeded */
+    worker_cleanup_add(worker, LOCK_LEASE_EXCLUSIVE, lease);
 }
 
 void cond_signal(pthread_cond_t *cond) {

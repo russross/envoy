@@ -1068,6 +1068,14 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     require_fid(fid);
 
+    if (!strcmp(filename(fid->pathname), "snapshot") &&
+            get_admin_path_type(dirname(fid->pathname)) == PATH_ADMIN)
+    {
+        /* can't delete the snapshot symlink */
+        errnum = EPERM;
+        goto cleanup;
+    }
+
     if ((walk = walk_lookup(worker, fid->pathname, fid->user)) != NULL)
         walk_remove(fid->pathname);
 
@@ -1201,13 +1209,15 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     Fid *fid;
     struct p9stat *info = NULL;
     struct p9stat *delta = p9stat_new();
+    char *oldname;
 
     require_fid(fid);
 
     /* handle forwarding */
     if (fid->isremote) {
         forward_to_envoy(worker, trans, fid);
-        /* TODO: update local state */
+        if (trans->out->id == RWSTAT && !emptystring(req->stat->name))
+            fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
         goto send_reply;
     }
 
@@ -1259,12 +1269,12 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     /* extension */
     if (!emptystring(req->stat->extension)) {
         /* no extension changes allowed? */
-        failif(1, EACCES);
+        failif(1, EPERM);
     }
 
     /* rename */
     if (!emptystring(req->stat->name) &&
-            strcmp(filename(fid->pathname), req->stat->name))
+            strcmp((oldname = filename(fid->pathname)), req->stat->name))
     {
         Claim *parent;
         Claim *oldfile;
@@ -1274,6 +1284,14 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         failif(!strcmp(req->stat->name, "."), EINVAL);
         failif(!strcmp(req->stat->name, ".."), EINVAL);
         failif(!strcmp(fid->pathname, "/"), EPERM);
+        /* no renames on admin files */
+        failif(get_admin_path_type(fid->pathname) == PATH_ADMIN &&
+                (!strcmp(req->stat->name, "current") ||
+                 !strcmp(req->stat->name, "snapshot") ||
+                 ispositiveint(req->stat->name) ||
+                 !strcmp(oldname, "current") ||
+                 !strcmp(oldname, "snapshot") ||
+                 ispositiveint(oldname)), EPERM);
 
         parent = claim_get_parent(worker, fid->claim);
 

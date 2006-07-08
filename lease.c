@@ -162,6 +162,8 @@ void lease_snapshot(Worker *worker, Claim *claim) {
     List *newoids = NULL;
     char *prefix = concatstrings(claim->pathname, "/");
 
+    lock_lease_exclusive(worker, claim->lease);
+
     /* start by freezing everything */
     claim_freeze(worker, claim);
     hash_apply(claim->lease->claim_cache,
