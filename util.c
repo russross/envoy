@@ -24,6 +24,9 @@ Hashtable *uid_to_user_table;
 Hashtable *group_to_gid_table;
 Hashtable *gid_to_group_table;
 
+static List *raw_buffer;
+static int raw_buffer_count;
+
 /*****************************************************************************/
 
 /* we know base to be well-formed, with a leading slash, no trailing slash */
@@ -464,6 +467,9 @@ void util_state_init(void) {
         }
     }
     endgrent();
+
+    raw_buffer = NULL;
+    raw_buffer_count = 0;
 }
 
 int isgroupmember(char *user, char *group) {
@@ -552,4 +558,29 @@ struct qid makeqid(u32 mode, u32 mtime, u64 size, u64 oid) {
     qid.path = oid;
 
     return qid;
+}
+
+void *raw_new(void) {
+    void *raw;
+    if (null(raw_buffer)) {
+        raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
+        assert(raw != NULL);
+        if (DEBUG_VERBOSE)
+            printf("raw_buffer_count = %d\n", ++raw_buffer_count);
+    } else {
+        raw = car(raw_buffer);
+        raw_buffer = cdr(raw_buffer);
+    }
+    return raw;
+}
+
+void raw_delete(void *raw) {
+    if (raw == NULL)
+        return;
+    if (DEBUG_VERBOSE) {
+        List *raws = raw_buffer;
+        for ( ; !null(raws); raws = cdr(raws))
+            assert(car(raws) != raw);
+    }
+    raw_buffer = cons(raw, raw_buffer);
 }

@@ -140,13 +140,14 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
     while (null(env->entries)) {
         u32 bytesread;
         u8 *block;
+        void *raw;
 
         /* have we already read the last block? */
         if (env->offset >= dirinfo->length)
             return NULL;
 
         /* read a block */
-        object_read(worker, fid->claim->oid, now(),
+        raw = object_read(worker, fid->claim->oid, now(),
                 env->offset, BLOCK_SIZE, &bytesread, &block);
         env->offset += BLOCK_SIZE;
 
@@ -155,6 +156,8 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 
         /* cache these entries */
         dir_prime_claim_cache(fid->claim, env->entries);
+
+        raw_delete(raw);
     }
 
     /* get stats for the next entry */
@@ -264,16 +267,18 @@ static int dir_iter(Worker *worker, Claim *claim,
         u8 *data;
         List *pre = NULL;
         List *post = NULL;
+        void *raw;
 
         if ((u64) num * BLOCK_SIZE >= dirinfo->length) {
             /* we're past the end of the directory */
             stop = 1;
         } else {
             /* read a block */
-            object_read(worker, claim->oid, now(),
+            raw = object_read(worker, claim->oid, now(),
                     (u64) num * BLOCK_SIZE, BLOCK_SIZE, &count, &data);
             assert(data != NULL);
             pre = dir_unpack_entries(count, data);
+            raw_delete(raw);
         }
 
         /* add all local entries to the claim cache */
@@ -300,12 +305,10 @@ static int dir_iter(Worker *worker, Claim *claim,
     for ( ; !null(changes); changes = cdr(changes)) {
         int num = (int) caar(changes);
         List *entries = cdar(changes);
-        void *raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
+        void *raw = raw_new();
         u8 *data = raw + TSWRITE_DATA_OFFSET;
         u32 count;
         u64 offset;
-
-        assert(raw != NULL);
 
         count = dir_pack_entries(entries, data);
 

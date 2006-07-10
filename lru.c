@@ -1,9 +1,11 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "types.h"
 #include "9p.h"
 #include "hashtable.h"
+#include "config.h"
 #include "heap.h"
 #include "lru.h"
 
@@ -21,8 +23,8 @@ Lru *lru_new(int size, Hashfunc keyhash, Cmpfunc keycmp,
     Lru *lru = GC_NEW(Lru);
     assert(lru != NULL);
 
-    lru->table = hash_create((size + 1) * 3 / 2, keyhash, keycmp);
-    lru->heap = heap_new(size + 1, (Cmpfunc) lru_cmp);
+    lru->table = hash_create(((size + 1) * 3) / 2, keyhash, keycmp);
+    lru->heap = heap_new(2 * size + 1, (Cmpfunc) lru_cmp);
     lru->resurrect = resurrect;
     lru->cleanup = cleanup;
     lru->size = size;
@@ -45,6 +47,25 @@ void *lru_get(Lru *lru, void *key) {
     return elt->value;
 }
 
+static void lru_compress(Lru *lru) {
+    int count = lru->heap->count;
+    while (lru->heap->count > hash_count(lru->table)) {
+        struct lru_elt *elt = heap_remove(lru->heap);
+
+        if (elt->value == NULL)
+            continue;
+        else if (elt->count != elt->refresh)
+            elt->count = elt->refresh;
+        else
+            elt->count = elt->refresh = lru->counter++;
+
+        heap_add(lru->heap, elt);
+    }
+
+    if (DEBUG_VERBOSE)
+        printf("lru_compress: from %d to %d\n", count, lru->heap->count);
+}
+
 void lru_add(Lru *lru, void *key, void *value) {
     struct lru_elt *elt;
 
@@ -60,6 +81,10 @@ void lru_add(Lru *lru, void *key, void *value) {
         elt->refresh = lru->counter++;
         return;
     }
+
+    /* make sure the heap doesn't grow out of control */
+    if (lru->heap->count >= lru->size * 2)
+        lru_compress(lru);
 
     /* if we're full, clear a space */
     while (hash_count(lru->table) >= lru->size) {

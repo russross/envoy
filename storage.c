@@ -94,12 +94,17 @@ void handle_tsread(Worker *worker, Transaction *trans) {
     guard(lseek(file->fd, req->offset, SEEK_SET));
 
     /* use the raw message buffer */
+    trans->out->raw = raw_new();
     res->data = trans->out->raw + RSREAD_DATA_OFFSET;
 
     unlock();
     len = read(file->fd, res->data, req->count);
     lock();
 
+    if (len < 0) {
+        raw_delete(trans->out->raw);
+        trans->out->raw = NULL;
+    }
     guard(len);
     res->count = (u32) len;
 
@@ -127,6 +132,9 @@ void handle_tswrite(Worker *worker, Transaction *trans) {
     len = write(file->fd, req->data, req->count);
     lock();
 
+    raw_delete(trans->in->raw);
+
+    trans->in->raw = NULL;
     guard(len);
     res->count = (u32) len;
 

@@ -6,6 +6,7 @@
 #include "transaction.h"
 #include "worker.h"
 
+int custom_raw(Message *m);
 void send_request(Transaction *trans);
 void send_requests(List *list);
 void send_reply(Transaction *trans);

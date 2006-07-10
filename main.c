@@ -151,6 +151,7 @@ int main(int argc, char **argv) {
     assert(sizeof(u64) == 8);
 
     GC_init();
+    GC_use_entire_heap = 0;
 
     /* were we called as envoy or storage? */
     name = strstr(argv[0], "storage");

@@ -138,9 +138,12 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
 
     /* copy the whole message over */
     env = trans_new(NULL, NULL, message_new());
-    message_raw_release(env->out->raw);
-    env->out->raw = trans->in->raw;
-    trans->in->raw = NULL;
+    if (custom_raw(trans->in)) {
+        env->out->raw = trans->in->raw;
+        trans->in->raw = NULL;
+    } else {
+        assert(trans->in->raw == NULL);
+    }
     memcpy(&env->out->msg, &trans->in->msg, sizeof(trans->in->msg));
     env->out->id = trans->in->id;
 
@@ -165,11 +168,15 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
     send_request(env);
 
     /* now copy the response back into trans */
-    message_raw_release(trans->out->raw);
-    trans->out->raw = env->in->raw;
-    env->in->raw = NULL;
     memcpy(&trans->out->msg, &env->in->msg, sizeof(env->in->msg));
     trans->out->id = env->in->id;
+
+    if (custom_raw(trans->out)) {
+        trans->out->raw = env->in->raw;
+        env->in->raw = NULL;
+    } else {
+        assert(env->in->raw == NULL);
+    }
 }
 
 #undef copy_forward
@@ -936,8 +943,8 @@ void handle_tread(Worker *worker, Transaction *trans) {
 
         if (req->offset >= info->length) {
             res->count = 0;
+            trans->out->raw = raw_new();
         } else {
-            message_raw_release(trans->out->raw);
             trans->out->raw = object_read(worker, fid->claim->oid, now(),
                     req->offset, count, &res->count, &res->data);
         }
@@ -951,14 +958,18 @@ void handle_tread(Worker *worker, Transaction *trans) {
         failif(req->offset != fid->readdir_cookie, ESPIPE);
 
         /* use the raw message buffer for data */
+        trans->out->raw = raw_new();
         res->data = trans->out->raw + RREAD_DATA_OFFSET;
 
         /* read directory entries until we run out or the buffer is full */
         res->count = dir_read(worker, fid, count, res->data);
 
         /* was a single entry too big for the return buffer? */
-        failif(res->count == 0 && fid->readdir_env->next != NULL,
-                ENAMETOOLONG);
+        if (res->count == 0 && fid->readdir_env->next != NULL) {
+            raw_delete(trans->out->raw);
+            trans->out->raw = NULL;
+            failif(1, ENAMETOOLONG);
+        }
 
         /* take note of how many bytes we ended up with */
         /* note: eof is signaled by return 0 bytes (dir_read caches this) */
@@ -967,7 +978,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
         failif(-1, EPERM);
     }
 
-send_reply:
+    send_reply:
     send_reply(trans);
 }
 
@@ -996,11 +1007,17 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     struct Twrite *req = &trans->in->msg.twrite;
     struct Rwrite *res = &trans->out->msg.rwrite;
     Fid *fid;
+    void *raw;
 
     require_fid(fid);
-    failif((fid->omode & OMASK) == OREAD, EACCES);
-    failif((fid->omode & OMASK) == OEXEC, EACCES);
-    failif(fid->status != STATUS_OPEN_FILE, EPERM);
+
+    if (((fid->omode & OMASK) != OWRITE && (fid->omode & OMASK) != ORDWR) ||
+            fid->status != STATUS_OPEN_FILE)
+    {
+        raw_delete(trans->in->raw);
+        trans->in->raw = NULL;
+        failif(1, EPERM);
+    }
 
     /* handle forwarding */
     if (fid->isremote) {
@@ -1008,10 +1025,10 @@ void handle_twrite(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-    res->count = object_write(worker, fid->claim->oid, now(), req->offset,
-            req->count, req->data, trans->in->raw);
-    /* we've passed this to the control of object_write */
+    raw = trans->in->raw;
     trans->in->raw = NULL;
+    res->count = object_write(worker, fid->claim->oid, now(), req->offset,
+            req->count, req->data, raw);
     fid->claim->info = NULL;
 
     send_reply:

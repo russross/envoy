@@ -4,34 +4,17 @@
 #include <string.h>
 #include <time.h>
 #include <gc/gc.h>
-#include "list.h"
 
 /*
  * constructors
  */
 
-static struct list *raw_buffer = NULL;
-static int raw_buffer_count = 0;
-
 struct message *message_new(void) {
     struct message *msg = GC_NEW(struct message);
     assert(msg != NULL);
-    if (null(raw_buffer)) {
-        msg->raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
-        assert(msg->raw != NULL);
-        if (DEBUG_VERBOSE)
-            printf("raw_buffer_count = %d\n", ++raw_buffer_count);
-    } else {
-        msg->raw = car(raw_buffer);
-        raw_buffer = cdr(raw_buffer);
-    }
+    msg->raw = NULL;
     msg->tag = ALLOCTAG;
     return msg;
-}
-
-void message_raw_release(void *raw) {
-    if (raw != NULL)
-        raw_buffer = cons(raw, raw_buffer);
 }
 
 struct p9stat *p9stat_new(void) {

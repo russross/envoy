@@ -24,9 +24,6 @@ struct p9stat *remote_stat(Worker *worker, Address *target, char *pathname) {
 
     send_request(trans);
 
-    message_raw_release(trans->in->raw);
-    message_raw_release(trans->out->raw);
-
     assert(trans->in != NULL && trans->in->id == RESTATREMOTE);
     res = &trans->in->msg.restatremote;
 
@@ -50,9 +47,6 @@ u16 remote_walk(Worker *worker, Address *target,
     set_tewalkremote(trans->out, fid, newfid, nwname, wname, user, pathname);
 
     send_request(trans);
-
-    message_raw_release(trans->in->raw);
-    message_raw_release(trans->out->raw);
 
     assert(trans->in != NULL);
     if (trans->in->id == REWALKREMOTE) {
@@ -86,9 +80,6 @@ void remote_closefid(Worker *worker, Address *target, u32 fid) {
 
     send_request(trans);
 
-    message_raw_release(trans->in->raw);
-    message_raw_release(trans->out->raw);
-
     /* TODO: what if this fails?  migration during the middle of a walk, or
      * during a client shutdown */
     assert(trans->in != NULL && trans->in->id == RECLOSEFID);
@@ -117,10 +108,8 @@ List *remote_snapshot(Worker *worker, List *targets) {
     /* build a (forward) list of new oids */
     for ( ; !null(requests); requests = cdr(requests)) {
         u64 *res = GC_NEW_ATOMIC(u64);
-        trans = car(requests);
-        message_raw_release(trans->in->raw);
-        message_raw_release(trans->out->raw);
         assert(res != NULL);
+        trans = car(requests);
         assert(trans->in->id == RESNAPSHOT);
         *res = trans->in->msg.resnapshot.newoid;
         results = cons(res, results);

@@ -41,6 +41,12 @@ static void write_message(Connection *conn) {
 
             assert(msg != NULL);
 
+            if (custom_raw(msg)) {
+                assert(msg->raw != NULL);
+            } else {
+                assert(msg->raw == NULL);
+                msg->raw = raw_new();
+            }
             packMessage(msg, conn->maxSize);
 
             /* print the message out if the right debug flag is set */
@@ -79,6 +85,8 @@ static void write_message(Connection *conn) {
         /* that message is finished */
         conn->partial_out = NULL;
         conn->partial_out_bytes = 0;
+        raw_delete(msg->raw);
+        msg->raw = NULL;
     }
 
     /* this was the last message in the queue so stop trying to write */
@@ -93,6 +101,7 @@ static Message *read_message(Connection *conn) {
     if (conn->partial_in == NULL) {
         conn->partial_in = msg = message_new();
         conn->partial_in_bytes = bytes = 0;
+        msg->raw = raw_new();
     } else {
         msg = conn->partial_in;
         bytes = conn->partial_in_bytes;
@@ -101,7 +110,7 @@ static Message *read_message(Connection *conn) {
     /* we start by reading the size field, then the whole message */
     size = (bytes < 4) ? 4 : msg->size;
 
-    while (bytes < size) {
+    for (;;) {
         int res =
             recv(conn->fd, msg->raw + bytes, size - bytes, MSG_DONTWAIT);
 
@@ -142,6 +151,10 @@ static Message *read_message(Connection *conn) {
                 /* success */
                 conn->partial_in = NULL;
                 conn->partial_in_bytes = 0;
+                if (!custom_raw(msg)) {
+                    raw_delete(msg->raw);
+                    msg->raw = NULL;
+                }
                 return msg;
             }
         }
@@ -409,8 +422,6 @@ Transaction *connect_envoy(Connection *conn) {
         assert(0);
 
     send_request(trans);
-    message_raw_release(trans->in->raw);
-    message_raw_release(trans->out->raw);
 
     /* check Rversion results */
     res = &trans->in->msg.rversion;

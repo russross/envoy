@@ -104,7 +104,6 @@ struct p9stat {
 };
 
 struct message *message_new(void);
-void message_raw_release(void *raw);
 struct p9stat *p9stat_new(void);
 
 int statsize(struct p9stat *elt);

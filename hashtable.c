@@ -1,10 +1,12 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
 #include "hashtable.h"
+#include "config.h"
 
 /*
  * Generic hash tables
@@ -71,6 +73,8 @@ static void hash_size_double(Hashtable *table) {
 
     table->bucketCount = newBucketCount;
     table->buckets = newBuckets;
+    if (DEBUG_VERBOSE)
+        printf("hash_size_double: new size = %d buckets\n", newBucketCount);
 }
 
 void hash_set(Hashtable *table, void *key, void *value) {
@@ -93,7 +97,7 @@ void hash_set(Hashtable *table, void *key, void *value) {
     } else {
         table->buckets[hash] = cons(cons(key, value), table->buckets[hash]);
         table->size++;
-        if (table->size > table->bucketCount * 2 / 3)
+        if (table->size > (table->bucketCount * 2) / 3)
             hash_size_double(table);
     }
 }

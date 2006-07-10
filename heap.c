@@ -12,10 +12,12 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "util.h"
+#include "config.h"
 #include "heap.h"
 
 /**
@@ -45,6 +47,8 @@ static void heap_resize(Heap *heap, int newSize) {
     assert(heap->array != NULL);
     memcpy(heap->array, old, sizeof(void *) * (heap->count + 1));
     heap->size = newSize;
+    if (DEBUG_VERBOSE)
+        printf("heap_resize: new size is %d elements\n", newSize);
 }
 
 /**

@@ -47,6 +47,8 @@ static void walk_build_qids(struct walk_env *env) {
                  env->result == WALK_COMPLETED_REMOTE))
         {
             walk_remove(walk->pathname);
+        } else {
+            lru_add(walk_cache, walk->pathname, walk);
         }
         env->qids = cons(qid, env->qids);
         env->walks = cdr(env->walks);
@@ -463,7 +465,6 @@ Walk *walk_new(Worker *worker, char *pathname, char *user, struct qid *qid,
         walk->addr = addr;
         /* mark the new walk as being in use */
         reserve(worker, LOCK_WALK, walk);
-        lru_add(walk_cache, pathname, walk);
     } else {
         reserve(worker, LOCK_WALK, walk);
 
