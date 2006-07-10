@@ -138,7 +138,9 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
 
     /* copy the whole message over */
     env = trans_new(NULL, NULL, message_new());
+    message_raw_release(env->out->raw);
     env->out->raw = trans->in->raw;
+    trans->in->raw = NULL;
     memcpy(&env->out->msg, &trans->in->msg, sizeof(trans->in->msg));
     env->out->id = trans->in->id;
 
@@ -163,7 +165,9 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
     send_request(env);
 
     /* now copy the response back into trans */
+    message_raw_release(trans->out->raw);
     trans->out->raw = env->in->raw;
+    env->in->raw = NULL;
     memcpy(&trans->out->msg, &env->in->msg, sizeof(env->in->msg));
     trans->out->id = env->in->id;
 }
@@ -933,6 +937,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
         if (req->offset >= info->length) {
             res->count = 0;
         } else {
+            message_raw_release(trans->out->raw);
             trans->out->raw = object_read(worker, fid->claim->oid, now(),
                     req->offset, count, &res->count, &res->data);
         }
@@ -1005,6 +1010,8 @@ void handle_twrite(Worker *worker, Transaction *trans) {
 
     res->count = object_write(worker, fid->claim->oid, now(), req->offset,
             req->count, req->data, trans->in->raw);
+    /* we've passed this to the control of object_write */
+    trans->in->raw = NULL;
     fid->claim->info = NULL;
 
     send_reply:

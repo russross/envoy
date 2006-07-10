@@ -4,18 +4,34 @@
 #include <string.h>
 #include <time.h>
 #include <gc/gc.h>
+#include "list.h"
 
 /*
  * constructors
  */
 
+static struct list *raw_buffer = NULL;
+static int raw_buffer_count = 0;
+
 struct message *message_new(void) {
     struct message *msg = GC_NEW(struct message);
     assert(msg != NULL);
-    msg->raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
-    assert(msg->raw != NULL);
+    if (null(raw_buffer)) {
+        msg->raw = GC_MALLOC_ATOMIC(GLOBAL_MAX_SIZE);
+        assert(msg->raw != NULL);
+        if (DEBUG_VERBOSE)
+            printf("raw_buffer_count = %d\n", ++raw_buffer_count);
+    } else {
+        msg->raw = car(raw_buffer);
+        raw_buffer = cdr(raw_buffer);
+    }
     msg->tag = ALLOCTAG;
     return msg;
+}
+
+void message_raw_release(void *raw) {
+    if (raw != NULL)
+        raw_buffer = cons(raw, raw_buffer);
 }
 
 struct p9stat *p9stat_new(void) {
@@ -171,7 +187,13 @@ u8 *unpackData(u8 *raw, int size, int *i, u32 *len) {
 
 char *unpackString(u8 *raw, int size, int *i) {
     char *s = NULL;
-    int len = unpackU16(raw, size, i);
+    int len;
+
+    /* workaround for bug in kernel module: accept a missing string at the end
+     * of a record as an empty string */
+    if (*i == size)
+        return NULL;
+    len = unpackU16(raw, size, i);
     if (*i < 0) return NULL;
     *i += len;
     if (len == 0)

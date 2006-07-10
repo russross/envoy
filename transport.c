@@ -409,8 +409,10 @@ Transaction *connect_envoy(Connection *conn) {
         assert(0);
 
     send_request(trans);
+    message_raw_release(trans->in->raw);
+    message_raw_release(trans->out->raw);
 
-    /* check Rversion results and prepare a Tauth message */
+    /* check Rversion results */
     res = &trans->in->msg.rversion;
 
     /* blow up if the reply wasn't what we were expecting */

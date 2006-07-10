@@ -178,6 +178,8 @@ void dispatch(Worker *worker, Transaction *trans) {
     if (DEBUG_AUDIT && worker_active_count() == 1)
         lease_audit();
 
+    if (trans->out != NULL)
+        message_raw_release(trans->out->raw);
     trans->out = message_new();
     trans->out->tag = trans->in->tag;
     trans->out->id = trans->in->id + 1;
@@ -185,9 +187,13 @@ void dispatch(Worker *worker, Transaction *trans) {
     /* farm out handshakes and storage messages */
     if (trans->conn->type == CONN_UNKNOWN_IN) {
         dispatch_unknown(worker, trans);
+        message_raw_release(trans->in->raw);
+        message_raw_release(trans->out->raw);
         return;
     } else if (trans->conn->type == CONN_STORAGE_IN) {
         dispatch_storage(worker, trans);
+        message_raw_release(trans->in->raw);
+        message_raw_release(trans->out->raw);
         return;
     } else if (trans->conn->type != CONN_CLIENT_IN &&
             trans->conn->type != CONN_ENVOY_IN)
@@ -317,4 +323,7 @@ void dispatch(Worker *worker, Transaction *trans) {
                         handle_error(worker, trans);
                         printf("\nBad request from client\n");
     }
+
+    message_raw_release(trans->in->raw);
+    message_raw_release(trans->out->raw);
 }

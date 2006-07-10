@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
@@ -11,9 +12,9 @@
 #include "worker.h"
 
 /* Operations on storage objects.
- * These functions allow simple calls to the object storage service.  They handle
- * local caching, find storage servers based on OID, and handle replication.
- */
+ * These functions allow simple calls to the object storage service.  They
+ * handle local caching, find storage servers based on OID, and handle
+ * replication. */
 
 /* pool of reserved oids */
 static u64 object_reserve_next = ~ (u64) 0;
@@ -37,6 +38,8 @@ u64 object_reserve_oid(Worker *worker) {
 
         object_reserve_next = res->firstoid;
         object_reserve_remaining = res->count;
+        message_raw_release(trans->in->raw);
+        message_raw_release(trans->out->raw);
     }
 
     object_reserve_remaining--;
@@ -70,6 +73,8 @@ struct qid object_create(Worker *worker, u64 oid, u32 mode, u32 ctime,
     while (!null(requests)) {
         trans = car(requests);
         assert(trans->in != NULL && trans->in->id == RSCREATE);
+        message_raw_release(trans->in->raw);
+        message_raw_release(trans->out->raw);
         requests = cdr(requests);
     }
 
@@ -96,6 +101,8 @@ void object_clone(Worker *worker, u64 oid, u64 newoid) {
     while (!null(requests)) {
         trans = car(requests);
         assert(trans->in != NULL && trans->in->id == RSCLONE);
+        message_raw_release(trans->in->raw);
+        message_raw_release(trans->out->raw);
         requests = cdr(requests);
     }
 }
@@ -120,6 +127,7 @@ void *object_read(Worker *worker, u64 oid, u32 atime, u64 offset, u32 count,
 
     *bytesread = res->count;
     *data = res->data;
+    message_raw_release(trans->out->raw);
     return trans->in->raw;
 }
 
@@ -131,11 +139,17 @@ u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
     struct Rswrite *res;
     int i;
 
-    /* we need new raw buffers for storage_server_count > 1 */
-    assert(storage_server_count == 1);
     for (i = 0; i < storage_server_count; i++) {
         trans = trans_new(storage_servers[i], NULL, message_new());
-        trans->out->raw = raw;
+        /* we need new raw buffers for storage_server_count > 1 */
+        if (i == 0) {
+            message_raw_release(trans->out->raw);
+            trans->out->raw = raw;
+        } else {
+            data = trans->out->raw + TWRITE_DATA_OFFSET;
+            memcpy(data, raw + TWRITE_DATA_OFFSET, count);
+        }
+
         trans->out->tag = ALLOCTAG;
         trans->out->id = TSWRITE;
         set_tswrite(trans->out, mtime, offset, count, data, oid);
@@ -154,6 +168,8 @@ u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
         trans = car(requests);
         assert(trans->in != NULL && trans->in->id == RSWRITE);
         assert(trans->in->msg.rswrite.count == res->count);
+        message_raw_release(trans->in->raw);
+        message_raw_release(trans->out->raw);
         requests = cdr(requests);
     }
 
@@ -179,6 +195,9 @@ struct p9stat *object_stat(Worker *worker, u64 oid, char *filename) {
     /* insert the filename supplied by the caller */
     res->stat->name = filename;
 
+    message_raw_release(trans->in->raw);
+    message_raw_release(trans->out->raw);
+
     return res->stat;
 }
 
@@ -202,6 +221,8 @@ void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     while (!null(requests)) {
         trans = car(requests);
         assert(trans->in != NULL && trans->in->id == RSWSTAT);
+        message_raw_release(trans->in->raw);
+        message_raw_release(trans->out->raw);
         requests = cdr(requests);
     }
 }
