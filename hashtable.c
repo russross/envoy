@@ -40,7 +40,6 @@ Hashtable *hash_create(
 void *hash_get(Hashtable *table, const void *key) {
     u32 hash;
     List *elt;
-    int test = 1;
 
     assert(table != NULL);
     assert(key != NULL);
@@ -48,10 +47,10 @@ void *hash_get(Hashtable *table, const void *key) {
     hash = table->keyhash(key) % table->bucketCount;
     elt = table->buckets[hash];
 
-    while (!null(elt) && (test = table->keycmp(key, caar(elt))) < 0)
+    while (!null(elt) && table->keycmp(key, caar(elt)))
         elt = cdr(elt);
 
-    return test ? NULL : cdar(elt);
+    return null(elt) ? NULL : cdar(elt);
 }
 
 static void hash_size_double(Hashtable *table) {
@@ -81,8 +80,6 @@ static void hash_size_double(Hashtable *table) {
 void hash_set(Hashtable *table, void *key, void *value) {
     u32 hash;
     List *elt;
-    List *prev = NULL;
-    int test = 1;
 
     assert(table != NULL);
     assert(key != NULL);
@@ -92,49 +89,44 @@ void hash_set(Hashtable *table, void *key, void *value) {
 
     /* check if this key already exists */
     elt = table->buckets[hash];
-    while (!null(elt) && (test = table->keycmp(key, caar(elt))) < 0) {
-        prev = elt;
+    while (!null(elt) && table->keycmp(key, caar(elt)))
         elt = cdr(elt);
-    }
 
-    if (!test) {
+    if (!null(elt)) {
         setcar(elt, cons(key, value));
-        return;
-    } else if (null(prev)) {
-        table->buckets[hash] = cons(cons(key, value), table->buckets[hash]);
     } else {
-        setcdr(prev, cons(cons(key, value), elt));
+        table->buckets[hash] = cons(cons(key, value), table->buckets[hash]);
+        table->size++;
+        if (table->size > (table->bucketCount * 2) / 3)
+            hash_size_double(table);
     }
-
-    table->size++;
-    if (table->size > (table->bucketCount * 2) / 3)
-        hash_size_double(table);
 }
 
 void hash_remove(Hashtable *table, const void *key) {
     u32 hash;
-    List *elt;
-    List *prev = NULL;
-    int test = 1;
+    List *elt, *prev;
 
     assert(table != NULL);
     assert(key != NULL);
 
     hash = table->keyhash(key) % table->bucketCount;
-
+    prev = NULL;
     elt = table->buckets[hash];
-    while (!null(elt) && (test = table->keycmp(key, caar(elt))) < 0) {
+
+    while (!null(elt) && table->keycmp(key, caar(elt))) {
         prev = elt;
         elt = cdr(elt);
     }
 
-    if (!test) {
+    /* element didn't exist */
+    if (null(elt))
         return;
-    } else if (null(prev)) {
+
+    /* was it the first element? */
+    if (null(prev))
         table->buckets[hash] = cdr(elt);
-    } else {
+    else
         setcdr(prev, cdr(elt));
-    }
 
     table->size--;
 }

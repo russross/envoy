@@ -206,7 +206,10 @@ u32 generic_hash(const void *elt, int len, u32 hash) {
 }
 
 u32 string_hash(const char *str) {
-    return generic_hash(str, strlen(str), 0);
+    u32 hash = 0;
+    while (*str)
+        hash = hash * 157 + *(str++);
+    return hash;
 }
 
 /* convert a u32 to a string, allocating the necessary storage */

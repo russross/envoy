@@ -63,7 +63,9 @@ static void *worker_loop(Worker *t) {
 
     lock();
 
-    for (i = 0; i < THREAD_LIFETIME; i++) {
+    /* threads seem to hold on to 8mb each after they terminate, so we don't
+     * let threads expire */
+    for (i = 0; 1 || i < THREAD_LIFETIME; i++) {
         if (i > 0) {
             /* wait in the pool for a request */
             worker_thread_pool = append_elt(worker_thread_pool, t);
@@ -84,10 +86,12 @@ static void *worker_loop(Worker *t) {
             if (state == WORKER_BLOCKED) {
                 /* wait for the blocking transaction to finish,
                  * then start over */
-                printf("WORKER_BLOCKED sleeping\n");
+                if (DEBUG_VERBOSE)
+                    printf("WORKER_BLOCKED sleeping\n");
                 worker_cleanup(t);
                 cond_wait(t->sleep);
-                printf("WORKER_BLOCKED waking up\n");
+                if (DEBUG_VERBOSE)
+                    printf("WORKER_BLOCKED waking up\n");
                 worker_wake_up_next();
             } else if (state == WORKER_RETRY) {
                 worker_cleanup(t);
@@ -229,6 +233,7 @@ void lock_lease_exclusive(Worker *worker, Lease *lease) {
             else
                 setcdr(prev, cdr(cleanup));
         }
+        prev = cleanup;
         cleanup = cdr(cleanup);
     }
 
