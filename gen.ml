@@ -395,6 +395,7 @@ let outputPrinter out m =
       begin
         let newline = ref false in
         let fieldLine elt =
+          newline := false;
           match elt with
           | FName name -> raise BadMessage
           | FInt1 name ->

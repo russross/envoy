@@ -156,8 +156,10 @@ void fid_state_init(void) {
     fid_remote_vector = vector_create(FID_REMOTE_VECTOR_SIZE);
 }
 
-u32 fid_reserve_remote(void) {
-    return vector_alloc(fid_remote_vector, (void *) 0xdeadbeef);
+u32 fid_reserve_remote(Worker *worker) {
+    u32 result = vector_alloc(fid_remote_vector, (void *) 0xdeadbeef);
+    worker_cleanup_add(worker, LOCK_REMOTE_FID, (void *) result);
+    return result;
 }
 
 void fid_set_remote(u32 rfid, Fid *fid) {

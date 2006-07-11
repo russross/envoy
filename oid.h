@@ -6,7 +6,6 @@
 #include "9p.h"
 #include "util.h"
 #include "worker.h"
-#include "lru.h"
 
 /* filenames:
  *  18 d0755 username groupnam
@@ -34,9 +33,6 @@ struct objectdir {
     char **filenames;
 };
 
-Lru *init_objectdir_lru(void);
-Lru *init_openfile_lru(void);
-
 u64 oid_find_next_available(void);
 Openfile *oid_add_openfile(u64 oid, int fd);
 Openfile *oid_get_openfile(Worker *worker, u64 oid);
@@ -48,6 +44,7 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
         char *gid, char *extension);
 int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf);
 int oid_clone(Worker *worker, u64 oldoid, u64 newoid);
+char *oid_delete(Worker *worker, u64 oid);
 
 void oid_state_init(void);
 

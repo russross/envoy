@@ -28,8 +28,10 @@ static void rerror(Message *m, u16 errnum, int line) {
     m->id = RERROR;
     m->msg.rerror.errnum = errnum;
     m->msg.rerror.ename = stringcopy(strerror(errnum));
-    fprintf(stderr, "error #%u: %s (%s line %d)\n",
-            (u32) errnum, m->msg.rerror.ename, __FILE__, line);
+    if (DEBUG_VERBOSE) {
+        fprintf(stderr, "error #%u: %s (%s line %d)\n",
+                (u32) errnum, m->msg.rerror.ename, __FILE__, line);
+    }
 }
 
 #define failif(p,e) do { \
@@ -159,6 +161,7 @@ void dispatch_storage(Worker *worker, Transaction *trans) {
         case TSWRITE:   handle_tswrite(worker, trans);      break;
         case TSSTAT:    handle_tsstat(worker, trans);       break;
         case TSWSTAT:   handle_tswstat(worker, trans);      break;
+        case TSDELETE:  handle_tsdelete(worker, trans);     break;
 
         default:
             handle_error(worker, trans);
@@ -271,7 +274,7 @@ void dispatch(Worker *worker, Transaction *trans) {
 
             /* for write ops, make sure the object is writable */
             if (trans->in->id == TCREATE || trans->in->id == TWRITE ||
-                    trans->in->id == TREMOVE || trans->in->id == TWSTAT ||
+                    trans->in->id == TWSTAT ||
                     (trans->in->id == TOPEN &&
                      (trans->in->msg.topen.mode & OTRUNC)))
             {

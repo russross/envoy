@@ -8,6 +8,7 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "vector.h"
 #include "fid.h"
 #include "config.h"
 #include "worker.h"
@@ -63,8 +64,8 @@ static void *worker_loop(Worker *t) {
 
     lock();
 
-    /* threads seem to hold on to 8mb each after they terminate, so we don't
-     * let threads expire */
+    /* threads seem to hold on to 8mb each even after they terminate,
+     * so we don't let threads expire */
     for (i = 0; 1 || i < THREAD_LIFETIME; i++) {
         if (i > 0) {
             /* wait in the pool for a request */
@@ -106,12 +107,11 @@ static void *worker_loop(Worker *t) {
 
         /* make anyone waiting on this transaction ready to run, then run one */
         if (!null(t->blocking)) {
-            while (!null(t->blocking)) {
+            for ( ; !null(t->blocking); t->blocking = cdr(t->blocking))
                 heap_add(worker_ready_to_run, car(t->blocking));
-                t->blocking = cdr(t->blocking);
-            }
             worker_wake_up_next();
         }
+
         worker_active--;
     }
 
@@ -147,9 +147,9 @@ void worker_create(void (*func)(Worker *, void *), void *arg) {
     }
 }
 
-static void unlock_lease_cleanup(Lease *lease) {
+static void unlock_lease_cleanup(Worker *worker, Lease *lease) {
     if (--lease->inflight == 0 && lease->wait_for_update != NULL)
-        heap_add(worker_ready_to_run, lease->wait_for_update);
+        worker->blocking = cons(lease->wait_for_update, worker->blocking);
     /* note: we leave wait_for_update set to keep the lease locked */
 }
 
@@ -173,10 +173,17 @@ void worker_cleanup(Worker *worker) {
                 claim_release((Claim *) obj);
                 break;
             case LOCK_LEASE:
-                unlock_lease_cleanup((Lease *) obj);
+                unlock_lease_cleanup(worker, (Lease *) obj);
                 break;
             case LOCK_LEASE_EXCLUSIVE:
                 ((Lease *) obj)->wait_for_update = NULL;
+                break;
+            case LOCK_REMOTE_FID:
+                if (vector_get(fid_remote_vector, (u32) obj) ==
+                        (void *) 0xdeadbeef)
+                {
+                    fid_release_remote((u32) obj);
+                }
                 break;
             default:
                 assert(0);
@@ -220,8 +227,6 @@ void lock_lease_exclusive(Worker *worker, Lease *lease) {
     List *cleanup = worker->cleanup;
     List *prev = NULL;
 
-    if (lease->wait_for_update == worker)
-        return;
     worker_attempt_to_acquire(worker, lease->wait_for_update);
 
     /* clean out any regular locks that we hold on this lease */

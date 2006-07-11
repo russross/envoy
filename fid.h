@@ -59,7 +59,7 @@ void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid);
 void fid_update_local(Fid *fid, Claim *claim);
 Fid *fid_lookup(Connection *conn, u32 fid);
 Fid *fid_lookup_remove(Connection *conn, u32 fid);
-u32 fid_reserve_remote(void);
+u32 fid_reserve_remote(Worker *worker);
 void fid_release_remote(u32 fid);
 void fid_set_remote(u32 rfid, Fid *fid);
 

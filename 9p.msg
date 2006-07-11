@@ -62,3 +62,5 @@
 211 size[4] Rsstat tag[2] stat[n]
 212 size[4] Tswstat tag[2] oid[8] stat[n]
 213 size[4] Rswstat tag[2]
+214 size[4] Tsdelete tag[2] oid[8]
+215 size[4] Rsdelete tag[2]

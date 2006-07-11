@@ -696,3 +696,20 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
 
     return oid_set_times(worker, newoid, &buf);
 }
+
+char *oid_delete(Worker *worker, u64 oid) {
+    u64 start = oid_dir_findstart(oid);
+    struct objectdir *dir;
+    char *filename;
+
+    if (    (dir = objectdir_lookup(worker, start)) == NULL ||
+            (filename = dir->filenames[oid - start]) == NULL)
+    {
+        return NULL;
+    }
+
+    lru_remove(openfile_lru, &oid);
+    dir->filenames[oid - start] = NULL;
+
+    return concatname(dir->dirname, filename);
+}

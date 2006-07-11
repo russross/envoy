@@ -73,7 +73,7 @@ void handle_tscreate(Worker *worker, Transaction *trans) {
 void handle_tsclone(Worker *worker, Transaction *trans) {
     struct Tsclone *req = &trans->in->msg.tsclone;
 
-    failif(oid_clone(worker, req->oid, req->newoid) < 0, ENOMEM);
+    failif(oid_clone(worker, req->oid, req->newoid) < 0, ENOENT);
 
     send_reply(trans);
 }
@@ -160,6 +160,17 @@ void handle_tswstat(Worker *worker, Transaction *trans) {
     struct Tswstat *req = &trans->in->msg.tswstat;
 
     failif(oid_wstat(worker, req->oid, req->stat) < 0, ENOENT);
+
+    send_reply(trans);
+}
+
+void handle_tsdelete(Worker *worker, Transaction *trans) {
+    struct Tsdelete *req = &trans->in->msg.tsdelete;
+    char *pathname;
+
+    failif((pathname = oid_delete(worker, req->oid)) == NULL, ENOENT);
+
+    guard(unlink(pathname));
 
     send_reply(trans);
 }

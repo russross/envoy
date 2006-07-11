@@ -216,3 +216,27 @@ void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
         requests = cdr(requests);
     }
 }
+
+void object_delete(Worker *worker, u64 oid) {
+    List *requests = NULL;
+    Transaction *trans;
+    int i;
+
+    for (i = 0; i < storage_server_count; i++) {
+        trans = trans_new(storage_servers[i], NULL, message_new());
+        trans->out->tag = ALLOCTAG;
+        trans->out->id = TSDELETE;
+        set_tsdelete(trans->out, oid);
+        requests = cons(trans, requests);
+    }
+
+    /* send request to all storage servers and wait for all to respond */
+    send_requests(requests);
+
+    /* make sure they all succeeded */
+    while (!null(requests)) {
+        trans = car(requests);
+        assert(trans->in != NULL && trans->in->id == RSDELETE);
+        requests = cdr(requests);
+    }
+}

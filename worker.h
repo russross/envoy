@@ -23,6 +23,7 @@ enum lock_types {
     LOCK_LEASE,
     LOCK_LEASE_EXCLUSIVE,
     LOCK_WALK,
+    LOCK_REMOTE_FID,
 };
 
 enum worker_transaction_states {

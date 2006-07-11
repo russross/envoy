@@ -307,7 +307,7 @@ void handle_tattach(Worker *worker, Transaction *trans) {
 
     env->oldfid = env->oldrfid = NOFID;
     env->newfid = req->fid;
-    env->newrfid = fid_reserve_remote();
+    env->newrfid = fid_reserve_remote(worker);
     env->oldaddr = NULL;
 
     walk_common(worker, trans, env);
@@ -419,7 +419,7 @@ void client_twalk(Worker *worker, Transaction *trans) {
     env->oldfid = req->fid;
     env->oldrfid = (fid->isremote ? fid->rfid : NOFID);
     env->newfid = req->newfid;
-    env->newrfid = fid_reserve_remote();
+    env->newrfid = fid_reserve_remote(worker);
     env->oldaddr = (fid->isremote ? fid->raddr : NULL);
 
     walk_common(worker, trans, env);
@@ -811,6 +811,12 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
 
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
+    failif((req->perm & DMAPPEND), ENOTSUP);
+    failif((req->perm & DMEXCL), ENOTSUP);
+    failif((req->perm & DMMOUNT), ENOTSUP);
+    failif((req->perm & DMAUTH), ENOTSUP);
+    failif((req->perm & DMTMP), ENOTSUP);
+    failif((req->perm & DMLINK), ENOTSUP);
 
     require_fid_unopenned(fid);
 
@@ -866,8 +872,10 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     /* note: the client normally checks to make sure this doesn't exist
      * before trying to create it, but a race with another client could
      * still happen */
-    failif(dir_create_entry(worker, fid->claim, req->name, newoid, 0) < 0,
-            EEXIST);
+    if (dir_create_entry(worker, fid->claim, req->name, newoid, 0) < 0) {
+        object_delete(worker, newoid);
+        failif(1, EEXIST);
+    }
 
     /* directory info has changed */
     fid->claim->info = NULL;
@@ -1142,11 +1150,16 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         goto cleanup;
     }
 
+    /* make sure the parent is writable */
+    claim_thaw(worker, parent);
+
     /* remove it */
     if (dir_remove_entry(worker, parent, filename(fid->pathname)) < 0) {
         errnum = ENOENT;
     } else {
-        /* TODO: delete the storage object? */
+        /* if the object isn't COW, then this is the only link to it */
+        if (fid->claim->access == ACCESS_WRITEABLE)
+            object_delete(worker, fid->claim->oid);
         claim_delete(fid->claim);
     }
 
@@ -1342,8 +1355,11 @@ void handle_twstat(Worker *worker, Transaction *trans) {
                 req->stat->name);
 
         failif(res < 0, EPERM);
-        if (oldfile != NULL)
+        if (oldfile != NULL) {
+            if (oldfile->access == ACCESS_WRITEABLE)
+                object_delete(worker, oldfile->oid);
             claim_delete(oldfile);
+        }
         parent->children =
             removeinorder((Cmpfunc) claim_cmp, parent->children, fid->claim);
         fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
