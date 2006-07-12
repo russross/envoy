@@ -162,7 +162,7 @@ static Message *read_message(Connection *conn) {
 
     /* time to shut down this connection */
     if (DEBUG_VERBOSE)
-        printf("closing connection: %s\n", address_to_string(conn->addr));
+        printf("closing connection: %s\n", addr_to_string(conn->addr));
 
     /* close down the connection */
     if (conn->type == CONN_CLIENT_IN)
@@ -179,22 +179,22 @@ static Message *read_message(Connection *conn) {
 }
 
 static void accept_connection(int sock) {
-    Address *addr;
+    struct sockaddr_in *netaddr;
     socklen_t len;
     int fd;
 
-    addr = GC_NEW_ATOMIC(Address);
-    assert(addr != NULL);
+    netaddr = GC_NEW_ATOMIC(struct sockaddr_in);
+    assert(netaddr != NULL);
 
-    len = sizeof(Address);
-    fd = accept(sock, (struct sockaddr *) addr, &len);
+    len = sizeof(struct sockaddr_in);
+    fd = accept(sock, (struct sockaddr *) netaddr, &len);
     assert(fd >= 0);
 
-    conn_insert_new(fd, CONN_UNKNOWN_IN, addr);
+    conn_insert_new(fd, CONN_UNKNOWN_IN, netaddr);
 
     handles_add(handles_read, fd);
     if (DEBUG_VERBOSE)
-        printf("accepted connection from %s\n", address_to_string(addr));
+        printf("accepted connection from %s\n", netaddr_to_string(netaddr));
 }
 
 /* select on all our open sockets and dispatch when one is ready */
@@ -282,10 +282,11 @@ void transport_init() {
 
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     assert(fd >= 0);
-    assert(bind(fd, (struct sockaddr *) my_address, sizeof(*my_address)) == 0);
+    assert(bind(fd, (struct sockaddr *) addr_to_netaddr(my_address),
+                sizeof(struct sockaddr_in)) == 0);
     assert(listen(fd, 5) == 0);
     if (DEBUG_VERBOSE)
-        printf("listening at %s\n", address_to_string(my_address));
+        printf("listening at %s\n", addr_to_string(my_address));
 
     ling.l_onoff = 1;
     ling.l_linger = 0;
@@ -311,7 +312,7 @@ void put_message(Connection *conn, Message *msg) {
     conn_queue_write(conn, msg);
 }
 
-int open_connection(Address *addr) {
+int open_connection(struct sockaddr_in *netaddr) {
     int flags;
     int fd;
 
@@ -319,7 +320,8 @@ int open_connection(Address *addr) {
     if (    (fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ||
             (flags = fcntl(fd, F_GETFL)) < 0 ||
             fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0 ||
-            (connect(fd, (struct sockaddr *) addr, sizeof(*addr)) < 0 &&
+            (connect(fd, (struct sockaddr *) netaddr,
+                     sizeof(struct sockaddr_in)) < 0 &&
              errno != EINPROGRESS))
     {
         if (fd >= 0)
@@ -330,7 +332,7 @@ int open_connection(Address *addr) {
     handles_add(handles_read, fd);
 
     if (DEBUG_VERBOSE)
-        printf("opened connection to %s\n", address_to_string(addr));
+        printf("opened connection to %s\n", netaddr_to_string(netaddr));
 
     return fd;
 }
@@ -442,6 +444,21 @@ Transaction *connect_envoy(Connection *conn) {
     } else {
         conn->maxSize = max(min(GLOBAL_MAX_SIZE, res->msize), GLOBAL_MIN_SIZE);
     }
+
+    if (conn->type == CONN_STORAGE_OUT)
+        return NULL;
+
+    /* let the envoy know our official address */
+    trans->out->tag = ALLOCTAG;
+    trans->out->id = TESETADDRESS;
+    set_tesetaddress(trans->out, my_address->ip, my_address->port);
+
+    trans->in = NULL;
+
+    send_request(trans);
+
+    if (trans->in->id != RESETADDRESS)
+        return trans;
 
     return NULL;
 }

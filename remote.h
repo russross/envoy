@@ -1,7 +1,6 @@
 #ifndef _REMOTE_H_
 #define _REMOTE_H_
 
-#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"

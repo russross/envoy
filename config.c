@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <getopt.h>
 #include "types.h"
 #include "9p.h"

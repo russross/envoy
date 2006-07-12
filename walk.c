@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <netinet/in.h>
 #include <errno.h>
 #include <string.h>
 #include "types.h"
@@ -310,7 +309,10 @@ static void walk_remote(Worker *worker, Transaction *trans,
     } else {
         env->result = WALK_PARTIAL;
         env->lastaddr = env->nextaddr;
-        env->nextaddr = next;
+        if (!addr_cmp(next, my_address))
+            env->nextaddr = NULL;
+        else
+            env->nextaddr = next;
     }
 
     return;

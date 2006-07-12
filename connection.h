@@ -3,12 +3,11 @@
 
 #include <netinet/in.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "vector.h"
-#include "hashtable.h"
 #include "transaction.h"
 #include "worker.h"
-#include "lru.h"
 
 /* connections */
 enum conn_type {
@@ -23,6 +22,7 @@ enum conn_type {
 struct connection {
     int fd;
     enum conn_type type;
+    struct sockaddr_in *netaddr;
     Address *addr;
     int maxSize;
     Vector *fid_vector;
@@ -35,11 +35,16 @@ struct connection {
     int partial_out_bytes;
 };
 
-extern Vector *conn_vector;
-extern Hashtable *addr_2_conn;
-extern Lru *conn_storage_lru;
+struct address {
+    u32 ip;
+    u16 port;
+};
 
-Connection *conn_insert_new(int fd, enum conn_type type, Address *addr);
+extern Vector *conn_vector;
+
+Connection *conn_insert_new(int fd, enum conn_type type,
+        struct sockaddr_in *netaddr);
+void conn_set_addr(Connection *conn, Address *addr);
 Connection *conn_lookup_fd(int fd);
 Connection *conn_get_from_addr(Worker *worker, Address *addr);
 Connection *conn_connect_to_storage(Address *addr);

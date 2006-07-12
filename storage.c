@@ -186,7 +186,7 @@ void storage_server_connection_init(void) {
 
         if (DEBUG_VERBOSE) {
             printf("storage server %d: %s\n", i,
-                    address_to_string(storage_addresses[i]));
+                    addr_to_string(storage_addresses[i]));
         }
 
         conn = conn_connect_to_storage(storage_addresses[i]);

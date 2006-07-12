@@ -1,7 +1,6 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "connection.h"

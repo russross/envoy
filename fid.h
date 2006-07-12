@@ -2,7 +2,6 @@
 #define _FID_H_
 
 #include <unistd.h>
-#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "vector.h"

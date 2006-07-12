@@ -154,26 +154,30 @@ char *concatname(char *path, char *name) {
     return res;
 }
 
-char *address_to_string(Address *addr) {
-    struct hostent *host = gethostbyaddr(&addr->sin_addr,
-            sizeof(addr->sin_addr), addr->sin_family);
+char *netaddr_to_string(struct sockaddr_in *netaddr) {
+    struct hostent *host = gethostbyaddr(&netaddr->sin_addr,
+            sizeof(netaddr->sin_addr), netaddr->sin_family);
     if (host == NULL || host->h_name == NULL) {
-        u32 address = addr_get_ip(addr);
+        Address *addr = netaddr_to_addr(netaddr);
         char *res = GC_MALLOC_ATOMIC(25);
         assert(res != NULL);
         sprintf(res, "%d.%d.%d.%d:%d",
-                (address >> 24) & 0xff,
-                (address >> 16) & 0xff,
-                (address >>  8) & 0xff,
-                address         & 0xff,
-                addr_get_port(addr));
+                (addr->ip >> 24) & 0xff,
+                (addr->ip >> 16) & 0xff,
+                (addr->ip >>  8) & 0xff,
+                addr->ip         & 0xff,
+                addr->port);
         return res;
     } else {
         char *res = GC_MALLOC_ATOMIC(strlen(host->h_name) + 10);
         assert(res != NULL);
-        sprintf(res, "%s:%d", host->h_name, ntohs(addr->sin_port));
+        sprintf(res, "%s:%d", host->h_name, ntohs(netaddr->sin_port));
         return res;
     }
+}
+
+char *addr_to_string(Address *addr) {
+    return netaddr_to_string(addr_to_netaddr(addr));
 }
 
 Address *get_my_address(void) {
@@ -239,22 +243,15 @@ u32 now(void) {
 }
 
 u32 addr_hash(const Address *addr) {
-    u32 hash = 0;
-    hash = generic_hash(&addr->sin_family, sizeof(addr->sin_family), hash);
-    hash = generic_hash(&addr->sin_port, sizeof(addr->sin_port), hash);
-    hash = generic_hash(&addr->sin_addr, sizeof(addr->sin_addr), hash);
-    return hash;
+    return generic_hash(addr, sizeof(Address), 0);
 }
 
 int addr_cmp(const Address *a, const Address *b) {
-    int x;
     if (a == NULL || b == NULL)
-        return a == b;
-    if ((x = memcmp(&a->sin_family, &b->sin_family, sizeof(a->sin_family))))
-        return x;
-    if ((x = memcmp(&a->sin_port, &b->sin_port, sizeof(a->sin_port))))
-        return x;
-    return memcmp(&a->sin_addr, &b->sin_addr, sizeof(a->sin_addr));
+        return a == b ? 0 : b == NULL;
+    if (a->port != b->port)
+        return a->port - b->port;
+    return a->ip - b->ip;
 }
 
 List *parse_address_list(char *hosts, int defaultport) {
@@ -297,29 +294,31 @@ Address *make_address(char *host, int port) {
     if (ent->h_addr_list[1] != NULL)
         fprintf(stderr, "warning: multiple ip addresses, using the first\n");
 
-    addr->sin_family = AF_INET;
-    addr->sin_addr = *((struct in_addr *) ent->h_addr_list[0]);
-    addr->sin_port = htons(port);
+    addr->ip = ntohl(((struct in_addr *) ent->h_addr_list[0])->s_addr);
+    addr->port = port;
 
     return addr;
 }
 
-Address *addr_decode(u32 address, u16 port) {
+struct sockaddr_in *addr_to_netaddr(Address *addr) {
+    struct sockaddr_in *netaddr = GC_NEW_ATOMIC(struct sockaddr_in);
+
+    assert(netaddr != NULL);
+    assert(addr != NULL);
+
+    netaddr->sin_family = AF_INET;
+    netaddr->sin_addr.s_addr = htonl(addr->ip);
+    netaddr->sin_port = htons(addr->port);
+
+    return netaddr;
+}
+
+Address *netaddr_to_addr(struct sockaddr_in *netaddr) {
     Address *addr = GC_NEW_ATOMIC(Address);
     assert(addr != NULL);
-    addr->sin_family = AF_INET;
-    addr->sin_addr.s_addr = htonl(address);
-    addr->sin_port = htons(port);
-
+    addr->ip = ntohl(netaddr->sin_addr.s_addr);
+    addr->port = ntohs(netaddr->sin_port);
     return addr;
-}
-
-u32 addr_get_ip(Address *addr) {
-    return ntohl(addr->sin_addr.s_addr);
-}
-
-u16 addr_get_port(Address *addr) {
-    return ntohs(addr->sin_port);
 }
 
 List *splitpath(char *path) {

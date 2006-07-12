@@ -15,7 +15,6 @@
 #include "transport.h"
 #include "dispatch.h"
 #include "worker.h"
-#include "lru.h"
 
 /*
  * Connection pool state
@@ -24,14 +23,22 @@
 
 Vector *conn_vector;
 Hashtable *addr_2_conn;
-Lru *conn_storage_lru;
 
-Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
+Connection *conn_insert_new(int fd, enum conn_type type,
+        struct sockaddr_in *netaddr)
+{
     Connection *conn;
+    Address *addr;
 
     assert(fd >= 0);
-    assert(addr != NULL);
+    assert(netaddr != NULL);
     assert(!vector_test(conn_vector, fd));
+
+    addr = GC_NEW_ATOMIC(Address);
+    assert(addr != NULL);
+
+    addr->ip = ntohl(netaddr->sin_addr.s_addr);
+    addr->port = ntohs(netaddr->sin_port);
     assert(hash_get(addr_2_conn, addr) == NULL);
 
     conn = GC_NEW(Connection);
@@ -39,6 +46,7 @@ Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
 
     conn->fd = fd;
     conn->type = type;
+    conn->netaddr = netaddr;
     conn->addr = addr;
     conn->maxSize = GLOBAL_MAX_SIZE;
     conn->fid_vector = vector_create(FID_VECTOR_SIZE);
@@ -51,15 +59,25 @@ Connection *conn_insert_new(int fd, enum conn_type type, Address *addr) {
     conn->partial_out_bytes = 0;
 
     vector_set(conn_vector, conn->fd, conn);
-    hash_set(addr_2_conn, conn->addr, conn);
+    if (type == CONN_ENVOY_OUT)
+        hash_set(addr_2_conn, addr, conn);
 
     return conn;
+}
+
+void conn_set_addr(Connection *conn, Address *addr) {
+    assert(conn->addr != NULL);
+    assert(addr != NULL);
+    assert(conn->type == CONN_ENVOY_IN);
+
+    conn->addr = addr;
 }
 
 Connection *conn_lookup_fd(int fd) {
     return vector_get(conn_vector, fd);
 }
 
+/* note: this only returns connections of type CONN_ENVOY_OUT */
 Connection *conn_get_from_addr(Worker *worker, Address *addr) {
     Transaction *trans;
     Connection *conn;
@@ -68,10 +86,11 @@ Connection *conn_get_from_addr(Worker *worker, Address *addr) {
 
     if ((conn = hash_get(addr_2_conn, addr)) == NULL) {
         int fd;
-        if ((fd = open_connection(addr)) < 0)
+        struct sockaddr_in *netaddr = addr_to_netaddr(addr);
+        if ((fd = open_connection(netaddr)) < 0)
             return NULL;
 
-        conn = conn_insert_new(fd, CONN_ENVOY_OUT, addr);
+        conn = conn_insert_new(fd, CONN_ENVOY_OUT, netaddr);
 
         if ((trans = connect_envoy(conn)) != NULL) {
             handle_error(worker, trans);
@@ -84,15 +103,14 @@ Connection *conn_get_from_addr(Worker *worker, Address *addr) {
 }
 
 Connection *conn_connect_to_storage(Address *addr) {
+    struct sockaddr_in *netaddr = addr_to_netaddr(addr);
     Connection *conn;
     int fd;
 
-    assert(addr != NULL);
-
-    if ((fd = open_connection(addr)) < 0)
+    if ((fd = open_connection(netaddr)) < 0)
         return NULL;
 
-    conn = conn_insert_new(fd, CONN_STORAGE_OUT, addr);
+    conn = conn_insert_new(fd, CONN_STORAGE_OUT, netaddr);
 
     if (connect_envoy(conn) != NULL) {
         conn_remove(conn);
@@ -129,12 +147,14 @@ void conn_queue_write(Connection *conn, Message *msg) {
 void conn_remove(Connection *conn) {
     assert(conn != NULL);
     assert(vector_test(conn_vector, conn->fd));
-    assert(hash_get(addr_2_conn, conn->addr) != NULL);
-
+    if (conn->type == CONN_ENVOY_OUT) {
+        assert(hash_get(addr_2_conn, conn->addr) != NULL);
+        hash_remove(addr_2_conn, conn->addr);
+    }
     vector_remove(conn_vector, conn->fd);
-    hash_remove(addr_2_conn, conn->addr);
 }
 
+/*
 static int conn_resurrect(Connection *conn) {
     return
         conn->type == CONN_CLIENT_IN ||
@@ -145,6 +165,7 @@ static int conn_resurrect(Connection *conn) {
         conn->fid_vector != NULL ||
         conn->tag_vector != NULL;
 }
+*/
 
 void conn_close(Connection *conn) {
     close(conn->fd);
@@ -157,12 +178,4 @@ void conn_init(void) {
             CONN_HASHTABLE_SIZE,
             (u32 (*)(const void *)) addr_hash,
             (int (*)(const void *, const void *)) addr_cmp);
-    conn_storage_lru = lru_new(
-            CONN_STORAGE_LRU_SIZE,
-            (u32 (*)(const void *)) addr_hash,
-            (int (*)(const void *, const void *)) addr_cmp,
-            (int (*)(void *)) conn_resurrect,
-            (void (*)(void *)) conn_close);
 }
-
-

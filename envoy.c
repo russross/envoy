@@ -485,8 +485,8 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
             break;
         case WALK_PARTIAL:
             res->errnum = 0;
-            res->address = addr_get_ip(env->nextaddr);
-            res->port = addr_get_port(env->nextaddr);
+            res->address = env->nextaddr->ip;
+            res->port = env->nextaddr->port;
             break;
         case WALK_ERROR:
             res->errnum = env->errnum;
@@ -1423,4 +1423,17 @@ void envoy_terenameroot(Worker *worker, Transaction *trans) {
 
     /* walk the fids in this lease */
     /* TODO: what about fid stubs? */
+}
+
+void envoy_tesetaddress(Worker *worker, Transaction *trans) {
+    struct Tesetaddress *req = &trans->in->msg.tesetaddress;
+    Address *addr = GC_NEW_ATOMIC(Address);
+    assert(addr != NULL);
+
+    addr->ip = req->address;
+    addr->port = req->port;
+
+    conn_set_addr(trans->conn, addr);
+
+    send_reply(trans);
 }

@@ -318,7 +318,8 @@ void dispatch(Worker *worker, Transaction *trans) {
                         break;
 
         case TEWALKREMOTE: envoy_tewalkremote(worker, trans);   break;
-        case TECLOSEFID: envoy_teclosefid(worker, trans);       break;
+        case TECLOSEFID:   envoy_teclosefid(worker, trans);     break;
+        case TESETADDRESS: envoy_tesetaddress(worker, trans);   break;
 
         case TVERSION:
         default:

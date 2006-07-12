@@ -159,7 +159,8 @@
 
     '<netinet/in.h>' => {
         'struct sockaddr_in' => 1,
-        'Address' => 1,
+        'sin_addr' => 1,
+        'sin_port' => 1,
         'IPPROTO_TCP' => 1,
     },
 

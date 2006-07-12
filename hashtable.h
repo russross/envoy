@@ -1,5 +1,5 @@
-#ifndef _HASHTABLE_H_
-#define _HASHTABLE_H_
+#ifndef _HASH_H_
+#define _HASH_H_
 
 #include "types.h"
 #include "9p.h"

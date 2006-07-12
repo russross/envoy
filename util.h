@@ -32,10 +32,10 @@ int addr_cmp(const Address *a, const Address *b);
 List *parse_address_list(char *hosts, int defaultport);
 Address *parse_address(char *host, int defaultport);
 Address *make_address(char *host, int port);
-Address *addr_decode(u32 address, u16 port);
-u32 addr_get_ip(Address *addr);
-u16 addr_get_port(Address *addr);
-char *address_to_string(Address *addr);
+struct sockaddr_in *addr_to_netaddr(Address *addr);
+Address *netaddr_to_addr(struct sockaddr_in *netattr);
+char *netaddr_to_string(struct sockaddr_in *netaddr);
+char *addr_to_string(Address *addr);
 Address *get_my_address(void);
 
 u32 generic_hash(const void *elt, int len, u32 hash);

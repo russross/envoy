@@ -1,7 +1,7 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
-typedef struct sockaddr_in Address;
+typedef struct address Address;
 typedef struct transaction Transaction;
 typedef struct connection Connection;
 typedef struct worker Worker;

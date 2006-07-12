@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
-#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
@@ -54,10 +53,15 @@ u16 remote_walk(Worker *worker, Address *target,
 
         *nwqid = res->nwqid;
         *wqid = res->wqid;
-        if (res->address == 0 && res->port == 0)
+        if (res->address == 0 && res->port == 0) {
             *address = NULL;
-        else
-            *address = addr_decode(res->address, res->port);
+        } else {
+            Address *addr = GC_NEW_ATOMIC(Address);
+            assert(addr != NULL);
+            addr->ip = res->address;
+            addr->port = res->port;
+            *address = addr;
+        }
         return res->errnum;
     } else if (trans->in->id == RERROR) {
         *nwqid = 0;

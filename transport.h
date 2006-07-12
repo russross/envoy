@@ -9,7 +9,7 @@
 
 void transport_init(void);
 void put_message(Connection *conn, Message *msg);
-int open_connection(Address *addr);
+int open_connection(struct sockaddr_in *netaddr);
 void transport_refresh(void);
 void main_loop(void);
 /* returns NULL on success, failed transaction on failure */

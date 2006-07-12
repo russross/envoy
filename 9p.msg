@@ -46,6 +46,8 @@
 165 size[4] Reclosefid tag[2]
 166 size[4] Terenameroot tag[2] oldpath[s] newpath[s]
 167 size[4] Rerenameroot tag[2]
+168 size[4] Tesetaddress tag[2] address[4] port[2]
+169 size[4] Resetaddress tag[2]
 
 # object storage server protocol
 200 size[4] Tsreserve tag[2]

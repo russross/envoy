@@ -2,7 +2,6 @@
 #define _WALK_H_
 
 #include <stdlib.h>
-#include <netinet/in.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
