@@ -213,6 +213,7 @@ void dispatch(Worker *worker, Transaction *trans) {
     switch (trans->in->id) {
         case TAUTH:
         case TFLUSH:
+        case TESETADDRESS:
             break;
 
         case TATTACH:   new_fid(tattach.fid);                   break;
