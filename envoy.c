@@ -757,7 +757,7 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
     fid->claim->info = NULL;
 
     /* move this fid to the new file */
-    lease_add_claim_to_cache(claim_new(fid->claim, req->name,
+    claim_add_to_cache(claim_new(fid->claim, req->name,
                 cow ? ACCESS_COW : ACCESS_READONLY, newoid));
     fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
 
@@ -881,7 +881,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     fid->claim->info = NULL;
 
     /* move this fid to the new file */
-    lease_add_claim_to_cache(claim_new(fid->claim, req->name,
+    claim_add_to_cache(claim_new(fid->claim, req->name,
                 ACCESS_WRITEABLE, newoid));
     fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
     fid->status = status;

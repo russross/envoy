@@ -101,13 +101,13 @@ static void dir_prime_claim_cache(Claim *dir, List *entries) {
             continue;
 
         /* is it already in the cache? */
-        if (lease_lookup_claim_from_cache(dir->lease, pathname) == NULL) {
+        if (claim_lookup_from_cache(dir->lease, pathname) == NULL) {
             /* create a new claim and add it to the cache */
             enum claim_access access = fid_access_child(dir->access, elt->cow);
             if (type == PATH_ADMIN && ispositiveint(elt->filename))
                 access = ACCESS_READONLY;
             Claim *claim = claim_new(dir, elt->filename, access, elt->oid);
-            lease_add_claim_to_cache(claim);
+            claim_add_to_cache(claim);
         }
     }
 }
@@ -423,7 +423,7 @@ static enum dir_iter_action dir_find_claim_iter(
 {
     /* dir iter puts everything it sees in the cache, so all we have to do is
      * check if our target has arrived in the cache yet */
-    env->claim = lease_lookup_claim_from_cache(env->lease, env->pathname);
+    env->claim = claim_lookup_from_cache(env->lease, env->pathname);
     if (env->claim == NULL)
         return DIR_CONTINUE;
     else

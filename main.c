@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
         worker_state_init();
         conn_init();
         lease_state_init();
+        claim_state_init();
         walk_state_init();
         fid_state_init();
         util_state_init();

@@ -7,7 +7,6 @@
 #include "list.h"
 #include "hashtable.h"
 #include "worker.h"
-#include "lru.h"
 #include "claim.h"
 
 /* General rules
@@ -57,16 +56,6 @@ struct lease {
 };
 
 extern Hashtable *lease_by_root_pathname;
-extern Lru *lease_claim_cache;
-
-/* add the given claim to the claim cache */
-void lease_add_claim_to_cache(Claim *claim);
-/* remove a given claim from the cache (usually when activating it) */
-void lease_remove_claim_from_cache(Claim *claim);
-/* search the cache for a claim for the given pathname */
-Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname);
-/* flush all cached claims related to the given lease */
-void lease_flush_claim_cache(Lease *lease);
 
 void lease_finish_transaction(Lease *lease);
 

@@ -5,7 +5,9 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "hashtable.h"
 #include "worker.h"
+#include "lru.h"
 #include "lease.h"
 
 /* Claims are handles to storage objects.  At most one exists per object in the
@@ -69,6 +71,11 @@ struct claim {
     struct p9stat *info;
 };
 
+extern Lru *claim_cache;
+extern Hashtable *claim_fully_cached_dirs;
+
+void claim_state_init(void);
+
 /*****************************************************************************/
 /* High-level functions */
 
@@ -106,6 +113,15 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid);
 void claim_delete(Claim *claim);
 /* Release a claim. */
 void claim_release(Claim *claim);
+
+/* add the given claim to the claim cache */
+void claim_add_to_cache(Claim *claim);
+/* remove a given claim from the cache (usually when activating it) */
+void claim_remove_from_cache(Claim *claim);
+/* search the cache for a claim for the given pathname */
+Claim *claim_lookup_from_cache(Lease *lease, char *pathname);
+/* flush all cached claims related to the given lease */
+void lease_flush_claim_cache(Lease *lease);
 
 int claim_cmp(const Claim *a, const Claim *b);
 int claim_key_cmp(const char *key, const Claim *elt);

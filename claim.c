@@ -5,12 +5,18 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "hashtable.h"
 #include "util.h"
+#include "config.h"
 #include "object.h"
 #include "worker.h"
+#include "lru.h"
 #include "dir.h"
 #include "claim.h"
 #include "lease.h"
+
+Lru *claim_cache;
+Hashtable *claim_fully_cached_dirs;
 
 int claim_cmp(const Claim *a, const Claim *b) {
     return strcmp(a->pathname, b->pathname);
@@ -110,7 +116,7 @@ void claim_release(Claim *claim) {
         claim->parent = NULL;
 
         if (!claim->deleted)
-            lease_add_claim_to_cache(claim);
+            claim_add_to_cache(claim);
 
         claim = parent;
     }
@@ -134,14 +140,14 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
         /* it's already on a live path */
         reserve(worker, LOCK_CLAIM, claim);
         return claim;
-    } else if ((claim = lease_lookup_claim_from_cache(parent->lease,
+    } else if ((claim = claim_lookup_from_cache(parent->lease,
                     targetpath)) != NULL)
     {
         assert(!claim->deleted);
 
         /* it's in the cache */
         reserve(worker, LOCK_CLAIM, claim);
-        lease_remove_claim_from_cache(claim);
+        claim_remove_from_cache(claim);
         claim->parent = parent;
         parent->children =
             insertinorder((Cmpfunc) claim_cmp, parent->children, claim);
@@ -258,4 +264,46 @@ void claim_freeze(Worker *worker, Claim *root) {
             claim->access = ACCESS_COW;
         }
     }
+}
+
+void claim_add_to_cache(Claim *claim) {
+    /* note: important to do the lru_add first, as it may contain a stale entry
+     * and try to do a hash_remove when clearing it */
+    lru_add(claim_cache, claim->pathname, claim);
+    hash_set(claim->lease->claim_cache, claim->pathname, claim);
+}
+
+void claim_remove_from_cache(Claim *claim) {
+    lru_remove(claim_cache, claim->pathname);
+}
+
+Claim *claim_lookup_from_cache(Lease *lease, char *pathname) {
+    Claim *claim = hash_get(lease->claim_cache, pathname);
+    if (claim == NULL)
+        return NULL;
+
+    /* refresh the LRU entry and verify the hit */
+    assert(lru_get(claim_cache, pathname) == claim);
+    return claim;
+}
+
+static void claim_cache_cleanup(Claim *claim) {
+    hash_remove(claim->lease->claim_cache, claim->pathname);
+
+    /* the parent directory is no longer fully cached */
+    /*hash_remove(claim_fully_cached_dirs, dirname(claim->pathname));*/
+}
+
+void claim_state_init(void) {
+    claim_cache = lru_new(
+            CLAIM_LRU_SIZE,
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp,
+            NULL,
+            (void (*)(void *)) claim_cache_cleanup);
+
+    claim_fully_cached_dirs = hash_create(
+            CLAIM_FULLY_CACHED_DIRS_SIZE,
+            (Hashfunc) string_hash,
+            (Cmpfunc) strcmp);
 }

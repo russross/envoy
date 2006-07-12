@@ -14,13 +14,11 @@
 #include "config.h"
 #include "remote.h"
 #include "worker.h"
-#include "lru.h"
 #include "dir.h"
 #include "claim.h"
 #include "lease.h"
 
 Hashtable *lease_by_root_pathname;
-Lru *lease_claim_cache;
 
 static int lease_cmp(const Lease *a, const Lease *b) {
     return strcmp(a->pathname, b->pathname);
@@ -65,50 +63,11 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     return l;
 }
 
-void lease_add_claim_to_cache(Claim *claim) {
-    /* note: important to do the lru_add first, as it may contain a stale entry
-     * and try to do a hash_remove when clearing it */
-    lru_add(lease_claim_cache, claim->pathname, claim);
-    hash_set(claim->lease->claim_cache, claim->pathname, claim);
-}
-
-void lease_remove_claim_from_cache(Claim *claim) {
-    hash_remove(claim->lease->claim_cache, claim->pathname);
-}
-
-Claim *lease_lookup_claim_from_cache(Lease *lease, char *pathname) {
-    Claim *claim = hash_get(lease->claim_cache, pathname);
-    if (claim == NULL)
-        return NULL;
-
-    /* refresh the LRU entry and verify the hit */
-    assert(lru_get(lease_claim_cache, pathname) == claim);
-    return claim;
-}
-
-void lease_flush_claim_cache(Lease *lease) {
-    lease->claim_cache = hash_create(
-            LEASE_CLAIM_HASHTABLE_SIZE,
-            (Hashfunc) string_hash,
-            (Cmpfunc) strcmp);
-}
-
-static void claim_cache_cleanup(Claim *claim) {
-    hash_remove(claim->lease->claim_cache, claim->pathname);
-}
-
 void lease_state_init(void) {
     lease_by_root_pathname = hash_create(
             LEASE_HASHTABLE_SIZE,
             (Hashfunc) string_hash,
             (Cmpfunc) strcmp);
-
-    lease_claim_cache = lru_new(
-            LEASE_CLAIM_LRU_SIZE,
-            (Hashfunc) string_hash,
-            (Cmpfunc) strcmp,
-            NULL,
-            (void (*)(void *)) claim_cache_cleanup);
 }
 
 Lease *lease_get_remote(char *pathname) {
