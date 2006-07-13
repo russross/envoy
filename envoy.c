@@ -1161,6 +1161,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         if (fid->claim->access == ACCESS_WRITEABLE)
             object_delete(worker, fid->claim->oid);
         claim_delete(fid->claim);
+        /* FIXME: this should be done when the last link is removed */
     }
 
     cleanup:

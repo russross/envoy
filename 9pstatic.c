@@ -47,7 +47,7 @@ struct p9stat *p9stat_new(void) {
  * size helpers
  */
 
-int statsize(struct p9stat *elt) {
+int statnsize(struct p9stat *elt) {
     return
         2 +     /* size[2] */
         2 +     /* type[2] */
@@ -61,18 +61,58 @@ int statsize(struct p9stat *elt) {
         4 +     /* n_uid[4] */
         4 +     /* n_gid[4] */
         4 +     /* n_muid[4] */
-        (elt->name == NULL ? 0 : strlen(elt->name)) +
-        (elt->uid  == NULL ? 0 : strlen(elt->uid)) +
-        (elt->gid  == NULL ? 0 : strlen(elt->gid)) +
-        (elt->muid == NULL ? 0 : strlen(elt->muid)) +
-        (elt->extension == NULL ? 0 : strlen(elt->extension));
+        safe_strlen(elt->name) +
+        safe_strlen(elt->uid) +
+        safe_strlen(elt->gid) +
+        safe_strlen(elt->muid) +
+        safe_strlen(elt->extension);
 }
 
 int stringlistsize(u16 len, char **elt) {
     int i;
     int size = len * 2;
     for (i = 0; i < len; i++)
-        size += elt[i] == NULL ? 0 : strlen(elt[i]);
+        size += safe_strlen(elt[i]);
+    return size;
+}
+
+int leaserecordsize(struct leaserecord *elt) {
+    return
+        2 +     /* pathname[s] length */
+        1 +     /* readonly[1] */
+        8 +     /* oid[8] */
+        4 +     /* address[4] */
+        2 +     /* port[2] */
+        safe_strlen(elt->pathname);
+}
+
+int leaserecordlistsize(u16 len, struct leaserecord **elt) {
+    int i;
+    int size = len * 2;
+    for (i = 0; i < len; i++)
+        size += leaserecordsize(elt[i]);
+    return size;
+}
+
+int fidrecordsize(struct fidrecord *elt) {
+    return
+        4 +     /* fid[4] */
+        2 +     /* pathname[s] length */
+        2 +     /* user[s] length */
+        1 +     /* status[1] */
+        4 +     /* omode[4] */
+        8 +     /* readdir_cookie[8] */
+        4 +     /* address[4] */
+        2 +     /* port[2] */
+        safe_strlen(elt->pathname) +
+        safe_strlen(elt->user);
+}
+
+int fidrecordlistsize(u16 len, struct fidrecord **elt) {
+    int i;
+    int size = len * 2;
+    for (i = 0; i < len; i++)
+        size += fidrecordsize(elt[i]);
     return size;
 }
 
@@ -133,21 +173,21 @@ u64 unpackU64(u8 *raw, int size, int *i) {
 
 u64 *unpackU64list(u8 *raw, int size, int *i, u16 *n) {
     int x;
-    u64 *v = NULL;
+    u64 *elt = NULL;
     *n = unpackU16(raw, size, i);
     if (*i < 0) return NULL;
     if (*n == 0)
         return NULL;
-    if (*n > MAXFELEM || (v = GC_MALLOC_ATOMIC(sizeof(u64) * *n)) == NULL) {
+    if (*n > MAXFELEM || (elt = GC_MALLOC_ATOMIC(sizeof(u64) * *n)) == NULL) {
         *i = -1;
         return NULL;
     }
     for (x = 0; x < *n; x++) {
-        v[x] = unpackU64(raw, size, i);
+        elt[x] = unpackU64(raw, size, i);
         if (*i < 0)
             return NULL;
     }
-    return v;
+    return elt;
 }
 
 u8 *unpackData(u8 *raw, int size, int *i, u32 *len) {
@@ -192,21 +232,21 @@ char *unpackString(u8 *raw, int size, int *i) {
 
 char **unpackStringlist(u8 *raw, int size, int *i, u16 *n) {
     int x;
-    char **v = NULL;
+    char **elt = NULL;
     *n = unpackU16(raw, size, i);
     if (*i < 0) return NULL;
     if (*n == 0)
         return NULL;
-    if (*n > MAXWELEM || (v = GC_MALLOC(sizeof(char *) * *n)) == NULL) {
+    if (*n > MAXWELEM || (elt = GC_MALLOC(sizeof(char *) * *n)) == NULL) {
         *i = -1;
         return NULL;
     }
     for (x = 0; x < *n; x++) {
-        v[x] = unpackString(raw, size, i);
+        elt[x] = unpackString(raw, size, i);
         if (*i < 0)
             return NULL;
     }
-    return v;
+    return elt;
 }
 
 struct qid unpackQid(u8 *raw, int size, int *i) {
@@ -219,23 +259,23 @@ struct qid unpackQid(u8 *raw, int size, int *i) {
 
 struct qid *unpackQidlist(u8 *raw, int size, int *i, u16 *n) {
     int x;
-    struct qid *v = NULL;
+    struct qid *elt = NULL;
     *n = unpackU16(raw, size, i);
     if (*i < 0) return NULL;
     if (*n == 0)
         return NULL;
     if (*n > MAXWELEM ||
-            (v = GC_MALLOC_ATOMIC(sizeof(struct qid) * *n)) == NULL)
+            (elt = GC_MALLOC_ATOMIC(sizeof(struct qid) * *n)) == NULL)
     {
         *i = -1;
         return NULL;
     }
     for (x = 0; x < *n; x++) {
-        v[x] = unpackQid(raw, size, i);
+        elt[x] = unpackQid(raw, size, i);
         if (*i < 0)
             return NULL;
     }
-    return v;
+    return elt;
 }
 
 struct p9stat *unpackStat(u8 *raw, int size, int *i) {
@@ -276,6 +316,91 @@ struct p9stat *unpackStatn(u8 *raw, int size, int *i) {
     if (*i < 0 || unpackU16(raw, size, &peek) != n - 2 || peek < 0)
         return NULL;
     return unpackStat(raw, size, i);
+}
+
+struct leaserecord *unpackLeaserecord(u8 *raw, int size, int *i) {
+    u16 length;
+    int starti = *i;
+    struct leaserecord *elt;
+    if (*i < 0) return NULL;
+    if ((elt = GC_NEW(struct leaserecord)) == NULL) {
+        *i = -1;
+        return NULL;
+    }
+    length = unpackU16(raw, size, i);
+    elt->pathname = unpackString(raw, size, i);
+    elt->readonly = unpackU8(raw, size, i);
+    elt->oid = unpackU64(raw, size, i);
+    elt->address = unpackU32(raw, size, i);
+    elt->port = unpackU16(raw, size, i);
+    if (*i != length + starti + sizeof(u16))
+        *i = -1;
+    if (*i < 0)
+        return NULL;
+    return elt;
+}
+
+struct leaserecord **unpackLeaserecordlist(u8 *raw, int size, int *i, u16 *n) {
+    int x;
+    struct leaserecord **elt = NULL;
+    *n = unpackU16(raw, size, i);
+    if (*i < 0) return NULL;
+    if (*n == 0)
+        return NULL;
+    if ((elt = GC_MALLOC(sizeof(struct leaserecord *) * *n)) == NULL) {
+        *i = -1;
+        return NULL;
+    }
+    for (x = 0; x < *n; x++) {
+        elt[x] = unpackLeaserecord(raw, size, i);
+        if (*i < 0)
+            return NULL;
+    }
+    return elt;
+}
+
+struct fidrecord *unpackFidrecord(u8 *raw, int size, int *i) {
+    u16 length;
+    int starti = *i;
+    struct fidrecord *elt;
+    if (*i < 0) return NULL;
+    if ((elt = GC_NEW(struct fidrecord)) == NULL) {
+        *i = -1;
+        return NULL;
+    }
+    length = unpackU16(raw, size, i);
+    elt->fid = unpackU32(raw, size, i);
+    elt->pathname = unpackString(raw, size, i);
+    elt->user = unpackString(raw, size, i);
+    elt->status = unpackU8(raw, size, i);
+    elt->omode = unpackU32(raw, size, i);
+    elt->readdir_cookie = unpackU64(raw, size, i);
+    elt->address = unpackU32(raw, size, i);
+    elt->port = unpackU16(raw, size, i);
+    if (*i != length + starti + sizeof(u16))
+        *i = -1;
+    if (*i < 0)
+        return NULL;
+    return elt;
+}
+
+struct fidrecord **unpackFidrecordlist(u8 *raw, int size, int *i, u16 *n) {
+    int x;
+    struct fidrecord **elt = NULL;
+    *n = unpackU16(raw, size, i);
+    if (*i < 0) return NULL;
+    if (*n == 0)
+        return NULL;
+    if ((elt = GC_MALLOC(sizeof(struct fidrecord *) * *n)) == NULL) {
+        *i = -1;
+        return NULL;
+    }
+    for (x = 0; x < *n; x++) {
+        elt[x] = unpackFidrecord(raw, size, i);
+        if (*i < 0)
+            return NULL;
+    }
+    return elt;
 }
 
 /*
@@ -328,7 +453,7 @@ void packData(u8 *raw, int *i, u32 len, u8 *elt) {
 }
 
 void packString(u8 *raw, int *i, char *elt) {
-    int len = elt == NULL ? 0 : strlen(elt);
+    int len = safe_strlen(elt);
     packU16(raw, i, (u16) len);
     if (len > 0)
         memcpy(raw + *i, elt, len);
@@ -356,7 +481,7 @@ void packQidlist(u8 *raw, int *i, u16 len, struct qid *elt) {
 }
 
 void packStat(u8 *raw, int *i, struct p9stat *elt) {
-    u16 size = (u16) statsize(elt) - sizeof(u16);
+    u16 size = (u16) statnsize(elt) - sizeof(u16);
     packU16(raw, i, size);
     packU16(raw, i, elt->type);
     packU32(raw, i, elt->dev);
@@ -380,6 +505,43 @@ void packStatn(u8 *raw, int *i, struct p9stat *elt) {
     packU16(raw, i, 0);
     packStat(raw, i, elt);
     packU16(raw, &start, (u16) (*i - start - sizeof(u16)));
+}
+
+void packLeaserecord(u8 *raw, int *i, struct leaserecord *elt) {
+    u16 size = (u16) leaserecordsize(elt);
+    packU16(raw, i, size);
+    packString(raw, i, elt->pathname);
+    packU8(raw, i, elt->readonly);
+    packU64(raw, i, elt->oid);
+    packU32(raw, i, elt->address);
+    packU16(raw, i, elt->port);
+}
+
+void packLeaserecordlist(u8 *raw, int *i, u16 len, struct leaserecord **elt) {
+    int x;
+    packU16(raw, i, len);
+    for (x = 0; x < len; x++)
+        packLeaserecord(raw, i, elt[x]);
+}
+
+void packFidrecord(u8 *raw, int *i, struct fidrecord *elt) {
+    u16 size = (u16) fidrecordsize(elt);
+    packU16(raw, i, size);
+    packU32(raw, i, elt->fid);
+    packString(raw, i, elt->pathname);
+    packString(raw, i, elt->user);
+    packU8(raw, i, elt->status);
+    packU32(raw, i, elt->omode);
+    packU64(raw, i, elt->readdir_cookie);
+    packU32(raw, i, elt->address);
+    packU16(raw, i, elt->port);
+}
+
+void packFidrecordlist(u8 *raw, int *i, u16 len, struct fidrecord **elt) {
+    int x;
+    packU16(raw, i, len);
+    for (x = 0; x < len; x++)
+        packFidrecord(raw, i, elt[x]);
 }
 
 /*
@@ -464,4 +626,27 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
                     size);
         }
     }
+}
+
+void dumpLeaserecord(FILE *fp, char *prefix, struct leaserecord *elt) {
+    fprintf(fp, "[%s,r%c,$%llx,%u.%u.%u.%u:%u]", elt->pathname,
+            elt->readonly ? 'o' : 'w', elt->oid,
+            (u32) (elt->address >> 24) & 0xff,
+            (u32) (elt->address >> 16) & 0xff,
+            (u32) (elt->address >>  8) & 0xff,
+            (u32)  elt->address        & 0xff,
+            (u32) elt->port);
+}
+
+void dumpFidrecord(FILE *fp, char *prefix, struct fidrecord *elt) {
+    fprintf(fp, "{ fid[%u] pathname[%s] user[%s]\n", elt->fid, elt->pathname,
+            elt->user);
+    fprintf(fp, "%s  status[%u] omode[%04o] cookie[$%llx]\n", prefix,
+            elt->status, elt->omode, (u64) elt->readdir_cookie);
+    fprintf(fp, "%s  %u.%u.%u.%u:%u }", prefix,
+            (u32) (elt->address >> 24) & 0xff,
+            (u32) (elt->address >> 16) & 0xff,
+            (u32) (elt->address >>  8) & 0xff,
+            (u32)  elt->address        & 0xff,
+            (u32) elt->port);
 }

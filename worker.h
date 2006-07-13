@@ -14,7 +14,6 @@
 
 #define WORKER_PRIORITY_THRESHOLD 0x80000000L
 
-/* the order here is the order in which locks must be acquired */
 enum lock_types {
     LOCK_DIRECTORY,
     LOCK_OPENFILE,

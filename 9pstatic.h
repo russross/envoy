@@ -77,7 +77,7 @@ enum qidtypes {
 #define STORAGE_SLUSH 8
 
 /* string length that handles NULL strings */
-#define safe_strlen(x) ((x) == NULL ? 0 : strlen(x))
+#define safe_strlen(_s) ((_s) == NULL ? 0 : strlen(_s))
 
 struct qid {
     u8 type;
@@ -103,15 +103,40 @@ struct p9stat {
     u32 n_muid;
 };
 
+struct leaserecord {
+    char *pathname;
+    u8 readonly;
+    u64 oid;
+    u32 address;
+    u16 port;
+};
+
+struct fidrecord {
+    u32 fid;
+    char *pathname;
+    char *user;
+    u8 status;
+    u32 omode;
+    u64 readdir_cookie;
+    u32 address;
+    u16 port;
+};
+
 struct message *message_new(void);
 struct p9stat *p9stat_new(void);
 
-int statsize(struct p9stat *elt);
+int statnsize(struct p9stat *elt);
 int stringlistsize(u16 len, char **elt);
+int leaserecordsize(struct leaserecord *elt);
+int leaserecordlistsize(u16 len, struct leaserecord **elt);
+int fidrecordsize(struct fidrecord *elt);
+int fidrecordlistsize(u16 len, struct fidrecord **elt);
 
 void dumpBytes(FILE *fp, char *prefix, u8 *buff, int size);
 void dumpData(FILE *fp, char *prefix, u8 *buff, int size);
 void dumpStat(FILE *fp, char *prefix, struct p9stat *stat);
+void dumpLeaserecord(FILE *fp, char *prefix, struct leaserecord *elt);
+void dumpFidrecord(FILE *fp, char *prefix, struct fidrecord *elt);
 
 u8 unpackU8(u8 *raw, int size, int *i);
 u16 unpackU16(u8 *raw, int size, int *i);
@@ -125,6 +150,10 @@ struct qid unpackQid(u8 *raw, int size, int *i);
 struct qid *unpackQidlist(u8 *raw, int size, int *i, u16 *n);
 struct p9stat *unpackStat(u8 *raw, int size, int *i);
 struct p9stat *unpackStatn(u8 *raw, int size, int *i);
+struct leaserecord *unpackLeaserecord(u8 *raw, int size, int *i);
+struct leaserecord **unpackLeaserecordlist(u8 *raw, int size, int *i, u16 *n);
+struct fidrecord *unpackFidrecord(u8 *raw, int size, int *i);
+struct fidrecord **unpackFidrecordlist(u8 *raw, int size, int *i, u16 *n);
 
 void packU8(u8 *raw, int *i, u8 elt);
 void packU16(u8 *raw, int *i, u16 elt);
@@ -138,3 +167,7 @@ void packQid(u8 *raw, int *i, struct qid elt);
 void packQidlist(u8 *raw, int *i, u16 len, struct qid *elt);
 void packStat(u8 *raw, int *i, struct p9stat *elt);
 void packStatn(u8 *raw, int *i, struct p9stat *elt);
+void packLeaserecord(u8 *raw, int *i, struct leaserecord *elt);
+void packFidrecord(u8 *raw, int *i, struct fidrecord *elt);
+void packLeaserecordlist(u8 *raw, int *i, u16 len, struct leaserecord **elt);
+void packFidrecordlist(u8 *raw, int *i, u16 len, struct fidrecord **elt);

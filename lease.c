@@ -313,3 +313,30 @@ void lease_audit(void) {
         assert(0);
     }
 }
+
+struct leaserecord *lease_serialize_root(Lease *lease) {
+    struct leaserecord *elt = GC_NEW(struct leaserecord);
+    assert(elt != NULL);
+
+    elt->pathname = lease->pathname;
+    elt->readonly = lease->readonly ? 1 : 0;
+    elt->oid = lease->claim->oid;
+    elt->address = my_address->ip;
+    elt->port = my_address->port;
+
+    return elt;
+}
+
+List *lease_serialize_exits(Lease *lease) {
+    List *result = NULL;
+    List *exits = lease->wavefront;
+
+    for ( ; !null(exits); exits = cdr(exits))
+        result = cons(lease_serialize_root(car(exits)), result);
+
+    return reverse(result);
+}
+
+List *lease_serialize_fids(Lease *lease) {
+    return NULL;
+}

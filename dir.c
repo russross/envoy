@@ -219,7 +219,7 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
                 if (info == NULL)
                     return 0;
 
-                bytes += statsize(info);
+                bytes += statnsize(info);
             }
         }
     }
@@ -229,7 +229,7 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
         if (info == NULL)
             break;
 
-        if (count + statsize(info) > size) {
+        if (count + statnsize(info) > size) {
             /* push this entry back into the stream */
             fid->readdir_env->next = info;
             break;

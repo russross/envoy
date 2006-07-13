@@ -92,4 +92,12 @@ void lease_snapshot(Worker *worker, Claim *claim);
 void lease_dump_graph(Lease *lease);
 void lease_audit(void);
 
+/* lease migration */
+
+enum grant_type {
+    GRANT_START,
+    GRANT_CONTINUE,
+    GRANT_END,
+};
+
 #endif

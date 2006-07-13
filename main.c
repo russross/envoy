@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +15,60 @@
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
+
+void test_dump(void) {
+    struct leaserecord *lease;
+    struct leaserecord **leaselist;
+    struct fidrecord *fid;
+    struct fidrecord **fidlist;
+    Message *m = message_new();
+    Message *m2 = message_new();
+    m->id = TEGRANT;
+    m->tag = 1;
+
+    lease = GC_NEW(struct leaserecord);
+    assert(lease != NULL);
+
+    lease->pathname = "/home/on/the/range";
+    lease->readonly = 0;
+    lease->oid = 1234567890;
+    lease->address = 127 * 256 * 256 * 256 + 1;
+    lease->port = 9922;
+
+    leaselist = GC_MALLOC(sizeof(struct leaserecord *) * 5);
+    assert(leaselist != NULL);
+    leaselist[0] = lease;
+    leaselist[1] = lease;
+    leaselist[2] = lease;
+    leaselist[3] = lease;
+    leaselist[4] = lease;
+
+    fid = GC_NEW(struct fidrecord);
+    assert(fid != NULL);
+    fid->fid = 5;
+    fid->pathname = "/home/a/me/give/oh";
+    fid->user = "russ";
+    fid->status = 2;
+    fid->omode = 0644;
+    fid->readdir_cookie = 9876543210LL;
+    fid->address = 192LL * 256 * 256 * 256 + 168 * 256 * 256 + 1;
+    fid->port = 9924;
+
+    fidlist = GC_MALLOC(sizeof(struct fidrecord *) * 4);
+    fidlist[0] = fid;
+    fidlist[1] = fid;
+    fidlist[2] = fid;
+    fidlist[3] = fid;
+
+    set_tegrant(m, 1, lease, 5, leaselist, 4, fidlist);
+    printMessage(stdout, m);
+    m->raw = GC_MALLOC(0x10000);
+    assert(packMessage(m, 0x10000) == 0);
+    m2->raw = m->raw;
+    m2->size = m->size;
+    assert(unpackMessage(m2) == 0);
+    printMessage(stdout, m2);
+}
 
 void test_oid(void) {
     printf("first available: %llx\n", oid_find_next_available());

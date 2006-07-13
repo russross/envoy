@@ -30,12 +30,12 @@
 # envoy protocol extensions
 150 size[4] Tesnapshot tag[2] path[s]
 151 size[4] Resnapshot tag[2] newoid[8]
-152 size[4] Tegrant tag[2] type[1] path[s] rfid[4]
-153 size[4] Regrant tag[2] 
-154 size[4] Terevoke tag[2] path[s]
-155 size[4] Rerevoke tag[2] 
-156 size[4] Tenominate tag[2] path[s] 
-157 size[4] Renominate tag[2] 
+152 size[4] Tegrant tag[2] type[1] root[l] nexit[2] nexit*(exit[l]) nfid[2] nfid*(fid[f])
+153 size[4] Regrant tag[2]
+154 size[4] Terevoke tag[2] type[1] root[s]
+155 size[4] Rerevoke tag[2] type[1] root[l] nexit[2] nexit*(exit[l]) nfid[2] nfid*(fid[f])
+156 size[4] Tenominate tag[2] path[s] address[4] port[2]
+157 size[4] Renominate tag[2]
 158 size[4] Tewalkremote tag[2] fid[4] newfid[4] nwname[2] nwname*(wname[s]) user[s] path[s]
 159 size[4] Rewalkremote tag[2] nwqid[2] nwqid*(wqid[13]) errnum[2] address[4] port[2]
 160 size[4] Testatremote tag[2] path[s]
