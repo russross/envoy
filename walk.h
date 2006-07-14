@@ -53,6 +53,7 @@ void walk_state_init(void);
 
 struct walk_env {
     /* the arguments */
+    int isattach;
     char *pathname;
     char *user;
     List *names;

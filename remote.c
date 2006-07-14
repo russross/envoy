@@ -16,7 +16,7 @@ struct p9stat *remote_stat(Worker *worker, Address *target, char *pathname) {
     Transaction *trans;
     struct Restatremote *res;
 
-    trans = trans_new(conn_get_from_addr(worker, target), NULL, message_new());
+    trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
     trans->out->tag = ALLOCTAG;
     trans->out->id = TESTATREMOTE;
     set_testatremote(trans->out, pathname);
@@ -40,7 +40,7 @@ u16 remote_walk(Worker *worker, Address *target,
     Transaction *trans;
     struct Rewalkremote *res;
 
-    trans = trans_new(conn_get_from_addr(worker, target), NULL, message_new());
+    trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
     trans->out->tag = ALLOCTAG;
     trans->out->id = TEWALKREMOTE;
     set_tewalkremote(trans->out, fid, newfid, nwname, wname, user, pathname);
@@ -77,7 +77,7 @@ u16 remote_walk(Worker *worker, Address *target,
 void remote_closefid(Worker *worker, Address *target, u32 fid) {
     Transaction *trans;
 
-    trans = trans_new(conn_get_from_addr(worker, target), NULL, message_new());
+    trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
     trans->out->tag = ALLOCTAG;
     trans->out->id = TECLOSEFID;
     set_teclosefid(trans->out, fid);
@@ -98,7 +98,7 @@ List *remote_snapshot(Worker *worker, List *targets) {
     for ( ; !null(targets); targets = cdr(targets)) {
         Lease *lease = car(targets);
         assert(lease->isexit);
-        trans = trans_new(conn_get_from_addr(worker, lease->addr),
+        trans = trans_new(conn_get_envoy_out(worker, lease->addr),
                 NULL, message_new());
         trans->out->tag = ALLOCTAG;
         trans->out->id = TESNAPSHOT;

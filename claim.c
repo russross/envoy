@@ -6,6 +6,7 @@
 #include "9p.h"
 #include "list.h"
 #include "hashtable.h"
+#include "fid.h"
 #include "util.h"
 #include "config.h"
 #include "object.h"
@@ -35,7 +36,7 @@ Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     assert(claim != NULL);
 
     claim->lock = NULL;
-    claim->refcount = 0;
+    claim->fids = NULL;
     claim->exclusive = 0;
     claim->deleted = 0;
 
@@ -57,7 +58,7 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
     assert(parent != NULL);
 
     claim->lock = NULL;
-    claim->refcount = 0;
+    claim->fids = NULL;
     claim->exclusive = 0;
     claim->deleted = 0;
 
@@ -84,10 +85,16 @@ void claim_delete(Claim *claim) {
 
     claim->parent = NULL;
     claim->deleted = 1;
+    claim->pathname = NULL;
 
-    if (claim->refcount > 0) {
-        claim->lease->deleted = insertinorder((Cmpfunc) claim_cmp,
-                claim->lease->deleted, claim);
+    if (!null(claim->fids)) {
+        List *fids = claim->fids;
+        for (fids = claim->fids; !null(fids); fids = cdr(fids)) {
+            Fid *fid = car(fids);
+            fid->pathname = NULL;
+            fid_deleted_list = insertinorder((Cmpfunc) fid_cmp,
+                    fid_deleted_list, fid);
+        }
     }
 }
 
@@ -97,13 +104,11 @@ void claim_release(Claim *claim) {
         return;
 
     /* is this a deleted entry being clunked? */
-    if (claim->deleted && claim->lock == NULL && claim->refcount == 0) {
-        claim->lease->deleted = removeinorder((Cmpfunc) claim_cmp,
-                claim->lease->deleted, claim);
-    }
+    if (claim->deleted)
+        return;
 
     /* delete up the tree as far as we can */
-    while (claim->lock == NULL && claim->refcount == 0 &&
+    while (claim->lock == NULL && null(claim->fids) &&
             null(claim->children) && claim->parent != NULL)
     {
         Claim *parent = claim->parent;
@@ -114,9 +119,7 @@ void claim_release(Claim *claim) {
 
         /* put this claim in the cache */
         claim->parent = NULL;
-
-        if (!claim->deleted)
-            claim_add_to_cache(claim);
+        claim_add_to_cache(claim);
 
         claim = parent;
     }

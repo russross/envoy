@@ -74,7 +74,7 @@ static void rerror(Message *m, u16 errnum, int line) {
         send_reply(trans); \
         return; \
     } \
-} while(0)
+} while (0)
 
 #define guard(_f) do { \
     if ((_f) < 0) { \
@@ -82,7 +82,7 @@ static void rerror(Message *m, u16 errnum, int line) {
         send_reply(trans); \
         return; \
     } \
-} while(0)
+} while (0)
 
 #define require_fid(_ptr) do { \
     (_ptr) = fid_lookup(trans->conn, req->fid); \
@@ -91,16 +91,7 @@ static void rerror(Message *m, u16 errnum, int line) {
         send_reply(trans); \
         return; \
     } \
-} while(0)
-
-#define require_fid_remove(_ptr) do { \
-    (_ptr) = fid_lookup_remove(trans->conn, req->fid); \
-    if ((_ptr) == NULL) { \
-        rerror(trans->out, EBADF, __LINE__); \
-        send_reply(trans); \
-        return; \
-    } \
-} while(0)
+} while (0)
 
 #define require_fid_unopenned(_ptr) do { \
     (_ptr) = fid_lookup(trans->conn, req->fid); \
@@ -113,14 +104,14 @@ static void rerror(Message *m, u16 errnum, int line) {
         send_reply(trans); \
         return; \
     } \
-} while(0)
+} while (0)
 
 #define require_info(_ptr) do { \
     if ((_ptr)->info == NULL) { \
         (_ptr)->info = \
             object_stat(worker, (_ptr)->oid, filename((_ptr)->pathname)); \
     } \
-} while(0)
+} while (0)
 
 /*
  * forward a request to an envoy by copying trans->in to env->out and
@@ -164,7 +155,7 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
             assert(0);
     }
 
-    env->conn = conn_get_from_addr(worker, fid->raddr);
+    env->conn = conn_get_envoy_out(worker, fid->raddr);
     send_request(env);
 
     /* now copy the response back into trans */
@@ -295,6 +286,7 @@ void handle_tattach(Worker *worker, Transaction *trans) {
     failif(fid_lookup(trans->conn, req->fid) != NULL, EBADF);
 
     /* treat this like a walk from the global root */
+    env->isattach = 1;
     env->pathname = "/";
     env->user = req->uname;
     if (emptystring(req->aname))
@@ -404,6 +396,10 @@ void client_twalk(Worker *worker, Transaction *trans) {
 
     require_fid_unopenned(fid);
 
+    /* no walks from deleted files */
+    failif(fid->pathname == NULL, EPERM);
+
+    env->isattach = 0;
     env->pathname = fid->pathname;
     env->user = fid->user;
 
@@ -441,6 +437,8 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
     int i;
 
     assert(env != NULL);
+
+    env->isattach = 0;
 
     /* is this the start of the walk? */
     if (emptystring(req->user) || emptystring(req->path)) {
@@ -1060,19 +1058,16 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
     struct Tclunk *req = &trans->in->msg.tclunk;
     Fid *fid;
 
-    require_fid_remove(fid);
+    require_fid(fid);
 
     /* handle forwarding */
-    if (fid->isremote) {
+    if (fid->isremote)
         forward_to_envoy(worker, trans, fid);
-        fid_release_remote(fid->rfid);
-        goto send_reply;
-    }
 
     /* we don't support remove-on-close */
 
-    send_reply:
     send_reply(trans);
+    fid_remove(trans->conn, req->fid);
 }
 
 /**
@@ -1165,9 +1160,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     }
 
     cleanup:
-    require_fid_remove(fid);
-    if (fid->isremote)
-        fid_release_remote(fid->rfid);
+    fid_remove(trans->conn, req->fid);
 
     failif(errnum != 0, errnum);
 
@@ -1381,7 +1374,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 void envoy_teclosefid(Worker *worker, Transaction *trans) {
     struct Teclosefid *req = &trans->in->msg.teclosefid;
 
-    fid_lookup_remove(trans->conn, req->fid);
+    fid_remove(trans->conn, req->fid);
 
     send_reply(trans);
 }
@@ -1396,7 +1389,7 @@ void client_shutdown(Worker *worker, Connection *conn) {
             remote_closefid(worker, fid->raddr, fid->rfid);
             fid_release_remote(fid->rfid);
         }
-        fid_lookup_remove(conn, i);
+        fid_remove(conn, i);
     }
 }
 
@@ -1434,7 +1427,7 @@ void envoy_tesetaddress(Worker *worker, Transaction *trans) {
     addr->ip = req->address;
     addr->port = req->port;
 
-    conn_set_addr(trans->conn, addr);
+    conn_set_addr_envoy_in(trans->conn, addr);
 
     send_reply(trans);
 }

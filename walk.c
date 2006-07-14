@@ -28,6 +28,13 @@ Lru *walk_cache;
     goto error; \
 } while (0);
 
+#define require_info(_ptr) do { \
+    if ((_ptr)->info == NULL) { \
+        (_ptr)->info = \
+            object_stat(worker, (_ptr)->oid, filename((_ptr)->pathname)); \
+    } \
+} while (0)
+
 static char *walk_pathname(char *pathname, char *name) {
     if (name == NULL || !strcmp(name, "."))
         return pathname;
@@ -163,10 +170,7 @@ static void walk_local(Worker *worker, Transaction *trans,
 
     for (;;) {
         /* look at the current file/directory */
-        if (env->claim->info == NULL) {
-            env->claim->info =
-                object_stat(worker, env->claim->oid, filename(env->pathname));
-        }
+        require_info(env->claim);
         info = env->claim->info;
 
         /* make the qid */
@@ -221,8 +225,25 @@ static void walk_local(Worker *worker, Transaction *trans,
             }
         } else {
             /* walk to the next child */
+            Claim *child = claim_get_child(worker, env->claim, name);
+
+            if (child != NULL) {
+                require_info(child);
+                info = child->info;
+
+                /* special case--for attach we handle symlinks to snapshots */
+                if (env->isattach && (info->mode & DMSYMLINK) &&
+                        get_admin_path_type(env->pathname) == PATH_ADMIN &&
+                        !emptystring(info->extension) &&
+                        ispositiveint(info->extension))
+                {
+                    name = info->extension;
+                    child = claim_get_child(worker, env->claim, name);
+                }
+            }
+
             env->pathname = concatname(env->pathname, name);
-            env->claim = claim_get_child(worker, env->claim, name);
+            env->claim = child;
 
             /* did we step past the lease? */
             if (env->claim == NULL) {

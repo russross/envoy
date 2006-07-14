@@ -184,7 +184,7 @@ void dispatch(Worker *worker, Transaction *trans) {
             trans->conn->type == CONN_STORAGE_IN);
 
     if (DEBUG_AUDIT && worker_active_count() == 1)
-        lease_audit();
+        /*lease_audit()*/;
 
     trans->out = message_new();
     trans->out->tag = trans->in->tag;

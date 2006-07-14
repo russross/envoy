@@ -44,9 +44,10 @@ extern Vector *conn_vector;
 
 Connection *conn_insert_new(int fd, enum conn_type type,
         struct sockaddr_in *netaddr);
-void conn_set_addr(Connection *conn, Address *addr);
+void conn_set_addr_envoy_in(Connection *conn, Address *addr);
 Connection *conn_lookup_fd(int fd);
-Connection *conn_get_from_addr(Worker *worker, Address *addr);
+Connection *conn_get_envoy_out(Worker *worker, Address *addr);
+Connection *conn_get_incoming(Address *addr);
 Connection *conn_connect_to_storage(Address *addr);
 Message *conn_get_pending_write(Connection *conn);
 int conn_has_pending_write(Connection *conn);

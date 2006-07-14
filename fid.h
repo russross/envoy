@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "types.h"
 #include "9p.h"
+#include "list.h"
 #include "vector.h"
 #include "connection.h"
 #include "worker.h"
@@ -34,6 +35,7 @@ struct fid {
     /* the number of bytes returned so far in the current directory read */
     u64 readdir_cookie;
 
+    Address *addr;
     int isremote;
 
     /* local fields */
@@ -56,18 +58,19 @@ void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
         Address *raddr, u32 rfid);
 void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid);
 void fid_update_local(Fid *fid, Claim *claim);
+int fid_cmp(const Fid *a, const Fid *b);
+u32 fid_hash(const Fid *fid);
 Fid *fid_lookup(Connection *conn, u32 fid);
-Fid *fid_lookup_remove(Connection *conn, u32 fid);
+void fid_remove(Connection *conn, u32 fid);
 u32 fid_reserve_remote(Worker *worker);
 void fid_release_remote(u32 fid);
 void fid_set_remote(u32 rfid, Fid *fid);
 
-u32 fid_hash(const Fid *fid);
-int fid_cmp(const Fid *a, const Fid *b);
 enum claim_access fid_access_child(enum claim_access access, int cowlink);
 
 void fid_state_init(void);
 
 extern Vector *fid_remote_vector;
+extern List *fid_deleted_list;
 
 #endif

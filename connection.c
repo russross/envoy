@@ -22,7 +22,8 @@
 
 
 Vector *conn_vector;
-Hashtable *addr_2_conn;
+Hashtable *addr_2_envoy_out;
+Hashtable *addr_2_in;
 
 Connection *conn_insert_new(int fd, enum conn_type type,
         struct sockaddr_in *netaddr)
@@ -39,7 +40,10 @@ Connection *conn_insert_new(int fd, enum conn_type type,
 
     addr->ip = ntohl(netaddr->sin_addr.s_addr);
     addr->port = ntohs(netaddr->sin_port);
-    assert(hash_get(addr_2_conn, addr) == NULL);
+    if (type == CONN_ENVOY_OUT)
+        assert(hash_get(addr_2_envoy_out, addr) == NULL);
+    else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN)
+        assert(hash_get(addr_2_in, addr) == NULL);
 
     conn = GC_NEW(Connection);
     assert(conn != NULL);
@@ -60,12 +64,14 @@ Connection *conn_insert_new(int fd, enum conn_type type,
 
     vector_set(conn_vector, conn->fd, conn);
     if (type == CONN_ENVOY_OUT)
-        hash_set(addr_2_conn, addr, conn);
+        hash_set(addr_2_envoy_out, addr, conn);
+    else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN)
+        hash_set(addr_2_in, addr, conn);
 
     return conn;
 }
 
-void conn_set_addr(Connection *conn, Address *addr) {
+void conn_set_addr_envoy_in(Connection *conn, Address *addr) {
     assert(conn->addr != NULL);
     assert(addr != NULL);
     assert(conn->type == CONN_ENVOY_IN);
@@ -78,13 +84,13 @@ Connection *conn_lookup_fd(int fd) {
 }
 
 /* note: this only returns connections of type CONN_ENVOY_OUT */
-Connection *conn_get_from_addr(Worker *worker, Address *addr) {
+Connection *conn_get_envoy_out(Worker *worker, Address *addr) {
     Transaction *trans;
     Connection *conn;
 
     assert(addr != NULL);
 
-    if ((conn = hash_get(addr_2_conn, addr)) == NULL) {
+    if ((conn = hash_get(addr_2_envoy_out, addr)) == NULL) {
         int fd;
         struct sockaddr_in *netaddr = addr_to_netaddr(addr);
         if ((fd = open_connection(netaddr)) < 0)
@@ -99,6 +105,12 @@ Connection *conn_get_from_addr(Worker *worker, Address *addr) {
         }
     }
 
+    return conn;
+}
+
+Connection *conn_get_incoming(Address *addr) {
+    Connection *conn = hash_get(addr_2_in, addr);
+    assert(conn != NULL);
     return conn;
 }
 
@@ -148,9 +160,13 @@ void conn_remove(Connection *conn) {
     assert(conn != NULL);
     assert(vector_test(conn_vector, conn->fd));
     if (conn->type == CONN_ENVOY_OUT) {
-        assert(hash_get(addr_2_conn, conn->addr) != NULL);
-        hash_remove(addr_2_conn, conn->addr);
+        assert(hash_get(addr_2_envoy_out, conn->addr) != NULL);
+        hash_remove(addr_2_envoy_out, conn->addr);
+    } else if (conn->type == CONN_ENVOY_IN || conn->type == CONN_CLIENT_IN) {
+        assert(hash_get(addr_2_in, conn->addr) != NULL);
+        hash_remove(addr_2_in, conn->addr);
     }
+
     vector_remove(conn_vector, conn->fd);
 }
 
@@ -174,7 +190,11 @@ void conn_close(Connection *conn) {
 
 void conn_init(void) {
     conn_vector = vector_create(CONN_VECTOR_SIZE);
-    addr_2_conn = hash_create(
+    addr_2_envoy_out = hash_create(
+            CONN_HASHTABLE_SIZE,
+            (u32 (*)(const void *)) addr_hash,
+            (int (*)(const void *, const void *)) addr_cmp);
+    addr_2_in = hash_create(
             CONN_HASHTABLE_SIZE,
             (u32 (*)(const void *)) addr_hash,
             (int (*)(const void *, const void *)) addr_cmp);

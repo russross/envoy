@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "types.h"
 #include "9p.h"
+#include "list.h"
 #include "vector.h"
 #include "connection.h"
 #include "fid.h"
@@ -16,6 +17,7 @@
  */
 
 Vector *fid_remote_vector;
+List *fid_deleted_list;
 
 void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     Fid *res = GC_NEW(Fid);
@@ -36,6 +38,7 @@ void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     res->status = STATUS_UNOPENNED;
     res->omode = 0;
     res->readdir_cookie = 0;
+    res->addr = conn->addr;
     res->isremote = 0;
 
     res->claim = claim;
@@ -44,9 +47,9 @@ void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     res->raddr = NULL;
     res->rfid = NOFID;
 
-    res->claim->refcount++;
-
+    res->claim->fids = insertinorder((Cmpfunc) fid_cmp, res->claim->fids, res);
     vector_set(conn->fid_vector, res->fid, res);
+    hash_set(res->claim->lease->fids, res, res);
 }
 
 void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
@@ -72,6 +75,7 @@ void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
     res->status = STATUS_UNOPENNED;
     res->omode = 0;
     res->readdir_cookie = 0;
+    res->addr = conn->addr;
     res->isremote = 1;
 
     res->claim = NULL;
@@ -87,8 +91,11 @@ void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
 void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
     fid->pathname = pathname;
     fid->isremote = 1;
-    if (fid->claim != NULL)
-        fid->claim->refcount--;
+    if (fid->claim != NULL) {
+        fid->claim->fids =
+            removeinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
+        hash_remove(fid->claim->lease->fids, fid);
+    }
     fid->claim = NULL;
     fid->raddr = raddr;
     fid->rfid = rfid;
@@ -98,15 +105,30 @@ void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
 void fid_update_local(Fid *fid, Claim *claim) {
     fid->pathname = claim->pathname;
     fid->isremote = 0;
-    if (fid->claim != NULL && fid->claim != claim)
-        fid->claim->refcount--;
+    if (fid->claim != NULL && fid->claim != claim) {
+        fid->claim->fids =
+            removeinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
+        hash_remove(fid->claim->lease->fids, fid);
+    }
     fid->claim = claim;
     fid->readdir_cookie = 0;
     fid->readdir_env = NULL;
     fid->raddr = NULL;
     fid->rfid = NOFID;
 
-    fid->claim->refcount++;
+    fid->claim->fids = insertinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
+    hash_set(fid->claim->lease->fids, fid, fid);
+}
+
+int fid_cmp(const Fid *a, const Fid *b) {
+    int res = addr_cmp(a->addr, b->addr);
+    if (res == 0)
+        return (int) a->fid - (int) b->fid;
+    return res;
+}
+
+u32 fid_hash(const Fid *fid) {
+    return generic_hash(&fid->fid, sizeof(fid->fid), addr_hash(fid->addr));
 }
 
 Fid *fid_lookup(Connection *conn, u32 fid) {
@@ -116,32 +138,27 @@ Fid *fid_lookup(Connection *conn, u32 fid) {
     return vector_get(conn->fid_vector, fid);
 }
 
-Fid *fid_lookup_remove(Connection *conn, u32 fid) {
-    Fid *res;
+void fid_remove(Connection *conn, u32 fid) {
+    Fid *elt;
 
     assert(conn != NULL);
     assert(fid != NOFID);
 
-    res = (Fid *) vector_get_remove(conn->fid_vector, fid);
+    elt = (Fid *) vector_get_remove(conn->fid_vector, fid);
 
-    if (res->claim != NULL && res->claim->exclusive &&
-            res->status != STATUS_UNOPENNED)
-    {
-        res->claim->exclusive = 0;
+    assert(elt != NULL);
+
+    if (elt->isremote) {
+        fid_release_remote(fid);
+    } else {
+        Claim *claim = elt->claim;
+        assert(claim != NULL);
+        if (claim->exclusive && elt->status != STATUS_UNOPENNED)
+            claim->exclusive = 0;
+        claim->fids = removeinorder((Cmpfunc) fid_cmp, claim->fids, elt);
+        if (claim->deleted && null(claim->fids))
+            removeinorder((Cmpfunc) fid_cmp, fid_deleted_list, elt);
     }
-
-    if (res->claim != NULL)
-        res->claim->refcount--;
-
-    return res;
-}
-
-u32 fid_hash(const Fid *fid) {
-    return generic_hash(&fid->fid, sizeof(fid->fid), 1);
-}
-
-int fid_cmp(const Fid *a, const Fid *b) {
-    return (int) a->fid - (int) b->fid;
 }
 
 enum claim_access fid_access_child(enum claim_access access, int cowlink) {
@@ -153,6 +170,7 @@ enum claim_access fid_access_child(enum claim_access access, int cowlink) {
 
 void fid_state_init(void) {
     fid_remote_vector = vector_create(FID_REMOTE_VECTOR_SIZE);
+    fid_deleted_list = NULL;
 }
 
 u32 fid_reserve_remote(Worker *worker) {

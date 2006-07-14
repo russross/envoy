@@ -41,8 +41,8 @@
 struct claim {
     Worker *lock;
 
-    /* number of fids referring directly to this claim */
-    int refcount;
+    /* fids referring directly to this claim */
+    List *fids;
 
     /* true if this file has been opened and has DMEXCL marked */
     int exclusive;

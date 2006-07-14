@@ -47,7 +47,6 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
             insertinorder((Cmpfunc) lease_cmp, l->wavefront, car(wavefront));
         wavefront = cdr(wavefront);
     }
-    l->deleted = NULL;
 
     l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
             (Hashfunc) fid_hash,
@@ -166,153 +165,153 @@ struct audit_env {
                 _name, __LINE__); \
 } while (0)
 
-static void lease_audit_iter(struct audit_env *env, char *pathname,
-        Lease *lease)
-{
-    eqnull(lease->wait_for_update, pathname);
-    eqnull(lease->inflight, pathname);
-    if (lease->isexit) {
-        eqnull(lease->claim, pathname);
-        eqnull(lease->wavefront, pathname);
-        eqnull(lease->fids, pathname);
-        eqnull(lease->readonly, pathname);
-        eqnull(lease->claim_cache, pathname);
-    } else {
-        /* walk the claim tree, verifying links and gathering claims with
-         * non-zero refcounts */
-        List *stack = cons(lease->claim, NULL);
-        while (!null(stack)) {
-            Claim *claim = car(stack);
-            stack = cdr(stack);
-            eqnull(claim->lock, claim->pathname);
-            eqnull(claim->deleted, claim->pathname);
-            assert(claim->lease == lease);
-            if (!null(claim->children)) {
-                List *children = claim->children;
-                while (!null(children)) {
-                    Claim *child = car(children);
-                    children = cdr(children);
-                    assert(child->parent == claim);
-                    assert(!strcmp(child->pathname,
-                                concatname(claim->pathname,
-                                    filename(child->pathname))));
-                    stack = cons(child, stack);
-                }
-            } else {
-                if (claim->refcount == 0 && claim != lease->claim) {
-                    printf("audit: zero refcount, no children, non-root: %s\n",
-                            claim->pathname);
-                }
-            }
-            if (claim->refcount != 0) {
-                int *refcount = GC_NEW_ATOMIC(int);
-                assert(refcount != NULL);
-                assert(hash_get(env->inuse, claim) == NULL);
-                *refcount = claim->refcount;
-                hash_set(env->inuse, claim, refcount);
-            }
-        }
-        stack = lease->deleted;
-        while (!null(stack)) {
-            int *refcount = GC_NEW_ATOMIC(int);
-            Claim *claim = car(stack);
-            stack = cdr(stack);
-            assert(claim->deleted);
-            eqnull(claim->parent, claim->pathname);
-            eqnull(claim->children, claim->pathname);
-            assert(claim->refcount != 0);
-            assert(refcount != NULL);
-            assert(hash_get(env->inuse, claim) == NULL);
-            *refcount = claim->refcount;
-            hash_set(env->inuse, claim, refcount);
-        }
-    }
-}
-
-static void lease_audit_fid_iter(struct audit_env *env, u32 key, Fid *fid) {
-    eqnull(fid->lock, fid->pathname);
-    assert(fid->pathname != NULL && fid->user != NULL);
-    if (fid->isremote) {
-        assert(fid->raddr != NULL);
-        assert(fid->rfid != NOFID);
-        assert(vector_get(env->rfids, fid->rfid) == fid);
-        vector_remove(env->rfids, fid->rfid);
-    } else {
-        int *refcount;
-        assert(fid->claim != NULL);
-        if (strcmp(fid->claim->pathname, fid->pathname)) {
-            printf("audit: fid->claim->pathname = %s, fid->pathname = %s\n",
-                    fid->claim->pathname, fid->pathname);
-        }
-        refcount = hash_get(env->inuse, fid->claim);
-        if (refcount == NULL) {
-            assert(fid->claim->refcount == 0);
-        } else {
-            (*refcount)--;
-            if (*refcount < 0) {
-                printf("lease_audit_fid_iter: (fid count = %d) > "
-                        "(refcount = %d): %s\n",
-                        fid->claim->refcount - *refcount,
-                        fid->claim->refcount, fid->pathname);
-            }
-        }
-    }
-}
-
-static void lease_audit_conn_iter(struct audit_env *env, u32 key, Connection *conn) {
-    vector_apply(conn->fid_vector,
-            (void (*)(void *, u32, void *)) lease_audit_fid_iter,
-            env);
-}
-
-static void lease_audit_count_iter(void *env, Claim *claim, int *refcount) {
-    if (*refcount > 0) {
-        printf("lease_audit_count_iter: claim refcount %d too high: %s\n",
-                *refcount, claim->pathname);
-    }
-}
-
-static void lease_audit_check_rfid(struct audit_env *env, u32 rfid, Fid *fid) {
-    assert(fid->rfid == rfid);
-    vector_set(env->rfids, rfid, fid);
-}
-
-void lease_audit(void) {
-    struct audit_env env;
-    env.inuse = hash_create(
-            64,
-            (Hashfunc) claim_hash,
-            (Cmpfunc) claim_cmp);
-    env.rfids = vector_create(FID_REMOTE_VECTOR_SIZE);
-
-    /* check and clone the remote fid vector */
-    vector_apply(fid_remote_vector,
-            (void (*)(void *, u32, void *)) lease_audit_check_rfid,
-            &env);
-
-    /* walk all the leases & claims, and gather claims with refcount != 0 */
-    hash_apply(lease_by_root_pathname,
-            (void (*)(void *, void *, void *)) lease_audit_iter,
-            &env);
-
-    /* walk all the fids and decrement refcounts */
-    vector_apply(conn_vector,
-            (void (*)(void *, u32, void *)) lease_audit_conn_iter,
-            &env);
-
-    /* see if there were any refcounts left > 0 */
-    hash_apply(env.inuse,
-            (void (*)(void *, void *, void *)) lease_audit_count_iter,
-            NULL);
-
-    /* see if there are any orphan rfids */
-    while (vector_get_next(env.rfids) > 0) {
-        u32 rfid = vector_get_next(env.rfids) - 1;
-        Fid *fid = vector_get_remove(env.rfids, rfid);
-        printf("audit: orphan remote fid: %d -> %s\n", rfid, fid->pathname);
-        assert(0);
-    }
-}
+//static void lease_audit_iter(struct audit_env *env, char *pathname,
+//        Lease *lease)
+//{
+//    eqnull(lease->wait_for_update, pathname);
+//    eqnull(lease->inflight, pathname);
+//    if (lease->isexit) {
+//        eqnull(lease->claim, pathname);
+//        eqnull(lease->wavefront, pathname);
+//        eqnull(lease->fids, pathname);
+//        eqnull(lease->readonly, pathname);
+//        eqnull(lease->claim_cache, pathname);
+//    } else {
+//        /* walk the claim tree, verifying links and gathering claims with
+//         * non-zero refcounts */
+//        List *stack = cons(lease->claim, NULL);
+//        while (!null(stack)) {
+//            Claim *claim = car(stack);
+//            stack = cdr(stack);
+//            eqnull(claim->lock, claim->pathname);
+//            eqnull(claim->deleted, claim->pathname);
+//            assert(claim->lease == lease);
+//            if (!null(claim->children)) {
+//                List *children = claim->children;
+//                while (!null(children)) {
+//                    Claim *child = car(children);
+//                    children = cdr(children);
+//                    assert(child->parent == claim);
+//                    assert(!strcmp(child->pathname,
+//                                concatname(claim->pathname,
+//                                    filename(child->pathname))));
+//                    stack = cons(child, stack);
+//                }
+//            } else {
+//                if (claim->refcount == 0 && claim != lease->claim) {
+//                    printf("audit: zero refcount, no children, non-root: %s\n",
+//                            claim->pathname);
+//                }
+//            }
+//            if (claim->refcount != 0) {
+//                int *refcount = GC_NEW_ATOMIC(int);
+//                assert(refcount != NULL);
+//                assert(hash_get(env->inuse, claim) == NULL);
+//                *refcount = claim->refcount;
+//                hash_set(env->inuse, claim, refcount);
+//            }
+//        }
+//        stack = lease->deleted;
+//        while (!null(stack)) {
+//            int *refcount = GC_NEW_ATOMIC(int);
+//            Claim *claim = car(stack);
+//            stack = cdr(stack);
+//            assert(claim->deleted);
+//            eqnull(claim->parent, claim->pathname);
+//            eqnull(claim->children, claim->pathname);
+//            assert(claim->refcount != 0);
+//            assert(refcount != NULL);
+//            assert(hash_get(env->inuse, claim) == NULL);
+//            *refcount = claim->refcount;
+//            hash_set(env->inuse, claim, refcount);
+//        }
+//    }
+//}
+//
+//static void lease_audit_fid_iter(struct audit_env *env, u32 key, Fid *fid) {
+//    eqnull(fid->lock, fid->pathname);
+//    assert(fid->pathname != NULL && fid->user != NULL);
+//    if (fid->isremote) {
+//        assert(fid->raddr != NULL);
+//        assert(fid->rfid != NOFID);
+//        assert(vector_get(env->rfids, fid->rfid) == fid);
+//        vector_remove(env->rfids, fid->rfid);
+//    } else {
+//        int *refcount;
+//        assert(fid->claim != NULL);
+//        if (strcmp(fid->claim->pathname, fid->pathname)) {
+//            printf("audit: fid->claim->pathname = %s, fid->pathname = %s\n",
+//                    fid->claim->pathname, fid->pathname);
+//        }
+//        refcount = hash_get(env->inuse, fid->claim);
+//        if (refcount == NULL) {
+//            assert(fid->claim->refcount == 0);
+//        } else {
+//            (*refcount)--;
+//            if (*refcount < 0) {
+//                printf("lease_audit_fid_iter: (fid count = %d) > "
+//                        "(refcount = %d): %s\n",
+//                        fid->claim->refcount - *refcount,
+//                        fid->claim->refcount, fid->pathname);
+//            }
+//        }
+//    }
+//}
+//
+//static void lease_audit_conn_iter(struct audit_env *env, u32 key, Connection *conn) {
+//    vector_apply(conn->fid_vector,
+//            (void (*)(void *, u32, void *)) lease_audit_fid_iter,
+//            env);
+//}
+//
+//static void lease_audit_count_iter(void *env, Claim *claim, int *refcount) {
+//    if (*refcount > 0) {
+//        printf("lease_audit_count_iter: claim refcount %d too high: %s\n",
+//                *refcount, claim->pathname);
+//    }
+//}
+//
+//static void lease_audit_check_rfid(struct audit_env *env, u32 rfid, Fid *fid) {
+//    assert(fid->rfid == rfid);
+//    vector_set(env->rfids, rfid, fid);
+//}
+//
+//void lease_audit(void) {
+//    struct audit_env env;
+//    env.inuse = hash_create(
+//            64,
+//            (Hashfunc) claim_hash,
+//            (Cmpfunc) claim_cmp);
+//    env.rfids = vector_create(FID_REMOTE_VECTOR_SIZE);
+//
+//    /* check and clone the remote fid vector */
+//    vector_apply(fid_remote_vector,
+//            (void (*)(void *, u32, void *)) lease_audit_check_rfid,
+//            &env);
+//
+//    /* walk all the leases & claims, and gather claims with refcount != 0 */
+//    hash_apply(lease_by_root_pathname,
+//            (void (*)(void *, void *, void *)) lease_audit_iter,
+//            &env);
+//
+//    /* walk all the fids and decrement refcounts */
+//    vector_apply(conn_vector,
+//            (void (*)(void *, u32, void *)) lease_audit_conn_iter,
+//            &env);
+//
+//    /* see if there were any refcounts left > 0 */
+//    hash_apply(env.inuse,
+//            (void (*)(void *, void *, void *)) lease_audit_count_iter,
+//            NULL);
+//
+//    /* see if there are any orphan rfids */
+//    while (vector_get_next(env.rfids) > 0) {
+//        u32 rfid = vector_get_next(env.rfids) - 1;
+//        Fid *fid = vector_get_remove(env.rfids, rfid);
+//        printf("audit: orphan remote fid: %d -> %s\n", rfid, fid->pathname);
+//        assert(0);
+//    }
+//}
 
 struct leaserecord *lease_serialize_root(Lease *lease) {
     struct leaserecord *elt = GC_NEW(struct leaserecord);
@@ -337,6 +336,12 @@ List *lease_serialize_exits(Lease *lease) {
     return reverse(result);
 }
 
+struct lease_serialize_fids_env {
+    List *fids;
+};
+
 List *lease_serialize_fids(Lease *lease) {
+    //List *result = NULL;
+    
     return NULL;
 }

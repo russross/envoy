@@ -66,7 +66,7 @@ static void *worker_loop(Worker *t) {
 
     /* threads seem to hold on to 8mb each even after they terminate,
      * so we don't let threads expire */
-    for (i = 0; 1 || i < THREAD_LIFETIME; i++) {
+    for (i = 0; i < THREAD_LIFETIME; i++) {
         if (i > 0) {
             /* wait in the pool for a request */
             worker_thread_pool = append_elt(worker_thread_pool, t);
@@ -134,6 +134,7 @@ void worker_create(void (*func)(Worker *, void *), void *arg) {
         pthread_t newthread;
         pthread_create(&newthread, NULL,
                 (void *(*)(void *)) worker_loop, (void *) t);
+        pthread_detach(newthread);
     } else {
         Worker *t = car(worker_thread_pool);
         worker_thread_pool = cdr(worker_thread_pool);
