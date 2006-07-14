@@ -40,10 +40,13 @@ Connection *conn_insert_new(int fd, enum conn_type type,
 
     addr->ip = ntohl(netaddr->sin_addr.s_addr);
     addr->port = ntohs(netaddr->sin_port);
-    if (type == CONN_ENVOY_OUT)
+    if (type == CONN_ENVOY_OUT) {
         assert(hash_get(addr_2_envoy_out, addr) == NULL);
-    else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN)
+    } else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN ||
+            type == CONN_UNKNOWN_IN)
+    {
         assert(hash_get(addr_2_in, addr) == NULL);
+    }
 
     conn = GC_NEW(Connection);
     assert(conn != NULL);
@@ -63,10 +66,13 @@ Connection *conn_insert_new(int fd, enum conn_type type,
     conn->partial_out_bytes = 0;
 
     vector_set(conn_vector, conn->fd, conn);
-    if (type == CONN_ENVOY_OUT)
+    if (type == CONN_ENVOY_OUT) {
         hash_set(addr_2_envoy_out, addr, conn);
-    else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN)
+    } else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN ||
+            type == CONN_UNKNOWN_IN)
+    {
         hash_set(addr_2_in, addr, conn);
+    }
 
     return conn;
 }
@@ -162,7 +168,9 @@ void conn_remove(Connection *conn) {
     if (conn->type == CONN_ENVOY_OUT) {
         assert(hash_get(addr_2_envoy_out, conn->addr) != NULL);
         hash_remove(addr_2_envoy_out, conn->addr);
-    } else if (conn->type == CONN_ENVOY_IN || conn->type == CONN_CLIENT_IN) {
+    } else if (conn->type == CONN_ENVOY_IN || conn->type == CONN_CLIENT_IN ||
+            conn->type == CONN_UNKNOWN_IN)
+    {
         assert(hash_get(addr_2_in, conn->addr) != NULL);
         hash_remove(addr_2_in, conn->addr);
     }

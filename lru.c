@@ -1,11 +1,9 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "types.h"
 #include "9p.h"
 #include "hashtable.h"
-#include "config.h"
 #include "heap.h"
 #include "lru.h"
 
@@ -48,7 +46,6 @@ void *lru_get(Lru *lru, void *key) {
 }
 
 static void lru_compress(Lru *lru) {
-    int count = lru->heap->count;
     while (lru->heap->count > hash_count(lru->table)) {
         struct lru_elt *elt = heap_remove(lru->heap);
 
@@ -61,9 +58,6 @@ static void lru_compress(Lru *lru) {
 
         heap_add(lru->heap, elt);
     }
-
-    if (DEBUG_VERBOSE)
-        printf("lru_compress: from %d to %d\n", count, lru->heap->count);
 }
 
 void lru_add(Lru *lru, void *key, void *value) {

@@ -121,3 +121,39 @@ List *remote_snapshot(Worker *worker, List *targets) {
 
     return results;
 }
+
+/* targets is a list of exit leases, addr is the grant target */
+void remote_grant_exits(Worker *worker, List *targets, Address *addr) {
+    List *requests = NULL;
+    Transaction *trans;
+
+    /* build a list of request transactions */
+    for ( ; !null(targets); targets = cdr(targets)) {
+        Lease *lease = car(targets);
+        struct leaserecord *rec = GC_NEW(struct leaserecord);
+        assert(rec != NULL);
+        assert(lease->isexit);
+
+        rec->pathname = lease->pathname;
+        rec->readonly = lease->readonly ? 1 : 0;
+        rec->oid = NOOID;
+        rec->address = addr->ip;
+        rec->port = addr->port;
+
+        trans = trans_new(conn_get_envoy_out(worker, lease->addr),
+                NULL, message_new());
+        trans->out->tag = ALLOCTAG;
+        trans->out->id = TEGRANT;
+        set_tegrant(trans->out, GRANT_CHANGE_PARENT, rec, 0, NULL, 0, NULL);
+        requests = cons(trans, requests);
+    }
+
+    /* wait for all transactions to complete */
+    send_requests(requests);
+
+    /* make sure they all succeeded */
+    for ( ; !null(requests); requests = cdr(requests)) {
+        trans = car(requests);
+        assert(trans->in->id == REGRANT);
+    }
+}

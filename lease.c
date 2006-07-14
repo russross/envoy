@@ -319,29 +319,89 @@ struct leaserecord *lease_serialize_root(Lease *lease) {
 
     elt->pathname = lease->pathname;
     elt->readonly = lease->readonly ? 1 : 0;
-    elt->oid = lease->claim->oid;
-    elt->address = my_address->ip;
-    elt->port = my_address->port;
+    if (lease->claim == NULL)
+        elt->oid = NOOID;
+    else
+        elt->oid = lease->claim->oid;
+    if (lease->isexit) {
+        elt->address = lease->addr->ip;
+        elt->port = lease->addr->port;
+    } else {
+        elt->address = my_address->ip;
+        elt->port = my_address->port;
+    }
 
     return elt;
 }
 
-List *lease_serialize_exits(Lease *lease) {
+/* prefix must include a trailing slash, addr is the grant target */
+List *lease_serialize_exits(Worker *worker, Lease *lease,
+        char *prefix, Address *addr)
+{
     List *result = NULL;
+    List *targets = NULL;
     List *exits = lease->wavefront;
+    List *prev = NULL;
 
-    for ( ; !null(exits); exits = cdr(exits))
-        result = cons(lease_serialize_root(car(exits)), result);
+    /* gather exits that match the prefix, and remove them from the lease */
+    for (exits = lease->wavefront; !null(exits); exits = cdr(exits)) {
+        Lease *elt = car(exits);
+        if (startswith(elt->pathname, prefix)) {
+            targets = cons(elt, targets);
+            if (prev == NULL)
+                lease->wavefront = cdr(exits);
+            else
+                setcdr(prev, cdr(exits));
+        } else {
+            prev = exits;
+        }
+    }
 
-    return reverse(result);
+    /* change the parent addresses of exits and freeze them */
+    remote_grant_exits(worker, targets, addr);
+
+    /* prepare list of records for the transfer */
+    for ( ; !null(targets); targets = cdr(targets))
+        result = cons(lease_serialize_root(car(targets)), result);
+
+    return result;
 }
 
 struct lease_serialize_fids_env {
+    char *prefix;
+    int prefixlen;
     List *fids;
 };
 
-List *lease_serialize_fids(Lease *lease) {
-    //List *result = NULL;
-    
-    return NULL;
+void lease_serialize_fids_iter(struct lease_serialize_fids_env *env,
+        Fid *key, Fid *fid)
+{
+    struct fidrecord *elt = GC_NEW(struct fidrecord);
+    assert(elt != NULL);
+    assert(fid->isremote && fid->claim != NULL);
+
+    elt->fid = fid->fid;
+    assert(startswith(elt->pathname, env->prefix));
+    elt->pathname = substring_rest(fid->pathname, env->prefixlen);
+    elt->user = fid->user;
+    elt->status = (u8) fid->status;
+    elt->omode = fid->omode;
+    elt->readdir_cookie = elt->readdir_cookie;
+    elt->address = fid->addr->ip;
+    elt->port = fid->addr->port;
+
+    env->fids = cons(elt, env->fids);
 }
+
+List *lease_serialize_fids(Lease *lease) {
+    struct lease_serialize_fids_env env;
+    env.prefix = concatstrings(lease->pathname, "/");
+    env.prefixlen = strlen(env.prefix);
+    env.fids = NULL;
+    hash_apply(lease->fids,
+            (void (*)(void *, void *, void *)) lease_serialize_fids_iter,
+            &env);
+
+    return env.fids;
+}
+

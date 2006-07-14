@@ -55,8 +55,6 @@ struct lease {
 
 extern Hashtable *lease_by_root_pathname;
 
-void lease_finish_transaction(Lease *lease);
-
 void lease_state_init(void);
 
 /* create a lease object */
@@ -96,6 +94,7 @@ enum grant_type {
     GRANT_START,
     GRANT_CONTINUE,
     GRANT_END,
+    GRANT_CHANGE_PARENT,
 };
 
 #endif

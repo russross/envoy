@@ -5,6 +5,7 @@
 #include "9p.h"
 #include "list.h"
 #include "vector.h"
+#include "hashtable.h"
 #include "connection.h"
 #include "fid.h"
 #include "util.h"

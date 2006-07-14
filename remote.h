@@ -19,5 +19,6 @@ void remote_rename(Worker *worker, Address *target,
         char *user, char *oldpath, char *newname);
 /* tags a list of leases, returns a list of new oids in the same order */
 List *remote_snapshot(Worker *worker, List *targets);
+void remote_grant_exits(Worker *worker, List *targets, Address *addr);
 
 #endif
