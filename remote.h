@@ -5,6 +5,7 @@
 #include "9p.h"
 #include "list.h"
 #include "worker.h"
+#include "lease.h"
 
 /* stubs for remote envoy calls */
 
@@ -19,6 +20,7 @@ void remote_rename(Worker *worker, Address *target,
         char *user, char *oldpath, char *newname);
 /* tags a list of leases, returns a list of new oids in the same order */
 List *remote_snapshot(Worker *worker, List *targets);
-void remote_grant_exits(Worker *worker, List *targets, Address *addr);
+void remote_grant_exits(Worker *worker, List *targets, Address *addr,
+        enum grant_type type);
 
 #endif

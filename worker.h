@@ -29,6 +29,7 @@ enum worker_transaction_states {
     WORKER_ZERO,
     WORKER_BLOCKED,
     WORKER_RETRY,
+    WORKER_MULTISTEP,
 };
 
 /* worker threads */
@@ -65,6 +66,7 @@ void lock(void);
 void unlock(void);
 void lock_lease(Worker *worker, Lease *lease);
 void lock_lease_exclusive(Worker *worker, Lease *lease);
+void lock_lease_extend_multistep(Worker *worker, Lease *lease);
 
 void cond_signal(pthread_cond_t *var);
 void cond_broadcast(pthread_cond_t *var);
@@ -78,5 +80,9 @@ void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object);
 void worker_state_init(void);
 void worker_commit(Worker *worker);
 int worker_active_count(void);
+
+void worker_multistep_transfer_request(Worker *worker,
+        void (*func)(Worker *, void *), void *arg);
+void worker_multistep_wait(Worker *worker);
 
 #endif

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "types.h"
+#include "9p.h"
 #include "list.h"
 #include "hashtable.h"
 #include "worker.h"
@@ -30,6 +31,11 @@ struct lease {
     Worker *wait_for_update;
     /* the number of active transactions using this lease */
     int inflight;
+
+    /* for lease transfers */
+    int changeinprogress;
+    List *changeexits;
+    List *changefids;
 
     /* is this an exit point to a remote owner, or a local grant? */
     int isexit;
@@ -62,7 +68,7 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         List *wavefront, int readonly);
 /* add a lease object, including exit lease objects for its wavefront */
 void lease_add(Lease *lease);
-/* remove a lease object, including exit lease objects for its wavefront */
+/* remove a lease object */
 void lease_remove(Lease *lease);
 
 /* returns the remote lease rooted at the given pathname, or NULL if the given
@@ -70,9 +76,7 @@ void lease_remove(Lease *lease);
 Lease *lease_get_remote(char *pathname);
 
 /* If the given pathname is covered by a local lease, find the root of that
- * lease and return the lease.  Otherwise, return NULL.
- *
- * Does not call lease_start_transaction on the result. */
+ * lease and return the lease.  Otherwise, return NULL. */
 Lease *lease_find_root(char *pathname);
 
 /* returns true if the given path has any decendents from the local lease that
@@ -85,9 +89,6 @@ int lease_is_exit_point_parent(Lease *lease, char *pathname);
  * can be queried from the claim; there is no return value. */
 void lease_snapshot(Worker *worker, Claim *claim);
 
-void lease_dump_graph(Lease *lease);
-void lease_audit(void);
-
 /* lease migration */
 
 enum grant_type {
@@ -96,5 +97,16 @@ enum grant_type {
     GRANT_END,
     GRANT_CHANGE_PARENT,
 };
+
+struct leaserecord *lease_to_lease_record(Lease *lease);
+List *lease_serialize_exits(Worker *worker, Lease *lease,
+        char *prefix, Address *addr);
+void lease_release_exits(Worker *worker, Lease *lease,
+        char *prefix, Address *addr);
+List *lease_serialize_fids(Worker *worker, Lease *lease,
+        char *prefix, Address *addr);
+void lease_release_fids(Worker *worker, Lease *lease,
+        char *prefix, Address *addr);
+void lease_pack_message(Lease *lease, List **exits, List **fids, int size);
 
 #endif

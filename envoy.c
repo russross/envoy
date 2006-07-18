@@ -53,6 +53,21 @@ static void qid_list_to_array(List *from, u16 *len, struct qid **to) {
     assert(null(from));
 }
 
+static void list_to_array(List *from, u16 *len, void **to) {
+    int i;
+
+    *len = length(from);
+    *to = GC_MALLOC(sizeof(void *) * *len);
+    assert(*to != NULL);
+
+    for (i = 0; i < *len; i++) {
+        to[i] = car(from);
+        from = cdr(from);
+    }
+
+    assert(null(from));
+}
+
 /*****************************************************************************/
 
 /* generate an error response with Unix errno errnum */
@@ -1430,4 +1445,69 @@ void envoy_tesetaddress(Worker *worker, Transaction *trans) {
     conn_set_addr_envoy_in(trans->conn, addr);
 
     send_reply(trans);
+}
+
+void envoy_terevoke(Worker *worker, Transaction *trans) {
+    struct Terevoke *req = &trans->in->msg.terevoke;
+    struct Rerevoke *res = &trans->out->msg.rerevoke;
+    Lease *lease = lease_find_root(req->pathname);
+    char *prefix = concatstrings(req->pathname, "/");
+    List *exits = NULL;
+    List *fids = NULL;
+    Address *newaddr = GC_NEW_ATOMIC(Address);
+    assert(newaddr != NULL);
+
+    failif(lease == NULL, EIO);
+    lock_lease_exclusive(worker, lease);
+
+    newaddr->ip = req->newaddress;
+    newaddr->port = req->newport;
+
+    res->root = lease_to_lease_record(lease);
+
+    switch (req->type) {
+        case GRANT_START:
+            /* gather the data to be transferred and freeze child leases */
+            lease->changeexits =
+                lease_serialize_exits(worker, lease, prefix, newaddr);
+            lease->changefids =
+                lease_serialize_fids(worker, lease, prefix, newaddr);
+            /* fall through */
+        case GRANT_CONTINUE:
+            /* fill up the response with exits & fids */
+            lease_pack_message(lease, &exits, &fids,
+                    REREVOKE_SIZE_FIXED + leaserecordsize(res->root));
+            if (lease->changeexits == NULL && lease->changefids == NULL)
+                res->type = GRANT_END;
+            else
+                res->type = GRANT_CONTINUE;
+            list_to_array(exits, &res->nexit, (void **) &res->exit);
+            list_to_array(fids, &res->nfid, (void **) &res->fid);
+            break;
+
+        case GRANT_END:
+            /* complete the switch by releasing the exits, notifying the
+             * fid clients of the change, and deleting the lease */
+            lease_release_exits(worker, lease, prefix, newaddr);
+            lease_release_fids(worker, lease, prefix, newaddr);
+            lease_remove(lease);
+            res->type = GRANT_END;
+            res->nexit = 0;
+            res->exit = NULL;
+            res->nfid = 0;
+            res->fid = NULL;
+            break;
+
+        case GRANT_CHANGE_PARENT:
+        default:
+            failif(1, EINVAL);
+    }
+
+    send_reply(trans);
+
+    /* hold on to this lease until another tranaction comes in */
+    if (req->type == GRANT_START || req->type == GRANT_CONTINUE) {
+        lock_lease_extend_multistep(worker, lease);
+        worker_multistep_wait(worker);
+    }
 }

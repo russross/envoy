@@ -94,6 +94,18 @@ static void *worker_loop(Worker *t) {
                 if (DEBUG_VERBOSE)
                     printf("WORKER_BLOCKED waking up\n");
                 worker_wake_up_next();
+            } else if (state == WORKER_MULTISTEP) {
+                /* wait for the next step in this grant/revoke op to wake us up
+                 * with more work to do */
+                if (DEBUG_VERBOSE)
+                    printf("WORKER_MULTISTEP sleeping\n");
+                worker_cleanup(t);
+                t->func = NULL;
+                t->arg = NULL;
+                while (t->func == NULL)
+                    cond_wait(t->sleep);
+                if (DEBUG_VERBOSE)
+                    printf("WORKER_MULTISTEP waking up\n");
             } else if (state == WORKER_RETRY) {
                 worker_cleanup(t);
             }
@@ -254,6 +266,11 @@ void lock_lease_exclusive(Worker *worker, Lease *lease) {
     worker_cleanup_add(worker, LOCK_LEASE_EXCLUSIVE, lease);
 }
 
+void lock_lease_extend_multistep(Worker *worker, Lease *lease) {
+    worker_cleanup_remove(worker, LOCK_LEASE_EXCLUSIVE, lease);
+    lease->changeinprogress = 1;
+}
+
 void cond_signal(pthread_cond_t *cond) {
     pthread_cond_signal(cond);
 }
@@ -301,4 +318,19 @@ void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object) {
 
 int worker_active_count(void) {
     return worker_active;
+}
+
+void worker_multistep_transfer_request(Worker *worker,
+        void (*func)(Worker *, void *), void *arg)
+{
+    assert(worker->func == NULL);
+    assert(worker->arg == NULL);
+    worker->func = func;
+    worker->arg = arg;
+    cond_signal(worker->sleep);
+}
+
+void worker_multistep_wait(Worker *worker) {
+    longjmp(worker->jmp, WORKER_MULTISTEP);
+    assert(0);
 }

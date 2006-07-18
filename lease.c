@@ -33,6 +33,10 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->wait_for_update = NULL;
     l->inflight = 0;
 
+    l->changeinprogress = 0;
+    l->changeexits = NULL;
+    l->changefids = NULL;
+
     l->pathname = pathname;
     l->addr = addr;
 
@@ -106,6 +110,22 @@ void lease_add(Lease *lease) {
         assert(exit->isexit);
         hash_set(lease_by_root_pathname, exit->pathname, exit);
     }
+}
+
+static void lease_remove_iter(void *env, void *key, void *value) {
+    claim_remove_from_cache((Claim *) value);
+}
+
+void lease_remove(Lease *lease) {
+    assert(null(lease->wavefront));
+    assert(hash_count(lease->fids) == 0);
+    assert(null(lease->changeexits));
+    assert(null(lease->changefids));
+    hash_apply(lease->claim_cache, lease_remove_iter, NULL);
+    hash_remove(lease_by_root_pathname, lease->pathname);
+    lease->pathname = NULL;
+    lease->addr = NULL;
+    lease->claim = NULL;
 }
 
 static void make_claim_cow(char *env, char *pathname, Claim *claim) {
@@ -313,7 +333,7 @@ struct audit_env {
 //    }
 //}
 
-struct leaserecord *lease_serialize_root(Lease *lease) {
+struct leaserecord *lease_to_lease_record(Lease *lease) {
     struct leaserecord *elt = GC_NEW(struct leaserecord);
     assert(elt != NULL);
 
@@ -340,31 +360,40 @@ List *lease_serialize_exits(Worker *worker, Lease *lease,
 {
     List *result = NULL;
     List *targets = NULL;
-    List *exits = lease->wavefront;
-    List *prev = NULL;
+    List *exits;
 
-    /* gather exits that match the prefix, and remove them from the lease */
+    /* gather exits that match the prefix */
     for (exits = lease->wavefront; !null(exits); exits = cdr(exits)) {
         Lease *elt = car(exits);
-        if (startswith(elt->pathname, prefix)) {
+        if (startswith(elt->pathname, prefix))
             targets = cons(elt, targets);
-            if (prev == NULL)
-                lease->wavefront = cdr(exits);
-            else
-                setcdr(prev, cdr(exits));
-        } else {
-            prev = exits;
-        }
     }
 
     /* change the parent addresses of exits and freeze them */
-    remote_grant_exits(worker, targets, addr);
+    remote_grant_exits(worker, targets, addr, GRANT_CHANGE_PARENT);
 
     /* prepare list of records for the transfer */
     for ( ; !null(targets); targets = cdr(targets))
-        result = cons(lease_serialize_root(car(targets)), result);
+        result = cons(lease_to_lease_record(car(targets)), result);
 
     return result;
+}
+
+void lease_release_exits(Worker *worker, Lease *lease,
+        char *prefix, Address *addr)
+{
+    List *targets = NULL;
+    List *exits;
+
+    /* gather exits that match the prefix */
+    for (exits = lease->wavefront; !null(exits); exits = cdr(exits)) {
+        Lease *elt = car(exits);
+        if (startswith(elt->pathname, prefix))
+            targets = cons(elt, targets);
+    }
+
+    /* release the exits */
+    remote_grant_exits(worker, targets, addr, GRANT_END);
 }
 
 struct lease_serialize_fids_env {
@@ -393,7 +422,9 @@ void lease_serialize_fids_iter(struct lease_serialize_fids_env *env,
     env->fids = cons(elt, env->fids);
 }
 
-List *lease_serialize_fids(Lease *lease) {
+List *lease_serialize_fids(Worker *worker, Lease *lease,
+        char *prefix, Address *addr)
+{
     struct lease_serialize_fids_env env;
     env.prefix = concatstrings(lease->pathname, "/");
     env.prefixlen = strlen(env.prefix);
@@ -405,3 +436,32 @@ List *lease_serialize_fids(Lease *lease) {
     return env.fids;
 }
 
+void lease_pack_message(Lease *lease, List **exits, List **fids, int size) {
+    while (!null(lease->changeexits)) {
+        struct leaserecord *elt = car(lease->changeexits);
+        int eltsize = leaserecordsize(elt);
+        if (eltsize <= size) {
+            *exits = cons(elt, *exits);
+            lease->changeexits = cdr(lease->changeexits);
+            size -= eltsize;
+        } else {
+            break;
+        }
+    }
+    while (!null(lease->changefids)) {
+        struct fidrecord *elt = car(lease->changefids);
+        int eltsize = fidrecordsize(elt);
+        if (eltsize <= size) {
+            *fids = cons(elt, *fids);
+            lease->changefids = cdr(lease->changefids);
+            size -= eltsize;
+        } else {
+            break;
+        }
+    }
+}
+
+void lease_transfer(Worker *worker, Address *source, Address *target,
+        struct leaserecord *root, List *exits, List *fids)
+{
+}

@@ -174,6 +174,9 @@ void dispatch(Worker *worker, Transaction *trans) {
     u32 newfid = NOFID;
     Fid *fid = NULL;
     int isadmincreate = 0;
+    enum grant_type granttype;
+    char *pathname;
+    Lease *lease;
 
     if (!isstorage && storage_servers == NULL)
         storage_server_connection_init();
@@ -206,14 +209,43 @@ void dispatch(Worker *worker, Transaction *trans) {
     /* validate the fid(s) from the request */
 #define new_fid(FIELD) do { \
     newfid = trans->in->msg.FIELD; \
-} while(0)
+} while (0)
 #define old_fid(FIELD) do { \
     oldfid = trans->in->msg.FIELD; \
-} while(0)
+} while (0)
     switch (trans->in->id) {
         case TAUTH:
         case TFLUSH:
         case TESETADDRESS:
+            break;
+
+        case TEREVOKE:
+        case TEGRANT:
+            lease = lease_find_root(pathname);
+            failif(lease == NULL, EBADF);
+
+            if (trans->in->id == TEREVOKE) {
+                granttype = trans->in->msg.terevoke.type;
+                pathname = trans->in->msg.terevoke.pathname;
+            } else {
+                granttype = trans->in->msg.tegrant.type;
+                pathname = trans->in->msg.tegrant.root->pathname;
+            }
+
+            if (granttype == GRANT_START || granttype == GRANT_CHANGE_PARENT) {
+                /* this starts a new multi-step transaction */
+                failif(lease->changeinprogress, EIO);
+            } else {
+                /* pass this over to the worker handling the lease change */
+                failif(!lease->changeinprogress, EIO);
+                failif(lease->wait_for_update == NULL, EIO);
+                worker_multistep_transfer_request(lease->wait_for_update,
+                        (void (*)(Worker *, void *))
+                            (trans->in->id == TEREVOKE ?
+                                envoy_terevoke : envoy_tegrant),
+                        trans);
+                return;
+            }
             break;
 
         case TATTACH:   new_fid(tattach.fid);                   break;

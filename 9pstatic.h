@@ -72,6 +72,7 @@ enum qidtypes {
 #define RSREAD_DATA_OFFSET 11
 #define TWRITE_DATA_OFFSET 23
 #define TSWRITE_DATA_OFFSET 23
+#define REREVOKE_SIZE_FIXED 12
 
 /* size difference between storage and client read/write messages */
 #define STORAGE_SLUSH 8

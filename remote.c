@@ -123,7 +123,9 @@ List *remote_snapshot(Worker *worker, List *targets) {
 }
 
 /* targets is a list of exit leases, addr is the grant target */
-void remote_grant_exits(Worker *worker, List *targets, Address *addr) {
+void remote_grant_exits(Worker *worker, List *targets, Address *addr,
+        enum grant_type type)
+{
     List *requests = NULL;
     Transaction *trans;
 
@@ -144,7 +146,7 @@ void remote_grant_exits(Worker *worker, List *targets, Address *addr) {
                 NULL, message_new());
         trans->out->tag = ALLOCTAG;
         trans->out->id = TEGRANT;
-        set_tegrant(trans->out, GRANT_CHANGE_PARENT, rec, 0, NULL, 0, NULL);
+        set_tegrant(trans->out, type, rec, 0, NULL, 0, NULL);
         requests = cons(trans, requests);
     }
 

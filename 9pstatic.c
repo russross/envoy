@@ -78,6 +78,7 @@ int stringlistsize(u16 len, char **elt) {
 
 int leaserecordsize(struct leaserecord *elt) {
     return
+        2 +     /* length */
         2 +     /* pathname[s] length */
         1 +     /* readonly[1] */
         8 +     /* oid[8] */
@@ -88,7 +89,7 @@ int leaserecordsize(struct leaserecord *elt) {
 
 int leaserecordlistsize(u16 len, struct leaserecord **elt) {
     int i;
-    int size = len * 2;
+    int size = 0;
     for (i = 0; i < len; i++)
         size += leaserecordsize(elt[i]);
     return size;
@@ -96,6 +97,7 @@ int leaserecordlistsize(u16 len, struct leaserecord **elt) {
 
 int fidrecordsize(struct fidrecord *elt) {
     return
+        2 +     /* length */
         4 +     /* fid[4] */
         2 +     /* pathname[s] length */
         2 +     /* user[s] length */
@@ -110,7 +112,7 @@ int fidrecordsize(struct fidrecord *elt) {
 
 int fidrecordlistsize(u16 len, struct fidrecord **elt) {
     int i;
-    int size = len * 2;
+    int size = 0;
     for (i = 0; i < len; i++)
         size += fidrecordsize(elt[i]);
     return size;
@@ -508,7 +510,7 @@ void packStatn(u8 *raw, int *i, struct p9stat *elt) {
 }
 
 void packLeaserecord(u8 *raw, int *i, struct leaserecord *elt) {
-    u16 size = (u16) leaserecordsize(elt);
+    u16 size = (u16) leaserecordsize(elt) - 2;
     packU16(raw, i, size);
     packString(raw, i, elt->pathname);
     packU8(raw, i, elt->readonly);
@@ -525,7 +527,7 @@ void packLeaserecordlist(u8 *raw, int *i, u16 len, struct leaserecord **elt) {
 }
 
 void packFidrecord(u8 *raw, int *i, struct fidrecord *elt) {
-    u16 size = (u16) fidrecordsize(elt);
+    u16 size = (u16) fidrecordsize(elt) - 2;
     packU16(raw, i, size);
     packU32(raw, i, elt->fid);
     packString(raw, i, elt->pathname);

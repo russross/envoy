@@ -30,5 +30,7 @@ void handle_twstat(Worker *worker, Transaction *trans);
 void envoy_teclosefid(Worker *worker, Transaction *trans);
 void client_shutdown(Worker *worker, Connection *conn);
 void envoy_tesetaddress(Worker *worker, Transaction *trans);
+void envoy_terevoke(Worker *worker, Transaction *trans);
+void envoy_tegrant(Worker *worker, Transaction *trans);
 
 #endif

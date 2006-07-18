@@ -349,10 +349,11 @@ let outputPacker out m =
               size := !size + 2;
               fprintf out "safe_strlen(m->msg.%s.%s) +@ " msg name
           | FQid _ -> size := !size + 13
-          | FStat name
+          | FStat name ->
+              size := !size + 2;
+              fprintf out "%ssize(m->msg.%s.%s) +@ " (fieldWorker elt) msg name
           | FLease name
           | FFid name ->
-              size := !size + 2;
               fprintf out "%ssize(m->msg.%s.%s) +@ " (fieldWorker elt) msg name
           | FData (len, name) ->
               size := !size + 4;
