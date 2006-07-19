@@ -300,6 +300,14 @@ Address *make_address(char *host, int port) {
     return addr;
 }
 
+Address *address_new(u32 ip, u16 port) {
+    Address *addr = GC_NEW_ATOMIC(Address);
+    assert(addr != NULL);
+    addr->ip = ip;
+    addr->port = port;
+    return addr;
+}
+
 struct sockaddr_in *addr_to_netaddr(Address *addr) {
     struct sockaddr_in *netaddr = GC_NEW_ATOMIC(struct sockaddr_in);
 

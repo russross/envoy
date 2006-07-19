@@ -68,6 +68,16 @@ static void list_to_array(List *from, u16 *len, void **to) {
     assert(null(from));
 }
 
+static List *array_to_list(u16 len, void **from) {
+    List *to = NULL;
+    int i;
+
+    for (i = len - 1; i >= 0; i--)
+        to = cons(from[i], to);
+
+    return to;
+}
+
 /*****************************************************************************/
 
 /* generate an error response with Unix errno errnum */
@@ -1436,11 +1446,7 @@ void envoy_terenameroot(Worker *worker, Transaction *trans) {
 
 void envoy_tesetaddress(Worker *worker, Transaction *trans) {
     struct Tesetaddress *req = &trans->in->msg.tesetaddress;
-    Address *addr = GC_NEW_ATOMIC(Address);
-    assert(addr != NULL);
-
-    addr->ip = req->address;
-    addr->port = req->port;
+    Address *addr = address_new(req->address, req->port);
 
     conn_set_addr_envoy_in(trans->conn, addr);
 
@@ -1454,14 +1460,10 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
     char *prefix = concatstrings(req->pathname, "/");
     List *exits = NULL;
     List *fids = NULL;
-    Address *newaddr = GC_NEW_ATOMIC(Address);
-    assert(newaddr != NULL);
+    Address *newaddr = address_new(req->newaddress, req->newport);
 
     failif(lease == NULL, EIO);
     lock_lease_exclusive(worker, lease);
-
-    newaddr->ip = req->newaddress;
-    newaddr->port = req->newport;
 
     res->root = lease_to_lease_record(lease);
 
@@ -1486,9 +1488,8 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
             break;
 
         case GRANT_END:
-            /* complete the switch by releasing the exits, notifying the
-             * fid clients of the change, and deleting the lease */
-            lease_release_exits(worker, lease, prefix, newaddr);
+            /* complete the switch by releasing the exits & fids
+             * and deleting the lease */
             lease_release_fids(worker, lease, prefix, newaddr);
             lease_remove(lease);
             res->type = GRANT_END;
@@ -1499,6 +1500,71 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
             break;
 
         case GRANT_CHANGE_PARENT:
+        default:
+            failif(1, EINVAL);
+    }
+
+    send_reply(trans);
+
+    /* hold on to this lease until another tranaction comes in */
+    if (req->type == GRANT_START || req->type == GRANT_CONTINUE) {
+        lock_lease_extend_multistep(worker, lease);
+        worker_multistep_wait(worker);
+    }
+}
+
+void envoy_tegrant(Worker *worker, Transaction *trans) {
+    struct Tegrant *req = &trans->in->msg.tegrant;
+    Lease *lease = lease_find_root(req->root->pathname);
+    Claim *claim;
+    List *exits;
+    List *fids;
+    Address *addr;
+
+    switch (req->type) {
+        case GRANT_START:
+            /* create the lease */
+            failif(lease != NULL, EIO);
+
+            addr = address_new(req->root->address, req->root->port);
+
+            claim = claim_new_root(req->root->pathname,
+                    req->root->readonly ? ACCESS_READONLY : ACCESS_WRITEABLE,
+                    req->root->oid);
+
+            lease = lease_new(claim->pathname, addr, 0, claim,
+                    req->root->readonly);
+            lease_add(lease);
+
+            /* fall through */
+        case GRANT_CONTINUE:
+        case GRANT_END:
+            /* add all the exits and fids and notify the remote envoys */
+            failif(lease == NULL, EIO);
+            lock_lease_exclusive(worker, lease);
+            exits = array_to_list(req->nexit, (void **) req->exit);
+            if (!null(exits)) {
+                failif(lease->isexit, EINVAL);
+                lease_add_exits(worker, lease, exits);
+            }
+            fids = array_to_list(req->nfid, (void **) req->fid);
+            if (!null(fids)) {
+                failif(lease->isexit, EINVAL);
+                lease_add_fids(worker, lease, fids);
+            }
+            break;
+
+        case GRANT_CHANGE_PARENT:
+            failif(req->nexit != 0, EINVAL);
+            failif(req->nfid != 0, EINVAL);
+            failif(lease != NULL, EIO);
+            lease = lease_get_remote(req->root->pathname);
+            failif(lease == NULL, EIO);
+            lock_lease_exclusive(worker, lease);
+
+            lease->addr = address_new(req->root->address, req->root->port);
+            break;
+
         default:
             failif(1, EINVAL);
     }

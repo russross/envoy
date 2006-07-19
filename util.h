@@ -32,6 +32,7 @@ int addr_cmp(const Address *a, const Address *b);
 List *parse_address_list(char *hosts, int defaultport);
 Address *parse_address(char *host, int defaultport);
 Address *make_address(char *host, int port);
+Address *address_new(u32 ip, u16 port);
 struct sockaddr_in *addr_to_netaddr(Address *addr);
 Address *netaddr_to_addr(struct sockaddr_in *netattr);
 char *netaddr_to_string(struct sockaddr_in *netaddr);

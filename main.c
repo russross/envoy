@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
         transport_init();
         if (root_address == NULL) {
             Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, root_oid);
-            Lease *lease = lease_new("/", NULL, 0, claim, NULL, 0);
+            Lease *lease = lease_new("/", NULL, 0, claim, 0);
             lease_add(lease);
         }
     }

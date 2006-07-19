@@ -37,7 +37,7 @@ struct lease {
     List *changeexits;
     List *changefids;
 
-    /* is this an exit point to a remote owner, or a local grant? */
+    /* is this an exit point to a remote owner, or locally owned? */
     int isexit;
 
     char *pathname;
@@ -65,9 +65,11 @@ void lease_state_init(void);
 
 /* create a lease object */
 Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
-        List *wavefront, int readonly);
+        int readonly);
 /* add a lease object, including exit lease objects for its wavefront */
 void lease_add(Lease *lease);
+/* merge a child lease into a parent lease */
+void lease_merge(Worker *worker, Lease *parent, Lease *child);
 /* remove a lease object */
 void lease_remove(Lease *lease);
 
@@ -101,12 +103,12 @@ enum grant_type {
 struct leaserecord *lease_to_lease_record(Lease *lease);
 List *lease_serialize_exits(Worker *worker, Lease *lease,
         char *prefix, Address *addr);
-void lease_release_exits(Worker *worker, Lease *lease,
-        char *prefix, Address *addr);
+void lease_add_exits(Worker *worker, Lease *lease, List *exits);
 List *lease_serialize_fids(Worker *worker, Lease *lease,
         char *prefix, Address *addr);
 void lease_release_fids(Worker *worker, Lease *lease,
         char *prefix, Address *addr);
+void lease_add_fids(Worker *worker, Lease *lease, List *fids);
 void lease_pack_message(Lease *lease, List **exits, List **fids, int size);
 
 #endif

@@ -250,8 +250,9 @@ void lock_lease_exclusive(Worker *worker, Lease *lease) {
                 worker->cleanup = cdr(cleanup);
             else
                 setcdr(prev, cdr(cleanup));
+        } else {
+            prev = cleanup;
         }
-        prev = cleanup;
         cleanup = cdr(cleanup);
     }
 
@@ -269,6 +270,35 @@ void lock_lease_exclusive(Worker *worker, Lease *lease) {
 void lock_lease_extend_multistep(Worker *worker, Lease *lease) {
     worker_cleanup_remove(worker, LOCK_LEASE_EXCLUSIVE, lease);
     lease->changeinprogress = 1;
+}
+
+void lock_lease_join(Worker *worker, List *children) {
+    for ( ; !null(children); children = cdr(children)) {
+        Lease *lease = car(children);
+        while (lease->wait_for_update != worker &&
+                lease->wait_for_update != NULL)
+        {
+            lease->wait_for_update->blocking =
+                cons(worker, lease->wait_for_update->blocking);
+            if (DEBUG_VERBOSE)
+                printf("lock_lease_join: sleeping\n");
+            cond_wait(worker->sleep);
+            if (DEBUG_VERBOSE)
+                printf("lock_lease_join: waking up\n");
+        }
+        lease->wait_for_update = worker;
+
+        /* we don't bother checking for our own non-exclusive locks */
+        while (lease->inflight > 0) {
+            if (DEBUG_VERBOSE)
+                printf("lock_lease_join: sleeping\n");
+            cond_wait(worker->sleep);
+            if (DEBUG_VERBOSE)
+                printf("lock_lease_join: waking up\n");
+        }
+
+        worker_cleanup_add(worker, LOCK_LEASE_EXCLUSIVE, lease);
+    }
 }
 
 void cond_signal(pthread_cond_t *cond) {
@@ -299,7 +329,7 @@ void worker_cleanup_remove(Worker *worker, enum lock_types type, void *object) {
     List *cur = worker->cleanup;
 
     while (!null(cur)) {
-        if ((enum lock_types) caar(cur) == type && cdar(cur) == object) {
+        if (caar(cur) == (void *) type && cdar(cur) == object) {
             if (prev == NULL)
                 worker->cleanup = cdr(cur);
             else
