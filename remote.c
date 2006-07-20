@@ -6,6 +6,7 @@
 #include "list.h"
 #include "connection.h"
 #include "transaction.h"
+#include "fid.h"
 #include "util.h"
 #include "remote.h"
 #include "dispatch.h"
@@ -157,5 +158,53 @@ void remote_grant_exits(Worker *worker, List *targets, Address *addr,
     for ( ; !null(requests); requests = cdr(requests)) {
         trans = car(requests);
         assert(trans->in->id == REGRANT);
+    }
+}
+
+void remote_migrate(Worker *worker, List *groups) {
+    List *requests = NULL;
+    Transaction *trans;
+
+    /* build a list of requests */
+    while (!null(groups)) {
+        List *group = car(groups);
+        Fid *fid = car(group);
+        struct Temigrate *req;
+        int i;
+
+        trans = trans_new(conn_get_envoy_out(worker, fid->addr),
+                NULL, message_new());
+        trans->out->tag = ALLOCTAG;
+        trans->out->id = TEMIGRATE;
+
+        req = &trans->out->msg.temigrate;
+        req->nfid = (u16) min(length(group),
+                (trans->conn->maxSize - TEMIGRATE_SIZE_FIXED) / sizeof(u32));
+        req->fid = GC_MALLOC_ATOMIC(req->nfid * sizeof(u32));
+        assert(req->fid != NULL);
+
+        /* fit as many elements from the group as we can per request */
+        for (i = 0; i < req->nfid; i++) {
+            fid = car(group);
+            req->fid[i] = fid->fid;
+            group = cdr(group);
+        }
+
+        /* if it fit, move on to the next group */
+        if (null(group))
+            groups = cdr(groups);
+        else
+            setcar(groups, group);
+
+        requests = cons(trans, requests);
+    }
+
+    /* wait for all transactions to complete */
+    send_requests(requests);
+
+    /* make sure they all succeeded */
+    for ( ; !null(requests); requests = cdr(requests)) {
+        trans = car(requests);
+        assert(trans->in->id == REMIGRATE);
     }
 }

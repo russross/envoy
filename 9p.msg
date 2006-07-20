@@ -48,6 +48,8 @@
 167 size[4] Rerenameroot tag[2]
 168 size[4] Tesetaddress tag[2] address[4] port[2]
 169 size[4] Resetaddress tag[2]
+170 size[4] Temigrate tag[2] nfid[2] nfid*(fid[4])
+171 size[4] Remigrate tag[2]
 
 # object storage server protocol
 200 size[4] Tsreserve tag[2]

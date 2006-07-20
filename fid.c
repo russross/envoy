@@ -185,6 +185,10 @@ void fid_set_remote(u32 rfid, Fid *fid) {
     vector_set(fid_remote_vector, rfid, fid);
 }
 
+Fid *fid_get_remote(u32 rfid) {
+    return vector_get(fid_remote_vector, rfid);
+}
+
 void fid_release_remote(u32 fid) {
     vector_remove(fid_remote_vector, fid);
 }

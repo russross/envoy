@@ -22,5 +22,6 @@ void remote_rename(Worker *worker, Address *target,
 List *remote_snapshot(Worker *worker, List *targets);
 void remote_grant_exits(Worker *worker, List *targets, Address *addr,
         enum grant_type type);
+void remote_migrate(Worker *worker, List *groups);
 
 #endif

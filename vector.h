@@ -22,6 +22,6 @@ void vector_set(Vector *v, u32 key, void *value);
 void vector_remove(Vector *v, const u32 key);
 void *vector_get_remove(Vector *v, const u32 key);
 void vector_apply(Vector *v, void (*fun)(void *, u32, void *), void *env);
-u32 vector_get_next(Vector *v);
+int vector_isempty(Vector *v);
 
 #endif

@@ -73,6 +73,7 @@ enum qidtypes {
 #define TWRITE_DATA_OFFSET 23
 #define TSWRITE_DATA_OFFSET 23
 #define REREVOKE_SIZE_FIXED 12
+#define TEMIGRATE_SIZE_FIXED 9
 
 /* size difference between storage and client read/write messages */
 #define STORAGE_SLUSH 8
@@ -143,6 +144,7 @@ u8 unpackU8(u8 *raw, int size, int *i);
 u16 unpackU16(u8 *raw, int size, int *i);
 u32 unpackU32(u8 *raw, int size, int *i);
 u64 unpackU64(u8 *raw, int size, int *i);
+u32 *unpackU32list(u8 *raw, int size, int *i, u16 *n);
 u64 *unpackU64list(u8 *raw, int size, int *i, u16 *n);
 u8 *unpackData(u8 *raw, int size, int *i, u32 *len);
 char *unpackString(u8 *raw, int size, int *i);
@@ -160,6 +162,7 @@ void packU8(u8 *raw, int *i, u8 elt);
 void packU16(u8 *raw, int *i, u16 elt);
 void packU32(u8 *raw, int *i, u32 elt);
 void packU64(u8 *raw, int *i, u64 elt);
+void packU32list(u8 *raw, int *i, u16 len, u32 *elt);
 void packU64list(u8 *raw, int *i, u16 len, u64 *elt);
 void packData(u8 *raw, int *i, u32 len, u8 *elt);
 void packString(u8 *raw, int *i, char *elt);

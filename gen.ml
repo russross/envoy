@@ -16,6 +16,7 @@ type field = FName of string
            | FData of string * string
            | FStringlist of string * string
            | FQidlist of string * string
+           | FInt4list of string * string
            | FInt8list of string * string
            | FLeaselist of string * string
            | FFidlist of string * string
@@ -32,6 +33,7 @@ let rec fieldName f =
   | FStringlist (_, s)
   | FQid s
   | FQidlist (_, s)
+  | FInt4list (_, s)
   | FInt8list (_, s)
   | FLeaselist (_, s)
   | FFidlist (_, s)
@@ -46,6 +48,7 @@ let rec getType f =
   | FInt2 _ -> "u16 "
   | FInt4 _ -> "u32 "
   | FInt8 _ -> "u64 "
+  | FInt4list _ -> "u32 *"
   | FInt8list _ -> "u64 *"
   | FLeaselist _ -> "struct leaserecord **"
   | FFidlist _ -> "struct fidrecord **"
@@ -65,6 +68,7 @@ let rec fieldWorker f =
   | FInt2 _ -> "u16"
   | FInt4 _ -> "u32"
   | FInt8 _ -> "u64"
+  | FInt4list _ -> "u32list"
   | FInt8list _ -> "u64list"
   | FLeaselist _ -> "leaserecordlist"
   | FFidlist _ -> "fidrecordlist"
@@ -98,7 +102,8 @@ let lexer = make_lexer ["["; "]"; "("; ")"; "*"; "s" ; "n" ; "l" ; "f"]
  *   count[4] name[count]  -> FData name
  *   len[2] len*(name[13]) -> FQidlist name
  *   len[2] len*(name[s])  -> FStringlist name
- *   len[2] len*(name[4])  -> FInt8list name
+ *   len[2] len*(name[4])  -> FInt4list name
+ *   len[2] len*(name[8])  -> FInt8list name
  *   len[2] len*(name[l])  -> FLeaselist name
  *   len[2] len*(name[f])  -> FFidlist name
  *   name[n]               -> FStat name
@@ -115,6 +120,7 @@ let parseMessage s =
           (match f rest with
           | (FString name, Kwd ")"::rest') -> (FStringlist (len1, name), rest')
           | (FQid name, Kwd ")"::rest') -> (FQidlist (len1, name), rest')
+          | (FInt4 name, Kwd ")"::rest') -> (FInt4list (len1, name), rest')
           | (FInt8 name, Kwd ")"::rest') -> (FInt8list (len1, name), rest')
           | (FLease name, Kwd ")"::rest') -> (FLeaselist (len1, name), rest')
           | (FFid name, Kwd ")"::rest') -> (FFidlist (len1, name), rest')
@@ -163,6 +169,7 @@ let outputStructs out fields id =
               fprintf out "@,%s%s;" (getType elt) s
         | FQidlist (l, s)
         | FStringlist (l, s)
+        | FInt4list (l, s)
         | FInt8list (l, s)
         | FLeaselist (l, s)
         | FFidlist (l, s) ->
@@ -201,6 +208,7 @@ let outputSetters out fields id =
           FData (name, _)
         | FStringlist (name, _)
         | FQidlist (name, _)
+        | FInt4list (name, _)
         | FInt8list (name, _)
         | FLeaselist (name, _)
         | FFidlist (name, _) ->
@@ -213,6 +221,7 @@ let outputSetters out fields id =
           FData (name, _)
         | FStringlist (name, _)
         | FQidlist (name, _)
+        | FInt4list (name, _)
         | FInt8list (name, _)
         | FLeaselist (name, _)
         | FFidlist (name, _) ->
@@ -251,6 +260,7 @@ let outputUnpacker out m =
           | FData (len, name)
           | FStringlist (len, name)
           | FQidlist (len, name)
+          | FInt4list (len, name)
           | FInt8list (len, name)
           | FLeaselist (len, name)
           | FFidlist (len, name) ->
@@ -282,55 +292,6 @@ let outputUnpacker out m =
   fprintf out "@,return -1;";
   fprintf out "@]@,@,return 0;";
   fprintf out "@]@,}@."
-
-(*
-let outputFreer out m =
-  let msg (id, fields) =
-    match fields with (FInt4 "size"::FName msg::FInt2 "tag"::rest) ->
-      begin
-        fprintf out "@,@[<v 4>case %s:" (String.uppercase msg);
-        let fieldLine elt =
-          match elt with
-          | FName _
-          | FInt1 _
-          | FInt2 _
-          | FInt4 _
-          | FInt8 _
-          | FQid _ -> ()
-          | FStat name ->
-              fprintf out "@,@[<v 4>if (m->msg.%s.%s != NULL)" msg name;
-              fprintf out "@,freeStat(m->msg.%s.%s);@]" msg name
-          | FQidlist (_, name)
-          | FData (_, name)
-          | FInt8list (_, name)
-          | FString name ->
-              fprintf out "@,@[<v 4>if (m->msg.%s.%s != NULL)" msg name;
-              fprintf out "@,free(m->msg.%s.%s);@]" msg name
-          | FStringlist (len, name) ->
-              fprintf out "@,@[<v 4>if (m->msg.%s.%s != NULL) {" msg name;
-              fprintf out "@,int i = (int) m->msg.%s.%s;" msg len;
-              fprintf out "@,@[<v 4>while (i-- > 0)";
-              fprintf out "@,@[<v 4>if (m->msg.%s.%s[i] != NULL)" msg name;
-              fprintf out "@,free(m->msg.%s.%s[i]);" msg name;
-              fprintf out "@]@]@,free(m->msg.%s.%s);" msg name;
-              fprintf out "@]@,}"
-        in
-        List.iter fieldLine rest;
-        fprintf out "@,break;";
-        fprintf out "@]@,"
-      end
-    | _ -> raise BadMessage
-  in
-  fprintf out "@[<v 4>void freeMessage(struct message *m) {";
-  fprintf out "@,@[<v 4>switch (m->id) {";
-  List.iter msg m;
-  fprintf out "@,@[<v 4>default:";
-  fprintf out "@,return;";
-  fprintf out "@]";
-  fprintf out "@]@,}";
-  fprintf out "@,@,bzero(&m->msg, sizeof(m->msg));";
-  fprintf out "@]@,}@."
-*)
 
 let outputPacker out m =
   let msgSize (id, fields) =
@@ -367,6 +328,9 @@ let outputPacker out m =
           | FQidlist (len, name) ->
               size := !size + 2;
               fprintf out "(13 * m->msg.%s.%s) +@ " msg len
+          | FInt4list (len, name) ->
+              size := !size + 2;
+              fprintf out "(4 * m->msg.%s.%s) +@ " msg len
           | FInt8list (len, name) ->
               size := !size + 2;
               fprintf out "(8 * m->msg.%s.%s) +@ " msg len
@@ -400,6 +364,7 @@ let outputPacker out m =
           | FData (len, name)
           | FStringlist (len, name)
           | FQidlist (len, name)
+          | FInt4list (len, name)
           | FInt8list (len, name)
           | FLeaselist (len, name)
           | FFidlist (len, name) ->
@@ -500,13 +465,15 @@ let outputPrinter out m =
               fprintf out "m->msg.%s.%s[i].version,@ " msg name;
               fprintf out "m->msg.%s.%s[i].path);@]" msg name;
               fprintf out "@]"
+          | FInt4list (len, name)
           | FInt8list (len, name) ->
               fprintf out "@,fprintf(fp, \" %s * %%d:\", " name;
               fprintf out "(u32) m->msg.%s.%s);" msg len;
               fprintf out "@,@[<v 4>for (i = 0; i < (int) m->msg.%s.%s; i++)"
                   msg len;
               fprintf out "@,fprintf(fp, \"\\n    ";
-              fprintf out "%%2d: %s[$%%llx]\", i, " name;
+              fprintf out "%%2d: %s[$%%%sx]\", i, " name
+                  (match elt with FInt8list _ -> "ll" | _ -> "");
               fprintf out "m->msg.%s.%s[i]);@]" msg name
           | FLeaselist (len, name)
           | FFidlist (len, name) ->

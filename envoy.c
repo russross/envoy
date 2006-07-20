@@ -1407,8 +1407,13 @@ void envoy_teclosefid(Worker *worker, Transaction *trans) {
 void client_shutdown(Worker *worker, Connection *conn) {
     u32 i;
 
-    while ((i = vector_get_next(conn->fid_vector)) > 0) {
-        Fid *fid = fid_lookup(conn, --i);
+    for (i = 0; !vector_isempty(conn->fid_vector); i++) {
+        Fid *fid;
+
+        if (!vector_test(conn->fid_vector, i))
+            continue;
+
+        fid = fid_lookup(conn, --i);
         reserve(worker, LOCK_FID, fid);
         if (fid->isremote) {
             remote_closefid(worker, fid->raddr, fid->rfid);
@@ -1465,7 +1470,7 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
     failif(lease == NULL, EIO);
     lock_lease_exclusive(worker, lease);
 
-    res->root = lease_to_lease_record(lease);
+    res->root = lease_to_lease_record(lease, 0);
 
     switch (req->type) {
         case GRANT_START:
@@ -1477,8 +1482,8 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
             /* fall through */
         case GRANT_CONTINUE:
             /* fill up the response with exits & fids */
-            lease_pack_message(lease, &exits, &fids,
-                    REREVOKE_SIZE_FIXED + leaserecordsize(res->root));
+            lease_pack_message(lease, &exits, &fids, trans->conn->maxSize -
+                    (REREVOKE_SIZE_FIXED + leaserecordsize(res->root)));
             if (lease->changeexits == NULL && lease->changefids == NULL)
                 res->type = GRANT_END;
             else
@@ -1488,7 +1493,7 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
             break;
 
         case GRANT_END:
-            /* complete the switch by releasing the exits & fids
+            /* complete the switch by releasing the fids
              * and deleting the lease */
             lease_release_fids(worker, lease, prefix, newaddr);
             lease_remove(lease);
@@ -1576,4 +1581,17 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
         lock_lease_extend_multistep(worker, lease);
         worker_multistep_wait(worker);
     }
+}
+
+void envoy_temigrate(Worker *worker, Transaction *trans) {
+    struct Temigrate *req = &trans->in->msg.temigrate;
+    int i;
+
+    for (i = 0; i < req->nfid; i++) {
+        Fid *fid = fid_get_remote(req->fid[i]);
+        assert(fid != NULL && fid != (void *) 0xdeadbeef);
+        fid->raddr = trans->conn->addr;
+    }
+
+    send_reply(trans);
 }

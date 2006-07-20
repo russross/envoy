@@ -65,6 +65,7 @@ void fid_remove(Connection *conn, u32 fid);
 u32 fid_reserve_remote(Worker *worker);
 void fid_release_remote(u32 fid);
 void fid_set_remote(u32 rfid, Fid *fid);
+Fid *fid_get_remote(u32 rfid);
 
 enum claim_access fid_access_child(enum claim_access access, int cowlink);
 

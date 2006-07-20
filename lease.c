@@ -46,11 +46,6 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->claim->lease = l;
 
     l->wavefront = NULL;
-//    while (!null(wavefront)) {
-//        l->wavefront =
-//            insertinorder((Cmpfunc) lease_cmp, l->wavefront, car(wavefront));
-//        wavefront = cdr(wavefront);
-//    }
 
     l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
             (Hashfunc) fid_hash,
@@ -88,7 +83,7 @@ void lease_merge(Worker *worker, Lease *parent, Lease *child) {
 
     /* find the immediate parent and add this child */
     claim = claim_find(worker, dirname(child->pathname));
-    assert(claim != NULL);
+    assert(claim != NULL && claim->lease == parent);
     claim->children =
         insertinorder((Cmpfunc) claim_cmp, claim->children, child->claim);
     child->claim->parent = claim;
@@ -393,20 +388,19 @@ struct audit_env {
 //    }
 //}
 
-struct leaserecord *lease_to_lease_record(Lease *lease) {
+struct leaserecord *lease_to_lease_record(Lease *lease, int prefixlen) {
     struct leaserecord *elt = GC_NEW(struct leaserecord);
     assert(elt != NULL);
 
-    elt->pathname = lease->pathname;
     elt->readonly = lease->readonly ? 1 : 0;
-    if (lease->claim == NULL)
-        elt->oid = NOOID;
-    else
-        elt->oid = lease->claim->oid;
     if (lease->isexit) {
+        elt->pathname = substring_rest(lease->pathname, prefixlen);
+        elt->oid = NOOID;
         elt->address = lease->addr->ip;
         elt->port = lease->addr->port;
     } else {
+        elt->pathname = lease->pathname;
+        elt->oid = lease->claim->oid;
         elt->address = my_address->ip;
         elt->port = my_address->port;
     }
@@ -422,6 +416,7 @@ List *lease_serialize_exits(Worker *worker, Lease *lease,
     List *targets = NULL;
     List *exits = lease->wavefront;
     List *prev = NULL;
+    int prefixlen = strlen(prefix);
 
     /* gather exits that match the prefix and remove them from the lease */
     while (!null(exits)) {
@@ -442,7 +437,7 @@ List *lease_serialize_exits(Worker *worker, Lease *lease,
 
     /* prepare list of records for the transfer */
     for ( ; !null(targets); targets = cdr(targets))
-        result = cons(lease_to_lease_record(car(targets)), result);
+        result = cons(lease_to_lease_record(car(targets), prefixlen), result);
 
     return result;
 }
@@ -455,8 +450,9 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
     /* first find any local leases that need to be merged */
     for ( ; !null(local); local = cdr(local)) {
         struct leaserecord *elt = car(local);
+        char *pathname = concatname(lease->pathname, elt->pathname);
         if (elt->address == my_address->ip && elt->port == my_address->port) {
-            Lease *child = lease_get_remote(elt->pathname);
+            Lease *child = lease_get_remote(pathname);
             assert(child != NULL);
             tomerge = cons(child, tomerge);
         }
@@ -469,16 +465,16 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
     /* convert to lease objects and add to the parent lease */
     for ( ; !null(exits); exits = cdr(exits)) {
         struct leaserecord *elt = car(exits);
+        char *pathname = concatname(lease->pathname, elt->pathname);
         if (elt->address == my_address->ip && elt->port == my_address->port) {
             /* merge with an existing lease */
-            Lease *child = lease_get_remote(elt->pathname);
+            Lease *child = lease_get_remote(pathname);
             assert(child != NULL);
             lease_merge(worker, lease, child);
         } else {
             /* add an exit */
             Address *addr = address_new(elt->address, elt->port);
-            Lease *exit =
-                lease_new(elt->pathname, addr, 1, NULL, elt->readonly);
+            Lease *exit = lease_new(pathname, addr, 1, NULL, elt->readonly);
             lease_add(exit);
             lock_lease_exclusive(worker, exit);
             lease->wavefront =
@@ -494,6 +490,7 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
 }
 
 struct lease_serialize_fids_env {
+    Worker *worker;
     char *prefix;
     int prefixlen;
     List *fids;
@@ -502,20 +499,44 @@ struct lease_serialize_fids_env {
 static void lease_serialize_fids_iter(struct lease_serialize_fids_env *env,
         void *key, Fid *fid)
 {
-    struct fidrecord *elt = GC_NEW(struct fidrecord);
-    assert(elt != NULL);
-    assert(!fid->isremote && fid->claim != NULL);
+    Connection *conn;
+    struct fidrecord *elt;
 
-    /* FIXME: if the fid comes from a client, set up a remote fid */
+    if (!startswith(elt->pathname, env->prefix))
+        return;
+
+    assert(!fid->isremote && fid->claim != NULL);
+    assert(fid->raddr == NULL);
+    assert(fid->rfid == NOFID);
+
+    /* if the fid comes from a client, set up a remote fid */
+    conn = conn_get_incoming(fid->addr);
+    assert(conn != NULL);
+    if (conn->type == CONN_CLIENT_IN) {
+        fid->rfid = fid_reserve_remote(env->worker);
+        fid_set_remote(fid->rfid, fid);
+        /* note: we don't set isremote, so incoming requests still block */
+    }
+
+    elt = GC_NEW(struct fidrecord);
+    assert(elt != NULL);
+
     elt->fid = fid->fid;
-    assert(startswith(elt->pathname, env->prefix));
     elt->pathname = substring_rest(fid->pathname, env->prefixlen);
     elt->user = fid->user;
     elt->status = (u8) fid->status;
     elt->omode = fid->omode;
-    elt->readdir_cookie = elt->readdir_cookie;
-    elt->address = fid->addr->ip;
-    elt->port = fid->addr->port;
+    elt->readdir_cookie = fid->readdir_cookie;
+
+    fid->readdir_env = NULL;
+
+    if (conn->type == CONN_CLIENT_IN) {
+        elt->address = my_address->ip;
+        elt->port = my_address->port;
+    } else {
+        elt->address = fid->addr->ip;
+        elt->port = fid->addr->port;
+    }
 
     env->fids = cons(elt, env->fids);
 }
@@ -524,6 +545,7 @@ List *lease_serialize_fids(Worker *worker, Lease *lease,
         char *prefix, Address *addr)
 {
     struct lease_serialize_fids_env env;
+    env.worker = worker;
     env.prefix = prefix;
     env.prefixlen = strlen(prefix);
     env.fids = NULL;
@@ -534,30 +556,90 @@ List *lease_serialize_fids(Worker *worker, Lease *lease,
     return env.fids;
 }
 
-static void lease_release_fids_iter(Address *newaddr,
+static void lease_release_fids_iter(struct lease_serialize_fids_env *env,
         void *key, Fid *fid)
 {
-    Connection *conn;
-
-    assert(!fid->isremote);
-
-    /* if the client is another envoy, drop it, else fix it up */
-    conn = conn_get_incoming(fid->addr);
-    assert(conn != NULL);
-    if (conn->type == CONN_ENVOY_IN) {
-        /* TODO: */
-    }
+    if (startswith(fid->pathname, env->prefix))
+        env->fids = cons(fid, env->fids);
 }
 
 void lease_release_fids(Worker *worker, Lease *lease,
         char *prefix, Address *addr)
 {
+    struct lease_serialize_fids_env env;
+    env.worker = worker;
+    env.prefix = prefix;
+    env.prefixlen = strlen(prefix);
+    env.fids = NULL;
     hash_apply(lease->fids,
             (void (*)(void *, void *, void *)) lease_release_fids_iter,
-            addr);
+            &env);
+
+    /* delete the envoy fids and update client fids to be remote */
+    for ( ; !null(env.fids); env.fids = cdr(env.fids)) {
+        Fid *fid = car(env.fids);
+        Connection *conn = conn_get_incoming(fid->addr);
+        assert(conn != NULL);
+        if (conn->type == CONN_CLIENT_IN)
+            fid_update_remote(fid, fid->pathname, addr, fid->rfid);
+        else
+            fid_remove(conn, fid->fid);
+    }
 }
 
 void lease_add_fids(Worker *worker, Lease *lease, List *fids) {
+    List *newremotefids = NULL;
+    Address *groupaddr = NULL;
+    List *groups = NULL;
+    List *group = NULL;
+
+    for ( ; !null(fids); fids = cdr(fids)) {
+        struct fidrecord *elt = car(fids);
+        Address *addr = address_new(elt->address, elt->port);
+        char *pathname = concatname(lease->pathname, elt->pathname);
+        Claim *claim = claim_find(worker, pathname);
+        Fid *fid;
+        assert(claim != NULL && claim->lease == lease);
+        if (!addr_cmp(my_address, addr)) {
+            /* a remote fid has come home--the system works! */
+            fid = fid_get_remote(elt->fid);
+            assert(fid != NULL && fid != (void *) 0xdeadbeef);
+            fid_update_local(fid, claim);
+            fid_release_remote(elt->fid);
+        } else {
+            Connection *conn = conn_get_incoming(addr);
+            if (conn == NULL)
+                conn = conn_insert_new_stub(addr);
+            fid_insert_local(conn, elt->fid, elt->user, claim);
+            fid = fid_lookup(conn, elt->fid);
+            newremotefids =
+                insertinorder((Cmpfunc) fid_cmp, newremotefids, fid);
+        }
+        assert(!strcmp(fid->user, elt->user));
+        fid->status = elt->status;
+        fid->omode = elt->omode;
+        fid->readdir_cookie = elt->readdir_cookie;
+    }
+
+
+    /* gather the fids into groups by address */
+    for ( ; !null(newremotefids); newremotefids = cdr(newremotefids)) {
+        Fid *fid = car(newremotefids);
+        if (!addr_cmp(fid->addr, groupaddr)) {
+            group = cons(fid, group);
+        } else {
+            if (!null(group))
+                groups = cons(group, groups);
+            group = NULL;
+            groupaddr = fid->addr;
+        }
+    }
+    if (!null(group))
+        groups = cons(group, groups);
+
+    /* notify the remote envoys of the fid updates */
+    if (!null(groups))
+        remote_migrate(worker, groups);
 }
 
 void lease_pack_message(Lease *lease, List **exits, List **fids, int size) {

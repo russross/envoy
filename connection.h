@@ -44,6 +44,7 @@ extern Vector *conn_vector;
 
 Connection *conn_insert_new(int fd, enum conn_type type,
         struct sockaddr_in *netaddr);
+Connection *conn_insert_new_stub(Address *addr);
 void conn_set_addr_envoy_in(Connection *conn, Address *addr);
 Connection *conn_lookup_fd(int fd);
 Connection *conn_get_envoy_out(Worker *worker, Address *addr);

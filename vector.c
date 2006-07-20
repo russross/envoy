@@ -96,8 +96,8 @@ void vector_apply(Vector *v, void (*fun)(void *, u32, void *), void *env) {
             fun(env, i, v->array[i]);
 }
 
-u32 vector_get_next(Vector *v) {
+int vector_isempty(Vector *v) {
     assert(v != NULL);
 
-    return v->next;
+    return v->next == 0;
 }

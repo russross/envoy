@@ -100,7 +100,7 @@ enum grant_type {
     GRANT_CHANGE_PARENT,
 };
 
-struct leaserecord *lease_to_lease_record(Lease *lease);
+struct leaserecord *lease_to_lease_record(Lease *lease, int prefixlen);
 List *lease_serialize_exits(Worker *worker, Lease *lease,
         char *prefix, Address *addr);
 void lease_add_exits(Worker *worker, Lease *lease, List *exits);

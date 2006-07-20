@@ -77,12 +77,46 @@ Connection *conn_insert_new(int fd, enum conn_type type,
     return conn;
 }
 
+Connection *conn_insert_new_stub(Address *addr) {
+    Connection *conn = GC_NEW(Connection);
+    assert(conn != NULL);
+
+    conn->fd = -1;
+    conn->type = CONN_ENVOY_IN;
+    conn->netaddr = NULL;
+    conn->addr = addr;
+    conn->maxSize = GLOBAL_MAX_SIZE;
+    conn->fid_vector = vector_create(FID_VECTOR_SIZE);
+    conn->tag_vector = NULL;
+    conn->pending_writes = NULL;
+    conn->notag_trans = NULL;
+    conn->partial_in = NULL;
+    conn->partial_in_bytes = 0;
+    conn->partial_out = NULL;
+    conn->partial_out_bytes = 0;
+
+    hash_set(addr_2_in, addr, conn);
+
+    return conn;
+}
+
 void conn_set_addr_envoy_in(Connection *conn, Address *addr) {
+    Connection *merge = hash_get(addr_2_in, addr);
+
     assert(conn->addr != NULL);
     assert(addr != NULL);
     assert(conn->type == CONN_ENVOY_IN);
 
+    hash_remove(addr_2_in, conn->addr);
+
+    if (merge != NULL) {
+        hash_remove(addr_2_in, addr);
+        assert(vector_isempty(conn->fid_vector));
+        conn->fid_vector = merge->fid_vector;
+    }
+
     conn->addr = addr;
+    hash_set(addr_2_in, addr, conn);
 }
 
 Connection *conn_lookup_fd(int fd) {
