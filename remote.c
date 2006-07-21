@@ -208,3 +208,50 @@ void remote_migrate(Worker *worker, List *groups) {
         assert(trans->in->id == REMIGRATE);
     }
 }
+
+void remote_revoke(Worker *worker, Address *target, enum grant_type type,
+        char *pathname, Address *newaddress,
+        enum grant_type *restype, struct leaserecord **root,
+        List **exits, List **fids)
+{
+    struct Rerevoke *res;
+    Transaction *trans;
+
+    trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
+    trans->out->tag = ALLOCTAG;
+    trans->out->id = TEREVOKE;
+    set_terevoke(trans->out, type, pathname, newaddress->ip, newaddress->port);
+
+    send_request(trans);
+
+    assert(trans->in != NULL && trans->in->id == REREVOKE);
+
+    res = &trans->in->msg.rerevoke;
+
+    *restype = res->type;
+    *root = res->root;
+    *exits = array_to_list(res->nexit, (void **) res->exit);
+    *fids = array_to_list(res->nfid, (void **) res->fid);
+}
+
+void remote_grant(Worker *worker, Address *target, enum grant_type type,
+        struct leaserecord *root, List *exits, List *fids)
+{
+    Transaction *trans;
+    u16 nexit;
+    struct leaserecord **exit;
+    u16 nfid;
+    struct fidrecord **fid;
+
+    list_to_array(exits, &nexit, (void **) exit);
+    list_to_array(fids, &nfid, (void **) fid);
+
+    trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
+    trans->out->tag = ALLOCTAG;
+    trans->out->id = TEGRANT;
+    set_tegrant(trans->out, type, root, nexit, exit, nfid, fid);
+
+    send_request(trans);
+
+    assert(trans->in != NULL && trans->in->id == REREVOKE);
+}

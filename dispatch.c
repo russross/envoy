@@ -218,6 +218,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TFLUSH:
         case TESETADDRESS:
         case TEMIGRATE:
+        case TENOMINATE:
             break;
 
         case TEREVOKE:
@@ -355,6 +356,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TECLOSEFID:   envoy_teclosefid(worker, trans);     break;
         case TESETADDRESS: envoy_tesetaddress(worker, trans);   break;
         case TEMIGRATE:    envoy_temigrate(worker, trans);      break;
+        case TENOMINATE:   envoy_tenominate(worker, trans);     break;
 
         case TVERSION:
         default:

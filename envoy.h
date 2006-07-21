@@ -33,5 +33,6 @@ void envoy_tesetaddress(Worker *worker, Transaction *trans);
 void envoy_terevoke(Worker *worker, Transaction *trans);
 void envoy_tegrant(Worker *worker, Transaction *trans);
 void envoy_temigrate(Worker *worker, Transaction *trans);
+void envoy_tenominate(Worker *worker, Transaction *trans);
 
 #endif

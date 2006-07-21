@@ -53,31 +53,6 @@ static void qid_list_to_array(List *from, u16 *len, struct qid **to) {
     assert(null(from));
 }
 
-static void list_to_array(List *from, u16 *len, void **to) {
-    int i;
-
-    *len = length(from);
-    *to = GC_MALLOC(sizeof(void *) * *len);
-    assert(*to != NULL);
-
-    for (i = 0; i < *len; i++) {
-        to[i] = car(from);
-        from = cdr(from);
-    }
-
-    assert(null(from));
-}
-
-static List *array_to_list(u16 len, void **from) {
-    List *to = NULL;
-    int i;
-
-    for (i = len - 1; i >= 0; i--)
-        to = cons(from[i], to);
-
-    return to;
-}
-
 /*****************************************************************************/
 
 /* generate an error response with Unix errno errnum */
@@ -1528,6 +1503,7 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
 
     switch (req->type) {
         case GRANT_START:
+        case GRANT_SINGLE:
             /* create the lease */
             failif(lease != NULL, EIO);
 
@@ -1563,8 +1539,9 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
             failif(req->nexit != 0, EINVAL);
             failif(req->nfid != 0, EINVAL);
             failif(lease != NULL, EIO);
-            lease = lease_get_remote(req->root->pathname);
+            lease = lease_find_root(req->root->pathname);
             failif(lease == NULL, EIO);
+            failif(strcmp(lease->pathname, req->root->pathname), EIO);
             lock_lease_exclusive(worker, lease);
 
             lease->addr = address_new(req->root->address, req->root->port);
@@ -1592,6 +1569,65 @@ void envoy_temigrate(Worker *worker, Transaction *trans) {
         assert(fid != NULL && fid != (void *) 0xdeadbeef);
         fid->raddr = trans->conn->addr;
     }
+
+    send_reply(trans);
+}
+
+void envoy_tenominate(Worker *worker, Transaction *trans) {
+    struct Tenominate *req = &trans->in->msg.tenominate;
+    Address *newaddr = address_new(req->address, req->port);
+    Address *oldaddr;
+    Lease *lease = lease_find_root(dirname(req->path));;
+    Lease *child = lease_get_remote(req->path);
+    struct leaserecord *root;
+    List *exits;
+    List *fids;
+    enum grant_type revoketype = GRANT_START;
+    enum grant_type granttype = GRANT_START;
+
+    failif(lease == NULL, EINVAL);
+    failif(child == NULL, EINVAL);
+
+    lock_lease_exclusive(worker, lease);
+    lock_lease_join(worker, cons(child, NULL));
+
+    oldaddr = child->addr;
+
+    if (addr_cmp(newaddr, my_address))
+        child->addr = newaddr;
+    else
+        lease_remove(child);
+
+    while (revoketype != GRANT_END) {
+        remote_revoke(worker, oldaddr, revoketype, req->path, newaddr,
+                &revoketype, &root, &exits, &fids);
+
+        if (revoketype == GRANT_END) {
+            if (granttype == GRANT_START)
+                granttype = GRANT_SINGLE;
+            else
+                granttype = GRANT_END;
+        }
+
+        if (!addr_cmp(newaddr, my_address)) {
+            /* add it to the local lease */
+            if (!null(exits))
+                lease_add_exits(worker, lease, exits);
+            if (!null(fids))
+                lease_add_fids(worker, lease, fids);
+        } else {
+            /* send the grant to a remote envoy */
+            assert(root->address == my_address->ip &&
+                    root->port == my_address->port);
+            remote_grant(worker, newaddr, granttype, root, exits, fids);
+            if (granttype == GRANT_START)
+                granttype = GRANT_CONTINUE;
+        }
+    }
+
+    remote_revoke(worker, oldaddr, GRANT_END, req->path, newaddr,
+            &revoketype, &root, &exits, &fids);
+    failif(revoketype != GRANT_END, EINVAL);
 
     send_reply(trans);
 }

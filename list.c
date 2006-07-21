@@ -150,3 +150,28 @@ List *removeinorder(Cmpfunc cmp, List *list, void *elt) {
     setcdr(prev, cdr(cur));
     return list;
 }
+
+void list_to_array(List *from, u16 *len, void **to) {
+    int i;
+
+    *len = length(from);
+    *to = GC_MALLOC(sizeof(void *) * *len);
+    assert(*to != NULL);
+
+    for (i = 0; i < *len; i++) {
+        to[i] = car(from);
+        from = cdr(from);
+    }
+
+    assert(null(from));
+}
+
+List *array_to_list(u16 len, void **from) {
+    List *to = NULL;
+    int i;
+
+    for (i = len - 1; i >= 0; i--)
+        to = cons(from[i], to);
+
+    return to;
+}

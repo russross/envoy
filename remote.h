@@ -23,5 +23,11 @@ List *remote_snapshot(Worker *worker, List *targets);
 void remote_grant_exits(Worker *worker, List *targets, Address *addr,
         enum grant_type type);
 void remote_migrate(Worker *worker, List *groups);
+void remote_revoke(Worker *worker, Address *target, enum grant_type type,
+        char *pathname, Address *newaddress,
+        enum grant_type *restype, struct leaserecord **root,
+        List **exits, List **fids);
+void remote_grant(Worker *worker, Address *target, enum grant_type type,
+        struct leaserecord *root, List *exits, List *fids);
 
 #endif

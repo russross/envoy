@@ -33,4 +33,7 @@ List *insertinorder(Cmpfunc cmp, List *list, void *elt);
 void *findinorder(Cmpfunc cmp, List *list, void *elt);
 List *removeinorder(Cmpfunc cmp, List *list, void *elt);
 
+void list_to_array(List *from, u16 *len, void **to);
+List *array_to_list(u16 len, void **from);
+
 #endif

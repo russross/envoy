@@ -97,6 +97,7 @@ enum grant_type {
     GRANT_START,
     GRANT_CONTINUE,
     GRANT_END,
+    GRANT_SINGLE,
     GRANT_CHANGE_PARENT,
 };
 

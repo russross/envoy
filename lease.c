@@ -167,16 +167,22 @@ static void lease_remove_iter(List **env, void *key, void *value) {
 }
 
 void lease_remove(Lease *lease) {
-    List *toremove = NULL;
     assert(null(lease->wavefront));
     assert(hash_count(lease->fids) == 0);
     assert(null(lease->changeexits));
     assert(null(lease->changefids));
-    hash_apply(lease->claim_cache,
-            (void (*)(void *, void *, void *)) lease_remove_iter,
-            &toremove);
-    for ( ; !null(toremove); toremove = cdr(toremove))
-        claim_remove_from_cache((Claim *) car(toremove));
+    if (lease->isexit) {
+        Lease *parent = lease_find_root(dirname(lease->pathname));
+        parent->wavefront = removeinorder((Cmpfunc) lease_cmp,
+                parent->wavefront, lease);
+    } else {
+        List *toremove = NULL;
+        hash_apply(lease->claim_cache,
+                (void (*)(void *, void *, void *)) lease_remove_iter,
+                &toremove);
+        for ( ; !null(toremove); toremove = cdr(toremove))
+            claim_remove_from_cache((Claim *) car(toremove));
+    }
     hash_remove(lease_by_root_pathname, lease->pathname);
     lease->pathname = NULL;
     lease->addr = NULL;
@@ -401,8 +407,8 @@ struct leaserecord *lease_to_lease_record(Lease *lease, int prefixlen) {
     } else {
         elt->pathname = lease->pathname;
         elt->oid = lease->claim->oid;
-        elt->address = my_address->ip;
-        elt->port = my_address->port;
+        elt->address = lease->addr->ip;
+        elt->port = lease->addr->port;
     }
 
     return elt;
