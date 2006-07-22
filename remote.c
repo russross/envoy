@@ -253,7 +253,7 @@ void remote_grant(Worker *worker, Address *target, enum grant_type type,
 
     send_request(trans);
 
-    assert(trans->in != NULL && trans->in->id == REREVOKE);
+    assert(trans->in != NULL && trans->in->id == REGRANT);
 }
 
 void remote_nominate(Worker *worker, Address *target,

@@ -73,6 +73,7 @@ enum qidtypes {
 #define TWRITE_DATA_OFFSET 23
 #define TSWRITE_DATA_OFFSET 23
 #define REREVOKE_SIZE_FIXED 12
+#define TEGRANT_SIZE_FIXED 12
 #define TEMIGRATE_SIZE_FIXED 9
 
 /* size difference between storage and client read/write messages */

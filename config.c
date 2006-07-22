@@ -81,9 +81,11 @@ int config_envoy(int argc, char **argv) {
     /* fill in the defaults */
     root_oid = 0LL;
     root_address = NULL;
-    storage_server_count = 0;
+    storage_server_count = 1;
+    storage_addresses = GC_MALLOC(sizeof(Address *));
+    assert(storage_addresses != NULL);
+    storage_addresses[0] = make_address("localhost", STORAGE_PORT);
     storage_servers = NULL;
-    storage_addresses = NULL;
     PORT = ENVOY_PORT;
     DEBUG_VERBOSE =
         DEBUG_AUDIT =

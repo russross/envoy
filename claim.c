@@ -98,13 +98,53 @@ void claim_delete(Claim *claim) {
     }
 }
 
+struct claim_clear_descendents_env {
+    List *toremove;
+    char *prefix;
+};
+
+static void claim_clear_descendents_iter(
+        struct claim_clear_descendents_env *env, void *key, Claim *value)
+{
+    if (startswith(value->pathname, env->prefix))
+        env->toremove = cons(value, env->toremove);
+}
+
+void claim_clear_descendents(Claim *claim) {
+    List *stack = cons(claim, NULL);
+    struct claim_clear_descendents_env env;
+
+    env.toremove = NULL;
+    env.prefix = concatname(claim->pathname, "/");
+
+    /* clear the claim cache */
+    hash_apply(claim->lease->claim_cache,
+            (void (*)(void *, void *, void *)) claim_clear_descendents_iter,
+            &env);
+    for ( ; !null(env.toremove); env.toremove = cdr(env.toremove))
+        claim_remove_from_cache((Claim *) car(env.toremove));
+
+    /* clear the claim tree */
+    while (!null(stack)) {
+        Claim *elt = car(stack);
+        stack = cdr(stack);
+
+        assert(null(elt->fids));
+        elt->parent = NULL;
+        elt->lease = NULL;
+        elt->pathname = NULL;
+        for ( ; !null(elt->children); elt->children = cdr(elt->children))
+            stack = cons(car(elt->children), stack);
+    }
+}
+
 void claim_release(Claim *claim) {
-    /* keep the claim alive if there is an exit point immediately below it */
-    if (lease_is_exit_point_parent(claim->lease, claim->pathname))
+    /* is this a deleted entry being clunked? */
+    if (claim->deleted || claim->lease == NULL)
         return;
 
-    /* is this a deleted entry being clunked? */
-    if (claim->deleted)
+    /* keep the claim alive if there is an exit point immediately below it */
+    if (lease_is_exit_point_parent(claim->lease, claim->pathname))
         return;
 
     /* delete up the tree as far as we can */

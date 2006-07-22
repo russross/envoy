@@ -40,23 +40,27 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     l->pathname = pathname;
     l->addr = addr;
 
-    l->isexit = isexit;
-
-    l->claim = claim;
-    l->claim->lease = l;
-
     l->wavefront = NULL;
 
-    l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
-            (Hashfunc) fid_hash,
-            (Cmpfunc) fid_cmp);
+    l->isexit = isexit;
 
-    l->readonly = 0;
+    if (isexit) {
+        l->claim = NULL;
+        l->fids = NULL;
+        l->claim_cache = NULL;
+    } else {
+        l->claim = claim;
+        l->claim->lease = l;
+        l->fids = hash_create(LEASE_FIDS_HASHTABLE_SIZE,
+                (Hashfunc) fid_hash,
+                (Cmpfunc) fid_cmp);
+        l->claim_cache = hash_create(
+                LEASE_CLAIM_HASHTABLE_SIZE,
+                (Hashfunc) string_hash,
+                (Cmpfunc) strcmp);
+    }
 
-    l->claim_cache = hash_create(
-            LEASE_CLAIM_HASHTABLE_SIZE,
-            (Hashfunc) string_hash,
-            (Cmpfunc) strcmp);
+    l->readonly = readonly;
 
     return l;
 }
@@ -162,13 +166,9 @@ void lease_add(Lease *lease) {
     }
 }
 
-static void lease_remove_iter(List **env, void *key, void *value) {
-    *env = cons(value, *env);
-}
-
 void lease_remove(Lease *lease) {
     assert(null(lease->wavefront));
-    assert(hash_count(lease->fids) == 0);
+    assert(lease->fids == NULL || hash_count(lease->fids) == 0);
     assert(null(lease->changeexits));
     assert(null(lease->changefids));
     if (lease->isexit) {
@@ -176,12 +176,7 @@ void lease_remove(Lease *lease) {
         parent->wavefront = removeinorder((Cmpfunc) lease_cmp,
                 parent->wavefront, lease);
     } else {
-        List *toremove = NULL;
-        hash_apply(lease->claim_cache,
-                (void (*)(void *, void *, void *)) lease_remove_iter,
-                &toremove);
-        for ( ; !null(toremove); toremove = cdr(toremove))
-            claim_remove_from_cache((Claim *) car(toremove));
+        claim_clear_descendents(lease->claim);
     }
     hash_remove(lease_by_root_pathname, lease->pathname);
     lease->pathname = NULL;
@@ -649,6 +644,7 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids) {
 }
 
 void lease_pack_message(Lease *lease, List **exits, List **fids, int size) {
+    *exits = NULL;
     while (!null(lease->changeexits)) {
         struct leaserecord *elt = car(lease->changeexits);
         int eltsize = leaserecordsize(elt);
@@ -660,6 +656,7 @@ void lease_pack_message(Lease *lease, List **exits, List **fids, int size) {
             break;
         }
     }
+    *fids = NULL;
     while (!null(lease->changefids)) {
         struct fidrecord *elt = car(lease->changefids);
         int eltsize = fidrecordsize(elt);
@@ -671,4 +668,59 @@ void lease_pack_message(Lease *lease, List **exits, List **fids, int size) {
             break;
         }
     }
+}
+
+void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
+    List *exits;
+    List *fids;
+    char *prefix = concatstrings(pathname, "/");
+    Claim *claim = claim_find(worker, pathname);
+    Lease *child;
+    struct leaserecord *root;
+    enum grant_type type = GRANT_START;
+
+    assert(claim != NULL);
+    assert(claim->lease == lease);
+
+    lock_lease_exclusive(worker, lease);
+
+    if (claim->access == ACCESS_COW)
+        claim_thaw(worker, claim);
+
+    root = GC_NEW(struct leaserecord);
+    assert(root != NULL);
+
+    root->readonly = (claim->access == ACCESS_READONLY);
+    root->pathname = pathname;
+    root->oid = claim->oid;
+    root->address = my_address->ip;
+    root->port = my_address->port;
+
+    lease->changeexits = lease_serialize_exits(worker, lease, prefix, addr);
+    lease->changefids = lease_serialize_fids(worker, lease, prefix, addr);
+
+    /* send the grant in as many steps as necessary */
+    do {
+        lease_pack_message(lease, &exits, &fids,
+                (TEGRANT_SIZE_FIXED + leaserecordsize(root)));
+        if (null(lease->changeexits) && null(lease->changefids)) {
+            if (type == GRANT_START)
+                type = GRANT_SINGLE;
+            else
+                type = GRANT_END;
+        }
+        remote_grant(worker, addr, type, root, exits, fids);
+        type = GRANT_CONTINUE;
+    } while (!null(lease->changeexits) || !null(lease->changefids));
+
+    lease_release_fids(worker, lease, prefix, addr);
+
+    child = lease_new(pathname, addr, 1, NULL,
+            (claim->access == ACCESS_READONLY));
+    lease_add(child);
+
+    assert(null(claim->children));
+    claim->parent->children =
+        removeinorder((Cmpfunc) claim_cmp, claim->parent->children, claim);
+    claim_clear_descendents(claim);
 }

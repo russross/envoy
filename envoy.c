@@ -1446,8 +1446,8 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
     struct Rerevoke *res = &trans->out->msg.rerevoke;
     Lease *lease = lease_find_root(req->pathname);
     char *prefix = concatstrings(req->pathname, "/");
-    List *exits = NULL;
-    List *fids = NULL;
+    List *exits;
+    List *fids;
     Address *newaddr = address_new(req->newaddress, req->newport);
 
     failif(lease == NULL, EIO);

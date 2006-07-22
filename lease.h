@@ -111,5 +111,6 @@ void lease_release_fids(Worker *worker, Lease *lease,
         char *prefix, Address *addr);
 void lease_add_fids(Worker *worker, Lease *lease, List *fids);
 void lease_pack_message(Lease *lease, List **exits, List **fids, int size);
+void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr);
 
 #endif
