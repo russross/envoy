@@ -1131,10 +1131,18 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     parent = claim_get_parent(worker, fid->claim);
 
     /* if not, give up ownership of this file and repeat the request remotely */
-    /* TODO: implement this */
     if (parent == NULL) {
-        errnum = ENOTSUP;
-        goto cleanup;
+        Lease *lease = fid->claim->lease;
+
+        /* release lock on this lease so the remote envoy can reclaim it */
+        worker_cleanup(worker);
+
+        remote_nominate(worker, lease->addr, lease->pathname, lease->addr);
+
+        /* now force a restart on this fid */
+        worker_retry(worker);
+
+        assert(0);
     }
 
     require_info(parent);
@@ -1591,7 +1599,9 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
     lock_lease_exclusive(worker, lease);
     lock_lease_join(worker, cons(child, NULL));
 
+    /* only the old lease holder can initiate a transfer */
     oldaddr = child->addr;
+    failif(addr_cmp(oldaddr, trans->conn->addr), EINVAL);
 
     if (addr_cmp(newaddr, my_address))
         child->addr = newaddr;

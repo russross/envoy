@@ -255,3 +255,18 @@ void remote_grant(Worker *worker, Address *target, enum grant_type type,
 
     assert(trans->in != NULL && trans->in->id == REREVOKE);
 }
+
+void remote_nominate(Worker *worker, Address *target,
+        char *pathname, Address *newaddr)
+{
+    Transaction *trans;
+
+    trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
+    trans->out->tag = ALLOCTAG;
+    trans->out->id = TENOMINATE;
+    set_tenominate(trans->out, pathname, newaddr->ip, newaddr->port);
+
+    send_request(trans);
+
+    assert(trans->in != NULL && trans->in->id == RENOMINATE);
+}
