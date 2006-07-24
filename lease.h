@@ -103,13 +103,14 @@ enum grant_type {
 
 struct leaserecord *lease_to_lease_record(Lease *lease, int prefixlen);
 List *lease_serialize_exits(Worker *worker, Lease *lease,
-        char *prefix, Address *addr);
+        char *oldroot, Address *addr);
 void lease_add_exits(Worker *worker, Lease *lease, List *exits);
 List *lease_serialize_fids(Worker *worker, Lease *lease,
-        char *prefix, Address *addr);
+        char *oldroot, Address *addr);
 void lease_release_fids(Worker *worker, Lease *lease,
-        char *prefix, Address *addr);
-void lease_add_fids(Worker *worker, Lease *lease, List *fids);
+        char *oldroot, Address *addr);
+void lease_add_fids(Worker *worker, Lease *lease, List *fids,
+        char *oldroot, Address *oldaddr);
 void lease_pack_message(Lease *lease, List **exits, List **fids, int size);
 void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr);
 

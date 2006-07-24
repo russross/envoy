@@ -93,11 +93,6 @@ int config_envoy(int argc, char **argv) {
         DEBUG_CLIENT =
         DEBUG_ENVOY = DEBUG_ENVOY_ADMIN = 0;
 
-    if (argc < 2) {
-        print_usage();
-        return -1;
-    }
-
     while (!finished) {
         u64 rootobj;
         char *end;
@@ -213,11 +208,6 @@ int config_storage(int argc, char **argv) {
     DEBUG_VERBOSE =
         DEBUG_STORAGE = 0;
 
-    if (argc < 2) {
-        print_usage();
-        return -1;
-    }
-
     while (!finished) {
         int i;
         char *end;
@@ -280,8 +270,16 @@ int config_storage(int argc, char **argv) {
     }
 
     if (objectroot == NULL) {
-        fprintf(stderr, "No root directory for object storage specified\n");
-        return -1;
+        char *home = getenv("HOME");
+        struct stat info;
+        if (home != NULL) {
+            objectroot = resolvePath(resolvePath("/", home, &info),
+                    "root", &info);
+        }
+        if (objectroot == NULL) {
+            fprintf(stderr, "No root directory for object storage specified\n");
+            return -1;
+        }
     }
 
     return 0;

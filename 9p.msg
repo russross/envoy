@@ -32,7 +32,7 @@
 151 size[4] Resnapshot tag[2] newoid[8]
 152 size[4] Tenominate tag[2] path[s] address[4] port[2]
 153 size[4] Renominate tag[2]
-154 size[4] Tegrant tag[2] type[1] root[l] nexit[2] nexit*(exit[l]) nfid[2] nfid*(fid[f])
+154 size[4] Tegrant tag[2] type[1] root[l] oldaddress[4] oldport[2] nexit[2] nexit*(exit[l]) nfid[2] nfid*(fid[f])
 155 size[4] Regrant tag[2]
 156 size[4] Terevoke tag[2] type[1] pathname[s] newaddress[4] newport[2]
 157 size[4] Rerevoke tag[2] type[1] root[l] nexit[2] nexit*(exit[l]) nfid[2] nfid*(fid[f])

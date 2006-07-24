@@ -20,6 +20,7 @@ void handle_tflush(Worker *worker, Transaction *trans);
 void handle_topen(Worker *worker, Transaction *trans);
 void handle_tcreate(Worker *worker, Transaction *trans);
 void handle_tcreate_admin(Worker *worker, Transaction *trans);
+void handle_tcreate_migrate(Worker *worker, Transaction *trans);
 void handle_tread(Worker *worker, Transaction *trans);
 void handle_twrite(Worker *worker, Transaction *trans);
 void handle_tclunk(Worker *worker, Transaction *trans);
@@ -34,5 +35,6 @@ void envoy_terevoke(Worker *worker, Transaction *trans);
 void envoy_tegrant(Worker *worker, Transaction *trans);
 void envoy_temigrate(Worker *worker, Transaction *trans);
 void envoy_tenominate(Worker *worker, Transaction *trans);
+void envoy_testatremote(Worker *worker, Transaction *trans);
 
 #endif

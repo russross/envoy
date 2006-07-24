@@ -128,6 +128,7 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 {
     struct direntry *elt;
     char *childpath;
+    Lease *remote;
 
     /* do we have a cached result? */
     if (env->next != NULL) {
@@ -166,7 +167,7 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
     childpath = concatname(fid->claim->pathname, elt->filename);
 
     /* can we get stats locally? */
-    if (lease_get_remote(childpath) == NULL) {
+    if ((remote = lease_get_remote(childpath)) == NULL) {
         Claim *claim;
         struct p9stat *info;
 
@@ -181,9 +182,7 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 
         return info;
     } else {
-        Lease *lease = lease_get_remote(childpath);
-        assert(lease != NULL);
-        return remote_stat(worker, lease->addr, childpath);
+        return remote_stat(worker, remote->addr, childpath);
     }
 }
 

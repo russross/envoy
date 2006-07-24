@@ -147,7 +147,7 @@ void remote_grant_exits(Worker *worker, List *targets, Address *addr,
                 NULL, message_new());
         trans->out->tag = ALLOCTAG;
         trans->out->id = TEGRANT;
-        set_tegrant(trans->out, type, rec, 0, NULL, 0, NULL);
+        set_tegrant(trans->out, type, rec, 0, 0, 0, NULL, 0, NULL);
         requests = cons(trans, requests);
     }
 
@@ -235,7 +235,7 @@ void remote_revoke(Worker *worker, Address *target, enum grant_type type,
 }
 
 void remote_grant(Worker *worker, Address *target, enum grant_type type,
-        struct leaserecord *root, List *exits, List *fids)
+        struct leaserecord *root, Address *oldaddr, List *exits, List *fids)
 {
     Transaction *trans;
     u16 nexit;
@@ -243,13 +243,14 @@ void remote_grant(Worker *worker, Address *target, enum grant_type type,
     u16 nfid;
     struct fidrecord **fid;
 
-    list_to_array(exits, &nexit, (void **) exit);
-    list_to_array(fids, &nfid, (void **) fid);
+    list_to_array(exits, &nexit, (void ***) &exit);
+    list_to_array(fids, &nfid, (void ***) &fid);
 
     trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
     trans->out->tag = ALLOCTAG;
     trans->out->id = TEGRANT;
-    set_tegrant(trans->out, type, root, nexit, exit, nfid, fid);
+    set_tegrant(trans->out, type, root, oldaddr->ip, oldaddr->port,
+            nexit, exit, nfid, fid);
 
     send_request(trans);
 

@@ -20,7 +20,6 @@
  * Connection pool state
  */
 
-
 Vector *conn_vector;
 Hashtable *addr_2_envoy_out;
 Hashtable *addr_2_in;
@@ -29,24 +28,10 @@ Connection *conn_insert_new(int fd, enum conn_type type,
         struct sockaddr_in *netaddr)
 {
     Connection *conn;
-    Address *addr;
 
     assert(fd >= 0);
     assert(netaddr != NULL);
     assert(!vector_test(conn_vector, fd));
-
-    addr = GC_NEW_ATOMIC(Address);
-    assert(addr != NULL);
-
-    addr->ip = ntohl(netaddr->sin_addr.s_addr);
-    addr->port = ntohs(netaddr->sin_port);
-    if (type == CONN_ENVOY_OUT) {
-        assert(hash_get(addr_2_envoy_out, addr) == NULL);
-    } else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN ||
-            type == CONN_UNKNOWN_IN)
-    {
-        assert(hash_get(addr_2_in, addr) == NULL);
-    }
 
     conn = GC_NEW(Connection);
     assert(conn != NULL);
@@ -54,7 +39,7 @@ Connection *conn_insert_new(int fd, enum conn_type type,
     conn->fd = fd;
     conn->type = type;
     conn->netaddr = netaddr;
-    conn->addr = addr;
+    conn->addr = netaddr_to_addr(netaddr);
     conn->maxSize = GLOBAL_MAX_SIZE;
     conn->fid_vector = vector_create(FID_VECTOR_SIZE);
     conn->tag_vector = vector_create(TAG_VECTOR_SIZE);
@@ -67,11 +52,13 @@ Connection *conn_insert_new(int fd, enum conn_type type,
 
     vector_set(conn_vector, conn->fd, conn);
     if (type == CONN_ENVOY_OUT) {
-        hash_set(addr_2_envoy_out, addr, conn);
+        assert(hash_get(addr_2_envoy_out, conn->addr) == NULL);
+        hash_set(addr_2_envoy_out, conn->addr, conn);
     } else if (type == CONN_ENVOY_IN || type == CONN_CLIENT_IN ||
             type == CONN_UNKNOWN_IN)
     {
-        hash_set(addr_2_in, addr, conn);
+        assert(hash_get(addr_2_in, conn->addr) == NULL);
+        hash_set(addr_2_in, conn->addr, conn);
     }
 
     return conn;
@@ -123,7 +110,6 @@ Connection *conn_lookup_fd(int fd) {
     return vector_get(conn_vector, fd);
 }
 
-/* note: this only returns connections of type CONN_ENVOY_OUT */
 Connection *conn_get_envoy_out(Worker *worker, Address *addr) {
     Transaction *trans;
     Connection *conn;

@@ -60,7 +60,7 @@ void test_dump(void) {
     fidlist[2] = fid;
     fidlist[3] = fid;
 
-    set_tegrant(m, 1, lease, 5, leaselist, 4, fidlist);
+    set_tegrant(m, 1, lease, 0x7f000001, 9922, 5, leaselist, 4, fidlist);
     printMessage(stdout, m);
     m->raw = GC_MALLOC(0x10000);
     assert(packMessage(m, 0x10000) == 0);

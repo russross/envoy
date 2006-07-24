@@ -397,7 +397,7 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
                 env->claim = NULL;
 
                 /* close the remote fid */
-                if (env->oldrfid != NOFID) {
+                if (env->oldrfid != NOFID && env->oldrfid == env->newrfid) {
                     /* the walk has moved from a remote host to here */
                     assert(env->oldaddr != NULL);
                     remote_closefid(worker, env->oldaddr, env->oldrfid);

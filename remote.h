@@ -28,7 +28,7 @@ void remote_revoke(Worker *worker, Address *target, enum grant_type type,
         enum grant_type *restype, struct leaserecord **root,
         List **exits, List **fids);
 void remote_grant(Worker *worker, Address *target, enum grant_type type,
-        struct leaserecord *root, List *exits, List *fids);
+        struct leaserecord *root, Address *oldaddr, List *exits, List *fids);
 void remote_nominate(Worker *worker, Address *target,
         char *pathname, Address *newaddr);
 

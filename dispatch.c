@@ -174,9 +174,9 @@ void dispatch(Worker *worker, Transaction *trans) {
     u32 newfid = NOFID;
     Fid *fid = NULL;
     int isadmincreate = 0;
+    int isleasemigrate = 0;
     enum grant_type granttype;
     char *pathname;
-    Lease *lease;
 
     if (!isstorage && storage_servers == NULL)
         storage_server_connection_init();
@@ -219,13 +219,11 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TESETADDRESS:
         case TEMIGRATE:
         case TENOMINATE:
+        case TESTATREMOTE:
             break;
 
         case TEREVOKE:
         case TEGRANT:
-            lease = lease_find_root(pathname);
-            failif(lease == NULL, EBADF);
-
             if (trans->in->id == TEREVOKE) {
                 granttype = trans->in->msg.terevoke.type;
                 pathname = trans->in->msg.terevoke.pathname;
@@ -234,11 +232,10 @@ void dispatch(Worker *worker, Transaction *trans) {
                 pathname = trans->in->msg.tegrant.root->pathname;
             }
 
-            if (granttype == GRANT_START || granttype == GRANT_CHANGE_PARENT) {
-                /* this starts a new multi-step transaction */
-                failif(lease->changeinprogress, EIO);
-            } else {
+            if (granttype == GRANT_CONTINUE || granttype == GRANT_END) {
                 /* pass this over to the worker handling the lease change */
+                Lease *lease = lease_find_root(pathname);
+                failif(lease == NULL, EINVAL);
                 failif(!lease->changeinprogress, EIO);
                 failif(lease->wait_for_update == NULL, EIO);
                 worker_multistep_transfer_request(lease->wait_for_update,
@@ -300,6 +297,13 @@ void dispatch(Worker *worker, Transaction *trans) {
             {
                 isadmincreate = 1;
             }
+            /* testing interface--is this a lease request? */
+            if (trans->in->id == TCREATE &&
+                    get_admin_path_type(fid->pathname) != PATH_ADMIN &&
+                    startswith(trans->in->msg.tcreate.name, "::lease::"))
+            {
+                isleasemigrate = 1;
+            }
 
             /* lock the lease first */
             lock_lease(worker, fid->claim->lease);
@@ -332,6 +336,8 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TCREATE:
                         if (isadmincreate)
                             handle_tcreate_admin(worker, trans);
+                        else if (isleasemigrate)
+                            handle_tcreate_migrate(worker, trans);
                         else
                             handle_tcreate(worker, trans);
                         break;
@@ -355,8 +361,11 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TEWALKREMOTE: envoy_tewalkremote(worker, trans);   break;
         case TECLOSEFID:   envoy_teclosefid(worker, trans);     break;
         case TESETADDRESS: envoy_tesetaddress(worker, trans);   break;
+        case TEREVOKE:     envoy_terevoke(worker, trans);       break;
+        case TEGRANT:      envoy_tegrant(worker, trans);        break;
         case TEMIGRATE:    envoy_temigrate(worker, trans);      break;
         case TENOMINATE:   envoy_tenominate(worker, trans);     break;
+        case TESTATREMOTE: envoy_testatremote(worker, trans);   break;
 
         case TVERSION:
         default:

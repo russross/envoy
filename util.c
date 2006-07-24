@@ -243,7 +243,8 @@ u32 now(void) {
 }
 
 u32 addr_hash(const Address *addr) {
-    return generic_hash(addr, sizeof(Address), 0);
+    return generic_hash(&addr->port, sizeof(u16),
+            generic_hash(&addr->ip, sizeof(u32), 0));
 }
 
 int addr_cmp(const Address *a, const Address *b) {

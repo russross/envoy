@@ -611,6 +611,40 @@ void handle_topen(Worker *worker, Transaction *trans) {
     send_reply(trans);
 }
 
+/* ::lease::,path,to,root::target:port */
+void handle_tcreate_migrate(Worker *worker, Transaction *trans) {
+    struct Tcreate *req = &trans->in->msg.tcreate;
+    char *root = req->name + 9;
+    /* skip the ::lease:: bit */
+    char *host = strstr(root, "::");
+    Address *addr;
+    Lease *lease;
+    char *comma;
+
+    failif(host == NULL, EINVAL);
+    root = substring(root, 0, host - root);
+    while ((comma = strchr(root, ',')) != NULL)
+        *comma = '/';
+    addr = parse_address(host + 2, ENVOY_PORT);
+
+    lease = lease_find_root(root);
+    failif(lease == NULL, EINVAL);
+
+    worker_cleanup(worker);
+    if (strcmp(root, lease->pathname)) {
+        printf("lease migrate request: split %s from %s to %s\n",
+                root, lease->pathname, addr_to_string(addr));
+        lease_split(worker, lease, root, addr);
+    } else {
+        printf("lease migrate request: nominate %s to %s\n",
+                root, addr_to_string(addr));
+        remote_nominate(worker, lease->addr, root, addr);
+    }
+    printf("lease migrate request: completed\n");
+
+    failif(1, EPERM);
+}
+
 void handle_tcreate_admin(Worker *worker, Transaction *trans) {
     struct Tcreate *req = &trans->in->msg.tcreate;
     struct Rcreate *res = &trans->out->msg.rcreate;
@@ -1445,10 +1479,11 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
     struct Terevoke *req = &trans->in->msg.terevoke;
     struct Rerevoke *res = &trans->out->msg.rerevoke;
     Lease *lease = lease_find_root(req->pathname);
-    char *prefix = concatstrings(req->pathname, "/");
     List *exits;
     List *fids;
     Address *newaddr = address_new(req->newaddress, req->newport);
+
+    walk_flush();
 
     failif(lease == NULL, EIO);
     lock_lease_exclusive(worker, lease);
@@ -1457,11 +1492,13 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
 
     switch (req->type) {
         case GRANT_START:
+            failif(lease->changeinprogress, EIO);
+
             /* gather the data to be transferred and freeze child leases */
             lease->changeexits =
-                lease_serialize_exits(worker, lease, prefix, newaddr);
+                lease_serialize_exits(worker, lease, req->pathname, newaddr);
             lease->changefids =
-                lease_serialize_fids(worker, lease, prefix, newaddr);
+                lease_serialize_fids(worker, lease, req->pathname, newaddr);
             /* fall through */
         case GRANT_CONTINUE:
             /* fill up the response with exits & fids */
@@ -1471,14 +1508,14 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
                 res->type = GRANT_END;
             else
                 res->type = GRANT_CONTINUE;
-            list_to_array(exits, &res->nexit, (void **) &res->exit);
-            list_to_array(fids, &res->nfid, (void **) &res->fid);
+            list_to_array(exits, &res->nexit, (void ***) &res->exit);
+            list_to_array(fids, &res->nfid, (void ***) &res->fid);
             break;
 
         case GRANT_END:
             /* complete the switch by releasing the fids
              * and deleting the lease */
-            lease_release_fids(worker, lease, prefix, newaddr);
+            lease_release_fids(worker, lease, req->pathname, newaddr);
             lease_remove(lease);
             res->type = GRANT_END;
             res->nexit = 0;
@@ -1508,6 +1545,8 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
     List *exits;
     List *fids;
     Address *addr;
+
+    walk_flush();
 
     switch (req->type) {
         case GRANT_START:
@@ -1539,7 +1578,8 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
             fids = array_to_list(req->nfid, (void **) req->fid);
             if (!null(fids)) {
                 failif(lease->isexit, EINVAL);
-                lease_add_fids(worker, lease, fids);
+                lease_add_fids(worker, lease, fids, req->root->pathname,
+                        address_new(req->oldaddress, req->oldport));
             }
             break;
 
@@ -1547,9 +1587,8 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
             failif(req->nexit != 0, EINVAL);
             failif(req->nfid != 0, EINVAL);
             failif(lease != NULL, EIO);
-            lease = lease_find_root(req->root->pathname);
-            failif(lease == NULL, EIO);
             failif(strcmp(lease->pathname, req->root->pathname), EIO);
+            failif(lease->changeinprogress, EIO);
             lock_lease_exclusive(worker, lease);
 
             lease->addr = address_new(req->root->address, req->root->port);
@@ -1572,6 +1611,8 @@ void envoy_temigrate(Worker *worker, Transaction *trans) {
     struct Temigrate *req = &trans->in->msg.temigrate;
     int i;
 
+    walk_flush();
+
     for (i = 0; i < req->nfid; i++) {
         Fid *fid = fid_get_remote(req->fid[i]);
         assert(fid != NULL && fid != (void *) 0xdeadbeef);
@@ -1592,6 +1633,8 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
     List *fids;
     enum grant_type revoketype = GRANT_START;
     enum grant_type granttype = GRANT_START;
+
+    walk_flush();
 
     failif(lease == NULL, EINVAL);
     failif(child == NULL, EINVAL);
@@ -1624,12 +1667,13 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
             if (!null(exits))
                 lease_add_exits(worker, lease, exits);
             if (!null(fids))
-                lease_add_fids(worker, lease, fids);
+                lease_add_fids(worker, lease, fids, req->path, oldaddr);
         } else {
             /* send the grant to a remote envoy */
             assert(root->address == my_address->ip &&
                     root->port == my_address->port);
-            remote_grant(worker, newaddr, granttype, root, exits, fids);
+            remote_grant(worker, newaddr, granttype, root, oldaddr,
+                    exits, fids);
             if (granttype == GRANT_START)
                 granttype = GRANT_CONTINUE;
         }
@@ -1638,6 +1682,23 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
     remote_revoke(worker, oldaddr, GRANT_END, req->path, newaddr,
             &revoketype, &root, &exits, &fids);
     failif(revoketype != GRANT_END, EINVAL);
+
+    send_reply(trans);
+}
+
+void envoy_testatremote(Worker *worker, Transaction *trans) {
+    struct Testatremote *req = &trans->in->msg.testatremote;
+    struct Restatremote *res = &trans->out->msg.restatremote;
+    Claim *claim = claim_find(worker, req->path);
+
+    failif(claim == NULL, EBADF);
+
+    require_info(claim);
+    res->stat = claim->info;
+
+    /* symlinks should show up as 0777 */
+    if ((res->stat->mode & DMSYMLINK))
+        res->stat->mode |= 0777;
 
     send_reply(trans);
 }

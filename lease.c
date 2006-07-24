@@ -17,6 +17,7 @@
 #include "dir.h"
 #include "claim.h"
 #include "lease.h"
+#include "walk.h"
 
 Hashtable *lease_by_root_pathname;
 
@@ -409,14 +410,15 @@ struct leaserecord *lease_to_lease_record(Lease *lease, int prefixlen) {
     return elt;
 }
 
-/* prefix must include a trailing slash, addr is the grant target */
+/* addr is the grant target */
 List *lease_serialize_exits(Worker *worker, Lease *lease,
-        char *prefix, Address *addr)
+        char *oldroot, Address *addr)
 {
     List *result = NULL;
     List *targets = NULL;
     List *exits = lease->wavefront;
     List *prev = NULL;
+    char *prefix = concatstrings(oldroot, "/");
     int prefixlen = strlen(prefix);
 
     /* gather exits that match the prefix and remove them from the lease */
@@ -492,6 +494,7 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
 
 struct lease_serialize_fids_env {
     Worker *worker;
+    char *oldroot;
     char *prefix;
     int prefixlen;
     List *fids;
@@ -503,8 +506,11 @@ static void lease_serialize_fids_iter(struct lease_serialize_fids_env *env,
     Connection *conn;
     struct fidrecord *elt;
 
-    if (!startswith(elt->pathname, env->prefix))
+    if (!startswith(fid->pathname, env->prefix) &&
+            strcmp(fid->pathname, env->oldroot))
+    {
         return;
+    }
 
     assert(!fid->isremote && fid->claim != NULL);
     assert(fid->raddr == NULL);
@@ -522,7 +528,7 @@ static void lease_serialize_fids_iter(struct lease_serialize_fids_env *env,
     elt = GC_NEW(struct fidrecord);
     assert(elt != NULL);
 
-    elt->fid = fid->fid;
+    elt->fid = conn->type == CONN_CLIENT_IN ? fid->rfid : fid->fid;
     elt->pathname = substring_rest(fid->pathname, env->prefixlen);
     elt->user = fid->user;
     elt->status = (u8) fid->status;
@@ -543,12 +549,13 @@ static void lease_serialize_fids_iter(struct lease_serialize_fids_env *env,
 }
 
 List *lease_serialize_fids(Worker *worker, Lease *lease,
-        char *prefix, Address *addr)
+        char *oldroot, Address *addr)
 {
     struct lease_serialize_fids_env env;
     env.worker = worker;
-    env.prefix = prefix;
-    env.prefixlen = strlen(prefix);
+    env.oldroot = oldroot;
+    env.prefix = concatstrings(oldroot, "/");
+    env.prefixlen = strlen(env.prefix);
     env.fids = NULL;
     hash_apply(lease->fids,
             (void (*)(void *, void *, void *)) lease_serialize_fids_iter,
@@ -560,17 +567,21 @@ List *lease_serialize_fids(Worker *worker, Lease *lease,
 static void lease_release_fids_iter(struct lease_serialize_fids_env *env,
         void *key, Fid *fid)
 {
-    if (startswith(fid->pathname, env->prefix))
+    if (startswith(fid->pathname, env->prefix) ||
+            !strcmp(fid->pathname, env->oldroot))
+    {
         env->fids = cons(fid, env->fids);
+    }
 }
 
 void lease_release_fids(Worker *worker, Lease *lease,
-        char *prefix, Address *addr)
+        char *oldroot, Address *addr)
 {
     struct lease_serialize_fids_env env;
     env.worker = worker;
-    env.prefix = prefix;
-    env.prefixlen = strlen(prefix);
+    env.oldroot = oldroot;
+    env.prefix = concatstrings(oldroot, "/");
+    env.prefixlen = strlen(env.prefix);
     env.fids = NULL;
     hash_apply(lease->fids,
             (void (*)(void *, void *, void *)) lease_release_fids_iter,
@@ -588,7 +599,9 @@ void lease_release_fids(Worker *worker, Lease *lease,
     }
 }
 
-void lease_add_fids(Worker *worker, Lease *lease, List *fids) {
+void lease_add_fids(Worker *worker, Lease *lease, List *fids,
+        char *oldroot, Address *oldaddr)
+{
     List *newremotefids = NULL;
     Address *groupaddr = NULL;
     List *groups = NULL;
@@ -597,7 +610,7 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids) {
     for ( ; !null(fids); fids = cdr(fids)) {
         struct fidrecord *elt = car(fids);
         Address *addr = address_new(elt->address, elt->port);
-        char *pathname = concatname(lease->pathname, elt->pathname);
+        char *pathname = concatname(oldroot, elt->pathname);
         Claim *claim = claim_find(worker, pathname);
         Fid *fid;
         assert(claim != NULL && claim->lease == lease);
@@ -607,21 +620,24 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids) {
             assert(fid != NULL && fid != (void *) 0xdeadbeef);
             fid_update_local(fid, claim);
             fid_release_remote(elt->fid);
+            assert(!strcmp(fid->user, elt->user));
         } else {
             Connection *conn = conn_get_incoming(addr);
             if (conn == NULL)
                 conn = conn_insert_new_stub(addr);
             fid_insert_local(conn, elt->fid, elt->user, claim);
             fid = fid_lookup(conn, elt->fid);
-            newremotefids =
-                insertinorder((Cmpfunc) fid_cmp, newremotefids, fid);
+
+            /* contact the remote envoy only when it isn't the former owner */
+            if (addr_cmp(addr, oldaddr)) {
+                newremotefids =
+                    insertinorder((Cmpfunc) fid_cmp, newremotefids, fid);
+            }
         }
-        assert(!strcmp(fid->user, elt->user));
         fid->status = elt->status;
         fid->omode = elt->omode;
         fid->readdir_cookie = elt->readdir_cookie;
     }
-
 
     /* gather the fids into groups by address */
     for ( ; !null(newremotefids); newremotefids = cdr(newremotefids)) {
@@ -631,7 +647,7 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids) {
         } else {
             if (!null(group))
                 groups = cons(group, groups);
-            group = NULL;
+            group = cons(fid, NULL);
             groupaddr = fid->addr;
         }
     }
@@ -673,7 +689,6 @@ void lease_pack_message(Lease *lease, List **exits, List **fids, int size) {
 void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     List *exits;
     List *fids;
-    char *prefix = concatstrings(pathname, "/");
     Claim *claim = claim_find(worker, pathname);
     Lease *child;
     struct leaserecord *root;
@@ -683,6 +698,7 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     assert(claim->lease == lease);
 
     lock_lease_exclusive(worker, lease);
+    walk_flush();
 
     if (claim->access == ACCESS_COW)
         claim_thaw(worker, claim);
@@ -696,8 +712,8 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     root->address = my_address->ip;
     root->port = my_address->port;
 
-    lease->changeexits = lease_serialize_exits(worker, lease, prefix, addr);
-    lease->changefids = lease_serialize_fids(worker, lease, prefix, addr);
+    lease->changeexits = lease_serialize_exits(worker, lease, pathname, addr);
+    lease->changefids = lease_serialize_fids(worker, lease, pathname, addr);
 
     /* send the grant in as many steps as necessary */
     do {
@@ -709,11 +725,11 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
             else
                 type = GRANT_END;
         }
-        remote_grant(worker, addr, type, root, exits, fids);
+        remote_grant(worker, addr, type, root, my_address, exits, fids);
         type = GRANT_CONTINUE;
     } while (!null(lease->changeexits) || !null(lease->changefids));
 
-    lease_release_fids(worker, lease, prefix, addr);
+    lease_release_fids(worker, lease, pathname, addr);
 
     child = lease_new(pathname, addr, 1, NULL,
             (claim->access == ACCESS_READONLY));
