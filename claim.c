@@ -91,6 +91,8 @@ void claim_delete(Claim *claim) {
         List *fids = claim->fids;
         for (fids = claim->fids; !null(fids); fids = cdr(fids)) {
             Fid *fid = car(fids);
+            if (fid->claim != NULL)
+                hash_remove(fid->claim->lease->fids, fid);
             fid->pathname = NULL;
             fid_deleted_list = insertinorder((Cmpfunc) fid_cmp,
                     fid_deleted_list, fid);

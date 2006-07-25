@@ -8,6 +8,7 @@
 #include "transaction.h"
 #include "fid.h"
 #include "util.h"
+#include "config.h"
 #include "remote.h"
 #include "dispatch.h"
 #include "worker.h"
@@ -178,6 +179,8 @@ void remote_migrate(Worker *worker, List *groups) {
         trans->out->id = TEMIGRATE;
 
         req = &trans->out->msg.temigrate;
+        req->newaddress = my_address->ip;
+        req->newport = my_address->port;
         req->nfid = (u16) min(length(group),
                 (trans->conn->maxSize - TEMIGRATE_SIZE_FIXED) / sizeof(u32));
         req->fid = GC_MALLOC_ATOMIC(req->nfid * sizeof(u32));

@@ -529,7 +529,8 @@ static void lease_serialize_fids_iter(struct lease_serialize_fids_env *env,
     assert(elt != NULL);
 
     elt->fid = conn->type == CONN_CLIENT_IN ? fid->rfid : fid->fid;
-    elt->pathname = substring_rest(fid->pathname, env->prefixlen);
+    elt->pathname = strcmp(fid->pathname, env->oldroot) ?
+        substring_rest(fid->pathname, env->prefixlen) : "";
     elt->user = fid->user;
     elt->status = (u8) fid->status;
     elt->omode = fid->omode;
@@ -595,7 +596,7 @@ void lease_release_fids(Worker *worker, Lease *lease,
         if (conn->type == CONN_CLIENT_IN)
             fid_update_remote(fid, fid->pathname, addr, fid->rfid);
         else
-            fid_remove(conn, fid->fid);
+            fid_remove(worker, conn, fid->fid);
     }
 }
 
@@ -610,7 +611,8 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids,
     for ( ; !null(fids); fids = cdr(fids)) {
         struct fidrecord *elt = car(fids);
         Address *addr = address_new(elt->address, elt->port);
-        char *pathname = concatname(oldroot, elt->pathname);
+        char *pathname = emptystring(elt->pathname) ?
+            oldroot : concatname(oldroot, elt->pathname);
         Claim *claim = claim_find(worker, pathname);
         Fid *fid;
         assert(claim != NULL && claim->lease == lease);

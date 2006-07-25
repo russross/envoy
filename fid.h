@@ -61,7 +61,7 @@ void fid_update_local(Fid *fid, Claim *claim);
 int fid_cmp(const Fid *a, const Fid *b);
 u32 fid_hash(const Fid *fid);
 Fid *fid_lookup(Connection *conn, u32 fid);
-void fid_remove(Connection *conn, u32 fid);
+void fid_remove(Worker *worker, Connection *conn, u32 fid);
 u32 fid_reserve_remote(Worker *worker);
 void fid_release_remote(u32 fid);
 void fid_set_remote(u32 rfid, Fid *fid);

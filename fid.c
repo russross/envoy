@@ -10,6 +10,7 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
+#include "object.h"
 #include "worker.h"
 #include "claim.h"
 
@@ -51,6 +52,7 @@ void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     res->claim->fids = insertinorder((Cmpfunc) fid_cmp, res->claim->fids, res);
     vector_set(conn->fid_vector, res->fid, res);
     hash_set(res->claim->lease->fids, res, res);
+    claim_remove_from_cache(claim);
 }
 
 void fid_insert_remote(Connection *conn, u32 fid, char *pathname, char *user,
@@ -119,6 +121,7 @@ void fid_update_local(Fid *fid, Claim *claim) {
 
     fid->claim->fids = insertinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
     hash_set(fid->claim->lease->fids, fid, fid);
+    claim_remove_from_cache(claim);
 }
 
 int fid_cmp(const Fid *a, const Fid *b) {
@@ -139,7 +142,7 @@ Fid *fid_lookup(Connection *conn, u32 fid) {
     return vector_get(conn->fid_vector, fid);
 }
 
-void fid_remove(Connection *conn, u32 fid) {
+void fid_remove(Worker *worker, Connection *conn, u32 fid) {
     Fid *elt;
 
     assert(conn != NULL);
@@ -154,11 +157,17 @@ void fid_remove(Connection *conn, u32 fid) {
     } else {
         Claim *claim = elt->claim;
         assert(claim != NULL);
+        hash_remove(claim->lease->fids, elt);
         if (claim->exclusive && elt->status != STATUS_UNOPENNED)
             claim->exclusive = 0;
         claim->fids = removeinorder((Cmpfunc) fid_cmp, claim->fids, elt);
-        if (claim->deleted && null(claim->fids))
+        if (claim->deleted && null(claim->fids)) {
             removeinorder((Cmpfunc) fid_cmp, fid_deleted_list, elt);
+
+            /* if the object isn't COW, then this is the only link to it */
+            if (claim->access == ACCESS_WRITEABLE)
+                object_delete(worker, claim->oid);
+        }
     }
 }
 

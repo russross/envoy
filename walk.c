@@ -294,8 +294,9 @@ static void walk_remote(Worker *worker, Transaction *trans,
             nwname, wname, env->user, env->pathname, &nwqid, &wqid, &next);
 
     /* did we get a race condition? */
-    if ((fid != NOFID && errnum == EBADF) || errnum == EPROTO) {
-        fprintf(stderr, "walk error: remote envoy detected race condition\n");
+    if (fid != NOFID && errnum == EBADF) {
+        if (DEBUG_VERBOSE)
+            printf("walk: race condition detected\n");
         walk_flush();
         worker_retry(worker);
         assert(0);

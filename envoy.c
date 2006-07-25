@@ -124,6 +124,7 @@ static void rerror(Message *m, u16 errnum, int line) {
 
 void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
     Transaction *env;
+    Address *raddr;
 
     assert(fid->isremote);
 
@@ -155,8 +156,21 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
             assert(0);
     }
 
-    env->conn = conn_get_envoy_out(worker, fid->raddr);
+    env->conn = conn_get_envoy_out(worker, raddr = fid->raddr);
     send_request(env);
+
+    /* if we get EBADF as an error and the remote address has changed then
+     * we have a race condition: a lease change occurred so we need to start
+     * over */
+    if (env->in->id == RERROR && env->in->msg.rerror.errnum == EBADF &&
+            addr_cmp(raddr, fid->raddr))
+    {
+        if (DEBUG_VERBOSE)
+            printf("forward message: race condition detected\n");
+        walk_flush();
+        worker_retry(worker);
+        assert(0);
+    }
 
     /* now copy the response back into trans */
     memcpy(&trans->out->msg, &env->in->msg, sizeof(env->in->msg));
@@ -336,6 +350,7 @@ void handle_tattach(Worker *worker, Transaction *trans) {
  *   server-side state change
  */
 void handle_tflush(Worker *worker, Transaction *trans) {
+    /* TODO: implement this */
     send_reply(trans);
 }
 
@@ -454,7 +469,7 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
         env->user = req->user;
 
         /* make sure the request came to the right place */
-        failif(lease_find_root(env->pathname) == NULL, EPROTO);
+        failif(lease_find_root(env->pathname) == NULL, EBADF);
     }
 
     /* copy the array of names into a list (which has a blank at the end) */
@@ -1100,8 +1115,8 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
 
     /* we don't support remove-on-close */
 
+    fid_remove(worker, trans->conn, req->fid);
     send_reply(trans);
-    fid_remove(trans->conn, req->fid);
 }
 
 /**
@@ -1191,18 +1206,13 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     claim_thaw(worker, parent);
 
     /* remove it */
-    if (dir_remove_entry(worker, parent, filename(fid->pathname)) < 0) {
+    if (dir_remove_entry(worker, parent, filename(fid->pathname)) < 0)
         errnum = ENOENT;
-    } else {
-        /* if the object isn't COW, then this is the only link to it */
-        if (fid->claim->access == ACCESS_WRITEABLE)
-            object_delete(worker, fid->claim->oid);
+    else
         claim_delete(fid->claim);
-        /* FIXME: this should be done when the last link is removed */
-    }
 
     cleanup:
-    fid_remove(trans->conn, req->fid);
+    fid_remove(worker, trans->conn, req->fid);
 
     failif(errnum != 0, errnum);
 
@@ -1416,7 +1426,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 void envoy_teclosefid(Worker *worker, Transaction *trans) {
     struct Teclosefid *req = &trans->in->msg.teclosefid;
 
-    fid_remove(trans->conn, req->fid);
+    fid_remove(worker, trans->conn, req->fid);
 
     send_reply(trans);
 }
@@ -1436,7 +1446,7 @@ void client_shutdown(Worker *worker, Connection *conn) {
             remote_closefid(worker, fid->raddr, fid->rfid);
             fid_release_remote(fid->rfid);
         }
-        fid_remove(conn, i);
+        fid_remove(worker, conn, i);
     }
 }
 
@@ -1610,13 +1620,14 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
 void envoy_temigrate(Worker *worker, Transaction *trans) {
     struct Temigrate *req = &trans->in->msg.temigrate;
     int i;
+    Address *newaddr = address_new(req->newaddress, req->newport);
 
     walk_flush();
 
     for (i = 0; i < req->nfid; i++) {
         Fid *fid = fid_get_remote(req->fid[i]);
         assert(fid != NULL && fid != (void *) 0xdeadbeef);
-        fid->raddr = trans->conn->addr;
+        fid->raddr = newaddr;
     }
 
     send_reply(trans);

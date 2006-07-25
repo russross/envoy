@@ -36,7 +36,7 @@
 155 size[4] Regrant tag[2]
 156 size[4] Terevoke tag[2] type[1] pathname[s] newaddress[4] newport[2]
 157 size[4] Rerevoke tag[2] type[1] root[l] nexit[2] nexit*(exit[l]) nfid[2] nfid*(fid[f])
-158 size[4] Temigrate tag[2] nfid[2] nfid*(fid[4])
+158 size[4] Temigrate tag[2] newaddress[4] newport[2] nfid[2] nfid*(fid[4])
 159 size[4] Remigrate tag[2]
 160 size[4] Tewalkremote tag[2] fid[4] newfid[4] nwname[2] nwname*(wname[s]) user[s] path[s]
 161 size[4] Rewalkremote tag[2] nwqid[2] nwqid*(wqid[13]) errnum[2] address[4] port[2]
