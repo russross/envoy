@@ -1525,7 +1525,8 @@ void envoy_terenametree(Worker *worker, Transaction *trans) {
             Fid *fid = fid_get_remote(req->fid[i]);
             assert(fid != NULL && fid != (void *) 0xdeadbeef);
             assert(startswith(fid->pathname, req->oldpath) &&
-                    fid->pathname[prefixlen] == '/');
+                    (fid->pathname[prefixlen] == '/' ||
+                     fid->pathname[prefixlen] == 0));
             fid->pathname =
                 concatname(req->newpath, fid->pathname + prefixlen + 1);
         }
@@ -1535,6 +1536,8 @@ void envoy_terenametree(Worker *worker, Transaction *trans) {
         failif(strcmp(lease->pathname, req->oldpath), EINVAL);
         lease_rename(worker, lease, lease->claim, req->oldpath, req->newpath);
     }
+
+    send_reply(trans);
 }
 
 void envoy_tesetaddress(Worker *worker, Transaction *trans) {
