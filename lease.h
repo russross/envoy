@@ -68,8 +68,8 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         int readonly);
 /* add a lease object, including exit lease objects for its wavefront */
 void lease_add(Lease *lease);
-/* merge a child lease into a parent lease */
-void lease_merge(Worker *worker, Lease *parent, Lease *child);
+/* merge a lease exit into a parent lease */
+void lease_merge_exit(Worker *worker, Lease *parent, Lease *child);
 /* remove a lease object */
 void lease_remove(Lease *lease);
 
@@ -113,5 +113,8 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids,
         char *oldroot, Address *oldaddr);
 void lease_pack_message(Lease *lease, List **exits, List **fids, int size);
 void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr);
+void lease_merge(Worker *worker, Lease *child);
+void lease_rename(Worker *worker, Lease *lease, Claim *root,
+        char *oldpath, char *newpath);
 
 #endif

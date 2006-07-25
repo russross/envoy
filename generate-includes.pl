@@ -27,6 +27,7 @@ foreach my $file (@ARGV) {
         $f = <FP>;
         close FP;
     }
+    my $orig = $f;
     $f =~ s/(^|\n+)(?:\n*#include [^\n]+)+(\n)/$1#### PLACEHOLDER ####$2/s
         or next;
 
@@ -42,7 +43,9 @@ foreach my $file (@ARGV) {
     }
     my $res = join "\n", map { "#include $_" } @includes;
     $f =~ s/#### PLACEHOLDER ####/$res/s;
-    open FP, ">$file" or die "Unable to open $file for writing: $!\n";
-    print FP $f;
-    close FP;
+    if ($f ne $orig) {
+        open FP, ">$file" or die "Unable to open $file for writing: $!\n";
+        print FP $f;
+        close FP;
+    }
 }

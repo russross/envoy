@@ -220,6 +220,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TEMIGRATE:
         case TENOMINATE:
         case TESTATREMOTE:
+        case TERENAMETREE:
             break;
 
         case TEREVOKE:
@@ -366,6 +367,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TEMIGRATE:    envoy_temigrate(worker, trans);      break;
         case TENOMINATE:   envoy_tenominate(worker, trans);     break;
         case TESTATREMOTE: envoy_testatremote(worker, trans);   break;
+        case TERENAMETREE: envoy_terenametree(worker, trans);   break;
 
         case TVERSION:
         default:

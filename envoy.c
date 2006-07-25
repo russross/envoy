@@ -1188,9 +1188,8 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
         remote_nominate(worker, lease->addr, lease->pathname, lease->addr);
 
-        /* now force a restart on this fid */
+        /* force a restart on this operation */
         worker_retry(worker);
-
         assert(0);
     }
 
@@ -1293,6 +1292,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     struct p9stat *info = NULL;
     struct p9stat *delta = p9stat_new();
     char *oldname;
+    int change = 0;
 
     require_fid(fid);
 
@@ -1316,6 +1316,12 @@ void handle_twstat(Worker *worker, Transaction *trans) {
             delta->uid = uid_to_user(req->stat->n_uid);
         else
             delta->uid = req->stat->uid;
+
+        /* was there actually a change? */
+        if (strcmp(delta->uid, info->uid))
+            change = 1;
+        else
+            delta->uid = NULL;
     }
 
     if (!emptystring(req->stat->gid) || (req->stat->n_gid != NOGID &&
@@ -1326,6 +1332,12 @@ void handle_twstat(Worker *worker, Transaction *trans) {
             delta->gid = gid_to_group(req->stat->n_gid);
         else
             delta->gid = req->stat->gid;
+
+        /* was there actually a change? */
+        if (strcmp(delta->gid, info->gid))
+            change = 1;
+        else
+            delta->gid = NULL;
     }
 
     /* mode */
@@ -1333,6 +1345,12 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         failif(strcmp(fid->user, info->uid) &&
                 !isgroupleader(fid->user, info->gid), EPERM);
         delta->mode = req->stat->mode;
+
+        /* was there actually a change? */
+        if (delta->mode != info->mode)
+            change = 1;
+        else
+            delta->mode = ~(u32) 0;
     }
 
     /* mtime */
@@ -1340,6 +1358,12 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         failif(strcmp(fid->user, info->uid) &&
                 !isgroupleader(fid->user, info->gid), EPERM);
         delta->mtime = req->stat->mtime;
+
+        /* was there actually a change? */
+        if (delta->mtime != info->mtime)
+            change = 1;
+        else
+            delta->mtime = ~(u32) 0;
     }
 
     /* length */
@@ -1347,6 +1371,12 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         failif(!has_permission(fid->user, info, 0222), EPERM);
         failif(info->mode & DMDIR, EACCES);
         delta->length = req->stat->length;
+
+        /* was there actually a change? */
+        if (delta->length != info->length)
+            change = 1;
+        else
+            delta->length = ~(u64) 0;
     }
 
     /* extension */
@@ -1359,14 +1389,18 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     if (!emptystring(req->stat->name) &&
             strcmp((oldname = filename(fid->pathname)), req->stat->name))
     {
+        Lease *lease;
         Claim *parent;
         Claim *oldfile;
         int res;
         char *newpathname;
+
+        /* check for illegal names */
         failif(strchr(req->stat->name, '/'), EINVAL);
         failif(!strcmp(req->stat->name, "."), EINVAL);
         failif(!strcmp(req->stat->name, ".."), EINVAL);
         failif(!strcmp(fid->pathname, "/"), EPERM);
+
         /* no renames on admin files */
         failif(get_admin_path_type(fid->pathname) == PATH_ADMIN &&
                 (!strcmp(req->stat->name, "current") ||
@@ -1378,8 +1412,19 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         parent = claim_get_parent(worker, fid->claim);
 
-        /* TODO: implement remote renames */
-        failif(parent == NULL, ENOTSUP);
+        /* if this is a lease root, merge with the parent before renaming */
+        if (parent == NULL) {
+            lease = fid->claim->lease;
+
+            /* release lock on this lease so the remote envoy can reclaim it */
+            worker_cleanup(worker);
+
+            remote_nominate(worker, lease->addr, lease->pathname, lease->addr);
+
+            /* force a restart on this operation */
+            worker_retry(worker);
+            assert(0);
+        }
 
         /* make sure they have write permission in the parent directory */
         require_info(parent);
@@ -1387,9 +1432,21 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         newpathname = concatname(parent->pathname, req->stat->name);
 
+        /* check if the target name is another lease */
+        if ((lease = lease_get_remote(newpathname)) != NULL) {
+            /* merge the target back into this lease before proceeding */
+
+            /* release lock on this lease so the remote envoy can reclaim it */
+            worker_cleanup(worker);
+
+            lease_merge(worker, lease);
+
+            /* force a restart on this operation */
+            worker_retry(worker);
+            assert(0);
+        }
+
         /* check if the target name already exists */
-        /* TODO: implement remote renames */
-        failif(lease_get_remote(newpathname) != NULL, ENOTSUP);
         oldfile = claim_get_child(worker, parent, req->stat->name);
         if (oldfile != NULL) {
             /* make sure it's not a directory */
@@ -1397,27 +1454,31 @@ void handle_twstat(Worker *worker, Transaction *trans) {
             failif((oldfile->info->mode & DMDIR), EEXIST);
         }
 
+        /* if this is a directory, we need to get an exclusive lock so we can
+         * propagate the rename */
+        lease = fid->claim->lease;
+        if ((fid->claim->info->mode & DMDIR))
+            lock_lease_exclusive(worker, lease);
+
         res = dir_rename(worker, parent, filename(fid->pathname),
                 req->stat->name);
+        failif(res < 0, EIO);
 
-        failif(res < 0, EPERM);
-        if (oldfile != NULL) {
-            if (oldfile->access == ACCESS_WRITEABLE)
-                object_delete(worker, oldfile->oid);
+        if (oldfile != NULL)
             claim_delete(oldfile);
-        }
+
         parent->children =
             removeinorder((Cmpfunc) claim_cmp, parent->children, fid->claim);
-        fid->pathname = concatname(dirname(fid->pathname), req->stat->name);
-        fid->claim->pathname = fid->pathname;
+        lease_rename(worker, lease, fid->claim, fid->pathname, newpathname);
         parent->children =
             insertinorder((Cmpfunc) claim_cmp, parent->children, fid->claim);
-
-        /* TODO: recursive name changes for all descendents */
+        fid->claim->info->name = req->stat->name;
     }
 
-    object_wstat(worker, fid->claim->oid, delta);
-    fid->claim->info = NULL;
+    if (change) {
+        object_wstat(worker, fid->claim->oid, delta);
+        fid->claim->info = NULL;
+    }
 
     send_reply:
     send_reply(trans);
@@ -1450,30 +1511,30 @@ void client_shutdown(Worker *worker, Connection *conn) {
     }
 }
 
-void envoy_terenameroot(Worker *worker, Transaction *trans) {
-    struct Terenameroot *req = &trans->in->msg.terenameroot;
-    Lease *lease = lease_find_root(req->oldpath);
-    List *stack;
-    int len = strlen(req->oldpath);
+void envoy_terenametree(Worker *worker, Transaction *trans) {
+    struct Terenametree *req = &trans->in->msg.terenametree;
+    Lease *lease;
+    int prefixlen = strlen(req->oldpath);
+    int i;
 
-    /* get exclusive use of the lease */
-    /*lock_lease_exclusive(worker, lease);*/
-    assert(!strcmp(lease->pathname, req->oldpath));
-    stack = cons(lease->claim, NULL);
+    walk_flush();
 
-    /* walk the active claims in this lease */
-    while (!null(stack)) {
-        Claim *claim = car(stack);
-        List *children = claim->children;
-        stack = cdr(stack);
-        claim->pathname = concatstrings(req->newpath,
-                substring_rest(claim->pathname, len));
-        for ( ; !null(children); children = cdr(children))
-            stack = cons(car(children), stack);
+    if (req->nfid > 0) {
+        /* walk the remote fids and update the stubs */
+        for (i = 0; i < req->nfid; i++) {
+            Fid *fid = fid_get_remote(req->fid[i]);
+            assert(fid != NULL && fid != (void *) 0xdeadbeef);
+            assert(startswith(fid->pathname, req->oldpath) &&
+                    fid->pathname[prefixlen] == '/');
+            fid->pathname =
+                concatname(req->newpath, fid->pathname + prefixlen + 1);
+        }
+    } else {
+        /* rename the lease, its active claims, claim cache, fids, and exits */
+        lease = lease_find_root(req->oldpath);
+        failif(strcmp(lease->pathname, req->oldpath), EINVAL);
+        lease_rename(worker, lease, lease->claim, req->oldpath, req->newpath);
     }
-
-    /* walk the fids in this lease */
-    /* TODO: what about fid stubs? */
 }
 
 void envoy_tesetaddress(Worker *worker, Transaction *trans) {

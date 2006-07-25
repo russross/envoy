@@ -75,6 +75,7 @@ enum qidtypes {
 #define REREVOKE_SIZE_FIXED 12
 #define TEGRANT_SIZE_FIXED 12
 #define TEMIGRATE_SIZE_FIXED 9
+#define TERENAMETREE_SIZE_FIXED 13
 
 /* size difference between storage and client read/write messages */
 #define STORAGE_SLUSH 8

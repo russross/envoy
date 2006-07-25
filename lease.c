@@ -73,7 +73,7 @@ static void lease_merge_iter_claim_cache(Lease *lease,
     hash_set(lease->claim_cache, pathname, claim);
 }
 
-void lease_merge(Worker *worker, Lease *parent, Lease *child) {
+void lease_merge_exit(Worker *worker, Lease *parent, Lease *child) {
     List *stack = cons(child->claim, NULL);
     Claim *claim;
     assert(parent->wait_for_update == worker &&
@@ -473,7 +473,7 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
             /* merge with an existing lease */
             Lease *child = lease_get_remote(pathname);
             assert(child != NULL);
-            lease_merge(worker, lease, child);
+            lease_merge_exit(worker, lease, child);
         } else {
             /* add an exit */
             Address *addr = address_new(elt->address, elt->port);
@@ -604,9 +604,7 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids,
         char *oldroot, Address *oldaddr)
 {
     List *newremotefids = NULL;
-    Address *groupaddr = NULL;
     List *groups = NULL;
-    List *group = NULL;
 
     for ( ; !null(fids); fids = cdr(fids)) {
         struct fidrecord *elt = car(fids);
@@ -641,22 +639,8 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids,
         fid->readdir_cookie = elt->readdir_cookie;
     }
 
-    /* gather the fids into groups by address */
-    for ( ; !null(newremotefids); newremotefids = cdr(newremotefids)) {
-        Fid *fid = car(newremotefids);
-        if (!addr_cmp(fid->addr, groupaddr)) {
-            group = cons(fid, group);
-        } else {
-            if (!null(group))
-                groups = cons(group, groups);
-            group = cons(fid, NULL);
-            groupaddr = fid->addr;
-        }
-    }
-    if (!null(group))
-        groups = cons(group, groups);
-
     /* notify the remote envoys of the fid updates */
+    groups = fid_gather_groups(newremotefids);
     if (!null(groups))
         remote_migrate(worker, groups);
 }
@@ -741,4 +725,148 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     claim->parent->children =
         removeinorder((Cmpfunc) claim_cmp, claim->parent->children, claim);
     claim_clear_descendents(claim);
+}
+
+void lease_merge(Worker *worker, Lease *child) {
+    Lease *lease = lease_find_root(dirname(child->pathname));
+    enum grant_type revoketype = GRANT_START;
+    List *exits;
+    List *fids;
+    char *oldpath = child->pathname;
+    Address *oldaddr = child->addr;
+    struct leaserecord *root;
+
+    assert(lease != NULL);
+    assert(!lease->isexit);
+    assert(child->isexit);
+
+    walk_flush();
+
+    lock_lease_exclusive(worker, lease);
+    lock_lease_join(worker, cons(child, NULL));
+
+    lease_remove(child);
+
+    while (revoketype != GRANT_END) {
+        remote_revoke(worker, oldaddr, revoketype, oldpath,
+                my_address, &revoketype, &root, &exits, &fids);
+
+        if (!null(exits))
+            lease_add_exits(worker, lease, exits);
+        if (!null(fids))
+            lease_add_fids(worker, lease, fids, oldpath, oldaddr);
+    }
+
+    remote_revoke(worker, oldaddr, GRANT_END, oldpath, my_address,
+            &revoketype, &root, &exits, &fids);
+    assert(revoketype == GRANT_END);
+}
+
+struct lease_rename_env {
+    char *oldpath;
+    char *newpath;
+    int prefixlen;
+    List *tochange;
+};
+
+void lease_rename_iter(struct lease_rename_env *env,
+        char *pathname, Claim *claim)
+{
+    if (startswith(pathname, env->oldpath) && pathname[env->prefixlen] == '/')
+        env->tochange = cons(claim, env->tochange);
+}
+
+void lease_rename(Worker *worker, Lease *lease, Claim *root,
+        char *oldpath, char *newpath)
+{
+    int prefixlen = strlen(oldpath);
+    List *stack = cons(root, NULL);
+    List *remotefids = NULL;
+    List *exits;
+    List *updateexits = NULL;
+    struct lease_rename_env env;
+
+    lock_lease_exclusive(worker, lease);
+
+    /* update the active claims starting at root */
+    while (!null(stack)) {
+        Claim *claim = car(stack);
+        List *children = claim->children;
+        List *fids = claim->fids;
+        stack = cdr(stack);
+
+        for ( ; !null(children); children = cdr(children))
+            stack = cons(car(children), stack);
+
+        /* get the new name for this file */
+        claim->pathname =
+            concatname(newpath, claim->pathname + prefixlen);
+
+        /* update all the fids that reference this claim */
+        for ( ; !null(fids) ; fids = cdr(fids)) {
+            Fid *fid = car(fids);
+            Connection *conn = conn_get_incoming(fid->addr);
+            fid->pathname = claim->pathname;
+
+            /* gather all fids coming from remote envoys */
+            if (conn->type == CONN_ENVOY_IN) {
+                remotefids =
+                    insertinorder((Cmpfunc) fid_cmp, remotefids, fid);
+            }
+        }
+    }
+
+    /* update the claim cache */
+    env.oldpath = oldpath;
+    env.newpath = newpath;
+    env.prefixlen = prefixlen;
+    env.tochange = NULL;
+
+    hash_apply(lease->claim_cache,
+            (void (*)(void *, void *, void *)) lease_rename_iter,
+            &env);
+    for ( ; !null(env.tochange); env.tochange = cdr(env.tochange)) {
+        Claim *claim = car(env.tochange);
+        hash_remove(lease->claim_cache, claim->pathname);
+        claim->pathname = concatname(newpath, claim->pathname + prefixlen);
+        hash_set(lease->claim_cache, claim->pathname, claim);
+    }
+
+    /* gather the exits that need updating */
+    for (exits = lease->wavefront; !null(exits); exits = cdr(exits)) {
+        Lease *elt = car(exits);
+
+        /* is this exit a descendent of our renamed directory? */
+        if (startswith(elt->pathname, oldpath) &&
+                elt->pathname[prefixlen] == '/')
+        {
+            lock_lease_join(worker, cons(elt, NULL));
+            updateexits = cons(elt, updateexits);
+        }
+    }
+
+    /* update the remote exits and remote fids */
+    if (!null(updateexits) || !null(remotefids)) {
+        remote_renametree(worker, oldpath, newpath,
+                updateexits, fid_gather_groups(remotefids));
+    }
+
+    /* now update the local exit stubs */
+    for ( ; !null(updateexits); updateexits = cdr(updateexits)) {
+        Lease *elt = car(updateexits);
+        hash_remove(lease_by_root_pathname, elt->pathname);
+        elt->pathname =
+            concatname(newpath, elt->pathname + prefixlen);
+        hash_set(lease_by_root_pathname, elt->pathname, elt);
+    }
+
+    /* see if the lease itself needs renaming */
+    if (startswith(lease->pathname, oldpath) &&
+            (lease->pathname[prefixlen] == '/' ||
+             lease->pathname[prefixlen] == 0))
+    {
+        hash_remove(lease_by_root_pathname, lease->pathname);
+        lease->pathname = concatname(newpath, lease->pathname + prefixlen);
+        hash_set(lease_by_root_pathname, lease->pathname, lease);
+    }
 }

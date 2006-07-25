@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
@@ -273,4 +274,74 @@ void remote_nominate(Worker *worker, Address *target,
     send_request(trans);
 
     assert(trans->in != NULL && trans->in->id == RENOMINATE);
+}
+
+void remote_renametree(Worker *worker, char *oldpath, char *newpath,
+        List *exits, List *fidgroups)
+{
+    List *requests = NULL;
+    Transaction *trans;
+    int prefixlen = strlen(oldpath);
+    int newpathlen = strlen(newpath);
+
+    /* build a list of requests, starting with lease name changes */
+    for ( ; !null(exits); exits = cdr(exits)) {
+        Lease *exit = car(exits);
+        trans = trans_new(conn_get_envoy_out(worker, exit->addr),
+                NULL, message_new());
+        trans->out->tag = ALLOCTAG;
+        trans->out->id = TERENAMETREE;
+
+        assert(startswith(exit->pathname, oldpath));
+
+        set_terenametree(trans->out, exit->pathname,
+                concatname(newpath, exit->pathname + prefixlen), 0, NULL);
+        requests = cons(trans, requests);
+    }
+
+    /* add the requests for fid name changes */
+    while (!null(fidgroups)) {
+        List *group = car(fidgroups);
+        Fid *fid = car(group);
+        int i;
+        u16 nfid;
+        u32 *fids;
+
+        trans = trans_new(conn_get_envoy_out(worker, fid->addr),
+                NULL, message_new());
+        trans->out->tag = ALLOCTAG;
+        trans->out->id = TERENAMETREE;
+
+        /* fit as many elements from the group as we can per request */
+        nfid = (u16) min(length(group),
+                (trans->conn->maxSize - TERENAMETREE_SIZE_FIXED -
+                 prefixlen - newpathlen) / sizeof(u32));
+        fids = GC_MALLOC_ATOMIC(nfid * sizeof(u32));
+        assert(fids != NULL);
+
+        for (i = 0; i < nfid; i++) {
+            fid = car(group);
+            fids[i] = fid->fid;
+            group = cdr(group);
+        }
+
+        set_terenametree(trans->out, oldpath, newpath, nfid, fids);
+
+        /* if it fit, move on to the next group */
+        if (null(group))
+            fidgroups = cdr(fidgroups);
+        else
+            setcar(fidgroups, group);
+
+        requests = cons(trans, requests);
+    }
+
+    /* wait for all transactions to complete */
+    send_requests(requests);
+
+    /* make sure they all succeeded */
+    for ( ; !null(requests); requests = cdr(requests)) {
+        trans = car(requests);
+        assert(trans->in->id == RERENAMETREE);
+    }
 }

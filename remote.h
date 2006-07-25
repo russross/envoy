@@ -16,9 +16,7 @@ u16 remote_walk(Worker *worker, Address *target,
 void remote_closefid(Worker *worker, Address *target, u32 fid);
 /* note: pathname is also used to fill in the name field of the result */
 struct p9stat *remote_stat(Worker *worker, Address *target, char *pathname);
-void remote_rename(Worker *worker, Address *target,
-        char *user, char *oldpath, char *newname);
-/* tags a list of leases, returns a list of new oids in the same order */
+/* takes a list of leases, returns a list of new oids in the same order */
 List *remote_snapshot(Worker *worker, List *targets);
 void remote_grant_exits(Worker *worker, List *targets, Address *addr,
         enum grant_type type);
@@ -31,5 +29,7 @@ void remote_grant(Worker *worker, Address *target, enum grant_type type,
         struct leaserecord *root, Address *oldaddr, List *exits, List *fids);
 void remote_nominate(Worker *worker, Address *target,
         char *pathname, Address *newaddr);
+void remote_renametree(Worker *worker, char *oldpath, char *newpath,
+        List *exits, List *fidgroups);
 
 #endif

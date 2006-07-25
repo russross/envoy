@@ -201,3 +201,25 @@ Fid *fid_get_remote(u32 rfid) {
 void fid_release_remote(u32 fid) {
     vector_remove(fid_remote_vector, fid);
 }
+
+List *fid_gather_groups(List *fids) {
+    Address *addr = NULL;
+    List *groups = NULL;
+    List *group = NULL;
+
+    /* gather the fids into groups by address */
+    for ( ; !null(fids); fids = cdr(fids)) {
+        Fid *fid = car(fids);
+        if (!addr_cmp(fid->addr, addr)) {
+            group = cons(fid, group);
+        } else {
+            if (!null(group))
+                groups = cons(group, groups);
+            group = cons(fid, NULL);
+            addr = fid->addr;
+        }
+    }
+    if (!null(group))
+        groups = cons(group, groups);
+    return groups;
+}

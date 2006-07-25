@@ -140,16 +140,24 @@ char *filename(char *path) {
 
 char *concatname(char *path, char *name) {
     int pathlen = strlen(path);
-    int namelen = strlen(name);
-    char *res = GC_MALLOC_ATOMIC(pathlen + namelen + 2);
+    int namelen;
+    char *res;
 
+    if (emptystring(name))
+        return path;
+
+    namelen = strlen(name);
+    res = GC_MALLOC_ATOMIC(pathlen + namelen + 2);
     assert(res != NULL);
 
     strcpy(res, path);
     assert(pathlen == 1 || res[pathlen-1] != '/');
     if (path[pathlen-1] != '/')
         strcat(res, "/");
-    strcat(res, name);
+    if (name[0] == '/')
+        strcat(res, name + 1);
+    else
+        strcat(res, name);
 
     return res;
 }

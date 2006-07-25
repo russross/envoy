@@ -42,14 +42,12 @@
 161 size[4] Rewalkremote tag[2] nwqid[2] nwqid*(wqid[13]) errnum[2] address[4] port[2]
 162 size[4] Testatremote tag[2] path[s]
 163 size[4] Restatremote tag[2] stat[n]
-164 size[4] Terenameremote tag[2] user[s] oldpath[s] newname[s]
-165 size[4] Rerenameremote tag[2]
-166 size[4] Teclosefid tag[2] fid[4]
-167 size[4] Reclosefid tag[2]
-168 size[4] Terenameroot tag[2] oldpath[s] newpath[s]
-169 size[4] Rerenameroot tag[2]
-170 size[4] Tesetaddress tag[2] address[4] port[2]
-171 size[4] Resetaddress tag[2]
+164 size[4] Teclosefid tag[2] fid[4]
+165 size[4] Reclosefid tag[2]
+166 size[4] Terenametree tag[2] oldpath[s] newpath[s] nfid[2] nfid*(fid[4])
+167 size[4] Rerenametree tag[2]
+168 size[4] Tesetaddress tag[2] address[4] port[2]
+169 size[4] Resetaddress tag[2]
 
 # object storage server protocol
 200 size[4] Tsreserve tag[2]
