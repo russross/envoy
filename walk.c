@@ -384,6 +384,20 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
                 assert(env->claim != NULL);
                 assert(null(env->names));
 
+                /* close the remote fid */
+                if (env->oldrfid != NOFID && env->oldrfid == env->newrfid) {
+                    /* the walk has moved from a remote host to here */
+                    assert(env->oldaddr != NULL);
+                    if (remote_closefid(worker, env->oldaddr, env->oldrfid) < 0)
+                    {
+                        /* race condition--restart the walk */
+                        walk_flush();
+                        worker_retry(worker);
+                        assert(0);
+                    }
+                    fid_release_remote(env->oldrfid);
+                }
+
                 /* create/update the fid */
                 if (env->oldfid != NOFID && env->oldfid == env->newfid) {
                     Fid *fid = fid_lookup(trans->conn, env->newfid);
@@ -397,13 +411,6 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
 
                 env->claim = NULL;
 
-                /* close the remote fid */
-                if (env->oldrfid != NOFID && env->oldrfid == env->newrfid) {
-                    /* the walk has moved from a remote host to here */
-                    assert(env->oldaddr != NULL);
-                    remote_closefid(worker, env->oldaddr, env->oldrfid);
-                    fid_release_remote(env->oldrfid);
-                }
                 if (env->newrfid != NOFID && env->newrfid != env->oldrfid)
                     fid_release_remote(env->newrfid);
 
@@ -429,6 +436,19 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
             if (env->result == WALK_COMPLETED_REMOTE) {
                 assert(null(env->names));
 
+                /* was this a move from one remote host to another? */
+                if (env->oldrfid == env->newrfid &&
+                        addr_cmp(env->oldaddr, env->lastaddr))
+                {
+                    if (remote_closefid(worker, env->oldaddr, env->oldrfid) < 0)
+                    {
+                        /* race condition--restart the walk */
+                        walk_flush();
+                        worker_retry(worker);
+                        assert(0);
+                    }
+                }
+
                 /* create/update the fid */
                 if (env->oldfid != NOFID && env->oldfid == env->newfid) {
                     Fid *fid = fid_lookup(trans->conn, env->newfid);
@@ -439,13 +459,6 @@ void walk_common(Worker *worker, Transaction *trans, struct walk_env *env) {
                     assert(fid_lookup(trans->conn, env->newfid) == NULL);
                     fid_insert_remote(trans->conn, env->newfid, env->pathname,
                             env->user, env->lastaddr, env->newrfid);
-                }
-
-                /* was this a move from one remote host to another? */
-                if (env->oldrfid == env->newrfid &&
-                        addr_cmp(env->oldaddr, env->lastaddr))
-                {
-                    remote_closefid(worker, env->oldaddr, env->oldrfid);
                 }
 
                 goto finish;

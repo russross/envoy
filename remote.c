@@ -77,7 +77,7 @@ u16 remote_walk(Worker *worker, Address *target,
     return ~(u16) 0;
 }
 
-void remote_closefid(Worker *worker, Address *target, u32 fid) {
+int remote_closefid(Worker *worker, Address *target, u32 fid) {
     Transaction *trans;
 
     trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
@@ -87,9 +87,11 @@ void remote_closefid(Worker *worker, Address *target, u32 fid) {
 
     send_request(trans);
 
-    /* TODO: what if this fails?  migration during the middle of a walk, or
-     * during a client shutdown */
-    assert(trans->in != NULL && trans->in->id == RECLOSEFID);
+    /* return -1 if the remote host couldn't find the fid (race condition) */
+    if (trans->in->id == RECLOSEFID)
+        return 0;
+    else
+        return -1;
 }
 
 List *remote_snapshot(Worker *worker, List *targets) {

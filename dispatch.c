@@ -221,6 +221,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TENOMINATE:
         case TESTATREMOTE:
         case TERENAMETREE:
+        case TECLOSEFID:
             break;
 
         case TEREVOKE:
@@ -262,7 +263,6 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TREMOVE:   old_fid(tremove.fid);                   break;
         case TSTAT:     old_fid(tstat.fid);                     break;
         case TWSTAT:    old_fid(twstat.fid);                    break;
-        case TECLOSEFID: old_fid(teclosefid.fid);               break;
 
         case TVERSION:
         default:

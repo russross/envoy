@@ -1486,6 +1486,16 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
 void envoy_teclosefid(Worker *worker, Transaction *trans) {
     struct Teclosefid *req = &trans->in->msg.teclosefid;
+    Fid *fid = fid_lookup(trans->conn, req->fid);
+
+    /* special case: we do the fid checking and locking here to avoid deadlock
+     * situations when a lease change overlaps with a walk */
+    failif(fid == NULL, EBADF);
+    assert(!fid->isremote);
+    failif(fid->claim->lease->wait_for_update != NULL, EDEADLK);
+
+    lock_lease(worker, fid->claim->lease);
+    reserve(worker, LOCK_FID, fid);
 
     fid_remove(worker, trans->conn, req->fid);
 
@@ -1494,6 +1504,7 @@ void envoy_teclosefid(Worker *worker, Transaction *trans) {
 
 void client_shutdown(Worker *worker, Connection *conn) {
     u32 i;
+    int res = 0;
 
     for (i = 0; !vector_isempty(conn->fid_vector); i++) {
         Fid *fid;
@@ -1503,10 +1514,14 @@ void client_shutdown(Worker *worker, Connection *conn) {
 
         fid = fid_lookup(conn, --i);
         reserve(worker, LOCK_FID, fid);
-        if (fid->isremote) {
-            remote_closefid(worker, fid->raddr, fid->rfid);
-            fid_release_remote(fid->rfid);
-        }
+        do {
+            if (fid->isremote) {
+                if (!(res = remote_closefid(worker, fid->raddr, fid->rfid)))
+                    fid_release_remote(fid->rfid);
+                else if (DEBUG_VERBOSE)
+                    printf("client_shutdown: remote_closefid retry\n");
+            }
+        } while (res < 0);
         fid_remove(worker, conn, i);
     }
 }
