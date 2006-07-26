@@ -57,6 +57,13 @@ struct lease {
     /* cache of unused claims in this lease.  these entries also appear in the
      * global LRU */
     Hashtable *claim_cache;
+    Hashtable *dir_cache;
+};
+
+enum dir_cache_type {
+    DIR_CACHE_ZERO,
+    DIR_CACHE_PARTIAL,
+    DIR_CACHE_COMPLETE,
 };
 
 extern Hashtable *lease_by_root_pathname;

@@ -151,3 +151,28 @@ void hash_apply(Hashtable *table, void (*fun)(void *, void *, void *),
 int hash_count(Hashtable *table) {
     return table->size;
 }
+
+List *hash_tolist(Hashtable *table) {
+    int i;
+    List *res = NULL;
+    List *elt;
+
+    assert(table != NULL);
+
+    for (i = 0; i < table->bucketCount; i++)
+        for (elt = table->buckets[i]; !null(elt); elt = cdr(elt))
+            res = cons(car(elt), res);
+
+    return res;
+}
+
+void hash_clear(Hashtable *table) {
+    int i;
+
+    assert(table != NULL);
+
+    for (i = 0; i < table->bucketCount; i++)
+        table->buckets[i] = NULL;
+
+    table->size = 0;
+}

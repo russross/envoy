@@ -294,7 +294,7 @@ void remote_renametree(Worker *worker, char *oldpath, char *newpath,
         trans->out->tag = ALLOCTAG;
         trans->out->id = TERENAMETREE;
 
-        assert(startswith(exit->pathname, oldpath));
+        assert(ispathprefix(exit->pathname, oldpath));
 
         set_terenametree(trans->out, exit->pathname,
                 concatname(newpath, exit->pathname + prefixlen), 0, NULL);

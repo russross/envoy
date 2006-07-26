@@ -20,6 +20,7 @@ char *substring_rest(char *s, int start);
 char *concatstrings(char *a, char *b);
 int emptystring(char *s);
 int startswith(char *s, char *sub);
+int ispathprefix(char *s, char *prefix);
 
 char *dirname(char *path);
 char *filename(char *path);

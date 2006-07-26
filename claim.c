@@ -17,7 +17,6 @@
 #include "lease.h"
 
 Lru *claim_cache;
-Hashtable *claim_fully_cached_dirs;
 
 int claim_cmp(const Claim *a, const Claim *b) {
     return strcmp(a->pathname, b->pathname);
@@ -29,6 +28,18 @@ int claim_key_cmp(const char *key, const Claim *elt) {
 
 u32 claim_hash(const Claim *a) {
     return string_hash(a->pathname);
+}
+
+void claim_link_child(Claim *parent, Claim *child) {
+    parent->children =
+        insertinorder((Cmpfunc) claim_cmp, parent->children, child);
+    child->parent = parent;
+}
+
+void claim_unlink_child(Claim *child) {
+    child->parent->children =
+        removeinorder((Cmpfunc) claim_cmp, child->parent->children, child);
+    child->parent = NULL;
 }
 
 Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
@@ -75,68 +86,49 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
 }
 
 void claim_delete(Claim *claim) {
+    char *dir = dirname(claim->pathname);
+    enum dir_cache_type type =
+        (enum dir_cache_type) hash_get(claim->lease->dir_cache, dir);
+    List *fids;
+
     assert(null(claim->children));
     assert(!claim->deleted);
     assert(claim->parent != NULL);
 
-    /* remove from the parent's children list */
-    claim->parent->children =
-        removeinorder((Cmpfunc) claim_cmp, claim->parent->children, claim);
+    claim_remove_from_cache(claim);
 
-    claim->parent = NULL;
-    claim->deleted = 1;
+    /* preserve the old dir cache status */
+    if (type != DIR_CACHE_ZERO)
+        hash_set(claim->lease->dir_cache, dir, (void *) type);
+
+    claim_unlink_child(claim);
     claim->pathname = NULL;
+    claim->deleted = 1;
 
-    if (!null(claim->fids)) {
-        List *fids = claim->fids;
-        for (fids = claim->fids; !null(fids); fids = cdr(fids)) {
-            Fid *fid = car(fids);
-            if (fid->claim != NULL)
-                hash_remove(fid->claim->lease->fids, fid);
-            fid->pathname = NULL;
-            fid_deleted_list = insertinorder((Cmpfunc) fid_cmp,
-                    fid_deleted_list, fid);
-        }
+    for (fids = claim->fids; !null(fids); fids = cdr(fids)) {
+        Fid *fid = car(fids);
+        hash_remove(claim->lease->fids, fid);
+        fid->pathname = NULL;
+        fid_deleted_list = insertinorder((Cmpfunc) fid_cmp,
+                fid_deleted_list, fid);
     }
-}
 
-struct claim_clear_descendents_env {
-    List *toremove;
-    char *prefix;
-};
-
-static void claim_clear_descendents_iter(
-        struct claim_clear_descendents_env *env, void *key, Claim *value)
-{
-    if (startswith(value->pathname, env->prefix))
-        env->toremove = cons(value, env->toremove);
+    claim->lease = NULL;
 }
 
 void claim_clear_descendents(Claim *claim) {
-    List *stack = cons(claim, NULL);
-    struct claim_clear_descendents_env env;
+    List *allclaims = hash_tolist(claim->lease->claim_cache);
 
-    env.toremove = NULL;
-    env.prefix = concatname(claim->pathname, "/");
-
-    /* clear the claim cache */
-    hash_apply(claim->lease->claim_cache,
-            (void (*)(void *, void *, void *)) claim_clear_descendents_iter,
-            &env);
-    for ( ; !null(env.toremove); env.toremove = cdr(env.toremove))
-        claim_remove_from_cache((Claim *) car(env.toremove));
-
-    /* clear the claim tree */
-    while (!null(stack)) {
-        Claim *elt = car(stack);
-        stack = cdr(stack);
-
-        assert(null(elt->fids));
-        elt->parent = NULL;
-        elt->lease = NULL;
-        elt->pathname = NULL;
-        for ( ; !null(elt->children); elt->children = cdr(elt->children))
-            stack = cons(car(elt->children), stack);
+    for ( ; !null(allclaims); allclaims = cdr(allclaims)) {
+        Claim *elt = car(allclaims);
+        if (ispathprefix(elt->pathname, claim->pathname)) {
+            assert(null(elt->fids));
+            claim_remove_from_cache(elt);
+            if (elt->parent != NULL)
+                claim_unlink_child(elt);
+            elt->lease = NULL;
+            elt->pathname = NULL;
+        }
     }
 }
 
@@ -154,15 +146,7 @@ void claim_release(Claim *claim) {
             null(claim->children) && claim->parent != NULL)
     {
         Claim *parent = claim->parent;
-
-        /* remove this claim from the parent's children list */
-        parent->children =
-            removeinorder((Cmpfunc) claim_cmp, parent->children, claim);
-
-        /* put this claim in the cache */
-        claim->parent = NULL;
-        claim_add_to_cache(claim);
-
+        claim_unlink_child(claim);
         claim = parent;
     }
 }
@@ -179,28 +163,23 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
     } else if ((claim = findinorder((Cmpfunc) claim_key_cmp,
                     parent->children, targetpath)) != NULL)
     {
-        if (claim->deleted)
-            return NULL;
-
         /* it's already on a live path */
         reserve(worker, LOCK_CLAIM, claim);
         return claim;
     } else if ((claim = claim_lookup_from_cache(parent->lease,
                     targetpath)) != NULL)
     {
-        assert(!claim->deleted);
-
         /* it's in the cache */
         reserve(worker, LOCK_CLAIM, claim);
-        claim_remove_from_cache(claim);
-        claim->parent = parent;
-        parent->children =
-            insertinorder((Cmpfunc) claim_cmp, parent->children, claim);
+        claim_link_child(parent, claim);
+    } else if (hash_get(parent->lease->dir_cache, parent->pathname) ==
+            (void *) DIR_CACHE_COMPLETE)
+    {
+        /* we've already scanned this directory and it doesn't exist */
     } else if ((claim = dir_find_claim(worker, parent, name)) != NULL) {
         /* found through a directory search */
         reserve(worker, LOCK_CLAIM, claim);
-        parent->children =
-            insertinorder((Cmpfunc) claim_cmp, parent->children, claim);
+        claim_link_child(parent, claim);
     }
 
     return claim;
@@ -257,8 +236,17 @@ void claim_thaw(Worker *worker, Claim *claim) {
     Claim *branch = claim;
     Claim *child = NULL;
 
+    if (claim->deleted) {
+        if (claim->access == ACCESS_COW) {
+            u64 newoid = object_reserve_oid(worker);
+            object_clone(worker, claim->oid, newoid);
+            claim->oid = newoid;
+        }
+        return;
+    }
+
     /* start by locking all the claims we'll need */
-    while (branch != NULL && !branch->deleted) {
+    while (branch != NULL) {
         reserve(worker, LOCK_CLAIM, branch);
         if (branch->access == ACCESS_WRITEABLE)
             break;
@@ -285,30 +273,7 @@ void claim_thaw(Worker *worker, Claim *claim) {
         } else {
             break;
         }
-
-        if (claim->deleted)
-            claim = NULL;
-        else
-            claim = claim->parent;
-    } while (claim != NULL);
-}
-
-void claim_freeze(Worker *worker, Claim *root) {
-    List *stack = cons(root, NULL);
-
-    assert(root->access != ACCESS_READONLY);
-
-    /* mark all active claims */
-    while (!null(stack)) {
-        Claim *claim = car(stack);
-        stack = cdr(stack);
-        if (claim->access == ACCESS_WRITEABLE) {
-            List *children = claim->children;
-            for ( ; !null(children); children = cdr(children))
-                stack = cons(car(children), stack);
-            claim->access = ACCESS_COW;
-        }
-    }
+    } while ((claim = claim->parent) != NULL);
 }
 
 void claim_add_to_cache(Claim *claim) {
@@ -324,11 +289,8 @@ void claim_remove_from_cache(Claim *claim) {
 
 Claim *claim_lookup_from_cache(Lease *lease, char *pathname) {
     Claim *claim = hash_get(lease->claim_cache, pathname);
-    if (claim == NULL)
-        return NULL;
-
-    /* refresh the LRU entry and verify the hit */
-    assert(lru_get(claim_cache, pathname) == claim);
+    if (claim != NULL)
+        assert(lru_get(claim_cache, pathname) == claim);
     return claim;
 }
 
@@ -336,7 +298,12 @@ static void claim_cache_cleanup(Claim *claim) {
     hash_remove(claim->lease->claim_cache, claim->pathname);
 
     /* the parent directory is no longer fully cached */
-    /*hash_remove(claim_fully_cached_dirs, dirname(claim->pathname));*/
+    hash_remove(claim->lease->dir_cache, dirname(claim->pathname));
+}
+
+static int claim_cache_resurrect(Claim *claim) {
+    return claim->parent != NULL || !null(claim->children) ||
+        !strcmp(claim->pathname, claim->lease->pathname);
 }
 
 void claim_state_init(void) {
@@ -344,11 +311,6 @@ void claim_state_init(void) {
             CLAIM_LRU_SIZE,
             (Hashfunc) string_hash,
             (Cmpfunc) strcmp,
-            NULL,
+            (int (*)(void *)) claim_cache_resurrect,
             (void (*)(void *)) claim_cache_cleanup);
-
-    claim_fully_cached_dirs = hash_create(
-            CLAIM_FULLY_CACHED_DIRS_SIZE,
-            (Hashfunc) string_hash,
-            (Cmpfunc) strcmp);
 }

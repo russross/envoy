@@ -381,6 +381,8 @@ char *stringcopy(char *s) {
 char *substring(char *s, int start, int len) {
     char *res;
     assert(s != NULL);
+    if (len == 0)
+        return "";
     res = GC_MALLOC_ATOMIC(len + 1);
     assert(res != NULL);
     strncpy(res, s + start, len);
@@ -409,6 +411,12 @@ int emptystring(char *s) {
 int startswith(char *s, char *sub) {
     int len = strlen(sub);
     return len <= strlen(s) && !strncmp(s, sub, len);
+}
+
+int ispathprefix(char *s, char *prefix) {
+    int len = strlen(prefix);
+    return len <= strlen(s) && !strncmp(s, prefix, len) &&
+        (s[len] == '/' || s[len] == 0);
 }
 
 int randInt(int range) {

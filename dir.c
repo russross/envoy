@@ -6,6 +6,7 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "hashtable.h"
 #include "fid.h"
 #include "util.h"
 #include "config.h"
@@ -91,24 +92,21 @@ static void dir_prime_claim_cache(Claim *dir, List *entries) {
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
         char *pathname = concatname(dir->pathname, elt->filename);
+        enum claim_access access;
 
         /* does this entry exit the lease? */
         if (lease_get_remote(pathname) != NULL)
             continue;
 
-        /* is it an active claim? */
-        if (findinorder((Cmpfunc) claim_key_cmp, dir->children, pathname))
+        /* is it already in the cache? */
+        if (claim_lookup_from_cache(dir->lease, pathname) != NULL)
             continue;
 
-        /* is it already in the cache? */
-        if (claim_lookup_from_cache(dir->lease, pathname) == NULL) {
-            /* create a new claim and add it to the cache */
-            enum claim_access access = fid_access_child(dir->access, elt->cow);
-            if (type == PATH_ADMIN && ispositiveint(elt->filename))
-                access = ACCESS_READONLY;
-            Claim *claim = claim_new(dir, elt->filename, access, elt->oid);
-            claim_add_to_cache(claim);
-        }
+        /* create a new claim and add it to the cache */
+        access = fid_access_child(dir->access, elt->cow);
+        if (type == PATH_ADMIN && ispositiveint(elt->filename))
+            access = ACCESS_READONLY;
+        claim_add_to_cache(claim_new(dir, elt->filename, access, elt->oid));
     }
 }
 
@@ -223,10 +221,27 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
         }
     }
 
+    if (fid->readdir_cookie == 0 &&
+            hash_get(fid->claim->lease->dir_cache, fid->pathname) !=
+            (void *) DIR_CACHE_COMPLETE)
+    {
+        hash_set(fid->claim->lease->dir_cache, fid->pathname,
+                (void *) DIR_CACHE_PARTIAL);
+    }
+
     for (;;) {
         info = dir_read_next(worker, fid, dirinfo, fid->readdir_env);
-        if (info == NULL)
+        if (info == NULL) {
+            /* did we complete a directory scan with the cache intact? */
+            if (hash_get(fid->claim->lease->dir_cache, fid->pathname) ==
+                    (void *) DIR_CACHE_PARTIAL)
+            {
+                hash_set(fid->claim->lease->dir_cache, fid->pathname,
+                        (void *) DIR_CACHE_COMPLETE);
+            }
+
             break;
+        }
 
         if (count + statnsize(info) > size) {
             /* push this entry back into the stream */
@@ -261,6 +276,13 @@ static int dir_iter(Worker *worker, Claim *claim,
     }
     dirinfo = claim->info;
 
+    if (hash_get(claim->lease->dir_cache, claim->pathname) !=
+            (void *) DIR_CACHE_COMPLETE)
+    {
+        hash_set(claim->lease->dir_cache, claim->pathname,
+                (void *) DIR_CACHE_PARTIAL);
+    }
+
     for (num = 0; !stop; num++) {
         u32 count;
         u8 *data;
@@ -288,7 +310,7 @@ static int dir_iter(Worker *worker, Claim *claim,
             case DIR_ABORT:
                 return -1;
             case DIR_STOP:
-                stop = 1;
+                stop = 2;
                 /* fall through */
             case DIR_CONTINUE:
                 /* store any requested changes */
@@ -324,6 +346,14 @@ static int dir_iter(Worker *worker, Claim *claim,
         assert(object_write(worker, claim->oid, now(),
                     offset, count, data, raw) == count);
         claim->info = NULL;
+    }
+
+    /* did we complete a directory scan with the cache intact? */
+    if (stop == 1 && hash_get(claim->lease->dir_cache, claim->pathname) ==
+            (void *) DIR_CACHE_PARTIAL)
+    {
+        hash_set(claim->lease->dir_cache, claim->pathname,
+                (void *) DIR_CACHE_COMPLETE);
     }
 
     return 0;

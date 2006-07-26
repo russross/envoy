@@ -1138,7 +1138,6 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     struct Tremove *req = &trans->in->msg.tremove;
     Fid *fid;
     Claim *parent;
-    int removed = 0;
     u16 errnum = 0;
     Walk *walk;
 
@@ -1158,9 +1157,6 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     /* handle forwarding */
     if (fid->isremote) {
         forward_to_envoy(worker, trans, fid);
-
-        if (trans->out->id == RREMOVE)
-            removed = 1;
 
         goto cleanup;
     }
@@ -1539,9 +1535,7 @@ void envoy_terenametree(Worker *worker, Transaction *trans) {
         for (i = 0; i < req->nfid; i++) {
             Fid *fid = fid_get_remote(req->fid[i]);
             assert(fid != NULL && fid != (void *) 0xdeadbeef);
-            assert(startswith(fid->pathname, req->oldpath) &&
-                    (fid->pathname[prefixlen] == '/' ||
-                     fid->pathname[prefixlen] == 0));
+            assert(ispathprefix(fid->pathname, req->oldpath));
             fid->pathname =
                 concatname(req->newpath, fid->pathname + prefixlen + 1);
         }

@@ -5,7 +5,6 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
-#include "hashtable.h"
 #include "worker.h"
 #include "lru.h"
 #include "lease.h"
@@ -72,7 +71,6 @@ struct claim {
 };
 
 extern Lru *claim_cache;
-extern Hashtable *claim_fully_cached_dirs;
 
 void claim_state_init(void);
 
@@ -96,10 +94,6 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name);
 /* Make a claim writable, possibly cloning the path from the root of the lease
  * to the given node. */
 void claim_thaw(Worker *worker, Claim *claim);
-
-/* Snapshot a claim, which must be the root of a lease.  All descendents
- * within this lease are marker CoW.  Assumes the lease is locked */
-void claim_freeze(Worker *worker, Claim *claim);
 
 /*****************************************************************************/
 /* Low-level functions */
@@ -127,5 +121,7 @@ void lease_flush_claim_cache(Lease *lease);
 int claim_cmp(const Claim *a, const Claim *b);
 int claim_key_cmp(const char *key, const Claim *elt);
 u32 claim_hash(const Claim *a);
+void claim_link_child(Claim *parent, Claim *child);
+void claim_unlink_child(Claim *child);
 
 #endif
