@@ -10,6 +10,7 @@
 #include "list.h"
 #include "vector.h"
 #include "fid.h"
+#include "util.h"
 #include "config.h"
 #include "worker.h"
 #include "heap.h"
@@ -134,6 +135,8 @@ static void *worker_loop(Worker *t) {
 
 void worker_create(void (*func)(Worker *, void *), void *arg) {
     if (null(worker_thread_pool)) {
+        pthread_t newthread;
+        pthread_attr_t attr;
         Worker *t = GC_NEW(Worker);
         assert(t != NULL);
         t->sleep = cond_new();
@@ -143,8 +146,9 @@ void worker_create(void (*func)(Worker *, void *), void *arg) {
         t->priority = ~(u32) 0;
         t->blocking = NULL;
 
-        pthread_t newthread;
-        pthread_create(&newthread, NULL,
+        pthread_attr_init(&attr);
+        pthread_attr_setstacksize(&attr, max(PTHREAD_STACK_MIN, 1024 * 1024));
+        pthread_create(&newthread, &attr,
                 (void *(*)(void *)) worker_loop, (void *) t);
         pthread_detach(newthread);
     } else {

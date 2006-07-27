@@ -111,11 +111,21 @@ void lease_merge_exit(Worker *worker, Lease *parent, Lease *child) {
     child->dir_cache = NULL;
 
     /* merge in the wavefront */
-    for ( ; !null(child->wavefront); child->wavefront = cdr(child->wavefront)) {
-        Lease *elt = car(child->wavefront);
-        parent->wavefront =
-            insertinorder((Cmpfunc) lease_cmp, parent->wavefront, elt);
-    }
+    for ( ; !null(child->wavefront); child->wavefront = cdr(child->wavefront))
+        lease_link_exit((Lease *) car(child->wavefront));
+}
+
+void lease_link_exit(Lease *exit) {
+    Lease *lease = lease_find_root(dirname(exit->pathname));
+    lease->wavefront =
+        insertinorder((Cmpfunc) lease_cmp, lease->wavefront, exit);
+    lease_add(exit);
+}
+
+void lease_unlink_exit(Lease *exit) {
+    Lease *lease = lease_find_root(dirname(exit->pathname));
+    lease->wavefront =
+        removeinorder((Cmpfunc) lease_cmp, lease->wavefront, exit);
 }
 
 void lease_state_init(void) {
@@ -164,13 +174,12 @@ void lease_remove(Lease *lease) {
     assert(lease->fids == NULL || hash_count(lease->fids) == 0);
     assert(null(lease->changeexits));
     assert(null(lease->changefids));
-    if (lease->isexit) {
-        Lease *parent = lease_find_root(dirname(lease->pathname));
-        parent->wavefront = removeinorder((Cmpfunc) lease_cmp,
-                parent->wavefront, lease);
-    } else {
+
+    if (lease->isexit)
+        lease_unlink_exit(lease);
+    else
         claim_clear_descendents(lease->claim);
-    }
+
     hash_remove(lease_by_root_pathname, lease->pathname);
     lease->pathname = NULL;
     lease->addr = NULL;
@@ -467,10 +476,8 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
             /* add an exit */
             Address *addr = address_new(elt->address, elt->port);
             Lease *exit = lease_new(pathname, addr, 1, NULL, elt->readonly);
-            lease_add(exit);
             lock_lease_exclusive(worker, exit);
-            lease->wavefront =
-                insertinorder((Cmpfunc) lease_cmp, lease->wavefront, exit);
+            lease_link_exit(exit);
 
             /* add to the list of remote envoys that need to be notified */
             newwavefront = cons(exit, newwavefront);
@@ -564,8 +571,7 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids,
     for ( ; !null(fids); fids = cdr(fids)) {
         struct fidrecord *elt = car(fids);
         Address *addr = address_new(elt->address, elt->port);
-        char *pathname = emptystring(elt->pathname) ?
-            root : concatname(root, elt->pathname);
+        char *pathname = concatname(root, elt->pathname);
         Claim *claim = claim_find(worker, pathname);
         Fid *fid;
 
@@ -676,7 +682,7 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
 
     child = lease_new(pathname, addr, 1, NULL,
             (claim->access == ACCESS_READONLY));
-    lease_add(child);
+    lease_link_exit(child);
 
     assert(null(claim->children));
     claim_clear_descendents(claim);
@@ -735,23 +741,12 @@ void lease_rename(Worker *worker, Lease *lease, Claim *root,
         List *fids = elt->fids;
 
         if (ispathprefix(elt->pathname, oldpath)) {
-            enum dir_cache_type type = (enum dir_cache_type)
-                hash_get(elt->lease->dir_cache, dirname(elt->pathname));
-            claim_remove_from_cache(elt);
-            elt->pathname = concatname(newpath, elt->pathname + prefixlen);
-            claim_add_to_cache(elt);
-
-            /* transfer the parent dir cache entry */
-            if (type != DIR_CACHE_ZERO) {
-                hash_set(elt->lease->dir_cache, dirname(elt->pathname),
-                        (void *) type);
-            }
+            claim_rename(elt, concatname(newpath, elt->pathname + prefixlen));
 
             /* update all the fids that reference this elt */
             for ( ; !null(fids) ; fids = cdr(fids)) {
                 Fid *fid = car(fids);
                 Connection *conn = conn_get_incoming(fid->addr);
-                fid->pathname = elt->pathname;
 
                 /* gather all fids coming from remote envoys */
                 if (conn->type == CONN_ENVOY_IN) {
@@ -773,8 +768,7 @@ void lease_rename(Worker *worker, Lease *lease, Claim *root,
             lock_lease_join(worker, cons(elt, NULL));
             remoteleases = cons(elt, remoteleases);
         } else {
-            lease->wavefront = insertinorder((Cmpfunc) lease_cmp,
-                    lease->wavefront, elt);
+            lease_link_exit(elt);
         }
     }
 
@@ -789,9 +783,7 @@ void lease_rename(Worker *worker, Lease *lease, Claim *root,
         Lease *elt = car(remoteleases);
         hash_remove(lease_by_root_pathname, elt->pathname);
         elt->pathname = concatname(newpath, elt->pathname + prefixlen);
-        hash_set(lease_by_root_pathname, elt->pathname, elt);
-        lease->wavefront = insertinorder((Cmpfunc) lease_cmp,
-                lease->wavefront, elt);
+        lease_link_exit(elt);
     }
 
     /* see if the lease itself needs renaming */

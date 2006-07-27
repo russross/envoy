@@ -62,6 +62,7 @@ static void lru_compress(Lru *lru) {
 
 void lru_add(Lru *lru, void *key, void *value) {
     struct lru_elt *elt;
+    int keepers = 0;
 
     assert(lru != NULL);
     assert(key != NULL);
@@ -82,6 +83,7 @@ void lru_add(Lru *lru, void *key, void *value) {
 
     /* if we're full, clear a space */
     while (hash_count(lru->table) >= lru->size) {
+        assert(keepers < lru->size);
         elt = heap_remove(lru->heap);
 
         /* has this item been touched since we saw it last? */
@@ -95,6 +97,7 @@ void lru_add(Lru *lru, void *key, void *value) {
             /* refresh this item and keep it */
             elt->count = elt->refresh = lru->counter++;
             heap_add(lru->heap, elt);
+            keepers++;
         } else {
             /* remove it from the hashtable and destroy it */
             hash_remove(lru->table, elt->key);

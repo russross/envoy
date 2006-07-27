@@ -108,6 +108,7 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid);
 void claim_release(Claim *claim);
 void claim_delete(Claim *claim);
 void claim_clear_descendents(Claim *claim);
+void claim_rename(Claim *claim, char *pathname);
 
 /* add the given claim to the claim cache */
 void claim_add_to_cache(Claim *claim);

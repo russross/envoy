@@ -83,7 +83,9 @@ int main(int argc, char **argv) {
     assert(sizeof(u32) == 4);
     assert(sizeof(u64) == 8);
 
+    GC_use_entire_heap = 1;
     GC_init();
+    GC_expand_hp(1024 * 8192);
 
     /* were we called as envoy or storage? */
     name = strstr(argv[0], "storage");
@@ -129,6 +131,7 @@ int main(int argc, char **argv) {
         if (root_address == NULL) {
             Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, root_oid);
             Lease *lease = lease_new("/", NULL, 0, claim, 0);
+            claim_add_to_cache(claim);
             lease_add(lease);
         }
     }

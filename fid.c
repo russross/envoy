@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
@@ -43,13 +44,13 @@ void fid_insert_local(Connection *conn, u32 fid, char *user, Claim *claim) {
     res->addr = conn->addr;
     res->isremote = 0;
 
-    res->claim = claim;
+    res->claim = NULL;
     res->readdir_env = NULL;
 
     res->raddr = NULL;
     res->rfid = NOFID;
 
-    res->claim->fids = insertinorder((Cmpfunc) fid_cmp, res->claim->fids, res);
+    fid_link_claim(res, claim);
     vector_set(conn->fid_vector, res->fid, res);
     hash_set(res->claim->lease->fids, res, res);
 }
@@ -94,11 +95,9 @@ void fid_update_remote(Fid *fid, char *pathname, Address *raddr, u32 rfid) {
     fid->pathname = pathname;
     fid->isremote = 1;
     if (fid->claim != NULL) {
-        fid->claim->fids =
-            removeinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
         hash_remove(fid->claim->lease->fids, fid);
+        fid_unlink_claim(fid);
     }
-    fid->claim = NULL;
     fid->raddr = raddr;
     fid->rfid = rfid;
     fid_set_remote(rfid, fid);
@@ -108,17 +107,16 @@ void fid_update_local(Fid *fid, Claim *claim) {
     fid->pathname = claim->pathname;
     fid->isremote = 0;
     if (fid->claim != NULL && fid->claim != claim) {
-        fid->claim->fids =
-            removeinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
         hash_remove(fid->claim->lease->fids, fid);
+        fid_unlink_claim(fid);
     }
-    fid->claim = claim;
+    fid->claim = NULL;
     fid->readdir_cookie = 0;
     fid->readdir_env = NULL;
     fid->raddr = NULL;
     fid->rfid = NOFID;
 
-    fid->claim->fids = insertinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
+    fid_link_claim(fid, claim);
     hash_set(fid->claim->lease->fids, fid, fid);
 }
 
@@ -151,21 +149,20 @@ void fid_remove(Worker *worker, Connection *conn, u32 fid) {
     assert(elt != NULL);
 
     if (elt->isremote) {
-        fid_release_remote(fid);
+        fid_release_remote(elt->rfid);
     } else {
         Claim *claim = elt->claim;
         assert(claim != NULL);
 
-        if (claim->deleted) {
-            fid_deleted_list = removeinorder((Cmpfunc) fid_cmp,
-                    fid_deleted_list, elt);
-        } else {
+        fid_unlink_claim(elt);
+
+        if (claim->deleted)
+            fid_unlink_deleted(elt);
+        else
             hash_remove(claim->lease->fids, elt);
-        }
 
         if (claim->exclusive && elt->status != STATUS_UNOPENNED)
             claim->exclusive = 0;
-        claim->fids = removeinorder((Cmpfunc) fid_cmp, claim->fids, elt);
 
         /* was this the last unlink on a deleted file? */
         if (claim->deleted && null(claim->fids) &&
@@ -227,4 +224,31 @@ List *fid_gather_groups(List *fids) {
     if (!null(group))
         groups = cons(group, groups);
     return groups;
+}
+
+void fid_link_claim(Fid *fid, Claim *claim) {
+    assert(fid->claim == NULL);
+    assert(claim->lease != NULL);
+    assert(claim->parent != NULL || !null(claim->children) ||
+            !strcmp(claim->lease->pathname, claim->pathname));
+    fid->claim = claim;
+    claim->fids = insertinorder((Cmpfunc) fid_cmp, claim->fids, fid);
+}
+
+void fid_unlink_claim(Fid *fid) {
+    assert(fid->claim != NULL);
+    fid->claim->fids = removeinorder((Cmpfunc) fid_cmp, fid->claim->fids, fid);
+    fid->claim = NULL;
+}
+
+void fid_link_deleted(Fid *fid) {
+    assert(fid->claim != NULL);
+    assert(fid->claim->deleted);
+    assert(fid->pathname == NULL);
+    fid_deleted_list = insertinorder((Cmpfunc) fid_cmp, fid_deleted_list, fid);
+}
+
+void fid_unlink_deleted(Fid *fid) {
+    assert(fid->claim == NULL);
+    fid_deleted_list = removeinorder((Cmpfunc) fid_cmp, fid_deleted_list, fid);
 }

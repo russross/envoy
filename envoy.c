@@ -460,7 +460,7 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
         /* this must be from an existing, closed fid */
         Fid *fid;
         require_fid_unopenned(fid);
-        failif(fid->isremote, EBADF);
+        failif(fid->isremote, EIO);
         env->pathname = fid->pathname;
         env->user = fid->user;
     } else {
@@ -469,7 +469,7 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
         env->user = req->user;
 
         /* make sure the request came to the right place */
-        failif(lease_find_root(env->pathname) == NULL, EBADF);
+        failif(lease_find_root(env->pathname) == NULL, EIO);
     }
 
     /* copy the array of names into a list (which has a blank at the end) */
@@ -804,8 +804,8 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
     fid->claim->info = NULL;
 
     /* move this fid to the new file */
-    claim_add_to_cache(claim_new(fid->claim, req->name,
-                cow ? ACCESS_COW : ACCESS_READONLY, newoid));
+    claim_new(fid->claim, req->name, cow ? ACCESS_COW : ACCESS_READONLY,
+            newoid);
     fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
 
     fid->status = STATUS_UNOPENNED;
@@ -928,8 +928,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     fid->claim->info = NULL;
 
     /* move this fid to the new file */
-    claim_add_to_cache(claim_new(fid->claim, req->name,
-                ACCESS_WRITEABLE, newoid));
+    claim_new(fid->claim, req->name, ACCESS_WRITEABLE, newoid);
     fid_update_local(fid, claim_get_child(worker, fid->claim, req->name));
     fid->status = status;
     fid->omode = req->mode;
@@ -1157,6 +1156,8 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     /* handle forwarding */
     if (fid->isremote) {
         forward_to_envoy(worker, trans, fid);
+        if (trans->out->id == RERROR)
+            errnum = trans->out->msg.rerror.errnum;
 
         goto cleanup;
     }
@@ -1207,9 +1208,11 @@ void handle_tremove(Worker *worker, Transaction *trans) {
         claim_delete(fid->claim);
 
     cleanup:
-    fid_remove(worker, trans->conn, req->fid);
-
+    /* note: this is a bug in the client driver: it expects the fid to survive
+     * if the remove fails */
     failif(errnum != 0, errnum);
+
+    fid_remove(worker, trans->conn, req->fid);
 
     send_reply(trans);
 }
@@ -1406,6 +1409,8 @@ void handle_twstat(Worker *worker, Transaction *trans) {
                  !strcmp(oldname, "snapshot") ||
                  ispositiveint(oldname)), EPERM);
 
+        failif(fid->claim->deleted, EPERM);
+
         parent = claim_get_parent(worker, fid->claim);
 
         /* if this is a lease root, merge with the parent before renaming */
@@ -1463,12 +1468,11 @@ void handle_twstat(Worker *worker, Transaction *trans) {
         if (oldfile != NULL)
             claim_delete(oldfile);
 
-        parent->children =
-            removeinorder((Cmpfunc) claim_cmp, parent->children, fid->claim);
-        lease_rename(worker, lease, fid->claim, fid->pathname, newpathname);
-        parent->children =
-            insertinorder((Cmpfunc) claim_cmp, parent->children, fid->claim);
-        fid->claim->info->name = req->stat->name;
+        /* rename the fid, claim, and (for dirs) the descendents */
+        if ((fid->claim->info->mode & DMDIR))
+            lease_rename(worker, lease, fid->claim, fid->pathname, newpathname);
+        else
+            claim_rename(fid->claim, newpathname);
     }
 
     if (change) {
@@ -1488,11 +1492,13 @@ void envoy_teclosefid(Worker *worker, Transaction *trans) {
      * situations when a lease change overlaps with a walk */
     failif(fid == NULL, EBADF);
     assert(!fid->isremote);
-    failif(fid->claim->lease->wait_for_update != NULL, EDEADLK);
+    failif(!fid->claim->deleted &&
+            fid->claim->lease->wait_for_update != NULL, EDEADLK);
 
-    lock_lease(worker, fid->claim->lease);
+    if (!fid->claim->deleted)
+        lock_lease(worker, fid->claim->lease);
+
     reserve(worker, LOCK_FID, fid);
-
     fid_remove(worker, trans->conn, req->fid);
 
     send_reply(trans);
@@ -1642,9 +1648,9 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
             claim = claim_new_root(req->root->pathname,
                     req->root->readonly ? ACCESS_READONLY : ACCESS_WRITEABLE,
                     req->root->oid);
-
             lease = lease_new(claim->pathname, addr, 0, claim,
                     req->root->readonly);
+            claim_add_to_cache(claim);
             lease_add(lease);
 
             /* fall through */

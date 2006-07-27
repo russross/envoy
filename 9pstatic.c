@@ -632,7 +632,7 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
         count++;
         unpackStat(data, size, &i);
     }
-    if (DEBUG_VERBOSE) {
+    if (DEBUG_PAYLOAD) {
         if (i < 0)
             dumpBytes(fp, prefix, data, size);
         else {

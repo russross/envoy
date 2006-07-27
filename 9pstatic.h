@@ -8,7 +8,7 @@ typedef unsigned long long u64;
 typedef int (*Cmpfunc)(const void *, const void *);
 typedef u32 (*Hashfunc)(const void *);
 
-extern int DEBUG_VERBOSE;
+extern int DEBUG_PAYLOAD;
 extern int GLOBAL_MAX_SIZE;
 
 #define OID_BITS 64

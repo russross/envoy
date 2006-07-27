@@ -30,6 +30,7 @@ int DEBUG_STORAGE = 0;
 int DEBUG_CLIENT = 0;
 int DEBUG_ENVOY = 0;
 int DEBUG_ENVOY_ADMIN = 0;
+int DEBUG_PAYLOAD = 0;
 u64 root_oid;
 
 void print_usage(void) {
@@ -64,6 +65,8 @@ void print_usage(void) {
 "                                 e: messages to/from other envoys\n"
 "                                 a:   envoy admin messages only\n");
     }
+    fprintf(stderr,
+"                                 p: include data payloads for read/write\n");
 }
 
 int config_envoy(int argc, char **argv) {
@@ -91,7 +94,8 @@ int config_envoy(int argc, char **argv) {
         DEBUG_AUDIT =
         DEBUG_STORAGE =
         DEBUG_CLIENT =
-        DEBUG_ENVOY = DEBUG_ENVOY_ADMIN = 0;
+        DEBUG_ENVOY = DEBUG_ENVOY_ADMIN =
+        DEBUG_PAYLOAD = 0;
 
     while (!finished) {
         u64 rootobj;
@@ -165,6 +169,7 @@ int config_envoy(int argc, char **argv) {
                         case 'a':       DEBUG_ENVOY_ADMIN = 1;          break;
                         case 'v':       DEBUG_VERBOSE = 1;              break;
                         case 'd':       DEBUG_AUDIT = 1;                break;
+                        case 'p':       DEBUG_PAYLOAD = 1;              break;
                         default:
                             fprintf(stderr, "Unknown debug option: %c\n",
                                     optarg[i]);
@@ -206,7 +211,8 @@ int config_storage(int argc, char **argv) {
     objectroot = NULL;
     PORT = STORAGE_PORT;
     DEBUG_VERBOSE =
-        DEBUG_STORAGE = 0;
+        DEBUG_STORAGE =
+        DEBUG_PAYLOAD = 0;
 
     while (!finished) {
         int i;
@@ -255,6 +261,7 @@ int config_storage(int argc, char **argv) {
                     switch (optarg[i]) {
                         case 's':       DEBUG_STORAGE = 1;              break;
                         case 'v':       DEBUG_VERBOSE = 1;              break;
+                        case 'p':       DEBUG_PAYLOAD = 1;              break;
                         default:
                             fprintf(stderr, "Unknown debug option: %c\n",
                                     optarg[i]);

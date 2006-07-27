@@ -274,7 +274,7 @@ void dispatch(Worker *worker, Transaction *trans) {
 
     /* if a new fid is required, make sure it isn't already in use */
     if (newfid != NOFID && newfid != oldfid)
-        failif(fid_lookup(trans->conn, newfid) != NULL, EBADF);
+        failif(fid_lookup(trans->conn, newfid) != NULL, EIO);
 
     /* check and possibly lock the fid */
     if (oldfid != NOFID) {
@@ -307,7 +307,8 @@ void dispatch(Worker *worker, Transaction *trans) {
             }
 
             /* lock the lease first */
-            lock_lease(worker, fid->claim->lease);
+            if (!fid->claim->deleted)
+                lock_lease(worker, fid->claim->lease);
 
             /* next lock the fid */
             reserve(worker, LOCK_FID, fid);

@@ -18,7 +18,7 @@
 #define LEASE_HASHTABLE_SIZE 64
 #define LEASE_FIDS_HASHTABLE_SIZE 128
 #define LEASE_CLAIM_HASHTABLE_SIZE 1024
-#define CLAIM_LRU_SIZE 1024
+#define CLAIM_LRU_SIZE 256
 #define LEASE_DIR_HASHTABLE_SIZE 32
 #define WALK_CACHE_SIZE 1024
 #define WORKER_READY_QUEUE_SIZE 16
@@ -41,6 +41,7 @@ extern Address *my_address;
 
 extern int DEBUG_VERBOSE;
 extern int DEBUG_STORAGE;
+extern int DEBUG_PAYLOAD;
 
 extern int isstorage;
 

@@ -88,6 +88,9 @@ Lease *lease_get_remote(char *pathname);
  * lease and return the lease.  Otherwise, return NULL. */
 Lease *lease_find_root(char *pathname);
 
+void lease_link_exit(Lease *exit);
+void lease_unlink_exit(Lease *exit);
+
 /* returns true if the given path has any decendents from the local lease that
  * are exit points */
 int lease_is_exit_point_parent(Lease *lease, char *pathname);

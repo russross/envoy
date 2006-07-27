@@ -161,7 +161,7 @@ List *hash_tolist(Hashtable *table) {
 
     for (i = 0; i < table->bucketCount; i++)
         for (elt = table->buckets[i]; !null(elt); elt = cdr(elt))
-            res = cons(car(elt), res);
+            res = cons(cdar(elt), res);
 
     return res;
 }
