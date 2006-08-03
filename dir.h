@@ -8,6 +8,7 @@
 #include "util.h"
 #include "worker.h"
 #include "claim.h"
+#include "lease.h"
 
 #define DIR_COW_OFFSET 8
 #define DIR_END_OFFSET 11
@@ -25,7 +26,16 @@ struct dir_read_env {
     List *entries;
 };
 
-/* high-level functions */
+struct dir_block {
+    Lease *lease;
+    u64 oid;
+    u32 blocknum;
+    List *entries;
+};
+
+int dir_block_cmp(const struct dir_block *a, const struct dir_block *b);
+u32 dir_block_hash(const struct dir_block *block);
+void dir_block_cache_set(Lease *lease, u64 oid, u32 blocknum, List *entries);
 
 void dir_clone(u32 count, u8 *data);
 u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data);

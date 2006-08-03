@@ -453,7 +453,7 @@ void envoy_tewalkremote(Worker *worker, Transaction *trans) {
 
     assert(env != NULL);
 
-    env->isattach = 0;
+    env->isattach = (req->fid == NOFID && !strcmp("/", req->path));
 
     /* is this the start of the walk? */
     if (emptystring(req->user) || emptystring(req->path)) {

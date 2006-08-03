@@ -14,12 +14,14 @@
 #include "config.h"
 #include "remote.h"
 #include "worker.h"
+#include "lru.h"
 #include "dir.h"
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
 
 Hashtable *lease_by_root_pathname;
+Lru *dir_cache;
 
 static int lease_cmp(const Lease *a, const Lease *b) {
     return strcmp(a->pathname, b->pathname);
@@ -49,6 +51,7 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         l->claim = NULL;
         l->fids = NULL;
         l->claim_cache = NULL;
+        l->dir_cache = NULL;
     } else {
         l->claim = claim;
         l->claim->lease = l;
@@ -61,8 +64,8 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
                 (Cmpfunc) strcmp);
         l->dir_cache = hash_create(
                 LEASE_DIR_HASHTABLE_SIZE,
-                (Hashfunc) string_hash,
-                (Cmpfunc) strcmp);
+                (Hashfunc) dir_block_hash,
+                (Cmpfunc) dir_block_cmp);
     }
 
     l->readonly = readonly;
@@ -70,11 +73,25 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     return l;
 }
 
+static void lease_clear_dir_cache(Lease *lease) {
+    List *allblocks = hash_tolist(lease->dir_cache);
+
+    for ( ; !null(allblocks); allblocks = cdr(allblocks))
+        lru_remove(dir_cache, car(allblocks));
+}
+
 static void lease_merge_iter_claim_cache(Lease *lease,
         char *pathname, Claim *claim)
 {
     claim->lease = lease;
     hash_set(lease->claim_cache, pathname, claim);
+}
+
+static void lease_merge_iter_dir_cache(Lease *lease,
+        struct dir_block *block, void *value)
+{
+    block->lease = lease;
+    hash_set(lease->dir_cache, block, block);
 }
 
 void lease_merge_exit(Worker *worker, Lease *parent, Lease *child) {
@@ -106,8 +123,9 @@ void lease_merge_exit(Worker *worker, Lease *parent, Lease *child) {
     child->claim_cache = NULL;
 
     /* merge the dir cache */
-    hash_apply(child->dir_cache, (void (*)(void *, void *, void *)) hash_set,
-            parent->claim_cache);
+    hash_apply(child->dir_cache,
+            (void (*)(void *, void *, void *)) lease_merge_iter_dir_cache,
+            parent);
     child->dir_cache = NULL;
 
     /* merge in the wavefront */
@@ -128,11 +146,21 @@ void lease_unlink_exit(Lease *exit) {
         removeinorder((Cmpfunc) lease_cmp, lease->wavefront, exit);
 }
 
+static void lease_cleanup_dir_block(struct dir_block *block) {
+    hash_remove(block->lease->dir_cache, block);
+}
+
 void lease_state_init(void) {
     lease_by_root_pathname = hash_create(
             LEASE_HASHTABLE_SIZE,
             (Hashfunc) string_hash,
             (Cmpfunc) strcmp);
+    dir_cache = lru_new(
+            LEASE_DIR_CACHE_SIZE,
+            (Hashfunc) dir_block_hash,
+            (Cmpfunc) dir_block_cmp,
+            NULL,
+            (void (*)(void *)) lease_cleanup_dir_block);
 }
 
 Lease *lease_get_remote(char *pathname) {
@@ -175,10 +203,12 @@ void lease_remove(Lease *lease) {
     assert(null(lease->changeexits));
     assert(null(lease->changefids));
 
-    if (lease->isexit)
+    if (lease->isexit) {
         lease_unlink_exit(lease);
-    else
+    } else {
         claim_clear_descendents(lease->claim);
+        lease_clear_dir_cache(lease);
+    }
 
     hash_remove(lease_by_root_pathname, lease->pathname);
     lease->pathname = NULL;
@@ -686,6 +716,7 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
 
     assert(null(claim->children));
     claim_clear_descendents(claim);
+    lease_clear_dir_cache(lease);
 }
 
 void lease_merge(Worker *worker, Lease *child) {

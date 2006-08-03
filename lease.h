@@ -8,6 +8,7 @@
 #include "list.h"
 #include "hashtable.h"
 #include "worker.h"
+#include "lru.h"
 #include "claim.h"
 
 /* General rules
@@ -60,13 +61,8 @@ struct lease {
     Hashtable *dir_cache;
 };
 
-enum dir_cache_type {
-    DIR_CACHE_ZERO,
-    DIR_CACHE_PARTIAL,
-    DIR_CACHE_COMPLETE,
-};
-
 extern Hashtable *lease_by_root_pathname;
+extern Lru *dir_cache;
 
 void lease_state_init(void);
 

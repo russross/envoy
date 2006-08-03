@@ -90,9 +90,6 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
 }
 
 void claim_delete(Claim *claim) {
-    char *dir = dirname(claim->pathname);
-    enum dir_cache_type type =
-        (enum dir_cache_type) hash_get(claim->lease->dir_cache, dir);
     List *fids;
 
     assert(claim->lock != NULL);
@@ -101,10 +98,6 @@ void claim_delete(Claim *claim) {
     assert(claim->parent != NULL);
 
     claim_remove_from_cache(claim);
-
-    /* preserve the old dir cache status */
-    if (type != DIR_CACHE_ZERO)
-        hash_set(claim->lease->dir_cache, dir, (void *) type);
 
     claim_unlink_child(claim);
     claim->pathname = NULL;
@@ -176,10 +169,6 @@ Claim *claim_get_child(Worker *worker, Claim *parent, char *name) {
         /* it's in the cache */
         reserve(worker, LOCK_CLAIM, claim);
         claim_link_child(parent, claim);
-    } else if (hash_get(parent->lease->dir_cache, parent->pathname) ==
-            (void *) DIR_CACHE_COMPLETE)
-    {
-        /* we've already scanned this directory and it doesn't exist */
     } else if ((claim = dir_find_claim(worker, parent, name)) != NULL) {
         /* found through a directory search */
         assert(claim->parent == parent && claim->lock == worker);
@@ -299,8 +288,6 @@ Claim *claim_lookup_from_cache(Lease *lease, char *pathname) {
 
 void claim_rename(Claim *claim, char *pathname) {
     List *fids;
-    enum dir_cache_type type = (enum dir_cache_type)
-        hash_get(claim->lease->dir_cache, dirname(claim->pathname));
     Claim *parent = claim->parent;
 
     if (parent != NULL)
@@ -310,10 +297,6 @@ void claim_rename(Claim *claim, char *pathname) {
     claim_remove_from_cache(claim);
     claim->pathname = pathname;
     claim_add_to_cache(claim);
-
-    /* restore the dir_cache status for the parent directory */
-    if (type != DIR_CACHE_ZERO)
-        hash_set(claim->lease->dir_cache, dirname(pathname), (void *) type);
 
     /* update the fids */
     for (fids = claim->fids; !null(fids); fids = cdr(fids)) {
@@ -330,9 +313,6 @@ void claim_rename(Claim *claim, char *pathname) {
 
 static void claim_cache_cleanup(Claim *claim) {
     hash_remove(claim->lease->claim_cache, claim->pathname);
-
-    /* the parent directory is no longer fully cached */
-    hash_remove(claim->lease->dir_cache, dirname(claim->pathname));
 }
 
 static int claim_cache_resurrect(Claim *claim) {

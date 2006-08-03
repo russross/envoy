@@ -13,9 +13,47 @@
 #include "object.h"
 #include "remote.h"
 #include "worker.h"
+#include "lru.h"
 #include "dir.h"
 #include "claim.h"
 #include "lease.h"
+
+int dir_block_cmp(const struct dir_block *a, const struct dir_block *b) {
+    if (a->oid != b->oid)
+        return a->oid - b->oid;
+    return a->blocknum - b->blocknum;
+}
+
+u32 dir_block_hash(const struct dir_block *block) {
+    return generic_hash(&block->oid, sizeof(u64),
+            generic_hash(&block->blocknum, sizeof(u32), 0));
+}
+
+void dir_block_cache_set(Lease *lease, u64 oid, u32 blocknum, List *entries) {
+    struct dir_block *block = GC_NEW(struct dir_block);
+    assert(block != NULL);
+    assert(lease != NULL);
+
+    block->lease = lease;
+    block->oid = oid;
+    block->blocknum = blocknum;
+    block->entries = entries;
+
+    /* note: the lru_add must come first because it may clear an old value */
+    lru_add(dir_cache, block, block);
+    hash_set(lease->dir_cache, block, block);
+}
+
+struct dir_block *dir_block_cache_lookup(u64 oid, u32 blocknum) {
+    struct dir_block block = {
+        .lease = NULL,
+        .oid = oid,
+        .blocknum = blocknum,
+        .entries = NULL
+    };
+
+    return lru_get(dir_cache, &block);
+}
 
 /* Directories are stored in a series of BLOCK_SIZE length blocks, with
  * the last block possibly truncated.  Each block is structured as follows:
@@ -67,14 +105,28 @@ static List *dir_unpack_entries(u32 count, u8 *data) {
 static u32 dir_pack_entries(List *entries, u8 *data) {
     int i = 0;
     int start = 0;
+    List *prev = NULL;
 
     /* reserve space for the end marker */
     packU16(data, &i, 0);
 
-    for ( ; !null(entries); entries = cdr(entries)) {
+    /* pack the entries and clean up the list (including setting offsets)
+     * so this list can go in the cache */
+    while (!null(entries)) {
         struct direntry *elt = car(entries);
-        if (elt == NULL)
+        if (elt == NULL) {
+            assert(prev != NULL);
+            entries = cdr(entries);
+            setcdr(prev, entries);
             continue;
+        }
+
+        prev = entries;
+        entries = cdr(entries);
+
+        assert(i > 0);
+        elt->offset = (u32) i;
+
         packU64(data, &i, elt->oid);
         packU8(data, &i, elt->cow);
         packString(data, &i, elt->filename);
@@ -153,23 +205,31 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
         u32 bytesread;
         u8 *block;
         void *raw;
+        struct dir_block *elt;
 
         /* have we already read the last block? */
         if (env->offset >= dirinfo->length)
             return NULL;
 
         /* read a block */
-        raw = object_read(worker, fid->claim->oid, now(),
-                env->offset, BLOCK_SIZE, &bytesread, &block);
-        env->offset += BLOCK_SIZE;
+        elt = dir_block_cache_lookup(fid->claim->oid, env->offset / BLOCK_SIZE);
+        if (elt == NULL) {
+            /* read a block and decode the entries */
+            raw = object_read(worker, fid->claim->oid, now(),
+                    env->offset, BLOCK_SIZE, &bytesread, &block);
+            env->entries = dir_unpack_entries(bytesread, block);
+            dir_block_cache_set(fid->claim->lease, fid->claim->oid,
+                    env->offset / BLOCK_SIZE, env->entries);
+            raw_delete(raw);
+        } else {
+            /* get the decoded entries from the cache */
+            env->entries = elt->entries;
+        }
 
-        /* decode the entries in this block */
-        env->entries = dir_unpack_entries(bytesread, block);
+        env->offset += BLOCK_SIZE;
 
         /* cache these entries */
         dir_prime_claim_cache(worker, fid->claim, env->entries, NULL);
-
-        raw_delete(raw);
     }
 
     /* get stats for the next entry */
@@ -238,27 +298,10 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
         }
     }
 
-    if (fid->readdir_cookie == 0 &&
-            hash_get(fid->claim->lease->dir_cache, fid->pathname) !=
-            (void *) DIR_CACHE_COMPLETE)
-    {
-        hash_set(fid->claim->lease->dir_cache, fid->pathname,
-                (void *) DIR_CACHE_PARTIAL);
-    }
-
     for (;;) {
         info = dir_read_next(worker, fid, dirinfo, fid->readdir_env);
-        if (info == NULL) {
-            /* did we complete a directory scan with the cache intact? */
-            if (hash_get(fid->claim->lease->dir_cache, fid->pathname) ==
-                    (void *) DIR_CACHE_PARTIAL)
-            {
-                hash_set(fid->claim->lease->dir_cache, fid->pathname,
-                        (void *) DIR_CACHE_COMPLETE);
-            }
-
+        if (info == NULL)
             break;
-        }
 
         if (count + statnsize(info) > size) {
             /* push this entry back into the stream */
@@ -293,13 +336,6 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
     }
     dirinfo = claim->info;
 
-    if (hash_get(claim->lease->dir_cache, claim->pathname) !=
-            (void *) DIR_CACHE_COMPLETE)
-    {
-        hash_set(claim->lease->dir_cache, claim->pathname,
-                (void *) DIR_CACHE_PARTIAL);
-    }
-
     for (num = 0; !stop; num++) {
         u32 count;
         u8 *data;
@@ -312,11 +348,17 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
             stop = 1;
         } else {
             /* read a block */
-            raw = object_read(worker, claim->oid, now(),
-                    (u64) num * BLOCK_SIZE, BLOCK_SIZE, &count, &data);
-            assert(data != NULL);
-            pre = dir_unpack_entries(count, data);
-            raw_delete(raw);
+            struct dir_block *elt = dir_block_cache_lookup(claim->oid, num);
+            if (elt == NULL) {
+                raw = object_read(worker, claim->oid, now(),
+                        (u64) num * BLOCK_SIZE, BLOCK_SIZE, &count, &data);
+                assert(data != NULL);
+                pre = dir_unpack_entries(count, data);
+                dir_block_cache_set(claim->lease, claim->oid, num, pre);
+                raw_delete(raw);
+            } else {
+                pre = elt->entries;
+            }
         }
 
         /* add all local entries to the claim cache */
@@ -327,7 +369,7 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
             case DIR_ABORT:
                 return -1;
             case DIR_STOP:
-                stop = 2;
+                stop = 1;
                 /* fall through */
             case DIR_CONTINUE:
                 /* store any requested changes */
@@ -348,7 +390,11 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
         u32 count;
         u64 offset;
 
+        /* clear any deleted entries from the head of the list */
+        while (!null(entries) && car(entries) == NULL)
+            entries = cdr(entries);
         count = dir_pack_entries(entries, data);
+        dir_block_cache_set(claim->lease, claim->oid, num, entries);
 
         /* make sure the directory has room for the block */
         offset = BLOCK_SIZE * num;
@@ -363,14 +409,6 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
         assert(object_write(worker, claim->oid, now(),
                     offset, count, data, raw) == count);
         claim->info = NULL;
-    }
-
-    /* did we complete a directory scan with the cache intact? */
-    if (stop == 1 && hash_get(claim->lease->dir_cache, claim->pathname) ==
-            (void *) DIR_CACHE_PARTIAL)
-    {
-        hash_set(claim->lease->dir_cache, claim->pathname,
-                (void *) DIR_CACHE_COMPLETE);
     }
 
     return 0;
