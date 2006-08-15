@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
         my_address = get_my_address();
         worker_state_init();
         conn_init();
-        oid_state_init();
+        oid_state_init_storage();
         fid_state_init();
         util_state_init();
         transport_init();
@@ -122,12 +122,14 @@ int main(int argc, char **argv) {
         my_address = get_my_address();
         worker_state_init();
         conn_init();
+        oid_state_init_envoy();
         lease_state_init();
         claim_state_init();
         walk_state_init();
         fid_state_init();
         util_state_init();
         transport_init();
+        object_state_init();
         if (root_address == NULL) {
             Claim *claim = claim_new_root("/", ACCESS_WRITEABLE, root_oid);
             Lease *lease = lease_new("/", NULL, 0, claim, 0);

@@ -46,6 +46,7 @@ int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf);
 int oid_clone(Worker *worker, u64 oldoid, u64 newoid);
 char *oid_delete(Worker *worker, u64 oid);
 
-void oid_state_init(void);
+void oid_state_init_storage(void);
+void oid_state_init_envoy(void);
 
 #endif

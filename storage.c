@@ -137,6 +137,7 @@ void handle_tswrite(Worker *worker, Transaction *trans) {
     trans->in->raw = NULL;
     guard(len);
     res->count = (u32) len;
+    assert(res->count == req->count);
 
     /* set the mtime */
     buf.actime = req->time;

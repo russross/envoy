@@ -246,6 +246,19 @@ int u32_cmp(const u32 *a, const u32 *b) {
         return 0;
 }
 
+u32 u64_hash(const u64 *n) {
+    return generic_hash(n, sizeof(u64), 13);
+}
+
+int u64_cmp(const u64 *a, const u64 *b) {
+    if (*a == *b)
+        return 0;
+    else if (*a < *b)
+        return -1;
+    else
+        return 1;
+}
+
 u32 now(void) {
     return (u32) time(NULL);
 }

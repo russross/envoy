@@ -48,7 +48,8 @@ void print_usage(void) {
 "                                 use the given object ID as the root object\n"
 "                                 (default 0)\n"
 "    -s, --storage=<SERVERS>    connect to the comma-seperated list of\n"
-"                                 storage servers (default localhost:%d)\n",
+"                                 storage servers (default localhost:%d)\n"
+"    -c, --cache=<PATH>         path to the root of the object cache\n",
             STORAGE_PORT);
     }
     fprintf(stderr,
@@ -75,6 +76,7 @@ int config_envoy(int argc, char **argv) {
         { "help",       no_argument,            NULL,   'h' },
         { "root",       required_argument,      NULL,   'r' },
         { "storage",    required_argument,      NULL,   's' },
+        { "cache",      required_argument,      NULL,   'c' },
         { "port",       required_argument,      NULL,   'p' },
         { "debug",      required_argument,      NULL,   'd' },
         { "messagesize", required_argument,     NULL,   'm' },
@@ -89,6 +91,7 @@ int config_envoy(int argc, char **argv) {
     assert(storage_addresses != NULL);
     storage_addresses[0] = make_address("localhost", STORAGE_PORT);
     storage_servers = NULL;
+    objectroot = NULL;
     PORT = ENVOY_PORT;
     DEBUG_VERBOSE =
         DEBUG_AUDIT =
@@ -101,6 +104,8 @@ int config_envoy(int argc, char **argv) {
         u64 rootobj;
         char *end;
         List *addrs;
+        char cwd[100];
+        struct stat info;
         int i;
 
         switch (getopt_long(argc, argv, "hr:s:p:d:m:", long_options, NULL)) {
@@ -136,6 +141,16 @@ int config_envoy(int argc, char **argv) {
                 while (!null(addrs)) {
                     storage_addresses[i++] = car(addrs);
                     addrs = cdr(addrs);
+                }
+                break;
+            case 'c':
+                /* get the cache directory */
+                assert(getcwd(cwd, 100) == cwd);
+                objectroot = resolvePath(resolvePath("/", cwd, &info), optarg,
+                        &info);
+                if (objectroot == NULL) {
+                    fprintf(stderr, "Invalid cache path: %s\n", optarg);
+                    return -1;
                 }
                 break;
             case 'p':
@@ -191,6 +206,18 @@ int config_envoy(int argc, char **argv) {
     if (storage_server_count == 0) {
         fprintf(stderr, "No storage servers specified\n");
         return -1;
+    }
+    if (objectroot == NULL) {
+        char *home = getenv("HOME");
+        struct stat info;
+        if (home != NULL) {
+            objectroot = resolvePath(resolvePath("/", home, &info),
+                    "cache", &info);
+        }
+        if (objectroot == NULL) {
+            fprintf(stderr, "No root directory for cache specified\n");
+            return -1;
+        }
     }
 
     return 0;

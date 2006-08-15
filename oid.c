@@ -59,19 +59,6 @@ static inline u64 oid_dir_findstart(u64 oid) {
     return (oid >> BITS_PER_DIR_OBJECTS) << BITS_PER_DIR_OBJECTS;
 }
 
-static u32 u64_hash(const u64 *n) {
-    return generic_hash(n, sizeof(u64), 13);
-}
-
-static int u64_cmp(const u64 *a, const u64 *b) {
-    if (*a == *b)
-        return 0;
-    else if (*a < *b)
-        return -1;
-    else
-        return 1;
-}
-
 static int resurrect_objectdir(Objectdir *dir) {
     return dir->lock != NULL;
 }
@@ -95,15 +82,31 @@ static void close_openfile(Openfile *file) {
     file->fd = -1;
 }
 
-void oid_state_init(void) {
+void oid_state_init_storage(void) {
     objectdir_lru = lru_new(
-            OBJECTDIR_CACHE_SIZE,
+            OBJECTDIR_CACHE_SIZE_STORAGE,
             (Hashfunc) u64_hash,
             (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_objectdir,
             (void (*)(void *)) close_objectdir);
     openfile_lru = lru_new(
-            FD_CACHE_SIZE,
+            FD_CACHE_SIZE_STORAGE,
+            (Hashfunc) u64_hash,
+            (Cmpfunc) u64_cmp,
+            (int (*)(void *)) resurrect_openfile,
+            (void (*)(void *)) close_openfile);
+    oid_next_available = oid_find_next_available();
+}
+
+void oid_state_init_envoy(void) {
+    objectdir_lru = lru_new(
+            OBJECTDIR_CACHE_SIZE_ENVOY,
+            (Hashfunc) u64_hash,
+            (Cmpfunc) u64_cmp,
+            (int (*)(void *)) resurrect_objectdir,
+            (void (*)(void *)) close_objectdir);
+    openfile_lru = lru_new(
+            FD_CACHE_SIZE_ENVOY,
             (Hashfunc) u64_hash,
             (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_openfile,

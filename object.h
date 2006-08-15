@@ -20,4 +20,6 @@ struct p9stat *object_stat(Worker *worker, u64 oid, char *filename);
 void object_wstat(Worker *worker, u64 oid, struct p9stat *info);
 void object_delete(Worker *worker, u64 oid);
 
+void object_state_init(void);
+
 #endif
