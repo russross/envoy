@@ -1,5 +1,9 @@
 #include <assert.h>
+#include <pthread.h>
+#include <gc/gc.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"
@@ -10,6 +14,9 @@
 #include "object.h"
 #include "dispatch.h"
 #include "worker.h"
+#include "lru.h"
+#include "oid.h"
+#include "lease.h"
 
 /* Operations on storage objects.
  * These functions allow simple calls to the object storage service.  They
@@ -21,6 +28,25 @@ static u64 object_reserve_next;
 static u32 object_reserve_remaining;
 static pthread_cond_t *object_reserve_wait;
 static Lru *object_cache_status;
+
+void object_cache_validate(u64 oid, Lease *lease) {
+    u64 *key = GC_NEW_ATOMIC(u64);
+    assert(key != NULL);
+    *key = oid;
+    lru_add(object_cache_status, key, lease);
+}
+
+void object_cache_invalidate(u64 oid) {
+    lru_remove(object_cache_status, &oid);
+}
+
+void object_cache_invalidate_lease(Lease *lease) {
+    lru_remove_value(object_cache_status, lease);
+}
+
+int object_cache_isvalid(u64 oid) {
+    return lru_get(object_cache_status, &oid) != NULL;
+}
 
 static void send_request_to_all(Transaction *trans) {
     List *requests = cons(trans, NULL);
@@ -90,12 +116,19 @@ u64 object_reserve_oid(Worker *worker) {
     return object_reserve_next++;
 }
 
-struct qid object_create(Worker *worker, u64 oid, u32 mode, u32 ctime,
-        char *uid, char *gid, char *extension)
+struct qid object_create(Worker *worker, Lease *lease, u64 oid, u32 mode,
+        u32 ctime, char *uid, char *gid, char *extension)
 {
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
     struct Rscreate *res;
+    int len;
 
+    /* create it in the cache */
+    len = oid_create(worker, oid, mode, ctime, uid, gid, extension);
+    assert(len >= 0);
+    object_cache_validate(oid, lease);
+
+    /* create it on the storage servers */
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSCREATE;
     set_tscreate(trans->out, oid, mode, ctime, uid, gid, extension);
@@ -106,8 +139,15 @@ struct qid object_create(Worker *worker, u64 oid, u32 mode, u32 ctime,
     return res->qid;
 }
 
-void object_clone(Worker *worker, u64 oid, u64 newoid) {
+void object_clone(Worker *worker, Lease *lease, u64 oid, u64 newoid) {
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
+
+    /* clone it locally if we have it in the cache */
+    if (object_cache_isvalid(oid)) {
+        int res = oid_clone(worker, oid, newoid);
+        assert(res >= 0);
+        object_cache_validate(newoid, lease);
+    }
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSCLONE;
@@ -147,6 +187,12 @@ u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
     struct Rswrite *res;
 
+    /* write to the cache if it exists */
+    if (object_cache_isvalid(oid)) {
+        int len = oid_write(worker, oid, mtime, offset, count, data);
+        assert(len > 0);
+    }
+
     trans->out->raw = raw;
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSWRITE;
@@ -158,10 +204,20 @@ u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
     return res->count;
 }
 
-struct p9stat *object_stat(Worker *worker, u64 oid, char *filename) {
+struct p9stat *object_stat(Worker *worker, Lease *lease, u64 oid,
+        char *filename)
+{
     int i = randInt(storage_server_count);
     Transaction *trans = trans_new(storage_servers[i], NULL, message_new());
     struct Rsstat *res;
+    struct p9stat *info;
+
+    /* handle it from the cache if it exists */
+    if (object_cache_isvalid(oid)) {
+        info = oid_stat(worker, oid);
+        info->name = filename;
+        return info;
+    }
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSSTAT;
@@ -176,11 +232,26 @@ struct p9stat *object_stat(Worker *worker, u64 oid, char *filename) {
     /* insert the filename supplied by the caller */
     res->stat->name = filename;
 
+    /* check if we have a cache entry with matching stats */
+    if ((info = oid_stat(worker, oid)) != NULL) {
+        info->name = filename;
+
+        /* if it's up-to-date, note it as a valid entry */
+        if (!p9stat_cmp(info, res->stat))
+            object_cache_validate(oid, lease);
+    }
+
     return res->stat;
 }
 
 void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
+
+    /* update the cache if it exists */
+    if (object_cache_isvalid(oid)) {
+        int res = oid_wstat(worker, oid, info);
+        assert(res >= 0);
+    }
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSWSTAT;
@@ -191,12 +262,35 @@ void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
 
 void object_delete(Worker *worker, u64 oid) {
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
+    int res;
+
+    /* delete the cache entry if it exists */
+    res = oid_delete(worker, oid);
+    object_cache_invalidate(oid);
+    if (res < 0) {
+        /* no entry is okay for the cache */
+        assert(-res == ENOENT);
+    }
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSDELETE;
     set_tsdelete(trans->out, oid);
 
     send_request_to_all(trans);
+}
+
+void object_fetch(Worker *worker, Lease *lease, u64 oid, struct p9stat *info) {
+    int res;
+
+    if (object_cache_isvalid(oid))
+        return;
+
+    /* delete any existing entry in the cache and fetch this one */
+    res = oid_delete(worker, oid);
+    assert(res >= 0 || -res == ENOENT);
+
+    /* stripe the reads across the storage servers */
+
 }
 
 void object_state_init(void) {

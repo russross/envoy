@@ -776,8 +776,8 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         /* create/update snapshot */
         if (snapshot == NULL) {
             u64 snapoid = object_reserve_oid(worker);
-            object_create(worker, snapoid, DMSYMLINK | 0777, now(),
-                    fid->user, dirinfo->gid, req->name);
+            object_create(worker, fid->claim->lease, snapoid, DMSYMLINK | 0777,
+                    now(), fid->user, dirinfo->gid, req->name);
             failif(dir_create_entry(worker, fid->claim, "snapshot",
                         snapoid, 0) < 0, EIO);
         } else {
@@ -913,8 +913,8 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
 
     /* create the file */
     newoid = object_reserve_oid(worker);
-    qid = object_create(worker, newoid, perm, now(), fid->user,
-            dirinfo->gid, req->extension);
+    qid = object_create(worker, fid->claim->lease, newoid, perm, now(),
+            fid->user, dirinfo->gid, req->extension);
 
     /* note: the client normally checks to make sure this doesn't exist
      * before trying to create it, but a race with another client could
@@ -1081,8 +1081,8 @@ void handle_twrite(Worker *worker, Transaction *trans) {
 
     raw = trans->in->raw;
     trans->in->raw = NULL;
-    res->count = object_write(worker, fid->claim->oid, now(), req->offset,
-            req->count, req->data, raw);
+    res->count = object_write(worker, fid->claim->lease, fid->claim->oid,
+            now(), req->offset, req->count, req->data, raw);
     fid->claim->info = NULL;
 
     send_reply:

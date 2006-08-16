@@ -119,30 +119,17 @@ void handle_tsread(Worker *worker, Transaction *trans) {
 void handle_tswrite(Worker *worker, Transaction *trans) {
     struct Tswrite *req = &trans->in->msg.tswrite;
     struct Rswrite *res = &trans->out->msg.rswrite;
-    Openfile *file;
-    struct utimbuf buf;
     int len;
 
-    /* get a handle to the open file */
-    failif((file = oid_get_openfile(worker, req->oid)) == NULL, ENOENT);
-
-    guard(lseek(file->fd, req->offset, SEEK_SET));
-
-    unlock();
-    len = write(file->fd, req->data, req->count);
-    lock();
+    len = oid_write(worker, req->oid, req->time, req->offset, req->count,
+            req->data);
 
     raw_delete(trans->in->raw);
-
     trans->in->raw = NULL;
-    guard(len);
-    res->count = (u32) len;
-    assert(res->count == req->count);
 
-    /* set the mtime */
-    buf.actime = req->time;
-    buf.modtime = req->time;
-    guard(oid_set_times(worker, req->oid, &buf));
+    failif(len < 0, -len);
+
+    res->count = (u32) len;
 
     send_reply(trans);
 }
@@ -167,11 +154,9 @@ void handle_tswstat(Worker *worker, Transaction *trans) {
 
 void handle_tsdelete(Worker *worker, Transaction *trans) {
     struct Tsdelete *req = &trans->in->msg.tsdelete;
-    char *pathname;
+    int res = oid_delete(worker, req->oid);
 
-    failif((pathname = oid_delete(worker, req->oid)) == NULL, ENOENT);
-
-    guard(unlink(pathname));
+    failif(res < 0, -res);
 
     send_reply(trans);
 }

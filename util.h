@@ -44,7 +44,7 @@ u32 generic_hash(const void *elt, int len, u32 hash);
 u32 string_hash(const char *str);
 u32 u32_hash(const u32 *elt);
 int u32_cmp(const u32 *a, const u32 *b);
-u64 u64_hash(const u64 *elt);
+u32 u64_hash(const u64 *elt);
 int u64_cmp(const u64 *a, const u64 *b);
 char *u32tostr(u32 n);
 int randInt(int range);

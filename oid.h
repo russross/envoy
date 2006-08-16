@@ -44,7 +44,9 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
         char *gid, char *extension);
 int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf);
 int oid_clone(Worker *worker, u64 oldoid, u64 newoid);
-char *oid_delete(Worker *worker, u64 oid);
+int oid_delete(Worker *worker, u64 oid);
+int oid_write(Worker *worker, u64 oid, u32 time, u64 offset, u32 count,
+        u8 *data);
 
 void oid_state_init_storage(void);
 void oid_state_init_envoy(void);

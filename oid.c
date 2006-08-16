@@ -700,7 +700,7 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
     return oid_set_times(worker, newoid, &buf);
 }
 
-char *oid_delete(Worker *worker, u64 oid) {
+int oid_delete(Worker *worker, u64 oid) {
     u64 start = oid_dir_findstart(oid);
     struct objectdir *dir;
     char *filename;
@@ -708,11 +708,46 @@ char *oid_delete(Worker *worker, u64 oid) {
     if (    (dir = objectdir_lookup(worker, start)) == NULL ||
             (filename = dir->filenames[oid - start]) == NULL)
     {
-        return NULL;
+        return -ENOENT;
     }
 
     lru_remove(openfile_lru, &oid);
     dir->filenames[oid - start] = NULL;
 
-    return concatname(dir->dirname, filename);
+    if (unlink(concatname(dir->dirname, filename)) < 0)
+        return -errno;
+
+    return 0;
+}
+
+int oid_write(Worker *worker, u64 oid, u32 time, u64 offset, u32 count,
+        u8 *data)
+{
+    Openfile *file;
+    struct utimbuf buf;
+    int len;
+
+    file = oid_get_openfile(worker, oid);
+    if (fail == NULL)
+        return -ENOENT;
+
+    if (lseek(file->fd, offset, SEEK_SET) < 0)
+        return -errno;
+
+    unlock();
+    len = write(file->fd, data, count);
+    lock();
+
+    if (len < 0)
+        return -errno;
+
+    assert(count == (u32) len);
+
+    /* set the mtime */
+    buf.actime = time;
+    buf.modtime = time;
+    if (oid_set_times(worker, oid, &buf) < 0)
+        return -errno;
+
+    return len;
 }

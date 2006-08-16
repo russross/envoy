@@ -406,7 +406,7 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
         }
 
         /* write the block */
-        assert(object_write(worker, claim->oid, now(),
+        assert(object_write(worker, claim->lease, claim->oid, now(),
                     offset, count, data, raw) == count);
         claim->info = NULL;
     }

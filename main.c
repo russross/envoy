@@ -10,6 +10,7 @@
 #include "util.h"
 #include "config.h"
 #include "transport.h"
+#include "object.h"
 #include "worker.h"
 #include "oid.h"
 #include "claim.h"

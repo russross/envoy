@@ -45,16 +45,27 @@ void *lru_get(Lru *lru, void *key) {
     return elt->value;
 }
 
-static void lru_compress(Lru *lru) {
-    while (lru->heap->count > hash_count(lru->table)) {
+void lru_remove_value(Lru *lru, void *value) {
+    int updated = 0;
+    while (lru->heap->count > hash_count(lru->table) ||
+            lru->heap->count > updated)
+    {
         struct lru_elt *elt = heap_remove(lru->heap);
 
-        if (elt->value == NULL)
+        if (elt->value == NULL) {
             continue;
-        else if (elt->count != elt->refresh)
+        } else if (elt->value == value) {
+            if (lru->cleanup != NULL)
+                lru->cleanup(elt->value);
+            hash_remove(lru->table, elt->key);
+            elt->value = NULL;
+            continue;
+        } else if (elt->count != elt->refresh) {
             elt->count = elt->refresh;
-        else
+        } else {
             elt->count = elt->refresh = lru->counter++;
+            updated++;
+        }
 
         heap_add(lru->heap, elt);
     }
@@ -79,7 +90,7 @@ void lru_add(Lru *lru, void *key, void *value) {
 
     /* make sure the heap doesn't grow out of control */
     if (lru->heap->count >= lru->size * 2)
-        lru_compress(lru);
+        lru_remove_value(lru, NULL);
 
     /* if we're full, clear a space */
     while (hash_count(lru->table) >= lru->size) {
