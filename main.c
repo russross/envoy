@@ -12,7 +12,7 @@
 #include "transport.h"
 #include "object.h"
 #include "worker.h"
-#include "oid.h"
+#include "disk.h"
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
@@ -72,7 +72,7 @@ void test_dump(void) {
 }
 
 void test_oid(void) {
-    printf("first available: %llx\n", oid_find_next_available());
+    printf("first available: %llx\n", disk_find_next_available());
 }
 
 int main(int argc, char **argv) {
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
         my_address = get_my_address();
         worker_state_init();
         conn_init();
-        oid_state_init_storage();
+        disk_state_init_storage();
         fid_state_init();
         util_state_init();
         transport_init();
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
         my_address = get_my_address();
         worker_state_init();
         conn_init();
-        oid_state_init_envoy();
+        disk_state_init_envoy();
         lease_state_init();
         claim_state_init();
         walk_state_init();

@@ -16,12 +16,12 @@
 #include "config.h"
 #include "worker.h"
 #include "lru.h"
-#include "oid.h"
+#include "disk.h"
 #include "dir.h"
 
 Lru *objectdir_lru;
 Lru *openfile_lru;
-u64 oid_next_available;
+u64 disk_next_available;
 
 static inline char *make_filename(u64 oid, u32 mode, char *name, char *group) {
     char *filename = GC_MALLOC_ATOMIC(OBJECT_FILENAME_LENGTH + 1);
@@ -55,7 +55,7 @@ static inline int parse_filename(char *filename, unsigned int *id, u32 *mode,
     return 0;
 }
 
-static inline u64 oid_dir_findstart(u64 oid) {
+static inline u64 disk_dir_findstart(u64 oid) {
     return (oid >> BITS_PER_DIR_OBJECTS) << BITS_PER_DIR_OBJECTS;
 }
 
@@ -82,7 +82,7 @@ static void close_openfile(Openfile *file) {
     file->fd = -1;
 }
 
-void oid_state_init_storage(void) {
+void disk_state_init_storage(void) {
     objectdir_lru = lru_new(
             OBJECTDIR_CACHE_SIZE_STORAGE,
             (Hashfunc) u64_hash,
@@ -95,10 +95,10 @@ void oid_state_init_storage(void) {
             (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_openfile,
             (void (*)(void *)) close_openfile);
-    oid_next_available = oid_find_next_available();
+    disk_next_available = disk_find_next_available();
 }
 
-void oid_state_init_envoy(void) {
+void disk_state_init_envoy(void) {
     objectdir_lru = lru_new(
             OBJECTDIR_CACHE_SIZE_ENVOY,
             (Hashfunc) u64_hash,
@@ -111,10 +111,10 @@ void oid_state_init_envoy(void) {
             (Cmpfunc) u64_cmp,
             (int (*)(void *)) resurrect_openfile,
             (void (*)(void *)) close_openfile);
-    oid_next_available = oid_find_next_available();
+    disk_next_available = disk_find_next_available();
 }
 
-Openfile *oid_add_openfile(u64 oid, int fd) {
+Openfile *disk_add_openfile(u64 oid, int fd) {
     Openfile *file;
     u64 *key;
 
@@ -198,7 +198,7 @@ u64 path_to_oid(List *path) {
     return oid;
 }
 
-u64 oid_find_next_available(void) {
+u64 disk_find_next_available(void) {
     char *dir = objectroot;
     List *minpath_full = oid_to_path(0LL);
     List *minpath_lst = minpath_full;
@@ -253,17 +253,17 @@ u64 oid_find_next_available(void) {
     return path_to_oid(reverse(lastpath)) + (1 << BITS_PER_DIR_OBJECTS);
 }
 
-int oid_reserve_block(u64 *oid, u32 *count) {
+int disk_reserve_block(u64 *oid, u32 *count) {
     char *dir = objectroot;
     struct stat info;
     List *path;
 
-    *oid = oid_next_available;
+    *oid = disk_next_available;
     *count = 1 << BITS_PER_DIR_OBJECTS;
-    oid_next_available += (u64) *count;
+    disk_next_available += (u64) *count;
 
     /* just in case 64 bits isn't enough... */
-    if (oid_next_available < *oid)
+    if (disk_next_available < *oid)
         return -1;
 
     path = oid_to_path(*oid);
@@ -325,7 +325,7 @@ static void read_objectdir(Objectdir *dir) {
 Objectdir *objectdir_lookup(Worker *worker, u64 start) {
     Objectdir *dir;
 
-    assert(start == oid_dir_findstart(start));
+    assert(start == disk_dir_findstart(start));
 
     dir = lru_get(objectdir_lru, &start);
 
@@ -354,9 +354,9 @@ Objectdir *objectdir_lookup(Worker *worker, u64 start) {
     return dir;
 }
 
-struct p9stat *oid_stat(Worker *worker, u64 oid) {
+struct p9stat *disk_stat(Worker *worker, u64 oid) {
     /* get filename */
-    u64 start = oid_dir_findstart(oid);
+    u64 start = disk_dir_findstart(oid);
     struct objectdir *dir;
     char *filename;
     struct stat info;
@@ -396,7 +396,7 @@ struct p9stat *oid_stat(Worker *worker, u64 oid) {
             info.st_size > 0 && info.st_size < MAX_EXTENSION_LENGTH)
     {
         int i, size;
-        Openfile *file = oid_get_openfile(worker, oid);
+        Openfile *file = disk_get_openfile(worker, oid);
         result->extension = GC_MALLOC_ATOMIC(info.st_size + 1);
         assert(result->extension != NULL);
         if (lseek(file->fd, 0, SEEK_SET) < 0)
@@ -426,8 +426,8 @@ struct p9stat *oid_stat(Worker *worker, u64 oid) {
     return result;
 }
 
-int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
-    u64 start = oid_dir_findstart(oid);
+int disk_wstat(Worker *worker, u64 oid, struct p9stat *info) {
+    u64 start = disk_dir_findstart(oid);
     struct objectdir *dir = NULL;
     char *filename, *newfilename;
     char *pathname, *newpathname;
@@ -473,7 +473,7 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     if (!emptystring(info->extension) &&
             (mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET)))
     {
-        Openfile *file = oid_get_openfile(worker, oid);
+        Openfile *file = disk_get_openfile(worker, oid);
         int len = strlen(info->extension);
         int failure = 0;
         unlock();
@@ -515,10 +515,10 @@ int oid_wstat(Worker *worker, u64 oid, struct p9stat *info) {
     return 0;
 }
 
-int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
+int disk_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
         char *gid, char *extension)
 {
-    u64 start = oid_dir_findstart(oid);
+    u64 start = disk_dir_findstart(oid);
     struct objectdir *dir;
     struct utimbuf buf;
     char *filename;
@@ -570,7 +570,7 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
         }
     }
     dir->filenames[oid - start] = filename;
-    oid_add_openfile(oid, fd);
+    disk_add_openfile(oid, fd);
 
     /* store metadata for special file types as file contents */
     if (!emptystring(extension) &&
@@ -590,7 +590,7 @@ int oid_create(Worker *worker, u64 oid, u32 mode, u32 ctime, char *uid,
     return length;
 }
 
-Openfile *oid_get_openfile(Worker *worker, u64 oid) {
+Openfile *disk_get_openfile(Worker *worker, u64 oid) {
     Openfile *file;
 
     /* first check the cache */
@@ -598,7 +598,7 @@ Openfile *oid_get_openfile(Worker *worker, u64 oid) {
 
     /* open the file if necessary */
     if (file == NULL) {
-        u64 start = oid_dir_findstart(oid);
+        u64 start = disk_dir_findstart(oid);
         struct objectdir *dir;
         char *filename;
         int fd;
@@ -609,7 +609,7 @@ Openfile *oid_get_openfile(Worker *worker, u64 oid) {
         {
             return NULL;
         }
-        file = oid_add_openfile(oid, fd);
+        file = disk_add_openfile(oid, fd);
     }
 
     assert(file->fd >= 0);
@@ -619,8 +619,8 @@ Openfile *oid_get_openfile(Worker *worker, u64 oid) {
     return file;
 }
 
-int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf) {
-    u64 start = oid_dir_findstart(oid);
+int disk_set_times(Worker *worker, u64 oid, struct utimbuf *buf) {
+    u64 start = disk_dir_findstart(oid);
     struct objectdir *dir;
     char *filename;
 
@@ -634,8 +634,8 @@ int oid_set_times(Worker *worker, u64 oid, struct utimbuf *buf) {
     return 0;
 }
 
-int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
-    struct p9stat *info = oid_stat(worker, oldoid);
+int disk_clone(Worker *worker, u64 oldoid, u64 newoid) {
+    struct p9stat *info = disk_stat(worker, oldoid);
     Openfile *new_fd, *old_fd;
     void *buff = GC_MALLOC_ATOMIC(CLONE_BUFFER_SIZE);
     int count;
@@ -643,7 +643,7 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
 
     assert(buff != NULL);
 
-    if (oid_create(worker, newoid, info->mode, info->mtime, info->uid,
+    if (disk_create(worker, newoid, info->mode, info->mtime, info->uid,
                 info->gid, info->extension) < 0)
     {
         return -1;
@@ -654,10 +654,10 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
         return 0;
 
     /* open both files and position at the start of the files */
-    if ((old_fd = oid_get_openfile(worker, oldoid)) == NULL)
+    if ((old_fd = disk_get_openfile(worker, oldoid)) == NULL)
         return -1;
     if (lseek(old_fd->fd, 0, SEEK_SET) < 0 ||
-            ((new_fd = oid_get_openfile(worker, newoid)) == NULL))
+            ((new_fd = disk_get_openfile(worker, newoid)) == NULL))
     {
         return -1;
     }
@@ -697,11 +697,11 @@ int oid_clone(Worker *worker, u64 oldoid, u64 newoid) {
     buf.actime = info->atime;
     buf.modtime = info->mtime;
 
-    return oid_set_times(worker, newoid, &buf);
+    return disk_set_times(worker, newoid, &buf);
 }
 
-int oid_delete(Worker *worker, u64 oid) {
-    u64 start = oid_dir_findstart(oid);
+int disk_delete(Worker *worker, u64 oid) {
+    u64 start = disk_dir_findstart(oid);
     struct objectdir *dir;
     char *filename;
 
@@ -720,15 +720,15 @@ int oid_delete(Worker *worker, u64 oid) {
     return 0;
 }
 
-int oid_write(Worker *worker, u64 oid, u32 time, u64 offset, u32 count,
+int disk_write(Worker *worker, u64 oid, u32 time, u64 offset, u32 count,
         u8 *data)
 {
     Openfile *file;
     struct utimbuf buf;
     int len;
 
-    file = oid_get_openfile(worker, oid);
-    if (fail == NULL)
+    file = disk_get_openfile(worker, oid);
+    if (file == NULL)
         return -ENOENT;
 
     if (lseek(file->fd, offset, SEEK_SET) < 0)
@@ -746,8 +746,35 @@ int oid_write(Worker *worker, u64 oid, u32 time, u64 offset, u32 count,
     /* set the mtime */
     buf.actime = time;
     buf.modtime = time;
-    if (oid_set_times(worker, oid, &buf) < 0)
+    if (disk_set_times(worker, oid, &buf) < 0)
         return -errno;
+
+    return len;
+}
+
+int disk_read(Worker *worker, u64 oid, u32 time, u64 offset, u32 count,
+        u8 *data)
+{
+    Openfile *file;
+    int len;
+
+    file = disk_get_openfile(worker, oid);
+    if (file == NULL)
+        return -ENOENT;
+
+    if (lseek(file->fd, offset, SEEK_SET) < 0)
+        return -errno;
+
+    unlock();
+    len = read(file->fd, data, count);
+    lock();
+
+    if (len < 0)
+        return -errno;
+
+    assert(count == (u32) len);
+
+    /* set the atime */
 
     return len;
 }

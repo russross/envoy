@@ -21,6 +21,7 @@ struct p9stat *object_stat(Worker *worker, Lease *lease, u64 oid,
         char *filename);
 void object_wstat(Worker *worker, u64 oid, struct p9stat *info);
 void object_delete(Worker *worker, u64 oid);
+void object_fetch(Worker *worker, Lease *lease, u64 oid, struct p9stat *info);
 
 void object_cache_validate(u64 oid, Lease *lease);
 void object_cache_invalidate(u64 oid);

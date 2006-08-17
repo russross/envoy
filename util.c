@@ -624,3 +624,46 @@ void raw_delete(void *raw) {
     }
     raw_buffer = cons(raw, raw_buffer);
 }
+
+int p9stat_cmp(const struct p9stat *a, const struct p9stat *b) {
+    int cmp;
+    if (a == b)
+        return 0;
+    if (a == NULL || b == NULL)
+        return a == NULL ? -1 : 1;
+    if (a->type != b->type)
+        return a->type - b->type;
+    if (a->dev != b->dev)
+        return a->dev - b->dev;
+    if (a->qid.type != b->qid.type)
+        return a->qid.type - b->qid.type;
+    if (a->qid.version != b->qid.version)
+        return a->qid.version - b->qid.version;
+    if (a->qid.path != b->qid.path)
+        return a->qid.path - b->qid.path;
+    if (a->mode != b->mode)
+        return a->mode - b->mode;
+    if (a->atime != b->atime)
+        return a->atime - b->atime;
+    if (a->mtime != b->mtime)
+        return a->mtime - b->mtime;
+    if (a->length != b->length)
+        return a->length - b->length;
+    if ((cmp = strcmp(a->name, b->name)) != 0)
+        return cmp;
+    if ((cmp = strcmp(a->uid, b->uid)) != 0)
+        return cmp;
+    if ((cmp = strcmp(a->gid, b->gid)) != 0)
+        return cmp;
+    if ((cmp = strcmp(a->muid, b->muid)) != 0)
+        return cmp;
+    if ((cmp = strcmp(a->extension, b->extension)) != 0)
+        return cmp;
+    if (a->n_uid != b->n_uid)
+        return a->n_uid - b->n_uid;
+    if (a->n_gid != b->n_gid)
+        return a->n_gid - b->n_gid;
+    if (a->n_muid != b->n_muid)
+        return a->n_muid - b->n_muid;
+    return 0;
+}

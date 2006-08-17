@@ -114,6 +114,69 @@ void send_requests(List *list) {
     }
 }
 
+void send_requests_streamed(List **queues, int n,
+        void (*f)(void *, Transaction *),
+        void *env)
+{
+    pthread_cond_t *cond;
+    int *outstanding;
+    int i;
+    int done = 0;
+
+    cond = cond_new();
+
+    outstanding = GC_MALLOC(sizeof(int) * n);
+    assert(outstanding != NULL);
+
+    for (i = 0; i < n; i++)
+        outstanding[i] = 0;
+
+    while (!done) {
+        done = 1;
+        for (i = 0; i < n; i++) {
+            /* check if any of the requests in this queue have finished */
+            int j = 0;
+            List *q = queues[i];
+            List *prev = NULL;
+            while (j < outstanding[i]) {
+                Transaction *trans = car(q);
+                if (trans->in == NULL) {
+                    prev = q;
+                    j++;
+                } else {
+                    trans->wait = NULL;
+                    outstanding[i]--;
+                    f(env, trans);
+
+                    if (null(prev))
+                        queues[i] = cdr(q);
+                    else
+                        setcdr(prev, cdr(q));
+                }
+                q = cdr(q);
+            }
+
+            /* now make sure this queue is saturated */
+            q = queues[i];
+            while (outstanding[i] < DISPATCH_STREAM_WINDOW_SIZE && !null(q)) {
+                Transaction *trans = car(q);
+                q = cdr(q);
+                if (trans->wait == NULL) {
+                    outstanding[i]++;
+                    assert(trans->conn->type == CONN_STORAGE_OUT);
+                    assert(trans->in == NULL);
+
+                    trans->wait = cond;
+                    trans_insert(trans);
+                    put_message(trans->conn, trans->out);
+                }
+            }
+            if (outstanding[i] > 0)
+                done = 0;
+        }
+    }
+}
+
 void send_reply(Transaction *trans) {
     assert(trans->conn->type == CONN_ENVOY_IN ||
            trans->conn->type == CONN_CLIENT_IN ||

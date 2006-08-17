@@ -14,7 +14,7 @@
 #include "config.h"
 #include "worker.h"
 #include "heap.h"
-#include "oid.h"
+#include "disk.h"
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
@@ -250,7 +250,7 @@ void lock_lease_exclusive(Worker *worker, Lease *lease) {
     while (lease->inflight > 0 && !null(cleanup)) {
         if (caar(cleanup) == (void *) LOCK_LEASE && cdar(cleanup) == lease) {
             lease->inflight--;
-            if (prev == NULL)
+            if (null(prev))
                 worker->cleanup = cdr(cleanup);
             else
                 setcdr(prev, cdr(cleanup));

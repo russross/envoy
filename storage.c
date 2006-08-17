@@ -2,8 +2,6 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <utime.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
@@ -17,7 +15,7 @@
 #include "storage.h"
 #include "dispatch.h"
 #include "worker.h"
-#include "oid.h"
+#include "disk.h"
 
 /* generate an error response with Unix errno errnum */
 static void rerror(Worker *w, Message *m, char *file, int line) {
@@ -51,7 +49,7 @@ static void rerror(Worker *w, Message *m, char *file, int line) {
 void handle_tsreserve(Worker *worker, Transaction *trans) {
     struct Rsreserve *res = &trans->out->msg.rsreserve;
 
-    failif(oid_reserve_block(&res->firstoid, &res->count), ENOMEM);
+    failif(disk_reserve_block(&res->firstoid, &res->count), ENOMEM);
 
     send_reply(trans);
 }
@@ -61,7 +59,7 @@ void handle_tscreate(Worker *worker, Transaction *trans) {
     struct Rscreate *res = &trans->out->msg.rscreate;
     int length;
 
-    length = oid_create(worker, req->oid, req->mode, req->time, req->uid,
+    length = disk_create(worker, req->oid, req->mode, req->time, req->uid,
             req->gid, req->extension);
     failif(length < 0, ENOMEM);
 
@@ -73,7 +71,7 @@ void handle_tscreate(Worker *worker, Transaction *trans) {
 void handle_tsclone(Worker *worker, Transaction *trans) {
     struct Tsclone *req = &trans->in->msg.tsclone;
 
-    failif(oid_clone(worker, req->oid, req->newoid) < 0, ENOENT);
+    failif(disk_clone(worker, req->oid, req->newoid) < 0, ENOENT);
 
     send_reply(trans);
 }
@@ -81,37 +79,26 @@ void handle_tsclone(Worker *worker, Transaction *trans) {
 void handle_tsread(Worker *worker, Transaction *trans) {
     struct Tsread *req = &trans->in->msg.tsread;
     struct Rsread *res = &trans->out->msg.rsread;
-    Openfile *file;
     int len;
-    /* struct utimbuf buf; */
 
     /* make sure the requested data is small enough to transmit */
     failif(req->count > trans->conn->maxSize - RSREAD_HEADER, EMSGSIZE);
-
-    /* get a handle to the open file */
-    failif((file = oid_get_openfile(worker, req->oid)) == NULL, ENOENT);
-
-    guard(lseek(file->fd, req->offset, SEEK_SET));
 
     /* use the raw message buffer */
     trans->out->raw = raw_new();
     res->data = trans->out->raw + RSREAD_DATA_OFFSET;
 
-    unlock();
-    len = read(file->fd, res->data, req->count);
-    lock();
+    len = disk_read(worker, req->oid, req->time, req->offset, req->count,
+            res->data);
 
     if (len < 0) {
         raw_delete(trans->out->raw);
         trans->out->raw = NULL;
     }
-    guard(len);
-    res->count = (u32) len;
 
-    /* set the atime */
-    /* buf.actime = req->atime;
-    buf.modtime = 0;
-    guard(oid_set_times(worker, req->oid, &buf)); */
+    failif(len < 0, -len);
+
+    res->count = (u32) len;
 
     send_reply(trans);
 }
@@ -121,7 +108,7 @@ void handle_tswrite(Worker *worker, Transaction *trans) {
     struct Rswrite *res = &trans->out->msg.rswrite;
     int len;
 
-    len = oid_write(worker, req->oid, req->time, req->offset, req->count,
+    len = disk_write(worker, req->oid, req->time, req->offset, req->count,
             req->data);
 
     raw_delete(trans->in->raw);
@@ -138,7 +125,7 @@ void handle_tsstat(Worker *worker, Transaction *trans) {
     struct Tsstat *req = &trans->in->msg.tsstat;
     struct Rsstat *res = &trans->out->msg.rsstat;
 
-    res->stat = oid_stat(worker, req->oid);
+    res->stat = disk_stat(worker, req->oid);
     failif(res->stat == NULL, ENOENT);
 
     send_reply(trans);
@@ -147,14 +134,14 @@ void handle_tsstat(Worker *worker, Transaction *trans) {
 void handle_tswstat(Worker *worker, Transaction *trans) {
     struct Tswstat *req = &trans->in->msg.tswstat;
 
-    failif(oid_wstat(worker, req->oid, req->stat) < 0, ENOENT);
+    failif(disk_wstat(worker, req->oid, req->stat) < 0, ENOENT);
 
     send_reply(trans);
 }
 
 void handle_tsdelete(Worker *worker, Transaction *trans) {
     struct Tsdelete *req = &trans->in->msg.tsdelete;
-    int res = oid_delete(worker, req->oid);
+    int res = disk_delete(worker, req->oid);
 
     failif(res < 0, -res);
 

@@ -247,8 +247,10 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
         dir_prime_claim_cache(worker, fid->claim, cons(elt, NULL), childpath);
         claim = claim_get_child(worker, fid->claim, elt->filename);
 
-        if (claim->info == NULL)
-            claim->info = object_stat(worker, claim->oid, elt->filename);
+        if (claim->info == NULL) {
+            claim->info =
+                object_stat(worker, claim->lease, claim->oid, elt->filename);
+        }
         info = claim->info;
 
         /* we don't want to hold locks on a bunch of claims */
@@ -267,8 +269,8 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
     u32 count = 0;
 
     if (fid->claim->info == NULL) {
-        fid->claim->info =
-            object_stat(worker, fid->claim->oid, filename(fid->pathname));
+        fid->claim->info = object_stat(worker, fid->claim->lease,
+                fid->claim->oid, filename(fid->pathname));
     }
     dirinfo = fid->claim->info;
 
@@ -331,8 +333,8 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
     struct p9stat *dirinfo;
 
     if (claim->info == NULL) {
-        claim->info =
-            object_stat(worker, claim->oid, filename(claim->pathname));
+        claim->info = object_stat(worker, claim->lease, claim->oid,
+                filename(claim->pathname));
     }
     dirinfo = claim->info;
 
@@ -406,7 +408,7 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
         }
 
         /* write the block */
-        assert(object_write(worker, claim->lease, claim->oid, now(),
+        assert(object_write(worker, claim->oid, now(),
                     offset, count, data, raw) == count);
         claim->info = NULL;
     }

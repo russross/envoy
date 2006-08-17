@@ -231,7 +231,7 @@ void claim_thaw(Worker *worker, Claim *claim) {
     if (claim->deleted) {
         if (claim->access == ACCESS_COW) {
             u64 newoid = object_reserve_oid(worker);
-            object_clone(worker, (Lease *) -1, claim->oid, newoid);
+            object_clone(worker, NULL, claim->oid, newoid);
             claim->oid = newoid;
         }
         return;

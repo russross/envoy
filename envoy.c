@@ -109,7 +109,8 @@ static void rerror(Message *m, u16 errnum, int line) {
 #define require_info(_ptr) do { \
     if ((_ptr)->info == NULL) { \
         (_ptr)->info = \
-            object_stat(worker, (_ptr)->oid, filename((_ptr)->pathname)); \
+            object_stat(worker, (_ptr)->lease, (_ptr)->oid, \
+                    filename((_ptr)->pathname)); \
     } \
 } while (0)
 
@@ -622,6 +623,10 @@ void handle_topen(Worker *worker, Transaction *trans) {
         fid->claim->info = NULL;
     }
 
+    /* fetch this file to the cache */
+    require_info(fid->claim);
+    object_fetch(worker, fid->claim->lease, fid->claim->oid, fid->claim->info);
+
     send_reply:
     send_reply(trans);
 }
@@ -788,7 +793,7 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         }
 
         /* get the qid */
-        info = object_stat(worker, oldoid, req->name);
+        info = object_stat(worker, fid->claim->lease, oldoid, req->name);
         qid = makeqid(info->mode, info->mtime, info->length, oldoid);
         newoid = oldoid;
         cow = 0;
@@ -1081,8 +1086,8 @@ void handle_twrite(Worker *worker, Transaction *trans) {
 
     raw = trans->in->raw;
     trans->in->raw = NULL;
-    res->count = object_write(worker, fid->claim->lease, fid->claim->oid,
-            now(), req->offset, req->count, req->data, raw);
+    res->count = object_write(worker, fid->claim->oid, now(),
+            req->offset, req->count, req->data, raw);
     fid->claim->info = NULL;
 
     send_reply:

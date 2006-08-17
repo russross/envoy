@@ -49,6 +49,7 @@ int u64_cmp(const u64 *a, const u64 *b);
 char *u32tostr(u32 n);
 int randInt(int range);
 u32 now(void);
+int p9stat_cmp(const struct p9stat *a, const struct p9stat *b);
 
 int isgroupmember(char *user, char *group);
 int isgroupleader(char *user, char *group);
