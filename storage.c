@@ -88,8 +88,10 @@ void handle_tsread(Worker *worker, Transaction *trans) {
     trans->out->raw = raw_new();
     res->data = trans->out->raw + RSREAD_DATA_OFFSET;
 
+    worker_cleanup_add(worker, LOCK_RAW, trans->out->raw);
     len = disk_read(worker, req->oid, req->time, req->offset, req->count,
             res->data);
+    worker_cleanup_remove(worker, LOCK_RAW, trans->out->raw);
 
     if (len < 0) {
         raw_delete(trans->out->raw);

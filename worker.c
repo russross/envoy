@@ -88,12 +88,12 @@ static void *worker_loop(Worker *t) {
             if (state == WORKER_BLOCKED) {
                 /* wait for the blocking transaction to finish,
                  * then start over */
-                if (DEBUG_VERBOSE)
-                    printf("WORKER_BLOCKED sleeping\n");
+                /*if (DEBUG_VERBOSE)
+                    printf("WORKER_BLOCKED sleeping\n");*/
                 worker_cleanup(t);
                 cond_wait(t->sleep);
-                if (DEBUG_VERBOSE)
-                    printf("WORKER_BLOCKED waking up\n");
+                /*if (DEBUG_VERBOSE)
+                    printf("WORKER_BLOCKED waking up\n");*/
                 worker_wake_up_next();
             } else if (state == WORKER_MULTISTEP) {
                 /* wait for the next step in this grant/revoke op to wake us up
@@ -122,10 +122,10 @@ static void *worker_loop(Worker *t) {
         if (!null(t->blocking)) {
             for ( ; !null(t->blocking); t->blocking = cdr(t->blocking))
                 heap_add(worker_ready_to_run, car(t->blocking));
-            worker_wake_up_next();
         }
 
         worker_active--;
+        worker_wake_up_next();
     }
 
     unlock();
@@ -201,6 +201,9 @@ void worker_cleanup(Worker *worker) {
                 {
                     fid_release_remote((u32) obj);
                 }
+                break;
+            case LOCK_RAW:
+                raw_delete((u8 *) obj);
                 break;
             default:
                 assert(0);

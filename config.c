@@ -15,7 +15,7 @@
 
 /* values that are configured at startup time */
 
-int GLOBAL_MAX_SIZE = 32799;
+int GLOBAL_MAX_SIZE = 1024 * 32 + TSWRITE_DATA_OFFSET + STORAGE_SLUSH + 1;
 int PORT;
 int isstorage;
 char *objectroot;
@@ -207,6 +207,7 @@ int config_envoy(int argc, char **argv) {
         fprintf(stderr, "No storage servers specified\n");
         return -1;
     }
+    /*
     if (objectroot == NULL) {
         char *home = getenv("HOME");
         struct stat info;
@@ -219,6 +220,7 @@ int config_envoy(int argc, char **argv) {
             return -1;
         }
     }
+    */
 
     return 0;
 }

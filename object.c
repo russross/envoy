@@ -30,22 +30,29 @@ static pthread_cond_t *object_reserve_wait;
 static Lru *object_cache_status;
 
 void object_cache_validate(u64 oid, Lease *lease) {
-    u64 *key = GC_NEW_ATOMIC(u64);
+    u64 *key;
+    if (objectroot == NULL)
+        return;
+    key = GC_NEW_ATOMIC(u64);
     assert(key != NULL);
     *key = oid;
     lru_add(object_cache_status, key, lease == NULL ? (Lease *) -1 : lease);
 }
 
 void object_cache_invalidate(u64 oid) {
+    if (objectroot == NULL)
+        return;
     lru_remove(object_cache_status, &oid);
 }
 
 void object_cache_invalidate_lease(Lease *lease) {
+    if (objectroot == NULL)
+        return;
     lru_remove_value(object_cache_status, lease == NULL ? (Lease *) -1 : lease);
 }
 
 int object_cache_isvalid(u64 oid) {
-    return lru_get(object_cache_status, &oid) != NULL;
+    return objectroot != NULL && lru_get(object_cache_status, &oid) != NULL;
 }
 
 static void send_request_to_all(Transaction *trans) {
@@ -124,9 +131,11 @@ struct qid object_create(Worker *worker, Lease *lease, u64 oid, u32 mode,
     int len;
 
     /* create it in the cache */
-    len = disk_create(worker, oid, mode, ctime, uid, gid, extension);
-    assert(len >= 0);
-    object_cache_validate(oid, lease);
+    if (objectroot != NULL) {
+        len = disk_create(worker, oid, mode, ctime, uid, gid, extension);
+        assert(len >= 0);
+        object_cache_validate(oid, lease);
+    }
 
     /* create it on the storage servers */
     trans->out->tag = ALLOCTAG;
@@ -249,8 +258,9 @@ struct p9stat *object_stat(Worker *worker, Lease *lease, u64 oid,
     res->stat->name = filename;
 
     /* check if we have a cache entry with matching stats */
-    if ((info = disk_stat(worker, oid)) != NULL) {
+    if (objectroot != NULL && (info = disk_stat(worker, oid)) != NULL) {
         info->name = filename;
+        info->atime = res->stat->atime;
 
         /* if it's up-to-date, note it as a valid entry */
         if (!p9stat_cmp(info, res->stat))
@@ -278,14 +288,15 @@ void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
 
 void object_delete(Worker *worker, u64 oid) {
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
-    int res;
 
     /* delete the cache entry if it exists */
-    res = disk_delete(worker, oid);
-    object_cache_invalidate(oid);
-    if (res < 0) {
-        /* no entry is okay for the cache */
-        assert(-res == ENOENT);
+    if (objectroot != NULL) {
+        int res = disk_delete(worker, oid);
+        object_cache_invalidate(oid);
+        if (res < 0) {
+            /* no entry is okay for the cache */
+            assert(-res == ENOENT);
+        }
     }
 
     trans->out->tag = ALLOCTAG;
@@ -338,7 +349,7 @@ void object_fetch(Worker *worker, Lease *lease, u64 oid, struct p9stat *info) {
     List **queues;
     struct object_fetch_env env;
 
-    if (object_cache_isvalid(oid))
+    if (objectroot == NULL || object_cache_isvalid(oid))
         return;
 
     /* delete any existing entry in the cache */
@@ -413,10 +424,14 @@ void object_state_init(void) {
     object_reserve_next = ~ (u64) 0;
     object_reserve_remaining = 0;
     object_reserve_wait = NULL;
-    object_cache_status = lru_new(
-            OBJECT_CACHE_STATE_SIZE,
-            (Hashfunc) u64_hash,
-            (Cmpfunc) u64_cmp,
-            NULL,
-            NULL);
+    if (objectroot == NULL) {
+        object_cache_status = NULL;
+    } else {
+        object_cache_status = lru_new(
+                OBJECT_CACHE_STATE_SIZE,
+                (Hashfunc) u64_hash,
+                (Cmpfunc) u64_cmp,
+                NULL,
+                NULL);
+    }
 }

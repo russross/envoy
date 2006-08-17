@@ -603,7 +603,13 @@ void dumpBytes(FILE *fp, char *prefix, u8 *buff, int size) {
 
 void dumpStat(FILE *fp, char *prefix, struct p9stat *stat) {
     char buff[80];
-    fprintf(fp, "%sname[%s] length[%lld]\n", prefix, stat->name, stat->length);
+    if (!DEBUG_PAYLOAD) {
+        fprintf(fp, " name[%s] length[%lld] mode[%04o]\n", stat->name,
+                stat->length, stat->mode);
+        return;
+    }
+    fprintf(fp, "\n%sname[%s] length[%lld]\n", prefix, stat->name,
+            stat->length);
     fprintf(fp, "%suid[%s] gid[%s] muid[%s]\n", prefix, stat->uid, stat->gid,
             stat->muid);
     fprintf(fp, "%sn_uid[%d] n_gid[%d] n_muid[%d]\n", prefix, stat->n_uid,
@@ -642,7 +648,7 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
             strcat(pre, "    ");
             for (n = 0; n < count; n++) {
                 stat = unpackStat(data, size, &i);
-                fprintf(fp, "%s%2d:\n", prefix, n);
+                fprintf(fp, "%s%2d:", prefix, n);
                 dumpStat(fp, pre, stat);
             }
         }

@@ -174,6 +174,9 @@ void send_requests_streamed(List **queues, int n,
             if (outstanding[i] > 0)
                 done = 0;
         }
+
+        if (!done)
+            cond_wait(cond);
     }
 }
 

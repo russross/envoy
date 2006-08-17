@@ -657,8 +657,15 @@ int p9stat_cmp(const struct p9stat *a, const struct p9stat *b) {
         return cmp;
     if ((cmp = strcmp(a->muid, b->muid)) != 0)
         return cmp;
-    if ((cmp = strcmp(a->extension, b->extension)) != 0)
-        return cmp;
+    if (!emptystring(a->extension) && !emptystring(b->extension)) {
+        if ((cmp = strcmp(a->extension, b->extension)) != 0)
+            return cmp;
+    } else {
+        if (!emptystring(a->extension))
+            return 1;
+        if (!emptystring(b->extension))
+            return 1;
+    }
     if (a->n_uid != b->n_uid)
         return a->n_uid - b->n_uid;
     if (a->n_gid != b->n_gid)

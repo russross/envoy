@@ -391,6 +391,7 @@ struct p9stat *disk_stat(Worker *worker, u64 oid) {
     result->gid = stringcopy(group);
     result->muid = result->uid;
     result->extension = NULL;
+
     /* for special files, read the contents of the file into extension */
     if (mode & (DMSYMLINK | DMDEVICE | DMNAMEDPIPE | DMSOCKET) &&
             info.st_size > 0 && info.st_size < MAX_EXTENSION_LENGTH)
@@ -771,8 +772,6 @@ int disk_read(Worker *worker, u64 oid, u32 time, u64 offset, u32 count,
 
     if (len < 0)
         return -errno;
-
-    assert(count == (u32) len);
 
     /* set the atime */
 

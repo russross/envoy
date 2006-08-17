@@ -430,7 +430,7 @@ let outputPrinter out m =
               fprintf out "m->msg.%s.%s.version,@ " msg name;
               fprintf out "m->msg.%s.%s.path);@]" msg name
           | FStat name ->
-              fprintf out "@,fprintf(fp, \" %s->\\n\");" name;
+              fprintf out "@,fprintf(fp, \" %s->\");" name;
               fprintf out "@,dumpStat(fp, \"    \", m->msg.%s.%s);" msg name;
               newline := true
           | FLease name

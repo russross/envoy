@@ -123,7 +123,8 @@ int main(int argc, char **argv) {
         my_address = get_my_address();
         worker_state_init();
         conn_init();
-        disk_state_init_envoy();
+        if (objectroot != NULL)
+            disk_state_init_envoy();
         lease_state_init();
         claim_state_init();
         walk_state_init();
