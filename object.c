@@ -212,6 +212,8 @@ u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
     struct Rswrite *res;
 
+    assert(raw != NULL);
+
     /* write to the cache if it exists */
     if (object_cache_isvalid(oid)) {
         int len = disk_write(worker, oid, mtime, offset, count, data);

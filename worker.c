@@ -65,8 +65,8 @@ static void *worker_loop(Worker *t) {
 
     lock();
 
-    /* threads seem to hold on to 8mb each even after they terminate,
-     * so we don't let threads expire */
+    /* let threads expire after a while so the thread pool can grow and shrink
+     * as needed without hard limits on the number of threads */
     for (i = 0; i < THREAD_LIFETIME; i++) {
         if (i > 0) {
             /* wait in the pool for a request */
@@ -77,6 +77,7 @@ static void *worker_loop(Worker *t) {
         t->priority = worker_next_priority++;
         if (!heap_isempty(worker_ready_to_run)) {
             /* wait for older threads that are ready to run */
+            worker_wake_up_next();
             heap_add(worker_ready_to_run, t);
             cond_wait(t->sleep);
         }
@@ -88,13 +89,9 @@ static void *worker_loop(Worker *t) {
             if (state == WORKER_BLOCKED) {
                 /* wait for the blocking transaction to finish,
                  * then start over */
-                /*if (DEBUG_VERBOSE)
-                    printf("WORKER_BLOCKED sleeping\n");*/
                 worker_cleanup(t);
-                cond_wait(t->sleep);
-                /*if (DEBUG_VERBOSE)
-                    printf("WORKER_BLOCKED waking up\n");*/
                 worker_wake_up_next();
+                cond_wait(t->sleep);
             } else if (state == WORKER_MULTISTEP) {
                 /* wait for the next step in this grant/revoke op to wake us up
                  * with more work to do */
@@ -103,6 +100,7 @@ static void *worker_loop(Worker *t) {
                 worker_cleanup(t);
                 t->func = NULL;
                 t->arg = NULL;
+                worker_wake_up_next();
                 while (t->func == NULL)
                     cond_wait(t->sleep);
                 if (DEBUG_VERBOSE)
@@ -112,7 +110,7 @@ static void *worker_loop(Worker *t) {
             }
         } while (state != WORKER_ZERO);
 
-        /* service the request */
+        /* process the request */
         if (t->func != NULL)
             t->func(t, t->arg);
         worker_cleanup(t);

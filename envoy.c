@@ -1085,9 +1085,10 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     }
 
     raw = trans->in->raw;
-    trans->in->raw = NULL;
+    assert(raw != NULL);
     res->count = object_write(worker, fid->claim->oid, now(),
             req->offset, req->count, req->data, raw);
+    trans->in->raw = NULL;
     fid->claim->info = NULL;
 
     send_reply:
@@ -1602,8 +1603,10 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
                 res->type = GRANT_END;
             else
                 res->type = GRANT_CONTINUE;
-            list_to_array(exits, &res->nexit, (void ***) &res->exit);
-            list_to_array(fids, &res->nfid, (void ***) &res->fid);
+            res->exit = (struct leaserecord **)
+                list_to_array(exits, &res->nexit);
+            res->fid = (struct fidrecord **)
+                list_to_array(fids, &res->nfid);
             break;
 
         case GRANT_END:

@@ -5,6 +5,7 @@
 #include "9p.h"
 #include "list.h"
 
+/*
 int null(List *list) {
     return list == NULL;
 }
@@ -59,6 +60,7 @@ void setcdr(List *list, void *cdr) {
 
     list->cdr = cdr;
 }
+*/
 
 List *append_elt(List *list, void *elt) {
     List *res = list;
@@ -151,24 +153,24 @@ List *removeinorder(Cmpfunc cmp, List *list, void *elt) {
     return list;
 }
 
-void list_to_array(List *from, u16 *len, void ***to) {
+void **list_to_array(List *from, u16 *len) {
     int i;
+    void **to;
 
     *len = length(from);
-    if (*len == 0) {
-        *to = NULL;
-        return;
-    }
+    if (*len == 0)
+        return NULL;
 
-    *to = GC_MALLOC(sizeof(void *) * *len);
-    assert(*to != NULL);
+    to = GC_MALLOC(sizeof(void *) * *len);
+    assert(to != NULL);
 
     for (i = 0; i < *len; i++) {
-        (*to)[i] = car(from);
+        to[i] = car(from);
         from = cdr(from);
     }
 
     assert(null(from));
+    return to;
 }
 
 List *array_to_list(u16 len, void **from) {

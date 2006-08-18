@@ -139,15 +139,25 @@ static u32 dir_pack_entries(List *entries, u8 *data) {
 
 /* prime the claim cache for all the entries in the list */
 static void dir_prime_claim_cache(Worker *worker, Claim *dir, List *entries,
-        char *target)
+        char *targetname)
 {
-    enum path_type type = get_admin_path_type(dir->pathname);
+    enum path_type type;
+
+    if (emptystring(targetname))
+        return;
+
+    type = get_admin_path_type(dir->pathname);
 
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
-        char *pathname = concatname(dir->pathname, elt->filename);
+        char *pathname;
         enum claim_access access;
         Claim *claim;
+
+        if (strcmp(targetname, elt->filename))
+            continue;
+
+        pathname = concatname(dir->pathname, elt->filename);
 
         /* does this file exit the lease? */
         if (lease_get_remote(pathname) != NULL)
@@ -155,8 +165,7 @@ static void dir_prime_claim_cache(Worker *worker, Claim *dir, List *entries,
 
         /* is it already in the cache? */
         if ((claim = claim_lookup_from_cache(dir->lease, pathname)) != NULL) {
-            if (target != NULL && !strcmp(claim->pathname, target))
-                reserve(worker, LOCK_CLAIM, claim);
+            reserve(worker, LOCK_CLAIM, claim);
             continue;
         }
 
@@ -168,10 +177,7 @@ static void dir_prime_claim_cache(Worker *worker, Claim *dir, List *entries,
         /* create the entry, but don't hold onto it */
         claim = claim_new(dir, elt->filename, access, elt->oid);
 
-        if (target == NULL || strcmp(target, claim->pathname))
-            claim_release(claim);
-        else
-            reserve(worker, LOCK_CLAIM, claim);
+        reserve(worker, LOCK_CLAIM, claim);
     }
 }
 
@@ -229,7 +235,7 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
         env->offset += BLOCK_SIZE;
 
         /* cache these entries */
-        dir_prime_claim_cache(worker, fid->claim, env->entries, NULL);
+        /*dir_prime_claim_cache(worker, fid->claim, env->entries, NULL);*/
     }
 
     /* get stats for the next entry */
@@ -244,7 +250,8 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
 
         /* make sure this can be found in cache, otherwise we get attempts
          * to search the directory and deadlock results */
-        dir_prime_claim_cache(worker, fid->claim, cons(elt, NULL), childpath);
+        dir_prime_claim_cache(worker, fid->claim, cons(elt, NULL),
+                elt->filename);
         claim = claim_get_child(worker, fid->claim, elt->filename);
 
         if (claim->info == NULL) {
@@ -323,7 +330,7 @@ enum dir_iter_action {
     DIR_CONTINUE,
 };
 
-static int dir_iter(Worker *worker, Claim *claim, char *target,
+static int dir_iter(Worker *worker, Claim *claim, char *targetname,
         enum dir_iter_action (f)(void *env, List *in, List **out, int extra),
         void *env)
 {
@@ -363,8 +370,8 @@ static int dir_iter(Worker *worker, Claim *claim, char *target,
             }
         }
 
-        /* add all local entries to the claim cache */
-        dir_prime_claim_cache(worker, claim, pre, target);
+        /* add target entry (if any) to the claim cache */
+        dir_prime_claim_cache(worker, claim, pre, targetname);
 
         /* process the files in this block */
         switch (f(env, pre, &post, stop)) {
@@ -507,7 +514,7 @@ struct dir_find_claim_env {
 static enum dir_iter_action dir_find_claim_iter(
         struct dir_find_claim_env *env, List *in, List **out, int extra)
 {
-    /* dir iter puts everything it sees in the cache, so all we have to do is
+    /* dir iter adds it to the cache for us, so all we have to do is
      * check if our target has arrived in the cache yet */
     env->claim = claim_lookup_from_cache(env->lease, env->pathname);
     if (env->claim == NULL)
@@ -524,7 +531,7 @@ Claim *dir_find_claim(Worker *worker, Claim *dir, char *name) {
     env.lease = dir->lease;
     env.claim = NULL;
 
-    result = dir_iter(worker, dir, env.pathname,
+    result = dir_iter(worker, dir, name,
             (enum dir_iter_action (*)(void *, List *, List **, int))
             dir_find_claim_iter,
             &env);

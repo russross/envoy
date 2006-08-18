@@ -249,8 +249,8 @@ void remote_grant(Worker *worker, Address *target, enum grant_type type,
     u16 nfid;
     struct fidrecord **fid;
 
-    list_to_array(exits, &nexit, (void ***) &exit);
-    list_to_array(fids, &nfid, (void ***) &fid);
+    exit = (struct leaserecord **) list_to_array(exits, &nexit);
+    fid = (struct fidrecord **) list_to_array(fids, &nfid);
 
     trans = trans_new(conn_get_envoy_out(worker, target), NULL, message_new());
     trans->out->tag = ALLOCTAG;

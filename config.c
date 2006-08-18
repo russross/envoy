@@ -108,7 +108,7 @@ int config_envoy(int argc, char **argv) {
         struct stat info;
         int i;
 
-        switch (getopt_long(argc, argv, "hr:s:p:d:m:", long_options, NULL)) {
+        switch (getopt_long(argc, argv, "hr:s:c:p:d:m:", long_options, NULL)) {
             case EOF:
                 finished = 1;
                 break;
