@@ -1,6 +1,9 @@
 #ifndef _LIST_H_
 #define _LIST_H_
 
+#include <assert.h>
+#include <gc/gc.h>
+#include <stdlib.h>
 #include "types.h"
 #include "9p.h"
 
