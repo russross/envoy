@@ -110,6 +110,27 @@ int length(List *list) {
     return len;
 }
 
+List *remove_elt(List *list, void *elt) {
+    List *res = NULL;
+    List *prev = NULL;
+
+    while (!null(list)) {
+        void *head = car(list);
+
+        list = cdr(list);
+        if (head == elt)
+            continue;
+        if (res == NULL)
+            res = prev = cons(head, NULL);
+        else {
+            setcdr(prev, cons(head, NULL));
+            prev = cdr(prev);
+        }
+    }
+
+    return res;
+}
+
 List *insertinorder(Cmpfunc cmp, List *list, void *elt) {
     List *prev = NULL;
     List *cur = list;

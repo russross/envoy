@@ -441,7 +441,7 @@ let outputPrinter out m =
               fprintf out "@,fprintf(fp, \"\\n\");";
               newline := true
           | FData (len, name) ->
-              fprintf out "@,fprintf(fp, \" %s[%%d]->\\n\", m->msg.%s.%s);"
+              fprintf out "@,fprintf(fp, \" %s[%%d]->\", m->msg.%s.%s);"
                   name msg len;
               fprintf out "@,dumpData(fp, \"    \", ";
               fprintf out "m->msg.%s.%s, m->msg.%s.%s);" msg name msg len;

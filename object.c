@@ -16,7 +16,6 @@
 #include "worker.h"
 #include "lru.h"
 #include "disk.h"
-#include "lease.h"
 
 /* Operations on storage objects.
  * These functions allow simple calls to the object storage service.  They
@@ -29,14 +28,14 @@ static u32 object_reserve_remaining;
 static pthread_cond_t *object_reserve_wait;
 static Lru *object_cache_status;
 
-void object_cache_validate(u64 oid, Lease *lease) {
+void object_cache_validate(u64 oid) {
     u64 *key;
     if (objectroot == NULL)
         return;
     key = GC_NEW_ATOMIC(u64);
     assert(key != NULL);
     *key = oid;
-    lru_add(object_cache_status, key, lease == NULL ? (Lease *) -1 : lease);
+    lru_add(object_cache_status, key, key);
 }
 
 void object_cache_invalidate(u64 oid) {
@@ -45,10 +44,10 @@ void object_cache_invalidate(u64 oid) {
     lru_remove(object_cache_status, &oid);
 }
 
-void object_cache_invalidate_lease(Lease *lease) {
+void object_cache_invalidate_all(void) {
     if (objectroot == NULL)
         return;
-    lru_remove_value(object_cache_status, lease == NULL ? (Lease *) -1 : lease);
+    lru_clear(object_cache_status);
 }
 
 int object_cache_isvalid(u64 oid) {
@@ -123,7 +122,7 @@ u64 object_reserve_oid(Worker *worker) {
     return object_reserve_next++;
 }
 
-struct qid object_create(Worker *worker, Lease *lease, u64 oid, u32 mode,
+struct qid object_create(Worker *worker, u64 oid, u32 mode,
         u32 ctime, char *uid, char *gid, char *extension)
 {
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
@@ -134,7 +133,7 @@ struct qid object_create(Worker *worker, Lease *lease, u64 oid, u32 mode,
     if (objectroot != NULL) {
         len = disk_create(worker, oid, mode, ctime, uid, gid, extension);
         assert(len >= 0);
-        object_cache_validate(oid, lease);
+        object_cache_validate(oid);
     }
 
     /* create it on the storage servers */
@@ -148,14 +147,14 @@ struct qid object_create(Worker *worker, Lease *lease, u64 oid, u32 mode,
     return res->qid;
 }
 
-void object_clone(Worker *worker, Lease *lease, u64 oid, u64 newoid) {
+void object_clone(Worker *worker, u64 oid, u64 newoid) {
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
 
     /* clone it locally if we have it in the cache */
     if (object_cache_isvalid(oid)) {
         int res = disk_clone(worker, oid, newoid);
         assert(res >= 0);
-        object_cache_validate(newoid, lease);
+        object_cache_validate(newoid);
     }
 
     trans->out->tag = ALLOCTAG;
@@ -231,11 +230,9 @@ u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
     return res->count;
 }
 
-struct p9stat *object_stat(Worker *worker, Lease *lease, u64 oid,
-        char *filename)
-{
-    int i = randInt(storage_server_count);
-    Transaction *trans = trans_new(storage_servers[i], NULL, message_new());
+struct p9stat *object_stat(Worker *worker, u64 oid, char *filename) {
+    int i;
+    Transaction *trans;
     struct Rsstat *res;
     struct p9stat *info;
 
@@ -245,6 +242,9 @@ struct p9stat *object_stat(Worker *worker, Lease *lease, u64 oid,
         info->name = filename;
         return info;
     }
+
+    i = randInt(storage_server_count);
+    trans = trans_new(storage_servers[i], NULL, message_new());
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSSTAT;
@@ -266,7 +266,7 @@ struct p9stat *object_stat(Worker *worker, Lease *lease, u64 oid,
 
         /* if it's up-to-date, note it as a valid entry */
         if (!p9stat_cmp(info, res->stat))
-            object_cache_validate(oid, lease);
+            object_cache_validate(oid);
     }
 
     return res->stat;
@@ -341,7 +341,7 @@ static void object_fetch_iter(struct object_fetch_env *env, Transaction *trans)
     env->wait = NULL;
 }
 
-void object_fetch(Worker *worker, Lease *lease, u64 oid, struct p9stat *info) {
+void object_fetch(Worker *worker, u64 oid, struct p9stat *info) {
     int res;
     u32 packetsize;
     u32 packetcount;
@@ -419,7 +419,7 @@ void object_fetch(Worker *worker, Lease *lease, u64 oid, struct p9stat *info) {
     if (disk_wstat(worker, oid, info) != 0)
         assert(0);
 
-    object_cache_validate(oid, lease);
+    object_cache_validate(oid);
 }
 
 void object_state_init(void) {

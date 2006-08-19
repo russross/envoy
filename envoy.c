@@ -109,8 +109,7 @@ static void rerror(Message *m, u16 errnum, int line) {
 #define require_info(_ptr) do { \
     if ((_ptr)->info == NULL) { \
         (_ptr)->info = \
-            object_stat(worker, (_ptr)->lease, (_ptr)->oid, \
-                    filename((_ptr)->pathname)); \
+            object_stat(worker, (_ptr)->oid, filename((_ptr)->pathname)); \
     } \
 } while (0)
 
@@ -625,7 +624,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
 
     /* fetch this file to the cache */
     require_info(fid->claim);
-    object_fetch(worker, fid->claim->lease, fid->claim->oid, fid->claim->info);
+    object_fetch(worker, fid->claim->oid, fid->claim->info);
 
     send_reply:
     send_reply(trans);
@@ -781,7 +780,7 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         /* create/update snapshot */
         if (snapshot == NULL) {
             u64 snapoid = object_reserve_oid(worker);
-            object_create(worker, fid->claim->lease, snapoid, DMSYMLINK | 0777,
+            object_create(worker, snapoid, DMSYMLINK | 0777,
                     now(), fid->user, dirinfo->gid, req->name);
             failif(dir_create_entry(worker, fid->claim, "snapshot",
                         snapoid, 0) < 0, EIO);
@@ -793,7 +792,7 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         }
 
         /* get the qid */
-        info = object_stat(worker, fid->claim->lease, oldoid, req->name);
+        info = object_stat(worker, oldoid, req->name);
         qid = makeqid(info->mode, info->mtime, info->length, oldoid);
         newoid = oldoid;
         cow = 0;
@@ -918,7 +917,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
 
     /* create the file */
     newoid = object_reserve_oid(worker);
-    qid = object_create(worker, fid->claim->lease, newoid, perm, now(),
+    qid = object_create(worker, newoid, perm, now(),
             fid->user, dirinfo->gid, req->extension);
 
     /* note: the client normally checks to make sure this doesn't exist
@@ -1578,8 +1577,6 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
     List *fids;
     Address *newaddr = address_new(req->newaddress, req->newport);
 
-    walk_flush();
-
     failif(lease == NULL, EIO);
     lock_lease_exclusive(worker, lease);
 
@@ -1588,6 +1585,10 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
     switch (req->type) {
         case GRANT_START:
             failif(lease->changeinprogress, EIO);
+
+            /* clear any cache references to this lease */
+            walk_flush();
+            object_cache_invalidate_all();
 
             /* gather the data to be transferred and freeze child leases */
             lease->changeexits =
@@ -1695,6 +1696,8 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
             failif(1, EINVAL);
     }
 
+    /* no need to invalidate the cache: this only adds to what we can cache */
+
     send_reply(trans);
 
     /* hold on to this lease until another tranaction comes in */
@@ -1780,6 +1783,9 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
     remote_revoke(worker, oldaddr, GRANT_END, req->path, newaddr,
             &revoketype, &root, &exits, &fids);
     failif(revoketype != GRANT_END, EINVAL);
+
+    /* no need to invalidate the cache: this either adds to a local lease or
+     * doesn't affect it at all, but it never reduces a lease */
 
     send_reply(trans);
 }

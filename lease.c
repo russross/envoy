@@ -12,6 +12,7 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
+#include "object.h"
 #include "remote.h"
 #include "worker.h"
 #include "lru.h"
@@ -677,7 +678,10 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     assert(claim->lease == lease);
 
     lock_lease_exclusive(worker, lease);
+
+    /* clear any cache references to this lease */
     walk_flush();
+    object_cache_invalidate_all();
 
     if (claim->access == ACCESS_COW)
         claim_thaw(worker, claim);

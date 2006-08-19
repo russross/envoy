@@ -75,6 +75,7 @@ List *append_elt(List *list, void *elt);
 List *append_list(List *a, List *b);
 List *reverse(List *list);
 int length(List *list);
+List *remove_elt(List *list, void *elt);
 
 /* these functions always call cmp with elt as the first arg */
 List *insertinorder(Cmpfunc cmp, List *list, void *elt);

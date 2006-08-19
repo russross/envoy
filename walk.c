@@ -31,8 +31,7 @@ Lru *walk_cache;
 #define require_info(_ptr) do { \
     if ((_ptr)->info == NULL) { \
         (_ptr)->info = \
-            object_stat(worker, (_ptr)->lease, (_ptr)->oid, \
-                    filename((_ptr)->pathname)); \
+            object_stat(worker, (_ptr)->oid, filename((_ptr)->pathname)); \
     } \
 } while (0)
 

@@ -639,6 +639,7 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
         unpackStat(data, size, &i);
     }
     if (DEBUG_PAYLOAD) {
+        fprintf(fp, "\n");
         if (i < 0)
             dumpBytes(fp, prefix, data, size);
         else {
@@ -654,10 +655,9 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
         }
     } else {
         if (i < 0 || count == 0) {
-            fprintf(fp, "%s[%d bytes of data]\n", prefix, size);
+            fprintf(fp, " [%d bytes of data]\n", size);
         } else {
-            fprintf(fp, "%s[%d stat records/%d bytes of data]\n", prefix, count,
-                    size);
+            fprintf(fp, " [%d stat records/%d bytes of data]\n", count, size);
         }
     }
 }

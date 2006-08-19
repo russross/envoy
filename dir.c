@@ -39,6 +39,8 @@ void dir_block_cache_set(Lease *lease, u64 oid, u32 blocknum, List *entries) {
     block->blocknum = blocknum;
     block->entries = entries;
 
+    assert(null(entries) || car(entries) != NULL);
+
     /* note: the lru_add must come first because it may clear an old value */
     lru_add(dir_cache, block, block);
     hash_set(lease->dir_cache, block, block);
@@ -114,12 +116,6 @@ static u32 dir_pack_entries(List *entries, u8 *data) {
      * so this list can go in the cache */
     while (!null(entries)) {
         struct direntry *elt = car(entries);
-        if (elt == NULL) {
-            assert(prev != NULL);
-            entries = cdr(entries);
-            setcdr(prev, entries);
-            continue;
-        }
 
         prev = entries;
         entries = cdr(entries);
@@ -254,10 +250,8 @@ static struct p9stat *dir_read_next(Worker *worker, Fid *fid,
                 elt->filename);
         claim = claim_get_child(worker, fid->claim, elt->filename);
 
-        if (claim->info == NULL) {
-            claim->info =
-                object_stat(worker, claim->lease, claim->oid, elt->filename);
-        }
+        if (claim->info == NULL)
+            claim->info = object_stat(worker, claim->oid, elt->filename);
         info = claim->info;
 
         /* we don't want to hold locks on a bunch of claims */
@@ -276,8 +270,8 @@ u32 dir_read(Worker *worker, Fid *fid, u32 size, u8 *data) {
     u32 count = 0;
 
     if (fid->claim->info == NULL) {
-        fid->claim->info = object_stat(worker, fid->claim->lease,
-                fid->claim->oid, filename(fid->pathname));
+        fid->claim->info =
+            object_stat(worker, fid->claim->oid, filename(fid->pathname));
     }
     dirinfo = fid->claim->info;
 
@@ -340,8 +334,8 @@ static int dir_iter(Worker *worker, Claim *claim, char *targetname,
     struct p9stat *dirinfo;
 
     if (claim->info == NULL) {
-        claim->info = object_stat(worker, claim->lease, claim->oid,
-                filename(claim->pathname));
+        claim->info =
+            object_stat(worker, claim->oid, filename(claim->pathname));
     }
     dirinfo = claim->info;
 
@@ -349,7 +343,7 @@ static int dir_iter(Worker *worker, Claim *claim, char *targetname,
         u32 count;
         u8 *data;
         List *pre = NULL;
-        List *post = NULL;
+        List *post = (List *) 1;
         void *raw;
 
         if ((u64) num * BLOCK_SIZE >= dirinfo->length) {
@@ -382,7 +376,7 @@ static int dir_iter(Worker *worker, Claim *claim, char *targetname,
                 /* fall through */
             case DIR_CONTINUE:
                 /* store any requested changes */
-                if (!null(post))
+                if (post != (List *) 1)
                     changes = cons(cons((void *) num, post), changes);
                 break;
             default:
@@ -399,9 +393,6 @@ static int dir_iter(Worker *worker, Claim *claim, char *targetname,
         u32 count;
         u64 offset;
 
-        /* clear any deleted entries from the head of the list */
-        while (!null(entries) && car(entries) == NULL)
-            entries = cdr(entries);
         count = dir_pack_entries(entries, data);
         dir_block_cache_set(claim->lease, claim->oid, num, entries);
 
@@ -484,8 +475,7 @@ static enum dir_iter_action dir_remove_entry_iter(
         struct direntry *elt = car(entries);
         if (!strcmp(elt->filename, env)) {
             /* delete the entry */
-            setcar(entries, NULL);
-            *out = in;
+            *out = remove_elt(in, elt);
 
             return DIR_STOP;
         }
@@ -588,15 +578,13 @@ static enum dir_iter_action dir_rename_iter(
         struct direntry *elt = car(entries);
         if (!strcmp(elt->filename, env->newentry->filename)) {
             /* the new name already exists */
-            setcar(entries, NULL);
-            *out = in;
+            *out = remove_elt(in, elt);
 
             /* note how much space we opened up */
             deleted_offset += DIR_END_OFFSET + strlen(elt->filename);
         } else if (!strcmp(elt->filename, env->oldname)) {
             /* delete the old entry */
-            setcar(entries, NULL);
-            *out = in;
+            *out = remove_elt(in, elt);
 
             /* note how much space we opened up */
             deleted_offset += DIR_END_OFFSET + strlen(elt->filename);
