@@ -571,6 +571,7 @@ static enum dir_iter_action dir_rename_iter(
         struct dir_rename_env *env, List *in, List **out, int extra)
 {
     List *entries = in;
+    List *changed = in;
     u32 offset = sizeof(u16);
     u32 deleted_offset = 0;
 
@@ -578,13 +579,15 @@ static enum dir_iter_action dir_rename_iter(
         struct direntry *elt = car(entries);
         if (!strcmp(elt->filename, env->newentry->filename)) {
             /* the new name already exists */
-            *out = remove_elt(in, elt);
+            changed = remove_elt(changed, elt);
+            *out = changed;
 
             /* note how much space we opened up */
             deleted_offset += DIR_END_OFFSET + strlen(elt->filename);
         } else if (!strcmp(elt->filename, env->oldname)) {
             /* delete the old entry */
-            *out = remove_elt(in, elt);
+            changed = remove_elt(changed, elt);
+            *out = changed;
 
             /* note how much space we opened up */
             deleted_offset += DIR_END_OFFSET + strlen(elt->filename);
@@ -606,7 +609,8 @@ static enum dir_iter_action dir_rename_iter(
         env->added = 1;
         /* note: newentry may be updated later (when we find oid and cow) but
          * that's okay--the block pack doesn't happen until the end */
-        *out = cons(env->newentry, in);
+        changed = cons(env->newentry, changed);
+        *out = changed;
     }
 
     if (env->removed && env->added)
