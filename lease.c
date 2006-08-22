@@ -28,6 +28,10 @@ static int lease_cmp(const Lease *a, const Lease *b) {
     return strcmp(a->pathname, b->pathname);
 }
 
+static int lease_key_cmp(const char *key, const Lease *elt) {
+    return strcmp(key, elt->pathname);
+}
+
 Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
         int readonly)
 {
@@ -182,7 +186,8 @@ Lease *lease_find_root(char *pathname) {
 }
 
 int lease_is_exit_point_parent(Lease *lease, char *pathname) {
-    return findinorder((Cmpfunc) lease_cmp, lease->wavefront, pathname) != NULL;
+    return findinorder((Cmpfunc) lease_key_cmp,
+            lease->wavefront, pathname) != NULL;
 }
 
 void lease_add(Lease *lease) {

@@ -226,6 +226,7 @@ static void walk_local(Worker *worker, Transaction *trans,
         } else {
             /* walk to the next child */
             Claim *child = claim_get_child(worker, env->claim, name);
+            enum path_type parenttype = get_admin_path_type(env->pathname);
 
             if (child != NULL) {
                 require_info(child);
@@ -256,6 +257,35 @@ static void walk_local(Worker *worker, Transaction *trans,
                 env->nextaddr = lease->addr;
                 env->result = WALK_PARTIAL;
                 return;
+            }
+
+            /* check if this is a remote attach and should trigger a grant:
+             * 1) it's an attach request
+             * 2) it's remote
+             * 3) we are the root (implied by the others)
+             * 4) we just crossed into the image
+             * 5) the image has no fids or descendent leases */
+            if (env->isattach && env->newrfid == NOFID &&
+                    parenttype == PATH_ADMIN &&
+                    get_admin_path_type(env->pathname) != PATH_ADMIN)
+            {
+                /* if there are no active fids, grant a lease to the remote
+                 * envoy and start the request over */
+                if (null(env->claim->children) && null(env->claim->fids)) {
+                    Lease *lease = env->claim->lease;
+
+                    if (DEBUG_VERBOSE) {
+                        printf("lease split for attach: %s to %s\n",
+                                env->pathname,
+                                addr_to_string(trans->conn->addr));
+                    }
+
+                    worker_cleanup(worker);
+                    lease_split(worker, lease, env->pathname,
+                            trans->conn->addr);
+                    worker_retry(worker);
+                    assert(0);
+                }
             }
         }
     }

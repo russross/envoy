@@ -115,10 +115,11 @@ void claim_delete(Claim *claim) {
 
 void claim_clear_descendents(Claim *claim) {
     List *allclaims = hash_tolist(claim->lease->claim_cache);
+    char *prefix = claim->pathname;
 
     for ( ; !null(allclaims); allclaims = cdr(allclaims)) {
         Claim *elt = car(allclaims);
-        if (ispathprefix(elt->pathname, claim->pathname)) {
+        if (ispathprefix(elt->pathname, prefix)) {
             assert(null(elt->fids));
             claim_remove_from_cache(elt);
             if (elt->parent != NULL)
