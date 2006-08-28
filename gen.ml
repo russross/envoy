@@ -432,7 +432,6 @@ let outputPrinter out m =
           | FStat name ->
               fprintf out "@,fprintf(fp, \" %s->\");" name;
               fprintf out "@,dumpStat(fp, \"    \", m->msg.%s.%s);" msg name;
-              newline := true
           | FLease name
           | FFid name ->
               fprintf out "@,fprintf(fp, \"\\n        %s\");" name;
@@ -445,26 +444,33 @@ let outputPrinter out m =
                   name msg len;
               fprintf out "@,dumpData(fp, \"    \", ";
               fprintf out "m->msg.%s.%s, m->msg.%s.%s);" msg name msg len;
-              newline := true
           | FStringlist (len, name) ->
-              fprintf out "@,fprintf(fp, \" %s * %%d:\", " name;
+              fprintf out "@,fprintf(fp, \" %s * %%d: [\", " name;
               fprintf out "(u32) m->msg.%s.%s);" msg len;
-              fprintf out "@,@[<v 4>for (i = 0; i < (int) m->msg.%s.%s; i++)"
+              fprintf out "@,@[<v 4>for (i = 0; i < (int) m->msg.%s.%s; i++) {"
                   msg len;
-              fprintf out "@,fprintf(fp, \"\\n    ";
-              fprintf out "%%2d: %s[%%s]\", i, " name;
-              fprintf out "m->msg.%s.%s[i]);@]" msg name
+              fprintf out "@,fprintf(fp, \"%%s%%s\",";
+              fprintf out " @[<hv>i == 0 ? \"\" : \"/\",@ ";
+              fprintf out "m->msg.%s.%s[i]);@]@]@,}" msg name;
+              fprintf out "@,fprintf(fp, \"]\");"
           | FQidlist (len, name) ->
               fprintf out "@,fprintf(fp, \" %s * %%d:\", " name;
               fprintf out "(u32) m->msg.%s.%s);" msg len;
-              fprintf out "@,@[<v 4>for (i = 0; i < (int) m->msg.%s.%s; i++)"
+              fprintf out "@,@[<v 4>if (m->msg.%s.%s == 1) {" msg len;
+              fprintf out "@,fprintf(fp, @[<hv>\" ";
+              fprintf out "%s[$%%x,$%%x,$%%llx]\",@ " name;
+              fprintf out "(u32) m->msg.%s.%s[i].type,@ " msg name;
+              fprintf out "m->msg.%s.%s[i].version,@ " msg name;
+              fprintf out "m->msg.%s.%s[i].path);@]" msg name;
+              fprintf out "@]@,@[<v 4>} else {";
+              fprintf out "@,@[<v 4>for (i = 0; i < (int) m->msg.%s.%s; i++) {"
                   msg len;
               fprintf out "@,fprintf(fp, @[<hv>\"\\n    ";
               fprintf out "%%2d: %s[$%%x,$%%x,$%%llx]\", i,@ " name;
               fprintf out "(u32) m->msg.%s.%s[i].type,@ " msg name;
               fprintf out "m->msg.%s.%s[i].version,@ " msg name;
               fprintf out "m->msg.%s.%s[i].path);@]" msg name;
-              fprintf out "@]"
+              fprintf out "@]@,}@]@,}";
           | FInt4list (len, name)
           | FInt8list (len, name) ->
               fprintf out "@,fprintf(fp, \" %s * %%d:\", " name;

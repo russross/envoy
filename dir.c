@@ -72,6 +72,7 @@ struct dir_block *dir_block_cache_lookup(u64 oid, u32 blocknum) {
 static List *dir_unpack_entries(u32 count, u8 *data) {
     int size = (int) count;
     int offset;
+    int cowoffset;
     u16 end;
     struct direntry *elt;
     List *result = NULL;
@@ -90,8 +91,16 @@ static List *dir_unpack_entries(u32 count, u8 *data) {
         assert(elt != NULL);
         elt->offset = offset;
         elt->oid = unpackU64(data, size, &offset);
+
+        /* CoW flag is the high bit of the string length field */
         elt->cow = unpackU8(data, size, &offset);
+        cowoffset = --offset;
+        if (cowoffset >= 0)
+            data[cowoffset] = elt->cow & 0x7f;
         elt->filename = unpackString(data, size, &offset);
+        if (cowoffset >= 0)
+            data[cowoffset] = elt->cow;
+        elt->cow = (elt->cow & 0x80) ? 1 : 0;
 
         if (offset < 0)
             return NULL;
@@ -106,6 +115,7 @@ static List *dir_unpack_entries(u32 count, u8 *data) {
 
 static u32 dir_pack_entries(List *entries, u8 *data) {
     int i = 0;
+    int cowi;
     int start = 0;
     List *prev = NULL;
 
@@ -124,8 +134,10 @@ static u32 dir_pack_entries(List *entries, u8 *data) {
         elt->offset = (u32) i;
 
         packU64(data, &i, elt->oid);
-        packU8(data, &i, elt->cow);
+        cowi = i;
         packString(data, &i, elt->filename);
+        if (elt->cow)
+            data[cowi] |= 0x80;
     }
 
     /* pack the end-of-data offset at the beginning of the block */
@@ -184,7 +196,7 @@ void dir_clone(u32 count, u8 *data) {
     for ( ; !null(entries); entries = cdr(entries)) {
         struct direntry *elt = car(entries);
         if (!elt->cow)
-            data[elt->offset + DIR_COW_OFFSET] = 1;
+            data[elt->offset + DIR_COW_OFFSET] |= 0x80;
     }
 }
 

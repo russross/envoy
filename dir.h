@@ -11,7 +11,7 @@
 #include "lease.h"
 
 #define DIR_COW_OFFSET 8
-#define DIR_END_OFFSET 11
+#define DIR_END_OFFSET 10
 
 struct direntry {
     u32 offset;

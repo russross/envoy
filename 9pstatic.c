@@ -596,15 +596,18 @@ void dumpBytes(FILE *fp, char *prefix, u8 *buff, int size) {
                 ch[j + j / 8] = ' ';
             }
         }
-        if (i % 16 == 15 || i + 1 == size)
-            fprintf(fp, "[%s]\n", ch);
+        if (i % 16 == 15 || i + 1 == size) {
+            fprintf(fp, "[%s]", ch);
+            if (i + 1 < size)
+                fprintf(fp, "\n");
+        }
     }
 }
 
 void dumpStat(FILE *fp, char *prefix, struct p9stat *stat) {
     char buff[80];
     if (!DEBUG_PAYLOAD) {
-        fprintf(fp, " name[%s] length[%lld] mode[%04o]\n", stat->name,
+        fprintf(fp, " name[%s] length[%lld] mode[%04o]", stat->name,
                 stat->length, stat->mode);
         return;
     }
@@ -626,7 +629,7 @@ void dumpStat(FILE *fp, char *prefix, struct p9stat *stat) {
             (u32) stat->type, stat->dev);
     fprintf(fp, "%sqid: { type[$%x] version[$%x] path[$%llx] }\n", prefix,
             (u32) stat->qid.type, stat->qid.version, stat->qid.path);
-    fprintf(fp, "%sextension[%s]\n", prefix, stat->extension);
+    fprintf(fp, "%sextension[%s]", prefix, stat->extension);
 }
 
 void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
@@ -638,7 +641,7 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
         count++;
         unpackStat(data, size, &i);
     }
-    if (DEBUG_PAYLOAD) {
+    if (DEBUG_PAYLOAD && size > 0) {
         fprintf(fp, "\n");
         if (i < 0)
             dumpBytes(fp, prefix, data, size);
@@ -655,9 +658,9 @@ void dumpData(FILE *fp, char *prefix, u8 *data, int size) {
         }
     } else {
         if (i < 0 || count == 0) {
-            fprintf(fp, " [%d bytes of data]\n", size);
+            fprintf(fp, " [%d bytes of data]", size);
         } else {
-            fprintf(fp, " [%d stat records/%d bytes of data]\n", count, size);
+            fprintf(fp, " [%d stat records/%d bytes of data]", count, size);
         }
     }
 }
