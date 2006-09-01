@@ -65,6 +65,13 @@ static void *worker_loop(Worker *t) {
 
     lock();
 
+    if (!heap_isempty(worker_ready_to_run)) {
+        /* wait for older threads that are ready to run */
+        worker_wake_up_next();
+        heap_add(worker_ready_to_run, t);
+        cond_wait(t->sleep);
+    }
+
     /* let threads expire after a while so the thread pool can grow and shrink
      * as needed without hard limits on the number of threads */
     for (i = 0; i < THREAD_LIFETIME; i++) {
@@ -74,13 +81,6 @@ static void *worker_loop(Worker *t) {
             cond_wait(t->sleep);
         }
         worker_active++;
-        t->priority = worker_next_priority++;
-        if (!heap_isempty(worker_ready_to_run)) {
-            /* wait for older threads that are ready to run */
-            worker_wake_up_next();
-            heap_add(worker_ready_to_run, t);
-            cond_wait(t->sleep);
-        }
 
         /* initialize the exception handler and catch exceptions */
         do {
@@ -141,7 +141,7 @@ void worker_create(void (*func)(Worker *, void *), void *arg) {
 
         t->func = func;
         t->arg = arg;
-        t->priority = ~(u32) 0;
+        t->priority = worker_next_priority++;
         t->blocking = NULL;
 
         pthread_attr_init(&attr);
@@ -155,10 +155,16 @@ void worker_create(void (*func)(Worker *, void *), void *arg) {
 
         t->func = func;
         t->arg = arg;
-        t->priority = ~(u32) 0;
+        t->priority = worker_next_priority++;
         t->blocking = NULL;
 
-        cond_signal(t->sleep);
+        if (!heap_isempty(worker_ready_to_run)) {
+            /* wait for older threads that are ready to run */
+            worker_wake_up_next();
+            heap_add(worker_ready_to_run, t);
+        } else {
+            cond_signal(t->sleep);
+        }
     }
 }
 
