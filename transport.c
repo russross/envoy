@@ -263,6 +263,7 @@ static Message *handle_socket_event(Connection **from) {
 void transport_init() {
     int fd;
     struct linger ling;
+    struct sockaddr_in listenaddr;
 
     /* set up the transport state */
     handles_listen = handles_new();
@@ -279,10 +280,13 @@ void transport_init() {
 
     /* initialize a listening port */
     assert(my_address != NULL);
+    listenaddr.sin_family = AF_INET;
+    listenaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    listenaddr.sin_port = htons(my_address->port);
 
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     assert(fd >= 0);
-    assert(bind(fd, (struct sockaddr *) addr_to_netaddr(my_address),
+    assert(bind(fd, (struct sockaddr *) &listenaddr,
                 sizeof(struct sockaddr_in)) == 0);
     assert(listen(fd, 5) == 0);
     if (DEBUG_VERBOSE)

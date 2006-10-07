@@ -1214,8 +1214,8 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     cleanup:
     /* note: this is a bug in the client driver: it expects the fid to survive
-     * if the remove fails */
-    failif(errnum != 0, errnum);
+     * if the remove fails -- fixed in kernel 2.6.18 */
+    /* failif(errnum != 0, errnum); */
 
     fid_remove(worker, trans->conn, req->fid);
 

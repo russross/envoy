@@ -457,6 +457,7 @@ let outputPrinter out m =
               fprintf out "@,fprintf(fp, \" %s * %%d:\", " name;
               fprintf out "(u32) m->msg.%s.%s);" msg len;
               fprintf out "@,@[<v 4>if (m->msg.%s.%s == 1) {" msg len;
+              fprintf out "@,i = 0;";
               fprintf out "@,fprintf(fp, @[<hv>\" ";
               fprintf out "%s[$%%x,$%%x,$%%llx]\",@ " name;
               fprintf out "(u32) m->msg.%s.%s[i].type,@ " msg name;
