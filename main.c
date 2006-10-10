@@ -75,6 +75,28 @@ void test_oid(void) {
     printf("first available: %llx\n", disk_find_next_available());
 }
 
+void make_daemon(void) {
+    pid_t pid, sid;
+    pid = fork();
+    if (pid < 0)
+        exit(-1);
+    else if (pid > 0)
+        exit(0);
+
+    umask(0022);
+
+    sid = setsid();
+    if (sid < 0)
+        exit(-1);
+
+    if (chdir("/") < 0)
+        exit(-1);
+
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+}
+
 int main(int argc, char **argv) {
     char *name;
 
@@ -95,6 +117,8 @@ int main(int argc, char **argv) {
         isstorage = 1;
         if (config_storage(argc, argv) < 0)
             return -1;
+        if (!DEBUG)
+            make_daemon();
         if (DEBUG_VERBOSE) {
             printf("starting storage server with root path:\n    [%s]\n",
                     objectroot);
@@ -111,6 +135,8 @@ int main(int argc, char **argv) {
         isstorage = 0;
         if (config_envoy(argc, argv) < 0)
             return -1;
+        if (!DEBUG)
+            make_daemon();
         if (DEBUG_VERBOSE) {
             if (root_address == NULL) {
                 printf("starting envoy server: root oid = [%llu]\n", root_oid);

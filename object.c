@@ -347,6 +347,7 @@ void object_fetch(Worker *worker, u64 oid, struct p9stat *info) {
     u32 packetcount;
     u64 offset;
     int i;
+    int start;
     u32 time = now();
     List **queues;
     struct object_fetch_env env;
@@ -384,13 +385,16 @@ void object_fetch(Worker *worker, u64 oid, struct p9stat *info) {
 
     i = 0;
     offset = 0;
+    start = randInt(storage_server_count);
 
     /* create read requests in contiguous chunks for each server */
     while (offset < info->length) {
         u64 size = info->length - offset;
         if (size > packetsize)
             size = packetsize;
-        Transaction *trans = trans_new(storage_servers[i], NULL, message_new());
+        Transaction *trans = trans_new(
+                storage_servers[(i + start) % storage_server_count],
+                NULL, message_new());
         trans->out->tag = ALLOCTAG;
         trans->out->id = TSREAD;
         set_tsread(trans->out, oid, time, offset, (u32) size);

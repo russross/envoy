@@ -132,6 +132,7 @@ void send_requests_streamed(List **queues, int n,
         outstanding[i] = 0;
 
     while (!done) {
+        restart:
         done = 1;
         for (i = 0; i < n; i++) {
             /* check if any of the requests in this queue have finished */
@@ -143,6 +144,7 @@ void send_requests_streamed(List **queues, int n,
                 if (trans->in == NULL) {
                     prev = q;
                     j++;
+                    q = cdr(q);
                 } else {
                     trans->wait = NULL;
                     outstanding[i]--;
@@ -152,8 +154,9 @@ void send_requests_streamed(List **queues, int n,
                         queues[i] = cdr(q);
                     else
                         setcdr(prev, cdr(q));
+
+                    goto restart;
                 }
-                q = cdr(q);
             }
 
             /* now make sure this queue is saturated */

@@ -44,6 +44,7 @@ extern int PORT;
 
 extern Address *my_address;
 
+extern int DEBUG;
 extern int DEBUG_VERBOSE;
 extern int DEBUG_STORAGE;
 extern int DEBUG_PAYLOAD;

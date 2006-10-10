@@ -24,6 +24,7 @@ Address *root_address;
 int storage_server_count;
 Connection **storage_servers;
 Address **storage_addresses;
+int DEBUG = 0;
 int DEBUG_VERBOSE = 0;
 int DEBUG_AUDIT = 0;
 int DEBUG_STORAGE = 0;
@@ -176,6 +177,7 @@ int config_envoy(int argc, char **argv) {
                 }
                 break;
             case 'd':
+                DEBUG = 1;
                 for (i = 0; optarg[i]; i++) {
                     switch (optarg[i]) {
                         case 'c':       DEBUG_CLIENT = 1;               break;
@@ -286,6 +288,7 @@ int config_storage(int argc, char **argv) {
                 }
                 break;
             case 'd':
+                DEBUG = 1;
                 for (i = 0; optarg[i]; i++) {
                     switch (optarg[i]) {
                         case 's':       DEBUG_STORAGE = 1;              break;
