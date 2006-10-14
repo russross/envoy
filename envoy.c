@@ -1562,7 +1562,8 @@ void envoy_terenametree(Worker *worker, Transaction *trans) {
 
 void envoy_tesetaddress(Worker *worker, Transaction *trans) {
     struct Tesetaddress *req = &trans->in->msg.tesetaddress;
-    Address *addr = address_new(req->address, req->port);
+    /* Address *addr = address_new(req->address, req->port); */
+    Address *addr = address_new(trans->conn->addr->ip, req->port);
 
     conn_set_addr_envoy_in(trans->conn, addr);
 

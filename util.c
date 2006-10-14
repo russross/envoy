@@ -313,8 +313,9 @@ Address *make_address(char *host, int port) {
     assert(ent != NULL);
     assert(ent->h_addrtype == AF_INET && ent->h_length == 4);
     assert(ent->h_addr_list[0] != NULL);
-    if (ent->h_addr_list[1] != NULL)
-        fprintf(stderr, "warning: multiple ip addresses, using the first\n");
+
+    /* we don't handle multiple ip addresses yet */
+    assert(ent->h_addr_list[1] == NULL);
 
     addr->ip = ntohl(((struct in_addr *) ent->h_addr_list[0])->s_addr);
     addr->port = port;
