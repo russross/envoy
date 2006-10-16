@@ -65,7 +65,7 @@ void send_request(Transaction *trans) {
     trans->wait = NULL;
 }
 
-void send_requests(List *list) {
+void send_requests(List *list, void (*callback)(void *), void *env) {
     Transaction *trans;
     List *ptr;
     pthread_cond_t *cond;
@@ -87,15 +87,17 @@ void send_requests(List *list) {
         put_message(trans->conn, trans->out);
     }
 
+    if (callback != NULL)
+        callback(env);
+    else
+        cond_wait(cond);
+
     /* We'll wake up every time a response comes in.  Since we may get
      * signalled multiple times before we are scheduled, we have to walk
      * the list to see if we have gathered all the responses. */
 
     done = 0;
     while (!done) {
-        /* wait for at least one response */
-        cond_wait(cond);
-
         /* check if we need to wait any longer */
         done = 1;
         for (ptr = list; !null(ptr); ptr = cdr(ptr)) {
@@ -105,6 +107,10 @@ void send_requests(List *list) {
                 break;
             }
         }
+
+        /* wait for at least one response */
+        if (!done)
+            cond_wait(cond);
     }
 
     /* clear the wait fields */

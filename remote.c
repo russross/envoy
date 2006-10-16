@@ -112,7 +112,7 @@ List *remote_snapshot(Worker *worker, List *targets) {
     }
 
     /* wait for all transactions to complete */
-    send_requests(requests);
+    send_requests(requests, NULL, NULL);
 
     /* build a (forward) list of new oids */
     for ( ; !null(requests); requests = cdr(requests)) {
@@ -156,7 +156,7 @@ void remote_grant_exits(Worker *worker, List *targets, Address *addr,
     }
 
     /* wait for all transactions to complete */
-    send_requests(requests);
+    send_requests(requests, NULL, NULL);
 
     /* make sure they all succeeded */
     for ( ; !null(requests); requests = cdr(requests)) {
@@ -206,7 +206,7 @@ void remote_migrate(Worker *worker, List *groups) {
     }
 
     /* wait for all transactions to complete */
-    send_requests(requests);
+    send_requests(requests, NULL, NULL);
 
     /* make sure they all succeeded */
     for ( ; !null(requests); requests = cdr(requests)) {
@@ -339,7 +339,7 @@ void remote_renametree(Worker *worker, char *oldpath, char *newpath,
     }
 
     /* wait for all transactions to complete */
-    send_requests(requests);
+    send_requests(requests, NULL, NULL);
 
     /* make sure they all succeeded */
     for ( ; !null(requests); requests = cdr(requests)) {

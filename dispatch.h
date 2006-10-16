@@ -8,7 +8,7 @@
 
 int custom_raw(Message *m);
 void send_request(Transaction *trans);
-void send_requests(List *list);
+void send_requests(List *list, void (*callback)(void *), void *env);
 void send_requests_streamed(List **queues, int n,
         void (*f)(void *, Transaction *),
         void *env);

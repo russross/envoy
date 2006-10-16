@@ -54,7 +54,9 @@ int object_cache_isvalid(u64 oid) {
     return objectroot != NULL && lru_get(object_cache_status, &oid) != NULL;
 }
 
-static void send_request_to_all(Transaction *trans) {
+static void send_request_to_all(Transaction *trans,
+        void (*callback)(void *), void *env)
+{
     List *requests = cons(trans, NULL);
     int i;
 
@@ -80,7 +82,7 @@ static void send_request_to_all(Transaction *trans) {
     }
 
     /* send request to all storage servers and wait for all to respond */
-    send_requests(requests);
+    send_requests(requests, callback, env);
 
     /* make sure they all succeeded */
     while (!null(requests)) {
@@ -141,27 +143,40 @@ struct qid object_create(Worker *worker, u64 oid, u32 mode,
     trans->out->id = TSCREATE;
     set_tscreate(trans->out, oid, mode, ctime, uid, gid, extension);
 
-    send_request_to_all(trans);
+    send_request_to_all(trans, NULL, NULL);
 
     res = &trans->in->msg.rscreate;
     return res->qid;
 }
 
-void object_clone(Worker *worker, u64 oid, u64 newoid) {
-    Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
+struct object_clone_env {
+    Worker *worker;
+    u64 oid;
+    u64 newoid;
+};
 
+static void object_clone_cb(struct object_clone_env *env) {
     /* clone it locally if we have it in the cache */
-    if (object_cache_isvalid(oid)) {
-        int res = disk_clone(worker, oid, newoid);
+    if (object_cache_isvalid(env->oid)) {
+        int res = disk_clone(env->worker, env->oid, env->newoid);
         assert(res >= 0);
-        object_cache_validate(newoid);
+        object_cache_validate(env->newoid);
     }
+}
+
+void object_clone(Worker *worker, u64 oid, u64 newoid) {
+    struct object_clone_env env = {
+        .worker = worker,
+        .oid = oid,
+        .newoid = newoid
+    };
+    Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSCLONE;
     set_tsclone(trans->out, oid, newoid);
 
-    send_request_to_all(trans);
+    send_request_to_all(trans, (void (*)(void *)) object_clone_cb, &env);
 }
 
 void *object_read(Worker *worker, u64 oid, u32 atime, u64 offset, u32 count,
@@ -205,26 +220,46 @@ void *object_read(Worker *worker, u64 oid, u32 atime, u64 offset, u32 count,
     return result;
 }
 
+struct object_write_env {
+    Worker *worker;
+    u64 oid;
+    u32 mtime;
+    u64 offset;
+    u32 count;
+    u8 *data;
+};
+
+static void object_write_cb(struct object_write_env *env) {
+    /* write to the cache if it exists */
+    if (object_cache_isvalid(env->oid)) {
+        int len = disk_write(env->worker, env->oid, env->mtime,
+                env->offset, env->count, env->data);
+        assert(len > 0);
+    }
+}
+
 u32 object_write(Worker *worker, u64 oid, u32 mtime, u64 offset,
         u32 count, u8 *data, void *raw)
 {
+    struct object_write_env env = {
+        .worker = worker,
+        .oid = oid,
+        .mtime = mtime,
+        .offset = offset,
+        .count = count,
+        .data = data
+    };
     Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
     struct Rswrite *res;
 
     assert(raw != NULL);
-
-    /* write to the cache if it exists */
-    if (object_cache_isvalid(oid)) {
-        int len = disk_write(worker, oid, mtime, offset, count, data);
-        assert(len > 0);
-    }
 
     trans->out->raw = raw;
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSWRITE;
     set_tswrite(trans->out, mtime, offset, count, data, oid);
 
-    send_request_to_all(trans);
+    send_request_to_all(trans, (void (*)(void *)) object_write_cb, &env);
 
     res = &trans->in->msg.rswrite;
     return res->count;
@@ -272,40 +307,64 @@ struct p9stat *object_stat(Worker *worker, u64 oid, char *filename) {
     return res->stat;
 }
 
-void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
-    Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
+struct object_wstat_env {
+    Worker *worker;
+    u64 oid;
+    struct p9stat *info;
+};
 
+static void object_wstat_cb(struct object_wstat_env *env) {
     /* update the cache if it exists */
-    if (object_cache_isvalid(oid)) {
-        int res = disk_wstat(worker, oid, info);
+    if (object_cache_isvalid(env->oid)) {
+        int res = disk_wstat(env->worker, env->oid, env->info);
         assert(res >= 0);
     }
+}
+
+void object_wstat(Worker *worker, u64 oid, struct p9stat *info) {
+    struct object_wstat_env env = {
+        .worker = worker,
+        .oid = oid,
+        .info = info
+    };
+    Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSWSTAT;
     set_tswstat(trans->out, oid, info);
 
-    send_request_to_all(trans);
+    send_request_to_all(trans, (void (*)(void *)) object_wstat_cb, &env);
 }
 
-void object_delete(Worker *worker, u64 oid) {
-    Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
+struct object_delete_env {
+    Worker *worker;
+    u64 oid;
+};
 
+static void object_delete_cb(struct object_delete_env *env) {
     /* delete the cache entry if it exists */
     if (objectroot != NULL) {
-        int res = disk_delete(worker, oid);
-        object_cache_invalidate(oid);
+        int res = disk_delete(env->worker, env->oid);
+        object_cache_invalidate(env->oid);
         if (res < 0) {
             /* no entry is okay for the cache */
             assert(-res == ENOENT);
         }
     }
+}
+
+void object_delete(Worker *worker, u64 oid) {
+    struct object_delete_env env = {
+        .worker = worker,
+        .oid = oid
+    };
+    Transaction *trans = trans_new(storage_servers[0], NULL, message_new());
 
     trans->out->tag = ALLOCTAG;
     trans->out->id = TSDELETE;
     set_tsdelete(trans->out, oid);
 
-    send_request_to_all(trans);
+    send_request_to_all(trans, (void (*)(void *)) object_delete_cb, &env);
 }
 
 struct object_fetch_env {
