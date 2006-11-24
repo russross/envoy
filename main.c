@@ -2,6 +2,7 @@
 #include <gc/gc.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"

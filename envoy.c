@@ -25,7 +25,9 @@
 #include "walk.h"
 
 int has_permission(char *uname, struct p9stat *info, u32 required) {
-    if (!strcmp(uname, info->uid)) {
+    if (!strcmp(uname, "root")) {
+        return 1;
+    } else if (!strcmp(uname, info->uid)) {
         return (info->mode & required & 0700) == (required & 0700) &&
             (required & 0700) != 0;
     } else if (isgroupmember(uname, info->gid)) {

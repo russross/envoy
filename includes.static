@@ -17,6 +17,7 @@
     '<sys/socket.h>',
     '<sys/sendfile.h>',
     '<netinet/in.h>',
+    '<netinet/tcp.h>',
     '<errno.h>',
     '<string.h>',
     '<ctype.h>',
@@ -162,6 +163,10 @@
         'sin_addr' => 1,
         'sin_port' => 1,
         'IPPROTO_TCP' => 1,
+    },
+
+    '<netinet/tcp.h>' => {
+        'TCP_NODELAY' => 1,
     },
 
     '<errno.h>' => {
