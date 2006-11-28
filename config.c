@@ -24,6 +24,13 @@ Address *root_address;
 int storage_server_count;
 Connection **storage_servers;
 Address **storage_addresses;
+int ter_disabled = 0;
+double ter_halflife = 10.0;
+double ter_urgent = 50.0;
+double ter_idle = 1.0;
+double ter_maxtime = 60.0;
+double ter_mintime = 5.0;
+double ter_rate = 0.0;
 int DEBUG = 0;
 int DEBUG_VERBOSE = 0;
 int DEBUG_AUDIT = 0;
@@ -50,8 +57,21 @@ void print_usage(void) {
 "                                 (default 0)\n"
 "    -s, --storage=<SERVERS>    connect to the comma-seperated list of\n"
 "                                 storage servers (default localhost:%d)\n"
-"    -c, --cache=<PATH>         path to the root of the object cache\n",
-            STORAGE_PORT);
+"    -c, --cache=<PATH>         path to the root of the object cache\n"
+"    = = = = = = = = dynamic territory management = = = = = = = =\n"
+"    -a, --noauto               disable automatic territory management\n"
+"    -l, --halflife=<SECONDS>   half-life of ops-per-second (OPS) value\n"
+"                                 (default %g)\n"
+"    -t, --mintime=<SECONDS>    shortest time to wait before a change\n"
+"                                 (default %g)\n"
+"    -T, --maxtime=<SECONDS>    longest time to wait before a change\n"
+"                                 (default %g)\n"
+"    -u, --idle=<OPS>           lowest rate to trigger a change (at maxtime)\n"
+"                                 (default %g)\n"
+"    -U, --urgent=<OPS>         rate to trigger a change fastest (at mintime)\n"
+"                                 (default %g)\n",
+            STORAGE_PORT,
+            ter_halflife, ter_mintime, ter_maxtime, ter_idle, ter_urgent);
     }
     fprintf(stderr,
 "    -p, --port=<PORT>          listed on the given port (default %d)\n"
@@ -78,6 +98,12 @@ int config_envoy(int argc, char **argv) {
         { "root",       required_argument,      NULL,   'r' },
         { "storage",    required_argument,      NULL,   's' },
         { "cache",      required_argument,      NULL,   'c' },
+        { "noauto",     no_argument,            NULL,   'a' },
+        { "halflife",   required_argument,      NULL,   'l' },
+        { "mintime",    required_argument,      NULL,   't' },
+        { "maxtime",    required_argument,      NULL,   'T' },
+        { "idle",       required_argument,      NULL,   'u' },
+        { "urgent",     required_argument,      NULL,   'U' },
         { "port",       required_argument,      NULL,   'p' },
         { "debug",      required_argument,      NULL,   'd' },
         { "messagesize", required_argument,     NULL,   'm' },
@@ -108,8 +134,11 @@ int config_envoy(int argc, char **argv) {
         char cwd[100];
         struct stat info;
         int i;
+        double d;
 
-        switch (getopt_long(argc, argv, "hr:s:c:p:d:m:", long_options, NULL)) {
+        switch (getopt_long(argc, argv, "hr:s:c:al:t:T:u:U:p:d:m:",
+                    long_options, NULL))
+        {
             case EOF:
                 finished = 1;
                 break;
@@ -151,6 +180,54 @@ int config_envoy(int argc, char **argv) {
                         &info);
                 if (objectroot == NULL) {
                     fprintf(stderr, "Invalid cache path: %s\n", optarg);
+                    return -1;
+                }
+                break;
+            case 'a':
+                ter_disabled = 1;
+                break;
+            case 'l':
+                d = strtod(optarg, &end);
+                if (*end == 0 && d >= 1.0 && d <= 3600.0) {
+                    ter_halflife = d;
+                } else {
+                    fprintf(stderr, "Invalid halflife: %s\n", optarg);
+                    return -1;
+                }
+                break;
+            case 't':
+                d = strtod(optarg, &end);
+                if (*end == 0 && d >= 0.0 && d <= 3600.0) {
+                    ter_mintime = d;
+                } else {
+                    fprintf(stderr, "Invalid mintime: %s\n", optarg);
+                    return -1;
+                }
+                break;
+            case 'T':
+                d = strtod(optarg, &end);
+                if (*end == 0 && d >= 1.0 && d <= 3600.0) {
+                    ter_maxtime = d;
+                } else {
+                    fprintf(stderr, "Invalid maxtime: %s\n", optarg);
+                    return -1;
+                }
+                break;
+            case 'u':
+                d = strtod(optarg, &end);
+                if (*end == 0 && d >= 0.0 && d < 10000.0) {
+                    ter_idle = d;
+                } else {
+                    fprintf(stderr, "Invalid idle value: %s\n", optarg);
+                    return -1;
+                }
+                break;
+            case 'U':
+                d = strtod(optarg, &end);
+                if (*end == 0 && d >= 1.0 && d < 10000.0) {
+                    ter_urgent = d;
+                } else {
+                    fprintf(stderr, "Invalid max urgency value: %s\n", optarg);
                     return -1;
                 }
                 break;
@@ -208,6 +285,19 @@ int config_envoy(int argc, char **argv) {
     if (storage_server_count == 0) {
         fprintf(stderr, "No storage servers specified\n");
         return -1;
+    }
+    if (!ter_disabled) {
+        if (ter_urgent <= ter_idle) {
+            fprintf(stderr, "Max urgency value must be greater than "
+                    "idle value\n");
+            return -1;
+        }
+        if (ter_maxtime <= ter_mintime) {
+            fprintf(stderr, "Max delay value must be greater than "
+                    "min delay value\n");
+            return -1;
+        }
+        ter_rate = (ter_maxtime - ter_mintime) / (ter_urgent - ter_idle);
     }
     /*
     if (objectroot == NULL) {

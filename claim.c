@@ -1,11 +1,14 @@
 #include <assert.h>
 #include <gc/gc.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
 #include "hashtable.h"
+#include "connection.h"
 #include "fid.h"
 #include "util.h"
 #include "config.h"
@@ -57,6 +60,10 @@ Claim *claim_new_root(char *pathname, enum claim_access access, u64 oid) {
     claim->parent = NULL;
     claim->children = NULL;
 
+    claim->lastupdate = 0.0;
+    claim->urgencycount = 0;
+    claim->urgency = NULL;
+
     claim->pathname = pathname;
     claim->access = access;
     claim->oid = oid;
@@ -77,6 +84,10 @@ Claim *claim_new(Claim *parent, char *name, enum claim_access access, u64 oid) {
 
     claim->lease = parent->lease;
     claim->children = NULL;
+
+    claim->lastupdate = 0.0;
+    claim->urgencycount = 0;
+    claim->urgency = NULL;
 
     claim->pathname = concatname(parent->pathname, name);
     claim->access = access;
@@ -320,6 +331,87 @@ static int claim_cache_resurrect(Claim *claim) {
     return claim->parent != NULL || !null(claim->children) ||
         !strcmp(claim->pathname, claim->lease->pathname);
 }
+
+Claim *claim_update_territory_move(Claim *claim, Connection *conn) {
+    int i;
+    double now = now_double();
+    Lease *lease = claim->lease;
+    Claim *mosturgent = NULL;
+    double mostgain = 0.0;
+    double gain;
+
+    assert(conn->type == CONN_ENVOY_IN || conn->type == CONN_CLIENT_IN);
+
+    if (ter_disabled || claim->deleted)
+        return NULL;
+
+    /* walk up the tree updating counters */
+    do {
+        /* has the territory changed since this file was visited? */
+        if (claim->lastupdate < lease->lastchange) {
+            for (i = 0; i < claim->urgencycount; i++)
+                claim->urgency[i] = 0.0;
+            claim->lastupdate = now;
+        } else {
+            /* we need to multiply each counter
+             * by (1/2)^(halflifes that have elapsed) */
+            double decay = pow(0.5, (now - claim->lastupdate) / ter_halflife);
+
+            /* decay the existing counters */
+            for (i = 0; i < claim->urgencycount; i++)
+                claim->urgency[i] *= decay;
+            claim->lastupdate = now;
+        }
+
+        /* first transaction from this source? */
+        if (claim->urgencycount <= conn->envoyindex) {
+            double *urgency =
+                GC_MALLOC_ATOMIC(sizeof(double) * (conn->envoyindex + 1));
+            assert(urgency != NULL);
+            for (i = 0; i <= conn->envoyindex; i++)
+                if (i < claim->urgencycount)
+                    urgency[i] = claim->urgency[i];
+                else
+                    urgency[i] = 0.0;
+            claim->urgency = urgency;
+            claim->urgencycount = conn->envoyindex + 1;
+        }
+
+        /* record this transaction */
+        claim->urgency[conn->envoyindex] += 1.0;
+
+        /* for envoy in, see if this is the most compelling move so far,
+         * favoring higher-level moves over lower-level moves */
+        if (conn->envoyindex > 0 &&
+                (gain = claim->urgency[conn->envoyindex] - claim->urgency[0]) >
+                mostgain - EPSILON)
+        {
+            mostgain = gain;
+            mosturgent = claim;
+        }
+
+        claim = claim->parent;
+    } while (claim != NULL);
+
+    /* did we find a move worth making? */
+    if (conn->envoyindex > 0 && now - lease->lastchange > ter_mintime) {
+        /* how long should this transfer be delayed? */
+        double delay = ter_mintime + (ter_urgent - mostgain) * ter_rate;
+
+        /* have we already waited that long? is it too minor? */
+        if (delay < now - lease->lastchange && delay < ter_maxtime) {
+            if (DEBUG_VERBOSE) {
+                printf("Territory migration recommended: [%s] to [%s]\n",
+                        mosturgent->pathname, addr_to_string(conn->addr));
+            }
+
+            return mosturgent;
+        }
+    }
+
+    return NULL;
+}
+
 
 void claim_state_init(void) {
     claim_cache = lru_new(

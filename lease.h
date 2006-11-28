@@ -55,6 +55,8 @@ struct lease {
     Hashtable *fids;
     /* does this lease cover a read-only region? */
     int readonly;
+    /* when was the most recent change to this lease? */
+    double lastchange;
     /* cache of unused claims in this lease.  these entries also appear in the
      * global LRU */
     Hashtable *claim_cache;

@@ -5,6 +5,7 @@
 #include "types.h"
 #include "9p.h"
 #include "list.h"
+#include "connection.h"
 #include "worker.h"
 #include "lru.h"
 #include "lease.h"
@@ -55,6 +56,11 @@ struct claim {
     Claim *parent;
     /* an ordered list of children */
     List *children;
+
+    /* who has been accessing this node (or its descendents) recently? */
+    double lastupdate;
+    int urgencycount;
+    double *urgency;
 
     /* the full system path of this object */
     char *pathname;
@@ -124,5 +130,6 @@ int claim_key_cmp(const char *key, const Claim *elt);
 u32 claim_hash(const Claim *a);
 void claim_link_child(Claim *parent, Claim *child);
 void claim_unlink_child(Claim *child);
+Claim *claim_update_territory_move(Claim *claim, Connection *conn);
 
 #endif

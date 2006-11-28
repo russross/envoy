@@ -30,6 +30,7 @@
 #define USER_HASHTABLE_SIZE 128
 #define OBJECT_CACHE_STATE_SIZE 16384
 #define DISPATCH_STREAM_WINDOW_SIZE 8
+#define EPSILON 0.00001
 
 #define ENVOY_PORT 9922
 #define STORAGE_PORT 9923
@@ -60,6 +61,14 @@ extern u64 root_oid;
 extern int storage_server_count;
 extern Connection **storage_servers;
 extern Address **storage_addresses;
+
+extern int ter_disabled;
+extern double ter_halflife;
+extern double ter_urgent;
+extern double ter_idle;
+extern double ter_mintime;
+extern double ter_maxtime;
+extern double ter_rate;
 
 extern int DEBUG_CLIENT;
 extern int DEBUG_ENVOY;

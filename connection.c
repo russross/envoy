@@ -23,6 +23,7 @@
 Vector *conn_vector;
 Hashtable *addr_2_envoy_out;
 Hashtable *addr_2_in;
+int envoycount;
 
 Connection *conn_insert_new(int fd, enum conn_type type,
         struct sockaddr_in *netaddr)
@@ -37,6 +38,10 @@ Connection *conn_insert_new(int fd, enum conn_type type,
     assert(conn != NULL);
 
     conn->fd = fd;
+    if (type == CONN_ENVOY_IN)
+        conn->envoyindex = envoycount++;
+    else
+        conn->envoyindex = 0;
     conn->type = type;
     conn->netaddr = netaddr;
     conn->addr = netaddr_to_addr(netaddr);
@@ -69,6 +74,7 @@ Connection *conn_insert_new_stub(Address *addr) {
     assert(conn != NULL);
 
     conn->fd = -1;
+    conn->envoyindex = envoycount++;
     conn->type = CONN_ENVOY_IN;
     conn->netaddr = NULL;
     conn->addr = addr;
@@ -226,4 +232,5 @@ void conn_init(void) {
             CONN_HASHTABLE_SIZE,
             (u32 (*)(const void *)) addr_hash,
             (int (*)(const void *, const void *)) addr_cmp);
+    envoycount = 1;
 }

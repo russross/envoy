@@ -74,6 +74,7 @@ Lease *lease_new(char *pathname, Address *addr, int isexit, Claim *claim,
     }
 
     l->readonly = readonly;
+    l->lastchange = now_double();
 
     return l;
 }
@@ -136,6 +137,8 @@ void lease_merge_exit(Worker *worker, Lease *parent, Lease *child) {
     /* merge in the wavefront */
     for ( ; !null(child->wavefront); child->wavefront = cdr(child->wavefront))
         lease_link_exit((Lease *) car(child->wavefront));
+
+    parent->lastchange = now_double();
 }
 
 void lease_link_exit(Lease *exit) {
@@ -201,6 +204,8 @@ void lease_add(Lease *lease) {
         assert(exit->isexit);
         hash_set(lease_by_root_pathname, exit->pathname, exit);
     }
+
+    lease->lastchange = now_double();
 }
 
 void lease_remove(Lease *lease) {
@@ -220,6 +225,7 @@ void lease_remove(Lease *lease) {
     lease->pathname = NULL;
     lease->addr = NULL;
     lease->claim = NULL;
+    lease->lastchange = now_double();
 }
 
 static void make_claim_cow(char *prefix, char *pathname, Claim *claim) {
@@ -522,6 +528,8 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
 
     /* notify the remote hosts */
     remote_grant_exits(worker, newwavefront, my_address, GRANT_CHANGE_PARENT);
+
+    lease->lastchange = now_double();
 }
 
 List *lease_serialize_fids(Worker *worker, Lease *lease,
@@ -596,6 +604,8 @@ void lease_release_fids(Worker *worker, Lease *lease,
                 fid_remove(worker, conn, fid->fid);
         }
     }
+
+    lease->lastchange = now_double();
 }
 
 void lease_add_fids(Worker *worker, Lease *lease, List *fids,
@@ -642,6 +652,8 @@ void lease_add_fids(Worker *worker, Lease *lease, List *fids,
     /* notify the remote envoys of the fid updates */
     if (!null((groups = fid_gather_groups(newremotefids))))
         remote_migrate(worker, groups);
+
+    lease->lastchange = now_double();
 }
 
 void lease_pack_message(Lease *lease, List **exits, List **fids, int size) {
@@ -726,6 +738,8 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     assert(null(claim->children));
     claim_clear_descendents(claim);
     lease_clear_dir_cache(lease);
+
+    lease->lastchange = now_double();
 }
 
 void lease_merge(Worker *worker, Lease *child) {
@@ -761,6 +775,8 @@ void lease_merge(Worker *worker, Lease *child) {
     remote_revoke(worker, oldaddr, GRANT_END, oldpath, my_address,
             &revoketype, &root, &exits, &fids);
     assert(revoketype == GRANT_END);
+
+    lease->lastchange = now_double();
 }
 
 void lease_rename(Worker *worker, Lease *lease, Claim *root,

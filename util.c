@@ -4,10 +4,13 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <utime.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <time.h>
 #include <ctype.h>
 #include <grp.h>
 #include <pwd.h>
@@ -261,6 +264,15 @@ int u64_cmp(const u64 *a, const u64 *b) {
 
 u32 now(void) {
     return (u32) time(NULL);
+}
+
+double now_double(void) {
+    struct timeval t;
+    int res;
+
+    res = gettimeofday(&t, NULL);
+    assert(res == 0);
+    return (double) t.tv_sec + ((double) t.tv_usec / 1000000.0);
 }
 
 u32 addr_hash(const Address *addr) {

@@ -21,6 +21,7 @@ enum conn_type {
 
 struct connection {
     int fd;
+    int envoyindex;
     enum conn_type type;
     struct sockaddr_in *netaddr;
     Address *addr;
@@ -41,6 +42,7 @@ struct address {
 };
 
 extern Vector *conn_vector;
+extern int envoycount;
 
 Connection *conn_insert_new(int fd, enum conn_type type,
         struct sockaddr_in *netaddr);

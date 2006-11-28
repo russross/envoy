@@ -188,6 +188,21 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
 
 #undef copy_forward
 
+void transfer_territory(Worker *worker, Connection *conn, Claim *claim) {
+    Lease *lease = claim->lease;
+
+    if (ter_disabled || claim == NULL || claim->deleted)
+        return;
+
+    /* release locks from the transaction */
+    worker_cleanup(worker);
+
+    /* is it a split or a transfer? */
+    if (claim->parent == NULL)
+        remote_nominate(worker, lease->addr, claim->pathname, conn->addr);
+    else
+        lease_split(worker, lease, claim->pathname, conn->addr);
+}
 
 /*****************************************************************************/
 
@@ -235,6 +250,7 @@ void handle_tversion(Worker *worker, Transaction *trans) {
             res->version = req->version;
         } else if (!strcmp(req->version, "9P2000.envoy")) {
             trans->conn->type = CONN_ENVOY_IN;
+            trans->conn->envoyindex = envoycount++;
             res->version = req->version;
         } else {
             res->version = "unknown";
@@ -551,6 +567,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     Fid *fid;
     struct p9stat *info;
     u32 perm;
+    Claim *change = NULL;
 
     require_fid_unopenned(fid);
 
@@ -628,8 +645,13 @@ void handle_topen(Worker *worker, Transaction *trans) {
     require_info(fid->claim);
     object_fetch(worker, fid->claim->oid, fid->claim->info);
 
+    change = claim_update_territory_move(fid->claim, trans->conn);
+
     send_reply:
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 /* ::lease::,path,to,root::target:port */
@@ -861,6 +883,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     struct qid qid;
     enum fid_status status;
     u64 newoid;
+    Claim *change = NULL;
 
     failif(!strcmp(req->name, ".") || !strcmp(req->name, "..") ||
             strchr(req->name, '/'), EINVAL);
@@ -943,8 +966,13 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     res->qid = qid;
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
 
+    change = claim_update_territory_move(fid->claim, trans->conn);
+
     send_reply:
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -978,6 +1006,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
     Fid *fid;
     u32 count = (req->count > trans->conn->maxSize - RREAD_HEADER) ?
         trans->conn->maxSize - RREAD_HEADER : req->count;
+    Claim *change = NULL;
 
     require_fid(fid);
 
@@ -995,7 +1024,6 @@ void handle_tread(Worker *worker, Transaction *trans) {
         goto send_reply;
     }
 
-
     if (fid->status == STATUS_OPEN_FILE) {
         struct p9stat *info;
         require_info(fid->claim);
@@ -1009,7 +1037,6 @@ void handle_tread(Worker *worker, Transaction *trans) {
                     req->offset, count, &res->count, &res->data);
         }
     } else if (fid->status == STATUS_OPEN_DIR) {
-
         /* allow rewinds, but no other offset changes */
         if (req->offset == 0 && fid->readdir_cookie != 0) {
             fid->readdir_cookie = 0;
@@ -1038,8 +1065,13 @@ void handle_tread(Worker *worker, Transaction *trans) {
         failif(-1, EPERM);
     }
 
+    change = claim_update_territory_move(fid->claim, trans->conn);
+
     send_reply:
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1068,6 +1100,7 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     struct Rwrite *res = &trans->out->msg.rwrite;
     Fid *fid;
     void *raw;
+    Claim *change = NULL;
 
     require_fid(fid);
 
@@ -1092,8 +1125,13 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     trans->in->raw = NULL;
     fid->claim->info = NULL;
 
+    change = claim_update_territory_move(fid->claim, trans->conn);
+
     send_reply:
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1112,17 +1150,23 @@ void handle_twrite(Worker *worker, Transaction *trans) {
 void handle_tclunk(Worker *worker, Transaction *trans) {
     struct Tclunk *req = &trans->in->msg.tclunk;
     Fid *fid;
+    Claim *change = NULL;
 
     require_fid(fid);
 
     /* handle forwarding */
     if (fid->isremote)
         forward_to_envoy(worker, trans, fid);
+    else
+        change = claim_update_territory_move(fid->claim, trans->conn);
 
     /* we don't support remove-on-close */
 
     fid_remove(worker, trans->conn, req->fid);
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1146,6 +1190,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     Claim *parent;
     u16 errnum = 0;
     Walk *walk;
+    Claim *change = NULL;
 
     require_fid(fid);
 
@@ -1208,6 +1253,10 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     /* make sure the parent is writable */
     claim_thaw(worker, parent);
 
+    change = claim_update_territory_move(fid->claim, trans->conn);
+    if (change == fid->claim)
+        change = NULL;
+
     /* remove it */
     if (dir_remove_entry(worker, parent, filename(fid->pathname)) < 0)
         errnum = ENOENT;
@@ -1217,11 +1266,14 @@ void handle_tremove(Worker *worker, Transaction *trans) {
     cleanup:
     /* note: this is a bug in the client driver: it expects the fid to survive
      * if the remove fails -- fixed in kernel 2.6.18 */
-    /* failif(errnum != 0, errnum); */
+    failif(errnum != 0, errnum);
 
     fid_remove(worker, trans->conn, req->fid);
 
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1240,6 +1292,7 @@ void handle_tstat(Worker *worker, Transaction *trans) {
     struct Tstat *req = &trans->in->msg.tstat;
     struct Rstat *res = &trans->out->msg.rstat;
     Fid *fid;
+    Claim *change = NULL;
 
     require_fid(fid);
 
@@ -1256,8 +1309,13 @@ void handle_tstat(Worker *worker, Transaction *trans) {
     if ((res->stat->mode & DMSYMLINK))
         res->stat->mode |= 0777;
 
+    change = claim_update_territory_move(fid->claim, trans->conn);
+
     send_reply:
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1298,7 +1356,8 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     struct p9stat *info = NULL;
     struct p9stat *delta = p9stat_new();
     char *oldname;
-    int change = 0;
+    int updated = 0;
+    Claim *change = NULL;
 
     require_fid(fid);
 
@@ -1325,7 +1384,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         /* was there actually a change? */
         if (strcmp(delta->uid, info->uid))
-            change = 1;
+            updated = 1;
         else
             delta->uid = NULL;
     }
@@ -1341,7 +1400,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         /* was there actually a change? */
         if (strcmp(delta->gid, info->gid))
-            change = 1;
+            updated = 1;
         else
             delta->gid = NULL;
     }
@@ -1354,7 +1413,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         /* was there actually a change? */
         if (delta->mode != info->mode)
-            change = 1;
+            updated = 1;
         else
             delta->mode = ~(u32) 0;
     }
@@ -1367,7 +1426,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         /* was there actually a change? */
         if (delta->mtime != info->mtime)
-            change = 1;
+            updated = 1;
         else
             delta->mtime = ~(u32) 0;
     }
@@ -1380,7 +1439,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         /* was there actually a change? */
         if (delta->length != info->length)
-            change = 1;
+            updated = 1;
         else
             delta->length = ~(u64) 0;
     }
@@ -1482,13 +1541,18 @@ void handle_twstat(Worker *worker, Transaction *trans) {
             claim_rename(fid->claim, newpathname);
     }
 
-    if (change) {
+    if (updated) {
         object_wstat(worker, fid->claim->oid, delta);
         fid->claim->info = NULL;
     }
 
+    change = claim_update_territory_move(fid->claim, trans->conn);
+
     send_reply:
     send_reply(trans);
+
+    if (change != NULL)
+        transfer_territory(worker, trans->conn, change);
 }
 
 void envoy_teclosefid(Worker *worker, Transaction *trans) {

@@ -2,7 +2,7 @@ OCAMLC=ocamlc
 CC=gcc
 # -D_FILE_OFFSET_BITS=64 comes from `getconf LFS_CFLAGS`
 CCOPTS=-g -O -Wall -Werror -D_FILE_OFFSET_BITS=64 -D_REENTRANT -DGC_THREADS
-LINKOPTS=-lgc
+LINKOPTS=-lgc -lm
 
 SRCNOGEN=9pstatic.c 9p.c
 SRCNOINC=main.c
