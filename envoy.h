@@ -6,8 +6,10 @@
 #include "connection.h"
 #include "transaction.h"
 #include "worker.h"
+#include "claim.h"
 
 int has_permission(char *uname, struct p9stat *info, u32 required);
+int transfer_territory(Worker *worker, Connection *conn, Claim *claim);
 
 void handle_tversion(Worker *worker, Transaction *trans);
 

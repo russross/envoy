@@ -188,20 +188,22 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
 
 #undef copy_forward
 
-void transfer_territory(Worker *worker, Connection *conn, Claim *claim) {
-    Lease *lease = claim->lease;
-
+int transfer_territory(Worker *worker, Connection *conn, Claim *claim) {
     if (ter_disabled || claim == NULL || claim->deleted)
-        return;
+        return 0;
 
     /* release locks from the transaction */
     worker_cleanup(worker);
 
     /* is it a split or a transfer? */
-    if (claim->parent == NULL)
-        remote_nominate(worker, lease->addr, claim->pathname, conn->addr);
-    else
-        lease_split(worker, lease, claim->pathname, conn->addr);
+    if (claim->parent == NULL) {
+        remote_nominate(worker, claim->lease->addr, claim->pathname,
+                conn->addr);
+    } else {
+        lease_split(worker, claim->lease, claim->pathname, conn->addr);
+    }
+
+    return 1;
 }
 
 /*****************************************************************************/
@@ -650,8 +652,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 /* ::lease::,path,to,root::target:port */
@@ -971,8 +972,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1070,8 +1070,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1130,8 +1129,7 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1165,8 +1163,7 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
     fid_remove(worker, trans->conn, req->fid);
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1272,8 +1269,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1314,8 +1310,7 @@ void handle_tstat(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 /**
@@ -1551,8 +1546,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    if (change != NULL)
-        transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn, change);
 }
 
 void envoy_teclosefid(Worker *worker, Transaction *trans) {

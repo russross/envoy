@@ -380,9 +380,10 @@ Claim *claim_update_territory_move(Claim *claim, Connection *conn) {
         /* record this transaction */
         claim->urgency[conn->envoyindex] += 1.0;
 
-        /* for envoy in, see if this is the most compelling move so far,
-         * favoring higher-level moves over lower-level moves */
-        if (conn->envoyindex > 0 &&
+        /* for an envoy proxy request, see if this is the most compelling move
+         * so far, favoring higher-level moves over lower-level moves.
+         * no move if the envoy is still connecting (null addr) */
+        if (conn->envoyindex > 0 && conn->addr != NULL &&
                 (gain = claim->urgency[conn->envoyindex] - claim->urgency[0]) >
                 mostgain - EPSILON)
         {

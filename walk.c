@@ -193,10 +193,7 @@ static void walk_local(Worker *worker, Transaction *trans,
 
             /* see if this walk triggers a territory migration */
             change = claim_update_territory_move(env->claim, trans->conn);
-            if (change != NULL) {
-                worker_cleanup(worker);
-                lease_split(worker, env->claim->lease,
-                        env->pathname, trans->conn->addr);
+            if (transfer_territory(worker, trans->conn, change)) {
                 worker_retry(worker);
                 assert(0);
             }
@@ -258,10 +255,7 @@ static void walk_local(Worker *worker, Transaction *trans,
             if (child == NULL) {
                 /* see if this walk triggers a territory migration */
                 change = claim_update_territory_move(env->claim, trans->conn);
-                if (change != NULL) {
-                    worker_cleanup(worker);
-                    lease_split(worker, env->claim->lease,
-                            env->pathname, trans->conn->addr);
+                if (transfer_territory(worker, trans->conn, change)) {
                     worker_retry(worker);
                     assert(0);
                 }
