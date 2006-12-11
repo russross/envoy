@@ -54,6 +54,10 @@ Connection *conn_insert_new(int fd, enum conn_type type,
     conn->partial_in_bytes = 0;
     conn->partial_out = NULL;
     conn->partial_out_bytes = 0;
+    conn->totalbytesin = 0;
+    conn->totalbytesout = 0;
+    conn->totalmessagesin = 0;
+    conn->totalmessagesout = 0;
 
     vector_set(conn_vector, conn->fd, conn);
     if (type == CONN_ENVOY_OUT) {
@@ -87,6 +91,10 @@ Connection *conn_insert_new_stub(Address *addr) {
     conn->partial_in_bytes = 0;
     conn->partial_out = NULL;
     conn->partial_out_bytes = 0;
+    conn->totalbytesin = 0;
+    conn->totalbytesout = 0;
+    conn->totalmessagesin = 0;
+    conn->totalmessagesout = 0;
 
     hash_set(addr_2_in, addr, conn);
 

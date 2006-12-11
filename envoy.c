@@ -23,6 +23,7 @@
 #include "claim.h"
 #include "lease.h"
 #include "walk.h"
+#include "dump.h"
 
 int has_permission(char *uname, struct p9stat *info, u32 required) {
     if (!strcmp(uname, "root")) {
@@ -685,6 +686,17 @@ void handle_tcreate_migrate(Worker *worker, Transaction *trans) {
         remote_nominate(worker, lease->addr, root, addr);
     }
     printf("lease migrate request: completed\n");
+
+    failif(1, EPERM);
+}
+
+/* ::dump:: */
+void handle_tcreate_dump(Worker *worker, Transaction *trans) {
+    struct Tcreate *req = &trans->in->msg.tcreate;
+    char *root = req->name + 8;
+    /* skip the ::dump:: bit */
+
+    dump(root);
 
     failif(1, EPERM);
 }

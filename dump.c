@@ -1,21 +1,27 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <netinet/in.h>
+#include <math.h>
 #include "types.h"
 #include "9p.h"
+#include "list.h"
 #include "vector.h"
 #include "hashtable.h"
 #include "connection.h"
 #include "transaction.h"
 #include "fid.h"
 #include "util.h"
-#include "state.h"
+#include "config.h"
+#include "claim.h"
+#include "lease.h"
+#include "dump.h"
 
 /*
  * Debugging functions
  */
 
+/*
 static void print_status(enum fid_status status) {
     printf("%s",
             status == STATUS_UNOPENNED ? "STATUS_UNOPENNED" :
@@ -79,4 +85,146 @@ static void print_addr_conn(Address *addr, Connection *conn) {
 void state_dump(void) {
     printf("Hashtable: address -> connection\n");
     hash_apply(addr_2_conn, (void (*)(void *, void *)) print_addr_conn);
+}
+*/
+
+/*****************************************************************************/
+
+/* dump a lease as a dot graph */
+
+static char *deslash(char *s) {
+    char *res = stringcopy(s);
+    int i;
+
+    for (i = 0; res[i]; i++)
+        if (res[i] == '/' || res[i] == '-' || res[i] == '.')
+            res[i] = '_';
+
+    return res;
+}
+
+void dump_dot(FILE *fp, Lease *lease) {
+    int i;
+    List *list;
+    List *stack;
+    double now = now_double();
+
+    fprintf(fp, "\n/* lease root is %s */\n", lease->pathname);
+    fprintf(fp, "digraph %s {\n", deslash(lease->pathname));
+
+    /* the root */
+    fprintf(fp, "  %s [shape=box];\n", deslash(lease->pathname));
+
+    /* mark the exits */
+    for (list = lease->wavefront; !null(list); list = cdr(list)) {
+        Lease *exit = car(list);
+        fprintf(fp, "  %s [shape=box,label=\"%s\"];\n", deslash(exit->pathname),
+                filename(exit->pathname));
+        fprintf(fp, "  %s -> %s [style=dotted];\n",
+            deslash(dirname(exit->pathname)),
+            deslash(exit->pathname));
+    }
+
+    /* walk the claim tree */
+    stack = cons(lease->claim, NULL);
+    while (!null(stack)) {
+        Claim *claim = car(stack);
+        stack = cdr(stack);
+
+        /* update the counters (copied from claim.c) */
+        if (claim->lastupdate < lease->lastchange) {
+            for (i = 0; i < claim->urgencycount; i++)
+                claim->urgency[i] = 0.0;
+            claim->lastupdate = now;
+        } else {
+            double decay = pow(0.5, (now - claim->lastupdate) / ter_halflife);
+
+            for (i = 0; i < claim->urgencycount; i++)
+                claim->urgency[i] *= decay;
+            claim->lastupdate = now;
+        }
+
+        /* add children to the stack */
+        for (list = claim->children; !null(list); list = cdr(list))
+            stack = cons(car(list), stack);
+
+        /* link this claim to its parent */
+        if (claim->parent != NULL) {
+            fprintf(fp, "  %s -> %s;\n",
+                    deslash(claim->parent->pathname),
+                    deslash(claim->pathname));
+        }
+
+        fprintf(fp, "  %s [label=\"%s\"];\n", deslash(claim->pathname),
+                filename(claim->pathname));
+    }
+
+    fprintf(fp, "}\n");
+}
+
+static int dot_counter = 0;
+
+void dump_dot_all(FILE *fp) {
+    List *leases = hash_tolist(lease_by_root_pathname);
+    for ( ; !null(leases); leases = cdr(leases)) {
+        Lease *lease = car(leases);
+        if (!lease->isexit)
+            dump_dot(fp, lease);
+    }
+}
+
+void dump_conn_all_iter(FILE *fp, u32 i, Connection *conn) {
+    if (conn == NULL || conn->addr == NULL)
+        return;
+    fprintf(fp, " *   %s ", addr_to_string(conn->addr));
+    switch (conn->type) {
+        case CONN_CLIENT_IN:    fprintf(fp, "CLIENT_IN");       break;
+        case CONN_ENVOY_IN:     fprintf(fp, "ENVOY_IN");        break;
+        case CONN_ENVOY_OUT:    fprintf(fp, "ENVOY_OUT");       break;
+        case CONN_STORAGE_IN:   fprintf(fp, "STORAGE_IN");      break;
+        case CONN_STORAGE_OUT:  fprintf(fp, "STORAGE_OUT");     break;
+        case CONN_UNKNOWN_IN:   fprintf(fp, "UNKNOWN_IN");      break;
+        default:
+            assert(0);
+    }
+    fprintf(fp, ":\n");
+    fprintf(fp, " *     messages/bytes in : %d/%lld\n",
+            conn->totalmessagesin, conn->totalbytesin);
+    fprintf(fp, " *     messages/bytes out: %d/%lld\n",
+            conn->totalmessagesout, conn->totalbytesout);
+}
+
+void dump_conn_all(FILE *fp) {
+    fprintf(fp, "/* Connections:\n");
+    vector_apply(conn_vector,
+            (void (*)(void *, u32, void *)) dump_conn_all_iter, fp);
+    fprintf(fp, " */\n");
+}
+
+void dump(char *name) {
+    char filename[100];
+    FILE *fp;
+    time_t now;
+
+    sprintf(filename, "/tmp/%s.%d.dot", name, ++dot_counter);
+
+    fp = fopen(filename, "w");
+    if (fp == NULL) {
+        perror(filename);
+        assert(0);
+    }
+
+    printf("dumping bytecounts and claim trees to %s\n", filename);
+
+    time(&now);
+    fprintf(fp, "/* Envoy connection bytecounts and claim trees\n"
+                " * Host: %s\n"
+                " * Time: %s"
+                " */\n\n",
+                addr_to_string(my_address),
+                ctime(&now));
+
+    dump_conn_all(fp);
+    dump_dot_all(fp);
+    fclose(fp);
 }

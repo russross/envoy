@@ -250,6 +250,7 @@ void dispatch(Worker *worker, Transaction *trans) {
     Fid *fid = NULL;
     int isadmincreate = 0;
     int isleasemigrate = 0;
+    int isdumpcreate = 0;
     enum grant_type granttype;
     char *pathname;
 
@@ -358,6 +359,13 @@ void dispatch(Worker *worker, Transaction *trans) {
         /* make sure it's a valid fid */
         failif(fid == NULL, EBADF);
 
+        /* reporting interface--is this a dump request? */
+        if (trans->in->id == TCREATE &&
+                startswith(trans->in->msg.tcreate.name, "::dump::"))
+        {
+            isdumpcreate = 1;
+        }
+
         /* lock the objects this transaction will use */
         if (fid->isremote) {
             /* lock the fid only */
@@ -415,6 +423,8 @@ void dispatch(Worker *worker, Transaction *trans) {
                             handle_tcreate_admin(worker, trans);
                         else if (isleasemigrate)
                             handle_tcreate_migrate(worker, trans);
+                        else if (isdumpcreate)
+                            handle_tcreate_dump(worker, trans);
                         else
                             handle_tcreate(worker, trans);
                         break;

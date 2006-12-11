@@ -34,6 +34,10 @@ struct connection {
     int partial_in_bytes;
     Message *partial_out;
     int partial_out_bytes;
+    u64 totalbytesin;
+    u64 totalbytesout;
+    u32 totalmessagesin;
+    u32 totalmessagesout;
 };
 
 struct address {

@@ -80,6 +80,7 @@ static void write_message(Connection *conn) {
 
             /* record the bytes we sent */
             conn->partial_out_bytes = (bytes += res);
+            conn->totalbytesout += res;
         }
 
         /* that message is finished */
@@ -87,6 +88,7 @@ static void write_message(Connection *conn) {
         conn->partial_out_bytes = 0;
         raw_delete(msg->raw);
         msg->raw = NULL;
+        conn->totalmessagesout++;
     }
 
     /* this was the last message in the queue so stop trying to write */
@@ -127,6 +129,7 @@ static Message *read_message(Connection *conn) {
 
         /* record the bytes we read */
         conn->partial_in_bytes = (bytes += res);
+        conn->totalbytesin += res;
 
         /* read the message length once it's available and check it */
         if (bytes == 4) {
@@ -155,6 +158,7 @@ static Message *read_message(Connection *conn) {
                     raw_delete(msg->raw);
                     msg->raw = NULL;
                 }
+                conn->totalmessagesin++;
                 return msg;
             }
         }

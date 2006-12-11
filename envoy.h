@@ -23,6 +23,7 @@ void handle_topen(Worker *worker, Transaction *trans);
 void handle_tcreate(Worker *worker, Transaction *trans);
 void handle_tcreate_admin(Worker *worker, Transaction *trans);
 void handle_tcreate_migrate(Worker *worker, Transaction *trans);
+void handle_tcreate_dump(Worker *worker, Transaction *trans);
 void handle_tread(Worker *worker, Transaction *trans);
 void handle_twrite(Worker *worker, Transaction *trans);
 void handle_tclunk(Worker *worker, Transaction *trans);
