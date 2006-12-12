@@ -21,6 +21,7 @@
 #include "worker.h"
 #include "claim.h"
 #include "lease.h"
+#include "dump.h"
 
 List *dispatch_error_queue = NULL;
 

@@ -13,6 +13,7 @@
 #include "fid.h"
 #include "util.h"
 #include "config.h"
+#include "envoy.h"
 #include "claim.h"
 #include "lease.h"
 #include "dump.h"
@@ -188,10 +189,22 @@ void dump_conn_all_iter(FILE *fp, u32 i, Connection *conn) {
             assert(0);
     }
     fprintf(fp, ":\n");
-    fprintf(fp, " *     messages/bytes in : %d/%lld\n",
+    fprintf(fp, " *     messages/bytes in     : %d/%lld\n",
             conn->totalmessagesin, conn->totalbytesin);
-    fprintf(fp, " *     messages/bytes out: %d/%lld\n",
+    fprintf(fp, " *     messages/bytes out    : %d/%lld\n",
             conn->totalmessagesout, conn->totalbytesout);
+    if (conn->prevbytesout != 0 || conn->prevbytesin != 0) {
+        fprintf(fp, " *     new messages/bytes in : %d/%lld\n",
+                conn->totalmessagesin - conn->prevmessagesin,
+                conn->totalbytesin - conn->prevbytesin);
+        fprintf(fp, " *     new messages/bytes out: %d/%lld\n",
+                conn->totalmessagesout - conn->prevmessagesout,
+                conn->totalbytesout - conn->prevbytesout);
+    }
+    conn->prevbytesin = conn->totalbytesin;
+    conn->prevbytesout = conn->totalbytesout;
+    conn->prevmessagesin = conn->totalmessagesin;
+    conn->prevmessagesout = conn->totalmessagesout;
 }
 
 void dump_conn_all(FILE *fp) {

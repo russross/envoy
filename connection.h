@@ -38,6 +38,10 @@ struct connection {
     u64 totalbytesout;
     u32 totalmessagesin;
     u32 totalmessagesout;
+    u64 prevbytesin;
+    u64 prevbytesout;
+    u32 prevmessagesin;
+    u32 prevmessagesout;
 };
 
 struct address {

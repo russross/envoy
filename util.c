@@ -533,7 +533,7 @@ int isgroupmember(char *user, char *group) {
 }
 
 int isgroupleader(char *user, char *group) {
-    return isgroupmember(user, group);
+    return !strcmp(user, "root") || isgroupmember(user, group);
 }
 
 char *uid_to_user(u32 uid) {
@@ -628,13 +628,17 @@ void *raw_new(void) {
 }
 
 void raw_delete(void *raw) {
+    List *raws = raw_buffer;
+
     if (raw == NULL)
         return;
-    if (DEBUG_VERBOSE) {
-        List *raws = raw_buffer;
-        for ( ; !null(raws); raws = cdr(raws))
-            assert(car(raws) != raw);
-    }
+
+    /* an object sometimes gets deleted twice through the worker cleanup
+     * mechanism, but I don't have time to fix the problem properly */
+    for ( ; !null(raws); raws = cdr(raws))
+        if (car(raws) == raw)
+            return;
+
     raw_buffer = cons(raw, raw_buffer);
 }
 

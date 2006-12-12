@@ -147,6 +147,9 @@ static Message *read_message(Connection *conn) {
 
         /* have we read the whole message? */
         if (bytes == size) {
+            int index = 0;
+            if ((size = unpackU32(msg->raw, 4, &index)) != msg->size)
+                assert(0);
             if (unpackMessage(msg) < 0) {
                 fprintf(stderr, "read_message: unpack failure\n");
                 break;

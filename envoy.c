@@ -1591,7 +1591,7 @@ void client_shutdown(Worker *worker, Connection *conn) {
         if (!vector_test(conn->fid_vector, i))
             continue;
 
-        fid = fid_lookup(conn, --i);
+        fid = fid_lookup(conn, i);
         reserve(worker, LOCK_FID, fid);
         do {
             if (fid->isremote) {

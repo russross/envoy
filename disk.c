@@ -419,6 +419,8 @@ struct p9stat *disk_stat(Worker *worker, u64 oid) {
                 return NULL;
         }
         result->extension[size] = 0;
+        worker_cleanup_remove(worker, LOCK_OPENFILE, file);
+        file->lock = NULL;
     }
     result->n_uid = user_to_uid(name);
     result->n_gid = group_to_gid(group);

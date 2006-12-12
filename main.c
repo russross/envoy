@@ -95,7 +95,7 @@ void make_daemon(void) {
 
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
-    close(STDERR_FILENO);
+    /*close(STDERR_FILENO);*/
 }
 
 int main(int argc, char **argv) {
