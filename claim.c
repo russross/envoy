@@ -347,6 +347,10 @@ Claim *claim_update_territory_move(Claim *claim, Connection *conn) {
 
     /* walk up the tree updating counters */
     do {
+        /* we don't migrate admin directories */
+        if (get_admin_path_type(claim->pathname) == PATH_ADMIN)
+            break;
+
         /* has the territory changed since this file was visited? */
         if (claim->lastupdate < lease->lastchange) {
             for (i = 0; i < claim->urgencycount; i++)
@@ -394,8 +398,18 @@ Claim *claim_update_territory_move(Claim *claim, Connection *conn) {
         claim = claim->parent;
     } while (claim != NULL);
 
+    if (DEBUG_VERBOSE && mosturgent != NULL) {
+        printf("Most urgent candidate: [%s] to [%s]\n",
+                mosturgent->pathname, addr_to_string(conn->addr));
+        printf("Time since last move: [%3g] required for this move: [%3g]\n",
+                now - lease->lastchange,
+                ter_mintime + (ter_urgent - mostgain) * ter_rate);
+    }
+
     /* did we find a move worth making? */
-    if (conn->envoyindex > 0 && now - lease->lastchange > ter_mintime) {
+    if (mosturgent != NULL &&
+            conn->envoyindex > 0 && now - lease->lastchange > ter_mintime)
+    {
         /* how long should this transfer be delayed? */
         double delay = ter_mintime + (ter_urgent - mostgain) * ter_rate;
 
@@ -412,7 +426,6 @@ Claim *claim_update_territory_move(Claim *claim, Connection *conn) {
 
     return NULL;
 }
-
 
 void claim_state_init(void) {
     claim_cache = lru_new(

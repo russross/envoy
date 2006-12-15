@@ -384,7 +384,6 @@ void dispatch(Worker *worker, Transaction *trans) {
             }
             /* testing interface--is this a lease request? */
             if (trans->in->id == TCREATE &&
-                    get_admin_path_type(fid->pathname) != PATH_ADMIN &&
                     startswith(trans->in->msg.tcreate.name, "::lease::"))
             {
                 isleasemigrate = 1;
@@ -398,10 +397,11 @@ void dispatch(Worker *worker, Transaction *trans) {
             reserve(worker, LOCK_FID, fid);
 
             /* for write ops, make sure the object is writable */
-            if (trans->in->id == TCREATE || trans->in->id == TWRITE ||
+            if (!isleasemigrate && !isdumpcreate &&
+                    (trans->in->id == TCREATE || trans->in->id == TWRITE ||
                     trans->in->id == TWSTAT ||
                     (trans->in->id == TOPEN &&
-                     (trans->in->msg.topen.mode & OTRUNC)))
+                     (trans->in->msg.topen.mode & OTRUNC))))
             {
                 if (fid->claim->access == ACCESS_COW) {
                     claim_thaw(worker, fid->claim);

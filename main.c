@@ -94,7 +94,7 @@ void make_daemon(void) {
         exit(-1);
 
     close(STDIN_FILENO);
-    close(STDOUT_FILENO);
+    /*close(STDOUT_FILENO);*/
     /*close(STDERR_FILENO);*/
 }
 

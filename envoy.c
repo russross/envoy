@@ -189,19 +189,30 @@ void forward_to_envoy(Worker *worker, Transaction *trans, Fid *fid) {
 
 #undef copy_forward
 
-int transfer_territory(Worker *worker, Connection *conn, Claim *claim) {
-    if (ter_disabled || claim == NULL || claim->deleted)
+int transfer_territory(Worker *worker, Address *addr, Claim *claim) {
+    Lease *lease;
+    Address *parent_addr;
+    char *pathname;
+    Claim *parent;
+
+    if (claim == NULL || claim->deleted)
         return 0;
+
+    lease = claim->lease;
+    parent_addr = claim->lease->addr;
+    pathname = claim->pathname;
+    parent = claim->parent;
 
     /* release locks from the transaction */
     worker_cleanup(worker);
 
     /* is it a split or a transfer? */
-    if (claim->parent == NULL) {
-        remote_nominate(worker, claim->lease->addr, claim->pathname,
-                conn->addr);
+    if (parent == NULL) {
+        remote_nominate(worker, parent_addr, pathname, addr);
+        dump("transfer_nominate");
     } else {
-        lease_split(worker, claim->lease, claim->pathname, conn->addr);
+        lease_split(worker, lease, pathname, addr);
+        dump("transfer_split");
     }
 
     return 1;
@@ -653,7 +664,7 @@ void handle_topen(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 /* ::lease::,path,to,root::target:port */
@@ -663,7 +674,7 @@ void handle_tcreate_migrate(Worker *worker, Transaction *trans) {
     /* skip the ::lease:: bit */
     char *host = strstr(root, "::");
     Address *addr;
-    Lease *lease;
+    Claim *claim;
     char *comma;
 
     failif(host == NULL, EINVAL);
@@ -672,19 +683,17 @@ void handle_tcreate_migrate(Worker *worker, Transaction *trans) {
         *comma = '/';
     addr = parse_address(host + 2, ENVOY_PORT);
 
-    lease = lease_find_root(root);
-    failif(lease == NULL, EINVAL);
+    claim = claim_find(worker, root);
+    failif(claim == NULL, EINVAL);
 
-    worker_cleanup(worker);
-    if (strcmp(root, lease->pathname)) {
-        printf("lease migrate request: split %s from %s to %s\n",
-                root, lease->pathname, addr_to_string(addr));
-        lease_split(worker, lease, root, addr);
-    } else {
+    if (claim->parent == NULL) {
         printf("lease migrate request: nominate %s to %s\n",
                 root, addr_to_string(addr));
-        remote_nominate(worker, lease->addr, root, addr);
+    } else {
+        printf("lease migrate request: split %s from %s to %s\n",
+                root, claim->lease->pathname, addr_to_string(addr));
     }
+    transfer_territory(worker, addr, claim);
     printf("lease migrate request: completed\n");
 
     failif(1, EPERM);
@@ -984,7 +993,7 @@ void handle_tcreate(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 /**
@@ -1082,7 +1091,7 @@ void handle_tread(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 /**
@@ -1141,7 +1150,7 @@ void handle_twrite(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 /**
@@ -1175,7 +1184,7 @@ void handle_tclunk(Worker *worker, Transaction *trans) {
     fid_remove(worker, trans->conn, req->fid);
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 /**
@@ -1239,12 +1248,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     /* if not, give up ownership of this file and repeat the request remotely */
     if (parent == NULL) {
-        Lease *lease = fid->claim->lease;
-
-        /* release lock on this lease so the remote envoy can reclaim it */
-        worker_cleanup(worker);
-
-        remote_nominate(worker, lease->addr, lease->pathname, lease->addr);
+        transfer_territory(worker, fid->claim->lease->addr, fid->claim);
 
         /* force a restart on this operation */
         worker_retry(worker);
@@ -1281,7 +1285,7 @@ void handle_tremove(Worker *worker, Transaction *trans) {
 
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 /**
@@ -1322,7 +1326,7 @@ void handle_tstat(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 /**
@@ -1488,12 +1492,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
 
         /* if this is a lease root, merge with the parent before renaming */
         if (parent == NULL) {
-            lease = fid->claim->lease;
-
-            /* release lock on this lease so the remote envoy can reclaim it */
-            worker_cleanup(worker);
-
-            remote_nominate(worker, lease->addr, lease->pathname, lease->addr);
+            transfer_territory(worker, fid->claim->lease->addr, fid->claim);
 
             /* force a restart on this operation */
             worker_retry(worker);
@@ -1558,7 +1557,7 @@ void handle_twstat(Worker *worker, Transaction *trans) {
     send_reply:
     send_reply(trans);
 
-    transfer_territory(worker, trans->conn, change);
+    transfer_territory(worker, trans->conn->addr, change);
 }
 
 void envoy_teclosefid(Worker *worker, Transaction *trans) {
@@ -1706,6 +1705,8 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
     if (req->type == GRANT_START || req->type == GRANT_CONTINUE) {
         lock_lease_extend_multistep(worker, lease);
         worker_multistep_wait(worker);
+    } else {
+        dump("transfer_revoke");
     }
 }
 
@@ -1777,6 +1778,8 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
     if (req->type == GRANT_START || req->type == GRANT_CONTINUE) {
         lock_lease_extend_multistep(worker, lease);
         worker_multistep_wait(worker);
+    } else {
+        dump("transfer_grant");
     }
 }
 

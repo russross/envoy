@@ -9,7 +9,7 @@
 #include "claim.h"
 
 int has_permission(char *uname, struct p9stat *info, u32 required);
-int transfer_territory(Worker *worker, Connection *conn, Claim *claim);
+int transfer_territory(Worker *worker, Address *addr, Claim *claim);
 
 void handle_tversion(Worker *worker, Transaction *trans);
 
