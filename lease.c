@@ -834,18 +834,18 @@ void lease_rename(Worker *worker, Lease *lease, Claim *root,
                 remoteleases, fid_gather_groups(remotefids));
     }
 
+    /* see if the lease itself needs renaming before re-linking the exits */
+    if (ispathprefix(lease->pathname, oldpath)) {
+        hash_remove(lease_by_root_pathname, lease->pathname);
+        lease->pathname = concatname(newpath, lease->pathname + prefixlen);
+        hash_set(lease_by_root_pathname, lease->pathname, lease);
+    }
+
     /* now update the local exit stubs and the wavefront list */
     for ( ; !null(remoteleases); remoteleases = cdr(remoteleases)) {
         Lease *elt = car(remoteleases);
         hash_remove(lease_by_root_pathname, elt->pathname);
         elt->pathname = concatname(newpath, elt->pathname + prefixlen);
         lease_link_exit(elt);
-    }
-
-    /* see if the lease itself needs renaming */
-    if (ispathprefix(lease->pathname, oldpath)) {
-        hash_remove(lease_by_root_pathname, lease->pathname);
-        lease->pathname = concatname(newpath, lease->pathname + prefixlen);
-        hash_set(lease_by_root_pathname, lease->pathname, lease);
     }
 }

@@ -40,5 +40,6 @@ void envoy_tegrant(Worker *worker, Transaction *trans);
 void envoy_temigrate(Worker *worker, Transaction *trans);
 void envoy_tenominate(Worker *worker, Transaction *trans);
 void envoy_testatremote(Worker *worker, Transaction *trans);
+void envoy_tesnapshot(Worker *worker, Transaction *trans);
 
 #endif

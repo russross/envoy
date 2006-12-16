@@ -1882,3 +1882,20 @@ void envoy_testatremote(Worker *worker, Transaction *trans) {
 
     send_reply(trans);
 }
+
+void envoy_tesnapshot(Worker *worker, Transaction *trans) {
+    struct Tesnapshot *req = &trans->in->msg.tesnapshot;
+    struct Resnapshot *res = &trans->out->msg.resnapshot;
+    Claim *claim = claim_find(worker, req->path);
+
+    failif(claim == NULL, EBADF);
+
+    lease_snapshot(worker, claim);
+
+    if (claim->access == ACCESS_COW)
+        claim_thaw(worker, claim);
+
+    res->newoid = claim->oid;
+
+    send_reply(trans);
+}

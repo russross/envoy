@@ -74,12 +74,15 @@ void print_usage(void) {
             ter_halflife, ter_mintime, ter_maxtime, ter_idle, ter_urgent);
     }
     fprintf(stderr,
-"    -p, --port=<PORT>          listed on the given port (default %d)\n"
+"    -i, --ip=<IPADDRESS>       override the ip address of this host\n"
+"                                 (default %s)\n"
+"    -p, --port=<PORT>          listen on the given port (default %d)\n"
 "    -m, --messagesize=<SIZE>   maximum message size (default %d)\n"
 "    -d, --debug=<FLAGS>        debug options:\n"
 "                                 v: verbose debug output\n"
 "                                 d: data structure audits\n"
 "                                 s: message to/from storage servers\n",
+            addr_to_dotted(my_address),
             (isstorage ? STORAGE_PORT : ENVOY_PORT), GLOBAL_MAX_SIZE);
     if (!isstorage) {
         fprintf(stderr,
@@ -104,6 +107,7 @@ int config_envoy(int argc, char **argv) {
         { "maxtime",    required_argument,      NULL,   'T' },
         { "idle",       required_argument,      NULL,   'u' },
         { "urgent",     required_argument,      NULL,   'U' },
+        { "ip",         required_argument,      NULL,   'i' },
         { "port",       required_argument,      NULL,   'p' },
         { "debug",      required_argument,      NULL,   'd' },
         { "messagesize", required_argument,     NULL,   'm' },
@@ -120,6 +124,7 @@ int config_envoy(int argc, char **argv) {
     storage_servers = NULL;
     objectroot = NULL;
     PORT = ENVOY_PORT;
+    my_address = get_my_address();
     DEBUG_VERBOSE =
         DEBUG_AUDIT =
         DEBUG_STORAGE =
@@ -136,7 +141,7 @@ int config_envoy(int argc, char **argv) {
         int i;
         double d;
 
-        switch (getopt_long(argc, argv, "hr:s:c:al:t:T:u:U:p:d:m:",
+        switch (getopt_long(argc, argv, "hr:s:c:al:t:T:u:U:i:p:d:m:",
                     long_options, NULL))
         {
             case EOF:
@@ -231,6 +236,13 @@ int config_envoy(int argc, char **argv) {
                     return -1;
                 }
                 break;
+            case 'i':
+                my_address = make_address(optarg, PORT);
+                if (my_address == NULL) {
+                    fprintf(stderr, "Invalid IP address: %s\n", optarg);
+                    return -1;
+                }
+                break;
             case 'p':
                 i = strtol(optarg, &end, 10);
                 if (*end == 0 && i > 0 && i < 0x10000) {
@@ -238,7 +250,7 @@ int config_envoy(int argc, char **argv) {
                         fprintf(stderr, "Only root can use ports < 1024\n");
                         return -1;
                     }
-                    PORT = i;
+                    my_address->port = PORT = i;
                 } else {
                     fprintf(stderr, "Invalid port: %s\n", optarg);
                     return -1;
@@ -331,6 +343,7 @@ int config_storage(int argc, char **argv) {
     /* fill in the defaults */
     objectroot = NULL;
     PORT = STORAGE_PORT;
+    my_address = get_my_address();
     DEBUG_VERBOSE =
         DEBUG_STORAGE =
         DEBUG_PAYLOAD = 0;
@@ -355,6 +368,13 @@ int config_storage(int argc, char **argv) {
                     return -1;
                 }
                 break;
+            case 'i':
+                my_address = make_address(optarg, PORT);
+                if (my_address == NULL) {
+                    fprintf(stderr, "Invalid IP address: %s\n", optarg);
+                    return -1;
+                }
+                break;
             case 'p':
                 i = strtol(optarg, &end, 10);
                 if (*end == 0 && i > 0 && i < 0x10000) {
@@ -362,7 +382,7 @@ int config_storage(int argc, char **argv) {
                         fprintf(stderr, "Only root can use ports < 1024\n");
                         return -1;
                     }
-                    PORT = i;
+                    my_address->port = PORT = i;
                 } else {
                     fprintf(stderr, "Invalid port: %s\n", optarg);
                     return -1;

@@ -118,14 +118,12 @@ int main(int argc, char **argv) {
         isstorage = 1;
         if (config_storage(argc, argv) < 0)
             return -1;
-        if (!DEBUG)
-            make_daemon();
+        make_daemon();
         if (DEBUG_VERBOSE) {
             printf("starting storage server with root path:\n    [%s]\n",
                     objectroot);
         }
 
-        my_address = get_my_address();
         worker_state_init();
         conn_init();
         disk_state_init_storage();
@@ -136,8 +134,7 @@ int main(int argc, char **argv) {
         isstorage = 0;
         if (config_envoy(argc, argv) < 0)
             return -1;
-        if (!DEBUG)
-            make_daemon();
+        make_daemon();
         if (DEBUG_VERBOSE) {
             if (root_address == NULL) {
                 printf("starting envoy server: root oid = [%llu]\n", root_oid);
@@ -147,7 +144,6 @@ int main(int argc, char **argv) {
             }
         }
 
-        my_address = get_my_address();
         worker_state_init();
         conn_init();
         if (objectroot != NULL)

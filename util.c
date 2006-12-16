@@ -191,6 +191,17 @@ char *addr_to_string(Address *addr) {
     return netaddr_to_string(addr_to_netaddr(addr));
 }
 
+char *addr_to_dotted(Address *addr) {
+    char *res = GC_MALLOC_ATOMIC(4*4);
+    assert(res != NULL);
+    sprintf(res, "%d.%d.%d.%d",
+            (addr->ip >> 24) & 0xff,
+            (addr->ip >> 16) & 0xff,
+            (addr->ip >>  8) & 0xff,
+            addr->ip         & 0xff);
+    return res;
+}
+
 Address *get_my_address(void) {
     char *hostname = GC_MALLOC_ATOMIC(MAX_HOSTNAME + 1);
     assert(hostname != NULL);

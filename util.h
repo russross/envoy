@@ -38,6 +38,7 @@ struct sockaddr_in *addr_to_netaddr(Address *addr);
 Address *netaddr_to_addr(struct sockaddr_in *netattr);
 char *netaddr_to_string(struct sockaddr_in *netaddr);
 char *addr_to_string(Address *addr);
+char *addr_to_dotted(Address *addr);
 Address *get_my_address(void);
 
 u32 generic_hash(const void *elt, int len, u32 hash);

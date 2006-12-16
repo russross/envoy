@@ -297,6 +297,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TEMIGRATE:
         case TENOMINATE:
         case TESTATREMOTE:
+        case TESNAPSHOT:
         case TERENAMETREE:
         case TECLOSEFID:
             break;
@@ -353,19 +354,22 @@ void dispatch(Worker *worker, Transaction *trans) {
     if (newfid != NOFID && newfid != oldfid)
         failif(fid_lookup(trans->conn, newfid) != NULL, EIO);
 
-    /* check and possibly lock the fid */
-    if (oldfid != NOFID) {
+    if (trans->in->id == TCREATE &&
+            startswith(trans->in->msg.tcreate.name, "::dump::"))
+    {
+        /* reporting interface--is this a dump request? */
+        isdumpcreate = 1;
+    } else if (trans->in->id == TCREATE &&
+            startswith(trans->in->msg.tcreate.name, "::lease::"))
+    {
+        /* testing interface--is this a lease request? */
+        isleasemigrate = 1;
+    } else if (oldfid != NOFID) {
+        /* check and possibly lock the fid */
         fid = fid_lookup(trans->conn, oldfid);
 
         /* make sure it's a valid fid */
         failif(fid == NULL, EBADF);
-
-        /* reporting interface--is this a dump request? */
-        if (trans->in->id == TCREATE &&
-                startswith(trans->in->msg.tcreate.name, "::dump::"))
-        {
-            isdumpcreate = 1;
-        }
 
         /* lock the objects this transaction will use */
         if (fid->isremote) {
@@ -381,12 +385,6 @@ void dispatch(Worker *worker, Transaction *trans) {
                      ispositiveint(trans->in->msg.tcreate.name)))
             {
                 isadmincreate = 1;
-            }
-            /* testing interface--is this a lease request? */
-            if (trans->in->id == TCREATE &&
-                    startswith(trans->in->msg.tcreate.name, "::lease::"))
-            {
-                isleasemigrate = 1;
             }
 
             /* lock the lease first */
@@ -454,6 +452,7 @@ void dispatch(Worker *worker, Transaction *trans) {
         case TEMIGRATE:    envoy_temigrate(worker, trans);      break;
         case TENOMINATE:   envoy_tenominate(worker, trans);     break;
         case TESTATREMOTE: envoy_testatremote(worker, trans);   break;
+        case TESNAPSHOT:   envoy_tesnapshot(worker, trans);     break;
         case TERENAMETREE: envoy_terenametree(worker, trans);   break;
 
         case TVERSION:

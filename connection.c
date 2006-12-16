@@ -137,6 +137,7 @@ Connection *conn_get_envoy_out(Worker *worker, Address *addr) {
     Connection *conn;
 
     assert(addr != NULL);
+    assert(addr_cmp(addr, my_address));
 
     if ((conn = hash_get(addr_2_envoy_out, addr)) == NULL) {
         int fd;
