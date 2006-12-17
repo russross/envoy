@@ -112,7 +112,7 @@ enum grant_type {
 struct leaserecord *lease_to_lease_record(Lease *lease, int prefixlen);
 List *lease_serialize_exits(Worker *worker, Lease *lease,
         char *oldroot, Address *addr);
-void lease_add_exits(Worker *worker, Lease *lease, List *exits);
+void lease_add_exits(Worker *worker, Lease *lease, char *prefix, List *exits);
 List *lease_serialize_fids(Worker *worker, Lease *lease,
         char *oldroot, Address *addr);
 void lease_release_fids(Worker *worker, Lease *lease,

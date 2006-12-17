@@ -1745,7 +1745,7 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
             exits = array_to_list(req->nexit, (void **) req->exit);
             if (!null(exits)) {
                 failif(lease->isexit, EINVAL);
-                lease_add_exits(worker, lease, exits);
+                lease_add_exits(worker, lease, lease->pathname, exits);
             }
             fids = array_to_list(req->nfid, (void **) req->fid);
             if (!null(fids)) {
@@ -1758,7 +1758,7 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
         case GRANT_CHANGE_PARENT:
             failif(req->nexit != 0, EINVAL);
             failif(req->nfid != 0, EINVAL);
-            failif(lease != NULL, EIO);
+            failif(lease == NULL, EIO);
             failif(strcmp(lease->pathname, req->root->pathname), EIO);
             failif(lease->changeinprogress, EIO);
             lock_lease_exclusive(worker, lease);
@@ -1803,6 +1803,7 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
     struct Tenominate *req = &trans->in->msg.tenominate;
     Address *newaddr = address_new(req->address, req->port);
     Address *oldaddr;
+    char *oldpath;
     Lease *lease = lease_find_root(dirname(req->path));;
     Lease *child = lease_get_remote(req->path);
     struct leaserecord *root;
@@ -1821,6 +1822,7 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
 
     /* only the old lease holder can initiate a transfer */
     oldaddr = child->addr;
+    oldpath = child->pathname;
     failif(addr_cmp(oldaddr, trans->conn->addr), EINVAL);
 
     if (addr_cmp(newaddr, my_address))
@@ -1842,7 +1844,7 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
         if (!addr_cmp(newaddr, my_address)) {
             /* add it to the local lease */
             if (!null(exits))
-                lease_add_exits(worker, lease, exits);
+                lease_add_exits(worker, lease, oldpath, exits);
             if (!null(fids))
                 lease_add_fids(worker, lease, fids, req->path, oldaddr);
         } else {

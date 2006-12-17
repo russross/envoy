@@ -105,9 +105,9 @@ void lease_merge_exit(Worker *worker, Lease *parent, Lease *child) {
     assert(parent->wait_for_update == worker &&
             child->wait_for_update == worker);
     assert(parent->inflight == 0 && child->inflight == 0);
-    assert(child->isexit && !parent->isexit);
-    assert(!parent->readonly);
-    assert(!child->readonly);
+    assert(!child->isexit && !parent->isexit);
+    /* assert(!parent->readonly);
+    assert(!child->readonly); */
 
     /* prevent lookups on the old lease */
     hash_remove(lease_by_root_pathname, child->pathname);
@@ -485,7 +485,7 @@ List *lease_serialize_exits(Worker *worker, Lease *lease,
     return result;
 }
 
-void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
+void lease_add_exits(Worker *worker, Lease *lease, char *prefix, List *exits) {
     List *newwavefront = NULL;
     List *local = exits;
     List *tomerge = NULL;
@@ -493,10 +493,10 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
     /* first find any local leases that need to be merged */
     for ( ; !null(local); local = cdr(local)) {
         struct leaserecord *elt = car(local);
-        char *pathname = concatname(lease->pathname, elt->pathname);
+        char *pathname = concatname(prefix, elt->pathname);
         if (elt->address == my_address->ip && elt->port == my_address->port) {
-            Lease *child = lease_get_remote(pathname);
-            assert(child != NULL);
+            Lease *child = lease_find_root(pathname);
+            assert(child != NULL && !strcmp(child->pathname, pathname));
             tomerge = cons(child, tomerge);
         }
     }
@@ -508,11 +508,11 @@ void lease_add_exits(Worker *worker, Lease *lease, List *exits) {
     /* convert to lease objects and add to the parent lease */
     for ( ; !null(exits); exits = cdr(exits)) {
         struct leaserecord *elt = car(exits);
-        char *pathname = concatname(lease->pathname, elt->pathname);
+        char *pathname = concatname(prefix, elt->pathname);
         if (elt->address == my_address->ip && elt->port == my_address->port) {
             /* merge with an existing lease */
-            Lease *child = lease_get_remote(pathname);
-            assert(child != NULL);
+            Lease *child = lease_find_root(pathname);
+            assert(child != NULL && !strcmp(child->pathname, pathname));
             lease_merge_exit(worker, lease, child);
         } else {
             /* add an exit */
@@ -767,7 +767,7 @@ void lease_merge(Worker *worker, Lease *child) {
                 my_address, &revoketype, &root, &exits, &fids);
 
         if (!null(exits))
-            lease_add_exits(worker, lease, exits);
+            lease_add_exits(worker, lease, oldpath, exits);
         if (!null(fids))
             lease_add_fids(worker, lease, fids, oldpath, oldaddr);
     }
