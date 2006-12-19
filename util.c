@@ -702,3 +702,14 @@ int p9stat_cmp(const struct p9stat *a, const struct p9stat *b) {
         return a->n_muid - b->n_muid;
     return 0;
 }
+
+double stopwatch(struct timeval *start) {
+    struct timeval stop;
+    double sec;
+
+    gettimeofday(&stop, NULL);
+    sec = stop.tv_sec - start->tv_sec +
+        (stop.tv_usec - start->tv_usec) / 1000000.0;
+
+    return sec;
+}

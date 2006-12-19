@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <utime.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include "types.h"
 #include "9p.h"
 #include "list.h"
@@ -67,6 +70,7 @@ static void rerror(Message *m, u16 errnum, int line) {
     {
         printf("error #%u: %s (%s line %d)\n",
                 (u32) errnum, m->msg.rerror.ename, __FILE__, line);
+        fflush(stdout);
     }
     m->id = RERROR;
 }
@@ -194,6 +198,7 @@ int transfer_territory(Worker *worker, Address *addr, Claim *claim) {
     Address *parent_addr;
     char *pathname;
     Claim *parent;
+    struct timeval start;
 
     if (claim == NULL || claim->deleted)
         return 0;
@@ -206,13 +211,26 @@ int transfer_territory(Worker *worker, Address *addr, Claim *claim) {
     /* release locks from the transaction */
     worker_cleanup(worker);
 
+    if (DEBUG_VERBOSE)
+        gettimeofday(&start, NULL);
+
     /* is it a split or a transfer? */
-    if (parent == NULL) {
+    if (parent == NULL)
         remote_nominate(worker, parent_addr, pathname, addr);
-        dump("transfer_nominate");
-    } else {
+    else
         lease_split(worker, lease, pathname, addr);
-        dump("transfer_split");
+
+    if (DEBUG_VERBOSE) {
+        double sec = stopwatch(&start);
+        printf("lease transfer: %s from %s to %s (%.4g seconds, #%d)\n",
+                (parent == NULL ? "nominate" : "split"),
+                pathname, addr_to_string(addr), sec, dot_counter + 1);
+        fflush(stdout);
+
+        if (parent == NULL)
+            dump("transfer_nominate");
+        else
+            dump("transfer_split");
     }
 
     return 1;
@@ -719,6 +737,11 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
     struct qid qid;
     u64 newoid;
     int cow;
+    int isfork;
+    struct timeval start;
+
+    if (DEBUG_VERBOSE)
+        gettimeofday(&start, NULL);
 
     /* snapshot is a reserved name */
     failif(!strcmp(req->name, "snapshot"), EPERM);
@@ -743,6 +766,7 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         char *targetname;
 
         /* target of the link must be the full path of a valid snapshot */
+        isfork = 1;
         failif(emptystring(req->extension), EINVAL);
         target = claim_find(worker, req->extension);
         failif(target == NULL, EINVAL);
@@ -784,6 +808,7 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
         struct p9stat *info;
 
         /* the target of the request must be current */
+        isfork = 0;
         failif(emptystring(req->extension), EINVAL);
         failif(strcmp(req->extension, "current") &&
                 strcmp(req->extension, "current/"), EINVAL);
@@ -866,6 +891,17 @@ void handle_tcreate_admin(Worker *worker, Transaction *trans) {
     res->iounit = trans->conn->maxSize - RREAD_HEADER;
 
     send_reply(trans);
+
+    if (DEBUG_VERBOSE) {
+        double sec = stopwatch(&start);
+        if (isfork) {
+            printf("fork: %s from %s (%.4g seconds)\n", fid->pathname,
+                    req->extension, sec);
+        } else {
+            printf("snapshot: %s (%.4g seconds)\n", fid->pathname, sec);
+        }
+        fflush(stdout);
+    }
 }
 
 /**
@@ -1541,10 +1577,24 @@ void handle_twstat(Worker *worker, Transaction *trans) {
             claim_delete(oldfile);
 
         /* rename the fid, claim, and (for dirs) the descendents */
-        if ((fid->claim->info->mode & DMDIR))
+        if ((fid->claim->info->mode & DMDIR)) {
+            struct timeval start;
+            char *oldname = fid->pathname;
+
+            if (DEBUG_VERBOSE)
+                gettimeofday(&start, NULL);
+
             lease_rename(worker, lease, fid->claim, fid->pathname, newpathname);
-        else
+
+            if (DEBUG_VERBOSE) {
+                double sec = stopwatch(&start);
+                printf("lease rename: %s to %s (%.4g seconds)\n",
+                        oldname, newpathname, sec);
+                fflush(stdout);
+            }
+        } else {
             claim_rename(fid->claim, newpathname);
+        }
     }
 
     if (updated) {
@@ -1706,7 +1756,8 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
         lock_lease_extend_multistep(worker, lease);
         worker_multistep_wait(worker);
     } else {
-        dump("transfer_revoke");
+        if (DEBUG_VERBOSE)
+            dump("transfer_revoke");
     }
 }
 
@@ -1779,7 +1830,8 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
         lock_lease_extend_multistep(worker, lease);
         worker_multistep_wait(worker);
     } else {
-        dump("transfer_grant");
+        if (DEBUG_VERBOSE)
+            dump("transfer_grant");
     }
 }
 

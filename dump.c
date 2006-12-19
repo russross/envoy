@@ -163,7 +163,7 @@ void dump_dot(FILE *fp, Lease *lease) {
     fprintf(fp, "}\n");
 }
 
-static int dot_counter = 0;
+int dot_counter = 0;
 
 void dump_dot_all(FILE *fp) {
     List *leases = hash_tolist(lease_by_root_pathname);

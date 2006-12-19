@@ -4,6 +4,8 @@
 #include "types.h"
 #include "lease.h"
 
+extern int dot_counter;
+
 void dump_dot(FILE *fp, Lease *lease);
 void dump_dot_all(FILE *fp);
 void dump_conn_all(FILE *fp);
