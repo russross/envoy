@@ -211,7 +211,7 @@ int transfer_territory(Worker *worker, Address *addr, Claim *claim) {
     /* release locks from the transaction */
     worker_cleanup(worker);
 
-    if (DEBUG_VERBOSE)
+    if (DEBUG_VERBOSE || DEBUG_TRANSFER)
         gettimeofday(&start, NULL);
 
     /* is it a split or a transfer? */
@@ -220,7 +220,7 @@ int transfer_territory(Worker *worker, Address *addr, Claim *claim) {
     else
         lease_split(worker, lease, pathname, addr);
 
-    if (DEBUG_VERBOSE) {
+    if (DEBUG_VERBOSE || DEBUG_TRANSFER) {
         double sec = stopwatch(&start);
         printf("lease transfer: %s from %s to %s (%.4g seconds, #%d)\n",
                 (parent == NULL ? "nominate" : "split"),

@@ -398,7 +398,7 @@ Claim *claim_update_territory_move(Claim *claim, Connection *conn) {
         claim = claim->parent;
     } while (claim != NULL);
 
-    if (DEBUG_VERBOSE && mosturgent != NULL) {
+    if (DEBUG_TRANSFER && mosturgent != NULL) {
         printf("Most urgent candidate: [%s] to [%s]\n",
                 mosturgent->pathname, addr_to_string(conn->addr));
         printf("Time since last move: [%3g] required for this move: [%3g]\n",
@@ -415,7 +415,7 @@ Claim *claim_update_territory_move(Claim *claim, Connection *conn) {
 
         /* have we already waited that long? is it too minor? */
         if (delay < now - lease->lastchange && delay < ter_maxtime) {
-            if (DEBUG_VERBOSE) {
+            if (DEBUG_VERBOSE || DEBUG_TRANSFER) {
                 printf("Territory migration recommended: [%s] to [%s]\n",
                         mosturgent->pathname, addr_to_string(conn->addr));
             }

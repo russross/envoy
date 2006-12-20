@@ -39,6 +39,7 @@ int DEBUG_CLIENT = 0;
 int DEBUG_ENVOY = 0;
 int DEBUG_ENVOY_ADMIN = 0;
 int DEBUG_PAYLOAD = 0;
+int DEBUG_TRANSFER = 0;
 u64 root_oid;
 
 void print_usage(void) {
@@ -88,7 +89,8 @@ void print_usage(void) {
         fprintf(stderr,
 "                                 c: messages to/from clients\n"
 "                                 e: messages to/from other envoys\n"
-"                                 a:   envoy admin messages only\n");
+"                                 a:   envoy admin messages only\n"
+"                                 t: territory transfer decisions\n");
     }
     fprintf(stderr,
 "                                 p: include data payloads for read/write\n");
@@ -130,7 +132,8 @@ int config_envoy(int argc, char **argv) {
         DEBUG_STORAGE =
         DEBUG_CLIENT =
         DEBUG_ENVOY = DEBUG_ENVOY_ADMIN =
-        DEBUG_PAYLOAD = 0;
+        DEBUG_PAYLOAD =
+        DEBUG_TRANSFER = 0;
 
     while (!finished) {
         u64 rootobj;
@@ -276,6 +279,7 @@ int config_envoy(int argc, char **argv) {
                         case 'v':       DEBUG_VERBOSE = 1;              break;
                         case 'd':       DEBUG_AUDIT = 1;                break;
                         case 'p':       DEBUG_PAYLOAD = 1;              break;
+                        case 't':       DEBUG_TRANSFER = 1;             break;
                         default:
                             fprintf(stderr, "Unknown debug option: %c\n",
                                     optarg[i]);

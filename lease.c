@@ -527,7 +527,10 @@ void lease_add_exits(Worker *worker, Lease *lease, char *prefix, List *exits) {
     }
 
     /* notify the remote hosts */
-    remote_grant_exits(worker, newwavefront, my_address, GRANT_CHANGE_PARENT);
+    if (!null(newwavefront)) {
+        remote_grant_exits(worker, newwavefront, my_address,
+                GRANT_CHANGE_PARENT);
+    }
 
     lease->lastchange = now_double();
 }
@@ -687,6 +690,7 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     List *exits;
     List *fids;
     Claim *claim = claim_find(worker, pathname);
+    Connection *conn;
     Lease *child;
     struct leaserecord *root;
     enum grant_type type = GRANT_START;
@@ -715,9 +719,11 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
     lease->changeexits = lease_serialize_exits(worker, lease, pathname, addr);
     lease->changefids = lease_serialize_fids(worker, lease, pathname, addr);
 
+    conn = conn_get_envoy_out(worker, addr);
+
     /* send the grant in as many steps as necessary */
     do {
-        lease_pack_message(lease, &exits, &fids,
+        lease_pack_message(lease, &exits, &fids, conn->maxSize -
                 (TEGRANT_SIZE_FIXED + leaserecordsize(root)));
         if (null(lease->changeexits) && null(lease->changefids)) {
             if (type == GRANT_START)
@@ -735,7 +741,6 @@ void lease_split(Worker *worker, Lease *lease, char *pathname, Address *addr) {
             (claim->access == ACCESS_READONLY));
     lease_link_exit(child);
 
-    assert(null(claim->children));
     claim_clear_descendents(claim);
     lease_clear_dir_cache(lease);
 

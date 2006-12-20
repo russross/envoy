@@ -49,6 +49,7 @@ extern int DEBUG;
 extern int DEBUG_VERBOSE;
 extern int DEBUG_STORAGE;
 extern int DEBUG_PAYLOAD;
+extern int DEBUG_TRANSFER;
 
 extern int isstorage;
 
