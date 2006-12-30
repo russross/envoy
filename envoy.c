@@ -1756,7 +1756,7 @@ void envoy_terevoke(Worker *worker, Transaction *trans) {
         lock_lease_extend_multistep(worker, lease);
         worker_multistep_wait(worker);
     } else {
-        if (DEBUG_VERBOSE)
+        if (DEBUG_VERBOSE || DEBUG_TRANSFER)
             dump("transfer_revoke");
     }
 }
@@ -1830,7 +1830,7 @@ void envoy_tegrant(Worker *worker, Transaction *trans) {
         lock_lease_extend_multistep(worker, lease);
         worker_multistep_wait(worker);
     } else {
-        if (DEBUG_VERBOSE)
+        if (DEBUG_VERBOSE || DEBUG_TRANSFER)
             dump("transfer_grant");
     }
 }

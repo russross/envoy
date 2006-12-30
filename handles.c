@@ -36,10 +36,12 @@ int handles_collect(Handles *set, fd_set *rset, int high) {
     int i;
     fd_mask *a = (fd_mask *) rset, *b = (fd_mask *) set->set;
 
+    high = high > set->high ? high : set->high;
+
     for (i = 0; i * NFDBITS <= high; i++)
         a[i] |= b[i];
 
-    return high > set->high ? high : set->high;
+    return high;
 }
 
 int handles_member(Handles *set, fd_set *rset) {
