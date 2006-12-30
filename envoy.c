@@ -1910,6 +1910,10 @@ void envoy_tenominate(Worker *worker, Transaction *trans) {
         }
     }
 
+    if (!addr_cmp(newaddr, my_address) && (DEBUG_VERBOSE || DEBUG_TRANSFER)) {
+        dump("transfer_nominate_grant");
+    }
+
     remote_revoke(worker, oldaddr, GRANT_END, req->path, newaddr,
             &revoketype, &root, &exits, &fids);
     failif(revoketype != GRANT_END, EINVAL);

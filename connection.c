@@ -159,7 +159,6 @@ Connection *conn_get_envoy_out(Worker *worker, Address *addr) {
 
 Connection *conn_get_incoming(Address *addr) {
     Connection *conn = hash_get(addr_2_in, addr);
-    assert(conn != NULL);
     return conn;
 }
 

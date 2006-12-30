@@ -176,8 +176,8 @@ static Message *read_message(Connection *conn) {
     if (conn_has_pending_write(conn))
         handles_remove(handles_write, conn->fd);
     close(conn->fd);
-    if (DEBUG)
-        exit(0);
+    /* if (DEBUG)
+        exit(0); */
     conn->fd = -1;
 
     return NULL;

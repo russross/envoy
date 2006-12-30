@@ -808,6 +808,7 @@ void lease_rename(Worker *worker, Lease *lease, Claim *root,
             for ( ; !null(fids) ; fids = cdr(fids)) {
                 Fid *fid = car(fids);
                 Connection *conn = conn_get_incoming(fid->addr);
+                assert(conn != NULL);
 
                 /* gather all fids coming from remote envoys */
                 if (conn->type == CONN_ENVOY_IN) {
