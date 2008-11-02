@@ -1,0 +1,79 @@
+#!/bin/sh
+
+case "$1" in
+    envoy | nocache | npfs | nfs) ;;
+    *)
+        echo usage: $0 \{envoy,npfs,nfs\} \[reset\]
+        exit
+        ;;
+esac
+
+if ! grep -q 9p /proc/modules ; then
+    echo loading 9p kernel module
+    insmod /root/envoy/9p-`uname -r`.ko
+fi
+
+if grep -q /mnt/9p /etc/mtab ; then
+    echo clearing old 9p mount
+    umount /mnt/9p
+fi
+
+if grep -q /mnt/9p /etc/mtab ; then
+    echo unable to umount 9p
+    exit
+fi
+
+if grep -q /mnt/nfs /etc/mtab ; then
+    echo clearing old nfs mount
+    umount /mnt/nfs
+fi
+
+if grep -q /mnt/nfs /etc/mtab ; then
+    echo unable to umount nfs
+    exit
+fi
+
+if [ "$2" = "shutdown" ] ; then
+    exit
+fi
+
+case "$1" in
+    envoy | nocache)
+        ANAME='/linux/current'
+        case `hostname` in
+            druid-0  | druid-1  | druid-2)  SERVER='128.232.39.40' ;;
+            skiing-0 | skiing-1 | skiing-2) SERVER='128.232.39.100' ;;
+            moonraider | moonraider-0 | moonraider-1 | moonraider-2)
+                    SERVER='128.232.38.190' ;;
+        esac
+
+        # special case--create the image for future mounts
+        if [ "$2" = "reset" ] ; then
+            echo creating mount point at $ANAME
+            mount -t 9p $SERVER /mnt/9p \
+              -o uid=0,gid=0,uname=root,port=9922,msize=32792
+            mkdir -p /mnt/9p/$ANAME
+            umount /mnt/9p
+            exit
+        fi
+
+        echo mount 9p on `hostname`: $SERVER $ANAME
+        mount -t 9p $SERVER /mnt/9p \
+              -o uid=0,gid=0,uname=root,port=9922,msize=32792,aname=$ANAME
+        ;;
+
+    npfs)
+        ANAME='/mnt/cache/npfsroot'
+        SERVER='128.232.39.40'
+        echo mount 9p on `hostname`: $SERVER $ANAME
+        mount -t 9p $SERVER /mnt/9p \
+              -o uid=0,gid=0,uname=root,port=9922,msize=32792,aname=$ANAME
+        ;;
+
+    nfs)
+        ANAME='/mnt/cache/nfsroot'
+        SERVER='128.232.39.40'
+        echo mount nfs
+        mount -t nfs $SERVER:$ANAME /mnt/nfs
+        ;;
+esac

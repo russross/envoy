@@ -1,0 +1,27 @@
+#!/bin/sh
+
+case `hostname` in
+    donkeykong.*)
+
+        for n in `seq 1 100` ; do
+            echo syncing
+            ssh root@druid-0.xeno sync
+            ssh root@skiing-0.xeno sync
+
+            ssh root@druid-0.xeno /root/envoy/scripts/snapshot-test-simple $n
+        done
+        ;;
+
+    druid-0)
+
+        cd /mnt/9p/linux
+        echo snapshot simple test $1
+        echo snapshot simple test $1 >> /tmp/stdout.log
+        date >> /tmp/stdout.log
+        /usr/bin/time ln -s current $1 2>> /tmp/stdout.log
+        ;;
+
+    *)
+        echo what do I do for `hostname`?
+        ;;
+esac

@@ -1,0 +1,294 @@
+# test of complex ownership tree: snapshot (no sync)
+snapshot 1
+Sat Dec 16 19:37:32 GMT 2006
+snapshot 2
+Sat Dec 16 19:38:21 GMT 2006
+Sat Dec 16 19:38:39 GMT 2006
+snapshot 3
+Sat Dec 16 19:39:34 GMT 2006
+0.00user 0.00system 0:12.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 4
+Sat Dec 16 19:39:48 GMT 2006
+0.00user 0.00system 0:13.62elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 5
+Sat Dec 16 19:40:01 GMT 2006
+0.00user 0.00system 0:14.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 6
+Sat Dec 16 19:40:17 GMT 2006
+0.00user 0.00system 0:15.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 7
+Sat Dec 16 19:40:32 GMT 2006
+0.00user 0.00system 0:10.85elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 8
+Sat Dec 16 19:40:43 GMT 2006
+0.00user 0.00system 0:14.42elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 9
+Sat Dec 16 19:40:58 GMT 2006
+0.00user 0.00system 0:48.38elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 10
+Sat Dec 16 19:41:46 GMT 2006
+0.00user 0.00system 0:41.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 11
+Sat Dec 16 19:42:28 GMT 2006
+0.00user 0.00system 0:41.95elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 12
+Sat Dec 16 19:43:10 GMT 2006
+0.00user 0.00system 0:49.70elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 13
+Sat Dec 16 19:44:00 GMT 2006
+0.00user 0.00system 0:45.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 14
+Sat Dec 16 19:44:45 GMT 2006
+0.00user 0.00system 0:51.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 15
+Sat Dec 16 19:45:37 GMT 2006
+0.00user 0.00system 1:02.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 16
+Sat Dec 16 19:46:39 GMT 2006
+0.00user 0.00system 1:26.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+snapshot 17
+Sat Dec 16 19:48:05 GMT 2006
+0.00user 0.00system 0:55.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+snapshot 18
+Sat Dec 16 19:49:01 GMT 2006
+0.00user 0.00system 1:03.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 19
+Sat Dec 16 19:50:04 GMT 2006
+0.00user 0.00system 0:59.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 20
+Sat Dec 16 19:51:04 GMT 2006
+0.00user 0.00system 0:55.80elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 21
+Sat Dec 16 19:51:59 GMT 2006
+0.00user 0.00system 0:55.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 22
+Sat Dec 16 19:52:55 GMT 2006
+0.00user 0.00system 1:23.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 23
+Sat Dec 16 19:54:19 GMT 2006
+0.00user 0.00system 0:44.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 24
+Sat Dec 16 19:55:03 GMT 2006
+0.00user 0.00system 0:35.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 25
+Sat Dec 16 19:55:39 GMT 2006
+0.00user 0.00system 1:15.92elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 26
+Sat Dec 16 19:56:55 GMT 2006
+0.00user 0.00system 1:00.38elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 27
+Sat Dec 16 19:57:55 GMT 2006
+0.00user 0.00system 1:03.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 28
+Sat Dec 16 19:58:59 GMT 2006
+0.00user 0.00system 1:34.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 29
+Sat Dec 16 20:00:34 GMT 2006
+0.00user 0.00system 1:02.70elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 30
+Sat Dec 16 20:01:37 GMT 2006
+0.00user 0.00system 1:22.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 31
+Sat Dec 16 20:02:59 GMT 2006
+0.00user 0.00system 1:49.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 32
+Sat Dec 16 20:04:49 GMT 2006
+0.00user 0.00system 0:47.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+snapshot 33
+Sat Dec 16 20:05:37 GMT 2006
+0.00user 0.00system 1:36.86elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 34
+Sat Dec 16 20:07:14 GMT 2006
+0.00user 0.00system 1:24.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 35
+Sat Dec 16 20:08:38 GMT 2006
+0.00user 0.00system 2:17.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 36
+Sat Dec 16 20:10:56 GMT 2006
+0.00user 0.00system 0:42.07elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 37
+Sat Dec 16 20:11:41 GMT 2006
+0.00user 0.00system 1:22.58elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 38
+Sat Dec 16 20:13:04 GMT 2006
+0.00user 0.00system 0:53.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 39
+Sat Dec 16 20:13:58 GMT 2006
+0.00user 0.00system 1:43.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 40
+Sat Dec 16 20:15:41 GMT 2006
+0.00user 0.00system 0:35.87elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 41
+Sat Dec 16 20:16:18 GMT 2006
+0.00user 0.00system 0:54.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 42
+Sat Dec 16 20:17:12 GMT 2006
+0.00user 0.00system 1:33.68elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 43
+Sat Dec 16 20:18:46 GMT 2006
+0.00user 0.00system 1:02.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 44
+Sat Dec 16 20:19:48 GMT 2006
+0.00user 0.00system 0:40.73elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 45
+Sat Dec 16 20:20:29 GMT 2006
+0.00user 0.00system 1:26.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 46
+Sat Dec 16 20:21:56 GMT 2006
+0.00user 0.00system 1:19.38elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 47
+Sat Dec 16 20:23:15 GMT 2006
+0.00user 0.00system 1:35.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 48
+Sat Dec 16 20:24:51 GMT 2006
+0.00user 0.00system 1:51.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 49
+Sat Dec 16 20:26:43 GMT 2006
+0.00user 0.00system 2:33.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 50
+Sat Dec 16 20:29:18 GMT 2006
+0.00user 0.00system 1:12.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 51
+Sat Dec 16 20:30:30 GMT 2006
+0.00user 0.00system 1:08.82elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 52
+Sat Dec 16 20:31:39 GMT 2006
+0.00user 0.00system 1:17.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 53
+Sat Dec 16 20:32:57 GMT 2006
+0.00user 0.00system 1:20.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 54
+Sat Dec 16 20:34:18 GMT 2006
+0.00user 0.00system 1:37.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 55
+Sat Dec 16 20:35:55 GMT 2006
+0.00user 0.00system 0:51.92elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 56
+Sat Dec 16 20:36:47 GMT 2006
+0.00user 0.00system 2:12.82elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 57
+Sat Dec 16 20:39:01 GMT 2006
+0.00user 0.00system 1:29.08elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 58
+Sat Dec 16 20:40:30 GMT 2006
+0.00user 0.00system 1:15.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 59
+Sat Dec 16 20:41:46 GMT 2006
+0.00user 0.00system 1:28.60elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 60
+Sat Dec 16 20:43:15 GMT 2006
+0.00user 0.00system 0:57.27elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 61
+Sat Dec 16 20:44:12 GMT 2006
+0.00user 0.00system 1:16.53elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 62
+Sat Dec 16 20:45:29 GMT 2006
+0.00user 0.00system 0:59.60elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 63
+Sat Dec 16 20:46:28 GMT 2006
+0.00user 0.00system 1:11.49elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 64
+Sat Dec 16 20:47:40 GMT 2006
+0.00user 0.00system 0:52.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 65
+Sat Dec 16 20:48:33 GMT 2006
+0.00user 0.00system 0:56.22elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 66
+Sat Dec 16 20:49:30 GMT 2006
+0.00user 0.00system 0:36.78elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 67
+Sat Dec 16 20:50:07 GMT 2006
+0.00user 0.00system 0:50.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 68
+Sat Dec 16 20:50:57 GMT 2006
+0.00user 0.00system 1:01.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 69
+Sat Dec 16 20:51:59 GMT 2006
+0.00user 0.00system 0:25.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+snapshot 70
+Sat Dec 16 20:52:24 GMT 2006
+0.00user 0.00system 0:50.56elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 71
+Sat Dec 16 20:53:15 GMT 2006
+0.00user 0.00system 0:58.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 72
+Sat Dec 16 20:54:13 GMT 2006
+0.00user 0.00system 0:36.73elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 73
+Sat Dec 16 20:54:50 GMT 2006
+0.00user 0.00system 0:58.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+snapshot 74
+Sat Dec 16 20:55:49 GMT 2006
+0.00user 0.00system 1:00.78elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps

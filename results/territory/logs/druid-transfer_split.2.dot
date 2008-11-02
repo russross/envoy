@@ -1,0 +1,60 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: druid-0.xeno.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 16:11:32 2006
+ */
+
+/* Connections:
+ *   druid-0.xeno.cl.cam.ac.uk:39956 CLIENT_IN:
+ *     messages/bytes in     : 2189/34051
+ *     messages/bytes out    : 2189/84698
+ *     new messages/bytes in : 1092/17012
+ *     new messages/bytes out: 1092/42256
+ *   moonraider-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 13/90446
+ *     messages/bytes out    : 13/287
+ *     new messages/bytes in : 5/89831
+ *     new messages/bytes out: 5/155
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 14/70271
+ *     messages/bytes out    : 14/318
+ *     new messages/bytes in : 5/69628
+ *     new messages/bytes out: 5/155
+ *   druid-1.xeno.cl.cam.ac.uk:40468 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 1915/54315
+ *     messages/bytes out    : 1915/86485
+ *     new messages/bytes in : 948/27340
+ *     new messages/bytes out: 949/42528
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 1959/54531
+ *     messages/bytes out    : 1959/88699
+ *     new messages/bytes in : 1092/30436
+ *     new messages/bytes out: 1092/49336
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 4/46
+ *     messages/bytes out    : 4/337
+ *     new messages/bytes in : 1/7
+ *     new messages/bytes out: 1/144
+ */
+
+/* lease root is / */
+digraph _ {
+  _ [shape=box];
+  _linux_current_linux_2_6_18_block_genhd_c [shape=box,label="genhd.c"];
+  _linux_current_linux_2_6_18_block -> _linux_current_linux_2_6_18_block_genhd_c [style=dotted];
+  _linux_current_linux_2_6_18_block_deadline_iosched_c [shape=box,label="deadline-iosched.c"];
+  _linux_current_linux_2_6_18_block -> _linux_current_linux_2_6_18_block_deadline_iosched_c [style=dotted];
+  _ [label="/"];
+  _ -> _linux;
+  _linux [label="linux"];
+  _linux -> _linux_current;
+  _linux_current [label="current"];
+  _linux_current -> _linux_current_linux_2_6_18;
+  _linux_current_linux_2_6_18 [label="linux-2.6.18"];
+  _linux_current_linux_2_6_18 -> _linux_current_linux_2_6_18_block;
+  _linux_current_linux_2_6_18_block [label="block"];
+}

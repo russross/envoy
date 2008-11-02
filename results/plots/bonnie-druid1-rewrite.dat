@@ -1,0 +1,6 @@
+cluster	rewrite	stdev
+envoy	6060.9	159.13
+envoy-ls	3709.7	78.13
+nocache	5187.7	97.11
+9p	7574.7	451.39
+nfs	5715.2	186

@@ -1,0 +1,924 @@
+Tue Dec 19 17:04:53 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09114 seconds)
+0.00user 0.00system 0:00.22elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09367 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 1
+Tue Dec 19 17:04:53 GMT 2006
+snapshot: /linux/1 (25.69 seconds)
+0.00user 0.00system 0:25.73elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+196minor)pagefaults 0swaps
+Tue Dec 19 17:05:46 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1312 seconds)
+0.00user 0.00system 0:00.13elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09006 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 2
+Tue Dec 19 17:05:46 GMT 2006
+snapshot: /linux/2 (11.8 seconds)
+0.00user 0.00system 0:11.80elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:06:34 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08451 seconds)
+0.00user 0.00system 0:00.08elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08218 seconds)
+0.00user 0.00system 0:00.08elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 3
+Tue Dec 19 17:06:35 GMT 2006
+snapshot: /linux/3 (13.4 seconds)
+0.00user 0.00system 0:13.40elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:07:39 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09022 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09539 seconds)
+0.00user 0.00system 0:00.10elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 4
+Tue Dec 19 17:07:40 GMT 2006
+snapshot: /linux/4 (12.35 seconds)
+0.00user 0.00system 0:12.35elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:08:19 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08526 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09262 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 5
+Tue Dec 19 17:08:19 GMT 2006
+snapshot: /linux/5 (13.77 seconds)
+0.00user 0.00system 0:13.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:09:12 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0908 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+213minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09235 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 6
+Tue Dec 19 17:09:12 GMT 2006
+snapshot: /linux/6 (14.67 seconds)
+0.00user 0.00system 0:14.67elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:10:36 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09819 seconds)
+0.00user 0.00system 0:00.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09229 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 7
+Tue Dec 19 17:10:36 GMT 2006
+snapshot: /linux/7 (14.32 seconds)
+0.00user 0.00system 0:14.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:11:51 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08786 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.0881 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 8
+Tue Dec 19 17:11:51 GMT 2006
+snapshot: /linux/8 (11.07 seconds)
+0.00user 0.00system 0:12.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:12:43 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09466 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+213minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.095 seconds)
+0.00user 0.00system 0:00.10elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 9
+Tue Dec 19 17:12:43 GMT 2006
+snapshot: /linux/9 (9.13 seconds)
+0.00user 0.00system 0:09.13elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:13:28 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08722 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1152 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 10
+Tue Dec 19 17:13:28 GMT 2006
+snapshot: /linux/10 (12.62 seconds)
+0.00user 0.00system 0:12.62elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:14:14 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08737 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09112 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 11
+Tue Dec 19 17:14:14 GMT 2006
+snapshot: /linux/11 (9.793 seconds)
+0.00user 0.00system 0:09.79elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:15:18 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0894 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09222 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 12
+Tue Dec 19 17:15:19 GMT 2006
+snapshot: /linux/12 (13.51 seconds)
+0.00user 0.00system 0:13.51elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:16:27 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.101 seconds)
+0.00user 0.00system 0:00.10elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09264 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 13
+Tue Dec 19 17:16:27 GMT 2006
+snapshot: /linux/13 (12.06 seconds)
+0.00user 0.00system 0:12.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+Tue Dec 19 17:17:31 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.118 seconds)
+0.00user 0.00system 0:00.12elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1143 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 14
+Tue Dec 19 17:17:31 GMT 2006
+snapshot: /linux/14 (13.43 seconds)
+0.00user 0.00system 0:13.43elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:18:37 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1037 seconds)
+0.00user 0.00system 0:00.10elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09142 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 15
+Tue Dec 19 17:18:37 GMT 2006
+snapshot: /linux/15 (12.33 seconds)
+0.00user 0.00system 0:12.33elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:19:24 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09023 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09031 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 16
+Tue Dec 19 17:19:24 GMT 2006
+snapshot: /linux/16 (11.79 seconds)
+0.00user 0.00system 0:11.79elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:20:14 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1074 seconds)
+0.00user 0.00system 0:00.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09176 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 17
+Tue Dec 19 17:20:14 GMT 2006
+snapshot: /linux/17 (15.5 seconds)
+0.00user 0.00system 0:15.50elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:21:37 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08977 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1153 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 18
+Tue Dec 19 17:21:37 GMT 2006
+snapshot: /linux/18 (15.52 seconds)
+0.00user 0.00system 0:15.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:22:51 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.114 seconds)
+0.00user 0.00system 0:00.11elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09202 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 19
+Tue Dec 19 17:22:52 GMT 2006
+snapshot: /linux/19 (12.53 seconds)
+0.00user 0.00system 0:12.53elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:24:10 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09028 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09008 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 20
+Tue Dec 19 17:24:11 GMT 2006
+snapshot: /linux/20 (10.91 seconds)
+0.00user 0.00system 0:10.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:25:05 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08626 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08865 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 21
+Tue Dec 19 17:25:05 GMT 2006
+snapshot: /linux/21 (13.19 seconds)
+0.00user 0.00system 0:13.39elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:26:06 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.112 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1169 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 22
+Tue Dec 19 17:26:06 GMT 2006
+snapshot: /linux/22 (11.62 seconds)
+0.00user 0.00system 0:11.62elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:27:23 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08921 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1077 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 23
+Tue Dec 19 17:27:23 GMT 2006
+snapshot: /linux/23 (10.63 seconds)
+0.00user 0.00system 0:10.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+Tue Dec 19 17:28:27 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1078 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09433 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 24
+Tue Dec 19 17:28:28 GMT 2006
+snapshot: /linux/24 (10.78 seconds)
+0.00user 0.00system 0:10.78elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:29:31 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1085 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09155 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 25
+Tue Dec 19 17:29:31 GMT 2006
+snapshot: /linux/25 (12.67 seconds)
+0.00user 0.00system 0:12.67elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:30:47 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09063 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+213minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09654 seconds)
+0.00user 0.00system 0:00.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+213minor)pagefaults 0swaps
+snapshot test 26
+Tue Dec 19 17:30:47 GMT 2006
+snapshot: /linux/26 (18.62 seconds)
+0.00user 0.00system 0:18.62elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:32:21 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0905 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.116 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 27
+Tue Dec 19 17:32:22 GMT 2006
+snapshot: /linux/27 (9.191 seconds)
+0.00user 0.00system 0:09.19elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:33:08 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1081 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1057 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 28
+Tue Dec 19 17:33:08 GMT 2006
+snapshot: /linux/28 (21.57 seconds)
+0.00user 0.00system 0:21.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:34:53 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08981 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08817 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 29
+Tue Dec 19 17:34:54 GMT 2006
+snapshot: /linux/29 (13.67 seconds)
+0.00user 0.00system 0:13.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:35:49 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1154 seconds)
+0.00user 0.00system 0:00.12elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09564 seconds)
+0.00user 0.00system 0:00.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 30
+Tue Dec 19 17:35:49 GMT 2006
+snapshot: /linux/30 (11.39 seconds)
+0.00user 0.00system 0:11.39elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:36:47 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1173 seconds)
+0.00user 0.00system 0:00.12elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1124 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 31
+Tue Dec 19 17:36:47 GMT 2006
+snapshot: /linux/31 (12.27 seconds)
+0.00user 0.00system 0:12.27elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:38:06 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0898 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09229 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 32
+Tue Dec 19 17:38:06 GMT 2006
+snapshot: /linux/32 (10.52 seconds)
+0.00user 0.00system 0:10.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:38:47 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1212 seconds)
+0.00user 0.00system 0:00.12elapsed 6%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1124 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 33
+Tue Dec 19 17:38:47 GMT 2006
+snapshot: /linux/33 (12.83 seconds)
+0.00user 0.00system 0:12.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:39:43 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0881 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09258 seconds)
+0.00user 0.00system 0:00.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 34
+Tue Dec 19 17:39:43 GMT 2006
+snapshot: /linux/34 (12.02 seconds)
+0.00user 0.00system 0:12.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:40:51 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09175 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1126 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 35
+Tue Dec 19 17:40:51 GMT 2006
+snapshot: /linux/35 (14.3 seconds)
+0.00user 0.00system 0:14.30elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:41:51 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08828 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+213minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1234 seconds)
+0.00user 0.00system 0:00.12elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 36
+Tue Dec 19 17:41:51 GMT 2006
+snapshot: /linux/36 (11.93 seconds)
+0.00user 0.00system 0:11.93elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:42:57 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0854 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08884 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 37
+Tue Dec 19 17:42:57 GMT 2006
+snapshot: /linux/37 (22.27 seconds)
+0.00user 0.00system 0:22.38elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:44:11 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1061 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1117 seconds)
+0.00user 0.00system 0:00.11elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 38
+Tue Dec 19 17:44:12 GMT 2006
+snapshot: /linux/38 (12.9 seconds)
+0.00user 0.00system 0:12.90elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:45:15 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08959 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1206 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 39
+Tue Dec 19 17:45:15 GMT 2006
+snapshot: /linux/39 (13.03 seconds)
+0.00user 0.00system 0:13.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:46:28 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.116 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09122 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 40
+Tue Dec 19 17:46:28 GMT 2006
+snapshot: /linux/40 (9.559 seconds)
+0.00user 0.00system 0:09.56elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:47:16 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1044 seconds)
+0.00user 0.00system 0:00.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08734 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 41
+Tue Dec 19 17:47:16 GMT 2006
+snapshot: /linux/41 (16.65 seconds)
+0.00user 0.00system 0:16.65elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:48:40 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1104 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1475 seconds)
+0.00user 0.00system 0:00.15elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 42
+Tue Dec 19 17:48:40 GMT 2006
+snapshot: /linux/42 (12.14 seconds)
+0.00user 0.00system 0:12.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:50:10 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09257 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1615 seconds)
+0.00user 0.00system 0:00.16elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 43
+Tue Dec 19 17:50:10 GMT 2006
+snapshot: /linux/43 (10.83 seconds)
+0.00user 0.00system 0:10.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:51:23 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1114 seconds)
+0.00user 0.00system 0:00.11elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09273 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 44
+Tue Dec 19 17:51:23 GMT 2006
+snapshot: /linux/44 (11.69 seconds)
+0.00user 0.00system 0:11.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:52:52 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.089 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09214 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 45
+Tue Dec 19 17:52:52 GMT 2006
+snapshot: /linux/45 (13.32 seconds)
+0.00user 0.00system 0:13.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:54:17 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09015 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09963 seconds)
+0.00user 0.00system 0:00.19elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 46
+Tue Dec 19 17:54:17 GMT 2006
+snapshot: /linux/46 (11.85 seconds)
+0.00user 0.00system 0:11.85elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 17:55:06 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09367 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1127 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 47
+Tue Dec 19 17:55:06 GMT 2006
+snapshot: /linux/47 (17.23 seconds)
+0.00user 0.00system 0:17.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:56:57 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0818 seconds)
+0.00user 0.00system 0:00.08elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08858 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 48
+Tue Dec 19 17:56:57 GMT 2006
+snapshot: /linux/48 (20.87 seconds)
+0.00user 0.00system 0:20.87elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+Tue Dec 19 17:58:50 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08976 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08774 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 49
+Tue Dec 19 17:58:50 GMT 2006
+snapshot: /linux/49 (11.07 seconds)
+0.00user 0.00system 0:11.07elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 17:59:46 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08526 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08898 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 50
+Tue Dec 19 17:59:46 GMT 2006
+snapshot: /linux/50 (18.83 seconds)
+0.00user 0.00system 0:18.86elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:00:59 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09412 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09168 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 51
+Tue Dec 19 18:00:59 GMT 2006
+snapshot: /linux/51 (16.29 seconds)
+0.00user 0.00system 0:16.29elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:01:43 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1166 seconds)
+0.00user 0.00system 0:00.12elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08831 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 52
+Tue Dec 19 18:01:43 GMT 2006
+snapshot: /linux/52 (17.31 seconds)
+0.00user 0.00system 0:17.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:02:52 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09031 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09184 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 53
+Tue Dec 19 18:02:52 GMT 2006
+snapshot: /linux/53 (13.61 seconds)
+0.00user 0.00system 0:13.61elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:04:01 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09216 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09192 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 54
+Tue Dec 19 18:04:02 GMT 2006
+snapshot: /linux/54 (12.99 seconds)
+0.00user 0.00system 0:13.04elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:05:20 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1288 seconds)
+0.00user 0.00system 0:00.13elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09383 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 55
+Tue Dec 19 18:05:21 GMT 2006
+snapshot: /linux/55 (13.34 seconds)
+0.00user 0.00system 0:13.34elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:06:45 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.0921 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08803 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 56
+Tue Dec 19 18:06:45 GMT 2006
+snapshot: /linux/56 (11.59 seconds)
+0.00user 0.00system 0:11.59elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:07:29 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08452 seconds)
+0.00user 0.00system 0:00.08elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09223 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 57
+Tue Dec 19 18:07:29 GMT 2006
+snapshot: /linux/57 (19.75 seconds)
+0.00user 0.00system 0:19.75elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:08:49 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1421 seconds)
+0.00user 0.00system 0:00.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1026 seconds)
+0.00user 0.00system 0:00.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 58
+Tue Dec 19 18:08:49 GMT 2006
+snapshot: /linux/58 (16.2 seconds)
+0.00user 0.00system 0:16.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:10:03 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1422 seconds)
+0.00user 0.00system 0:00.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08756 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 59
+Tue Dec 19 18:10:03 GMT 2006
+snapshot: /linux/59 (14.9 seconds)
+0.00user 0.00system 0:14.93elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:11:17 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1403 seconds)
+0.00user 0.00system 0:00.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08715 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 60
+Tue Dec 19 18:11:17 GMT 2006
+snapshot: /linux/60 (12.64 seconds)
+0.00user 0.00system 0:12.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:12:09 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1397 seconds)
+0.00user 0.00system 0:00.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.092 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 61
+Tue Dec 19 18:12:10 GMT 2006
+snapshot: /linux/61 (13.28 seconds)
+0.00user 0.00system 0:13.28elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:13:00 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08892 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08513 seconds)
+0.00user 0.00system 0:00.09elapsed 8%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 62
+Tue Dec 19 18:13:00 GMT 2006
+snapshot: /linux/62 (19.89 seconds)
+0.00user 0.00system 0:20.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+Tue Dec 19 18:14:17 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1095 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.0901 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 63
+Tue Dec 19 18:14:17 GMT 2006
+snapshot: /linux/63 (11.91 seconds)
+0.00user 0.00system 0:11.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:14:55 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08886 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08746 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 64
+Tue Dec 19 18:14:55 GMT 2006
+snapshot: /linux/64 (14.96 seconds)
+0.00user 0.00system 0:14.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:15:47 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08997 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1347 seconds)
+0.00user 0.00system 0:00.14elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 65
+Tue Dec 19 18:15:47 GMT 2006
+snapshot: /linux/65 (15.23 seconds)
+0.00user 0.00system 0:15.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+199minor)pagefaults 0swaps
+Tue Dec 19 18:16:50 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1075 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08799 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 66
+Tue Dec 19 18:16:50 GMT 2006
+snapshot: /linux/66 (13.96 seconds)
+0.00user 0.00system 0:13.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:17:44 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08936 seconds)
+0.00user 0.00system 0:00.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.0916 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 67
+Tue Dec 19 18:17:44 GMT 2006
+snapshot: /linux/67 (12.88 seconds)
+0.00user 0.00system 0:12.88elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:18:44 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08945 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+213minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08781 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 68
+Tue Dec 19 18:18:44 GMT 2006
+snapshot: /linux/68 (16.26 seconds)
+0.00user 0.00system 0:16.26elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:19:54 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09241 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1403 seconds)
+0.00user 0.00system 0:00.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 69
+Tue Dec 19 18:19:54 GMT 2006
+snapshot: /linux/69 (10.52 seconds)
+0.00user 0.00system 0:10.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:20:40 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1131 seconds)
+0.00user 0.00system 0:00.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09491 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 70
+Tue Dec 19 18:20:40 GMT 2006
+snapshot: /linux/70 (18.04 seconds)
+0.00user 0.00system 0:18.36elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:22:06 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09255 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.0917 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+213minor)pagefaults 0swaps
+snapshot test 71
+Tue Dec 19 18:22:07 GMT 2006
+snapshot: /linux/71 (9.768 seconds)
+0.00user 0.00system 0:09.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:22:49 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1558 seconds)
+0.00user 0.00system 0:00.16elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08784 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 72
+Tue Dec 19 18:22:49 GMT 2006
+snapshot: /linux/72 (15.83 seconds)
+0.00user 0.00system 0:15.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:23:49 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1069 seconds)
+0.00user 0.00system 0:00.11elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09101 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 73
+Tue Dec 19 18:23:49 GMT 2006
+snapshot: /linux/73 (10.19 seconds)
+0.00user 0.00system 0:10.19elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:24:41 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08741 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08492 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 74
+Tue Dec 19 18:24:42 GMT 2006
+snapshot: /linux/74 (12.45 seconds)
+0.00user 0.00system 0:12.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+197minor)pagefaults 0swaps
+Tue Dec 19 18:25:29 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.08853 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.1164 seconds)
+0.00user 0.00system 0:00.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 75
+Tue Dec 19 18:25:29 GMT 2006
+snapshot: /linux/75 (13.09 seconds)
+0.00user 0.00system 0:13.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:26:15 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.09167 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.09221 seconds)
+0.00user 0.00system 0:00.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+snapshot test 76
+Tue Dec 19 18:26:15 GMT 2006
+snapshot: /linux/76 (12.12 seconds)
+0.00user 0.00system 0:12.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps
+Tue Dec 19 18:26:54 GMT 2006
+lease rename: /linux/current/linux-2.6.18 to /linux/current/linux (0.1109 seconds)
+0.00user 0.00system 0:00.11elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+212minor)pagefaults 0swaps
+lease rename: /linux/current/linux to /linux/current/linux-2.6.18 (0.08867 seconds)
+0.00user 0.00system 0:00.09elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+211minor)pagefaults 0swaps
+snapshot test 77
+Tue Dec 19 18:26:54 GMT 2006
+snapshot: /linux/77 (10.64 seconds)
+0.00user 0.00system 0:10.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+198minor)pagefaults 0swaps

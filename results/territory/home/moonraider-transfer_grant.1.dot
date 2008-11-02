@@ -1,0 +1,38 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: moonraider.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 14:20:51 2006
+ */
+
+/* Connections:
+ *   moonraider.cl.cam.ac.uk:48395 CLIENT_IN:
+ *     messages/bytes in     : 102/1621
+ *     messages/bytes out    : 101/4121
+ *   moonraider.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 3/195
+ *     messages/bytes out    : 3/57
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 2/62
+ *     messages/bytes out    : 2/58
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 105/5057
+ *     messages/bytes out    : 106/3152
+ *   moonraider-1.xeno.cl.cam.ac.uk:43500 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 3/385
+ *     messages/bytes out    : 2/32
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 3/39
+ *     messages/bytes out    : 3/61
+ */
+
+/* lease root is /linux/current */
+digraph _linux_current {
+  _linux_current [shape=box];
+  _linux_current [label="current"];
+  _linux_current -> _linux_current_linux_2_6_18;
+  _linux_current_linux_2_6_18 [label="linux-2.6.18"];
+  _linux_current_linux_2_6_18 -> _linux_current_linux_2_6_18_drivers;
+  _linux_current_linux_2_6_18_drivers [label="drivers"];
+}

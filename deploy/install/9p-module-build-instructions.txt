@@ -1,0 +1,5 @@
+Install kernel source package
+
+in the 9p module directory:
+
+make -C /lib/modules/2.x.x-x/build/include/.. SUBDIRS=$PWD SRCROOT=$PWD/.modules

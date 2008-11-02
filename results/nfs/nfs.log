@@ -1,0 +1,1440 @@
+== druid-0 : nfs untar reset 0 ==
+Fri Oct 13 21:51:04 BST 2006
+0.79user 1.42system 4:14.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+486minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 1 ==
+Fri Oct 13 21:55:29 BST 2006
+0.70user 1.68system 3:59.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 2 ==
+Fri Oct 13 21:59:39 BST 2006
+0.70user 1.40system 4:04.26elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 3 ==
+Fri Oct 13 22:03:53 BST 2006
+0.70user 1.50system 3:52.58elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 4 ==
+Fri Oct 13 22:07:55 BST 2006
+0.75user 1.66system 4:01.51elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 5 ==
+Fri Oct 13 22:12:06 BST 2006
+0.54user 1.78system 4:01.56elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 6 ==
+Fri Oct 13 22:16:17 BST 2006
+0.79user 1.61system 4:03.15elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 7 ==
+Fri Oct 13 22:20:29 BST 2006
+0.64user 1.72system 3:54.56elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 8 ==
+Fri Oct 13 22:24:34 BST 2006
+0.54user 1.57system 4:03.60elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : nfs untar reset 9 ==
+Fri Oct 13 22:28:45 BST 2006
+0.54user 1.55system 3:52.80elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 0 ==
+Sat Oct 14 00:53:01 BST 2006
+0.03user 0.23system 7:18.79elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (2major+268minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 1 ==
+Sat Oct 14 01:00:26 BST 2006
+0.02user 0.27system 7:17.29elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 2 ==
+Sat Oct 14 01:07:48 BST 2006
+0.04user 0.17system 7:17.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 3 ==
+Sat Oct 14 01:15:11 BST 2006
+0.02user 0.36system 7:16.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 4 ==
+Sat Oct 14 01:22:33 BST 2006
+0.00user 0.20system 7:17.17elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 5 ==
+Sat Oct 14 01:29:55 BST 2006
+0.02user 0.17system 7:16.97elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 6 ==
+Sat Oct 14 01:37:17 BST 2006
+0.02user 0.18system 7:15.36elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 7 ==
+Sat Oct 14 01:44:37 BST 2006
+0.01user 0.25system 7:16.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 8 ==
+Sat Oct 14 01:51:59 BST 2006
+0.04user 0.24system 7:16.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar warm 9 ==
+Sat Oct 14 01:59:20 BST 2006
+0.00user 0.27system 7:16.54elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 0 ==
+Sat Oct 14 03:08:48 BST 2006
+0.00user 0.16system 7:05.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 1 ==
+Sat Oct 14 03:15:58 BST 2006
+0.02user 0.24system 7:12.37elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 2 ==
+Sat Oct 14 03:23:16 BST 2006
+0.01user 0.24system 7:14.33elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 3 ==
+Sat Oct 14 03:30:36 BST 2006
+0.01user 0.26system 7:15.17elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 4 ==
+Sat Oct 14 03:37:55 BST 2006
+0.01user 0.24system 7:17.17elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 5 ==
+Sat Oct 14 03:45:18 BST 2006
+0.01user 0.24system 7:17.73elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 6 ==
+Sat Oct 14 03:52:40 BST 2006
+0.01user 0.19system 7:12.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 7 ==
+Sat Oct 14 03:59:59 BST 2006
+0.02user 0.20system 7:12.70elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 8 ==
+Sat Oct 14 04:07:16 BST 2006
+0.01user 0.20system 7:13.73elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hot 9 ==
+Sat Oct 14 04:14:35 BST 2006
+0.02user 0.15system 7:14.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 0 ==
+Sat Oct 14 05:07:25 BST 2006
+0.23user 0.52system 8:19.48elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (3major+6312minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 1 ==
+Sat Oct 14 05:15:50 BST 2006
+0.28user 0.94system 8:21.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 2 ==
+Sat Oct 14 05:24:17 BST 2006
+0.21user 0.63system 8:21.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 3 ==
+Sat Oct 14 05:32:43 BST 2006
+0.21user 0.64system 8:20.62elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 4 ==
+Sat Oct 14 05:41:09 BST 2006
+0.18user 0.54system 8:18.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 5 ==
+Sat Oct 14 05:49:33 BST 2006
+0.21user 0.63system 8:19.54elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 6 ==
+Sat Oct 14 05:57:58 BST 2006
+0.23user 0.54system 8:22.38elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 7 ==
+Sat Oct 14 06:06:26 BST 2006
+0.22user 0.54system 8:19.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 8 ==
+Sat Oct 14 06:14:51 BST 2006
+0.18user 0.63system 8:22.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-0 : nfs rsync warm 9 ==
+Sat Oct 14 06:23:18 BST 2006
+0.24user 0.53system 8:19.56elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 0 ==
+Sat Oct 14 08:22:11 BST 2006
+0.20user 0.43system 7:59.29elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 1 ==
+Sat Oct 14 08:30:15 BST 2006
+0.17user 0.38system 8:11.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 2 ==
+Sat Oct 14 08:38:31 BST 2006
+0.20user 0.58system 8:10.35elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 3 ==
+Sat Oct 14 08:46:46 BST 2006
+0.34user 1.11system 8:13.16elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6321minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 4 ==
+Sat Oct 14 08:55:05 BST 2006
+0.22user 0.61system 8:10.90elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 5 ==
+Sat Oct 14 09:03:20 BST 2006
+0.29user 1.04system 8:14.82elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 6 ==
+Sat Oct 14 09:11:40 BST 2006
+0.19user 0.75system 8:14.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 7 ==
+Sat Oct 14 09:19:59 BST 2006
+0.20user 0.75system 8:13.61elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 8 ==
+Sat Oct 14 09:28:19 BST 2006
+0.31user 1.02system 8:12.95elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== druid-0 : nfs rsync hot 9 ==
+Sat Oct 14 09:36:37 BST 2006
+0.32user 1.00system 8:17.33elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-0 : nfs bonnie reset 0 ==
+Sat Oct 14 11:11:42 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 10647 34.3 11968  1.9  1213  0.1 18661 63.4 25546  2.1  80.0  0.1
+== druid-0 : nfs bonnie reset 1 ==
+Sat Oct 14 11:51:15 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 15493 49.8 14521  2.3  1248  0.1 19483 69.0 28374  3.2  85.3  0.2
+== druid-0 : nfs bonnie reset 2 ==
+Sat Oct 14 12:28:09 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 15040 48.6 13696  2.5  1205  0.1 18298 63.3 24776  1.1  78.8  0.1
+== druid-0 : nfs bonnie reset 3 ==
+Sat Oct 14 13:06:43 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 14878 48.0 14793  2.6  1197  0.1 18599 63.8 25324  2.4  84.8  0.1
+== druid-0 : nfs bonnie reset 4 ==
+Sat Oct 14 13:45:05 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 14849 47.8 17755  3.0  1158  0.1 19883 70.7 29527  3.7  66.0  0.1
+== druid-0 : nfs bonnie reset 5 ==
+Sat Oct 14 14:23:59 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 16098 52.1 12609  2.2  1223  0.1 18487 63.4 22044  1.8  81.0  0.1
+== druid-0 : nfs bonnie reset 6 ==
+Sat Oct 14 15:02:16 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 15667 54.0 16888  2.8  1255  0.1 20656 71.6 30533  4.1  56.2  0.1
+== druid-0 : nfs bonnie reset 7 ==
+Sat Oct 14 15:38:58 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 13446 43.3 14533  2.6  1211  0.1 18471 64.8 24928  2.0  85.2  0.1
+== druid-0 : nfs bonnie reset 8 ==
+Sat Oct 14 16:17:23 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 11081 38.2 13937  2.5  1197  0.1 19893 67.4 27116  2.8  84.8  0.1
+== druid-0 : nfs bonnie reset 9 ==
+Sat Oct 14 16:56:30 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 11319 38.0 12513  2.0  1177  0.1 17830 64.9 24504  2.2  66.3  0.1
+== druid-1 : nfs untar reset 0 ==
+Fri Oct 13 22:32:46 BST 2006
+1.17user 1.01system 4:29.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+487minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 1 ==
+Fri Oct 13 22:37:24 BST 2006
+1.34user 1.00system 4:30.00elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 2 ==
+Fri Oct 13 22:42:02 BST 2006
+1.11user 1.04system 4:29.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 3 ==
+Fri Oct 13 22:46:40 BST 2006
+1.09user 1.12system 4:28.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+490minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 4 ==
+Fri Oct 13 22:51:16 BST 2006
+1.34user 1.11system 4:28.37elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 5 ==
+Fri Oct 13 22:55:52 BST 2006
+1.18user 1.03system 4:26.94elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 6 ==
+Fri Oct 13 23:00:27 BST 2006
+1.19user 1.07system 4:26.88elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 7 ==
+Fri Oct 13 23:05:01 BST 2006
+1.25user 0.98system 4:28.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 8 ==
+Fri Oct 13 23:09:39 BST 2006
+1.30user 1.08system 4:28.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== druid-1 : nfs untar reset 9 ==
+Fri Oct 13 23:14:15 BST 2006
+1.30user 1.06system 4:27.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 0 ==
+Sat Oct 14 02:06:41 BST 2006
+0.04user 0.47system 2:07.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+272minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 1 ==
+Sat Oct 14 02:08:53 BST 2006
+0.03user 0.39system 2:08.95elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 2 ==
+Sat Oct 14 02:11:06 BST 2006
+0.04user 0.41system 2:09.19elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 3 ==
+Sat Oct 14 02:13:19 BST 2006
+0.06user 0.40system 2:09.00elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 4 ==
+Sat Oct 14 02:15:31 BST 2006
+0.08user 0.52system 2:08.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 5 ==
+Sat Oct 14 02:17:43 BST 2006
+0.03user 0.46system 2:06.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 6 ==
+Sat Oct 14 02:19:54 BST 2006
+0.04user 0.44system 2:05.40elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 7 ==
+Sat Oct 14 02:22:04 BST 2006
+0.05user 0.46system 2:04.86elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 8 ==
+Sat Oct 14 02:24:12 BST 2006
+0.04user 0.40system 2:04.45elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar warm 9 ==
+Sat Oct 14 02:26:20 BST 2006
+0.04user 0.48system 2:05.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 0 ==
+Sat Oct 14 04:21:54 BST 2006
+0.08user 0.64system 1:44.17elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 1 ==
+Sat Oct 14 04:23:41 BST 2006
+0.06user 0.77system 1:37.59elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 2 ==
+Sat Oct 14 04:25:22 BST 2006
+0.07user 0.68system 1:37.26elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 3 ==
+Sat Oct 14 04:27:02 BST 2006
+0.08user 0.66system 1:37.33elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 4 ==
+Sat Oct 14 04:28:43 BST 2006
+0.06user 0.67system 1:37.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 5 ==
+Sat Oct 14 04:30:23 BST 2006
+0.07user 0.62system 1:36.93elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 6 ==
+Sat Oct 14 04:32:04 BST 2006
+0.08user 0.64system 1:36.73elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 7 ==
+Sat Oct 14 04:33:44 BST 2006
+0.07user 0.68system 1:36.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 8 ==
+Sat Oct 14 04:35:24 BST 2006
+0.07user 0.60system 1:36.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hot 9 ==
+Sat Oct 14 04:37:04 BST 2006
+0.07user 0.60system 1:36.58elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 0 ==
+Sat Oct 14 06:31:43 BST 2006
+0.20user 0.44system 3:41.80elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (3major+6313minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 1 ==
+Sat Oct 14 06:35:28 BST 2006
+0.24user 0.31system 3:37.92elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 2 ==
+Sat Oct 14 06:39:10 BST 2006
+0.23user 0.40system 3:38.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 3 ==
+Sat Oct 14 06:42:52 BST 2006
+0.20user 0.48system 3:38.51elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 4 ==
+Sat Oct 14 06:46:34 BST 2006
+0.20user 0.39system 3:40.56elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 5 ==
+Sat Oct 14 06:50:18 BST 2006
+0.30user 0.36system 3:43.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 6 ==
+Sat Oct 14 06:54:06 BST 2006
+0.22user 0.40system 3:39.54elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 7 ==
+Sat Oct 14 06:57:49 BST 2006
+0.25user 0.34system 3:41.45elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 8 ==
+Sat Oct 14 07:01:34 BST 2006
+0.20user 0.40system 3:42.43elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs rsync warm 9 ==
+Sat Oct 14 07:05:20 BST 2006
+0.26user 0.39system 3:43.74elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 0 ==
+Sat Oct 14 09:44:59 BST 2006
+0.33user 0.39system 3:11.89elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 1 ==
+Sat Oct 14 09:48:14 BST 2006
+0.31user 0.68system 2:51.19elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 2 ==
+Sat Oct 14 09:51:09 BST 2006
+0.33user 0.44system 2:54.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 3 ==
+Sat Oct 14 09:54:07 BST 2006
+0.31user 0.45system 2:51.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 4 ==
+Sat Oct 14 09:57:01 BST 2006
+0.30user 0.60system 2:52.66elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 5 ==
+Sat Oct 14 09:59:57 BST 2006
+0.29user 0.47system 2:52.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 6 ==
+Sat Oct 14 10:02:53 BST 2006
+0.33user 0.47system 2:50.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 7 ==
+Sat Oct 14 10:05:46 BST 2006
+0.26user 0.45system 2:54.42elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 8 ==
+Sat Oct 14 10:08:44 BST 2006
+0.30user 0.46system 2:52.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs rsync hot 9 ==
+Sat Oct 14 10:11:40 BST 2006
+0.34user 0.56system 2:54.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs bonnie reset 0 ==
+Sat Oct 14 17:36:54 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 15055 48.8 16214  3.9  5434  0.8 16363 68.0 28753  2.0  78.9  0.1
+== druid-1 : nfs bonnie reset 1 ==
+Sat Oct 14 17:52:31 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 15191 49.2 16279  3.9  5864  0.8 16938 72.3 28714  1.5 107.4  0.1
+== druid-1 : nfs bonnie reset 2 ==
+Sat Oct 14 18:07:21 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 15189 47.2 16434  3.9  5763  0.9 16698 70.6 28906  1.7  80.7  0.1
+== druid-1 : nfs bonnie reset 3 ==
+Sat Oct 14 18:22:28 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 14801 48.0 15642  3.7  6021  0.9 18071 77.5 29278  1.5  97.0  0.1
+== druid-1 : nfs bonnie reset 4 ==
+Sat Oct 14 18:37:15 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 14844 46.9 15554  3.6  5619  0.9 16947 72.0 29458  1.6  87.7  0.1
+== druid-1 : nfs bonnie reset 5 ==
+Sat Oct 14 18:52:32 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 14111 45.7 14772  3.5  5511  0.8 17878 76.6 29099  1.4  98.8  0.1
+== druid-1 : nfs bonnie reset 6 ==
+Sat Oct 14 19:08:08 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 14461 45.0 15465  3.6  5867  0.9 17124 73.2 28943  1.7  95.8  0.1
+== druid-1 : nfs bonnie reset 7 ==
+Sat Oct 14 19:23:18 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 14569 50.5 14828  3.4  5668  0.9 17370 72.6 28242  1.7  86.8  0.1
+== druid-1 : nfs bonnie reset 8 ==
+Sat Oct 14 19:38:50 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 14825 51.4 14892  3.7  5565  0.8 16344 68.4 29537  1.7  86.6  0.1
+== druid-1 : nfs bonnie reset 9 ==
+Sat Oct 14 19:54:20 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 14177 46.0 14373  3.6  5840  0.9 18004 75.4 27986  1.6  92.8  0.1
+== skiing-0 : nfs untar reset 0 ==
+Fri Oct 13 23:12:35 BST 2006
+0.24user 0.26system 4:34.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+485minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 1 ==
+Fri Oct 13 23:17:15 BST 2006
+0.04user 0.23system 4:38.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 2 ==
+Fri Oct 13 23:22:01 BST 2006
+0.08user 0.17system 4:38.16elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 3 ==
+Fri Oct 13 23:26:46 BST 2006
+0.22user 0.23system 4:35.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 4 ==
+Fri Oct 13 23:31:27 BST 2006
+0.29user 0.25system 4:34.22elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 5 ==
+Fri Oct 13 23:36:08 BST 2006
+0.22user 0.26system 4:35.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 6 ==
+Fri Oct 13 23:40:50 BST 2006
+0.05user 0.19system 4:37.82elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 7 ==
+Fri Oct 13 23:45:35 BST 2006
+0.07user 0.18system 4:38.92elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 8 ==
+Fri Oct 13 23:50:20 BST 2006
+0.21user 0.26system 4:35.16elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-0 : nfs untar reset 9 ==
+Fri Oct 13 23:55:02 BST 2006
+0.06user 0.18system 4:38.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 0 ==
+Sat Oct 14 02:22:15 BST 2006
+0.01user 0.14system 1:56.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 1 ==
+Sat Oct 14 02:24:14 BST 2006
+0.00user 0.14system 1:55.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 2 ==
+Sat Oct 14 02:26:13 BST 2006
+0.01user 0.11system 1:55.22elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 3 ==
+Sat Oct 14 02:28:12 BST 2006
+0.00user 0.15system 1:54.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 4 ==
+Sat Oct 14 02:30:10 BST 2006
+0.00user 0.11system 1:56.80elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 5 ==
+Sat Oct 14 02:32:10 BST 2006
+0.00user 0.13system 1:55.58elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 6 ==
+Sat Oct 14 02:34:08 BST 2006
+0.01user 0.13system 1:58.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 7 ==
+Sat Oct 14 02:36:10 BST 2006
+0.00user 0.15system 1:57.32elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 8 ==
+Sat Oct 14 02:38:11 BST 2006
+0.00user 0.12system 1:57.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar warm 9 ==
+Sat Oct 14 02:40:12 BST 2006
+0.00user 0.17system 1:58.08elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 0 ==
+Sat Oct 14 04:32:29 BST 2006
+0.01user 0.22system 1:21.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 1 ==
+Sat Oct 14 04:33:54 BST 2006
+0.01user 0.22system 1:23.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 2 ==
+Sat Oct 14 04:35:20 BST 2006
+0.02user 0.26system 1:24.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 3 ==
+Sat Oct 14 04:36:47 BST 2006
+0.01user 0.23system 1:23.37elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 4 ==
+Sat Oct 14 04:38:14 BST 2006
+0.01user 0.21system 1:21.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 5 ==
+Sat Oct 14 04:39:38 BST 2006
+0.01user 0.24system 1:23.24elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 6 ==
+Sat Oct 14 04:41:04 BST 2006
+0.01user 0.29system 1:23.65elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 7 ==
+Sat Oct 14 04:42:31 BST 2006
+0.03user 0.17system 1:22.13elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 8 ==
+Sat Oct 14 04:43:56 BST 2006
+0.01user 0.21system 1:23.98elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hot 9 ==
+Sat Oct 14 04:45:22 BST 2006
+0.01user 0.25system 1:24.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 0 ==
+Sat Oct 14 07:02:54 BST 2006
+0.10user 0.10system 3:34.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 1 ==
+Sat Oct 14 07:06:32 BST 2006
+0.06user 0.10system 3:34.13elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 2 ==
+Sat Oct 14 07:10:09 BST 2006
+0.09user 0.06system 3:36.24elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 3 ==
+Sat Oct 14 07:13:49 BST 2006
+0.08user 0.08system 3:36.27elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 4 ==
+Sat Oct 14 07:17:29 BST 2006
+0.06user 0.07system 3:36.48elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 5 ==
+Sat Oct 14 07:21:08 BST 2006
+0.08user 0.09system 3:35.07elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6321minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 6 ==
+Sat Oct 14 07:24:47 BST 2006
+0.06user 0.06system 3:38.08elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 7 ==
+Sat Oct 14 07:28:28 BST 2006
+0.12user 0.06system 3:35.74elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 8 ==
+Sat Oct 14 07:32:07 BST 2006
+0.10user 0.08system 3:35.85elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync warm 9 ==
+Sat Oct 14 07:35:46 BST 2006
+0.05user 0.06system 3:38.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 0 ==
+Sat Oct 14 10:08:24 BST 2006
+0.08user 0.10system 2:48.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 1 ==
+Sat Oct 14 10:11:15 BST 2006
+0.06user 0.08system 2:49.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 2 ==
+Sat Oct 14 10:14:07 BST 2006
+0.06user 0.07system 2:49.89elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 3 ==
+Sat Oct 14 10:16:59 BST 2006
+0.08user 0.08system 2:49.13elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 4 ==
+Sat Oct 14 10:19:51 BST 2006
+0.08user 0.11system 2:48.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 5 ==
+Sat Oct 14 10:22:43 BST 2006
+0.09user 0.05system 2:47.30elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 6 ==
+Sat Oct 14 10:25:33 BST 2006
+0.09user 0.10system 2:46.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 7 ==
+Sat Oct 14 10:28:22 BST 2006
+0.05user 0.06system 2:49.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 8 ==
+Sat Oct 14 10:31:15 BST 2006
+0.06user 0.08system 2:49.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hot 9 ==
+Sat Oct 14 10:34:08 BST 2006
+0.06user 0.11system 2:47.60elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs bonnie reset 0 ==
+Sat Oct 14 20:03:28 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 13355 24.3 13312  1.8  5553  0.4 21845 45.3 24455  0.8 103.2  0.1
+== skiing-0 : nfs bonnie reset 1 ==
+Sat Oct 14 20:19:23 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 14850 28.3 13874  2.0  6058  0.5 20658 43.3 23397  0.8  93.9  0.1
+== skiing-0 : nfs bonnie reset 2 ==
+Sat Oct 14 20:34:22 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 15712 32.0 13743  1.8  5738  0.4 23559 50.3 26096  0.8  95.0  0.1
+== skiing-0 : nfs bonnie reset 3 ==
+Sat Oct 14 20:49:14 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 14646 29.8 13838  1.9  5823  0.4 23693 49.5 25538  0.8  93.6  0.0
+== skiing-0 : nfs bonnie reset 4 ==
+Sat Oct 14 21:04:20 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 15751 33.4 14397  1.9  6018  0.4 24468 52.2 26260  0.8  95.1  0.1
+== skiing-0 : nfs bonnie reset 5 ==
+Sat Oct 14 21:18:48 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 13717 27.9 12647  1.7  5379  0.4 10395 19.7 23529  0.6  89.4  0.1
+== skiing-0 : nfs bonnie reset 6 ==
+Sat Oct 14 21:36:42 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 12099 22.1 13315  1.8  5611  0.5 22847 48.3 24455  0.7  91.4  0.1
+== skiing-0 : nfs bonnie reset 7 ==
+Sat Oct 14 21:52:47 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 13021 23.7 13866  1.9  5387  0.4 21081 44.7 25194  0.7  92.8  0.1
+== skiing-0 : nfs bonnie reset 8 ==
+Sat Oct 14 22:08:44 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 14196 28.9 14212  1.9  5624  0.4 21261 45.4 26361  0.9  93.7  0.1
+== skiing-0 : nfs bonnie reset 9 ==
+Sat Oct 14 22:23:57 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-0 2047 13858 25.2 14460  2.0  5630  0.4 22243 47.3 25352  0.8  87.6  0.1
+== skiing-1 : nfs untar reset 0 ==
+Fri Oct 13 23:59:47 BST 2006
+0.39user 0.34system 4:35.17elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+487minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 1 ==
+Sat Oct 14 00:04:29 BST 2006
+0.26user 0.18system 4:35.26elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 2 ==
+Sat Oct 14 00:09:12 BST 2006
+0.34user 0.23system 4:35.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 3 ==
+Sat Oct 14 00:13:54 BST 2006
+0.28user 0.28system 4:35.22elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 4 ==
+Sat Oct 14 00:18:36 BST 2006
+0.30user 0.25system 4:35.27elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 5 ==
+Sat Oct 14 00:23:17 BST 2006
+0.29user 0.29system 4:35.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 6 ==
+Sat Oct 14 00:27:59 BST 2006
+0.30user 0.28system 4:35.07elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 7 ==
+Sat Oct 14 00:32:40 BST 2006
+0.28user 0.32system 4:35.59elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 8 ==
+Sat Oct 14 00:37:22 BST 2006
+0.31user 0.30system 4:35.66elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-1 : nfs untar reset 9 ==
+Sat Oct 14 00:42:04 BST 2006
+0.25user 0.30system 4:35.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 0 ==
+Sat Oct 14 02:42:13 BST 2006
+0.02user 0.12system 1:58.67elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 1 ==
+Sat Oct 14 02:44:16 BST 2006
+0.01user 0.21system 1:59.42elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 2 ==
+Sat Oct 14 02:46:18 BST 2006
+0.01user 0.18system 1:59.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 3 ==
+Sat Oct 14 02:48:21 BST 2006
+0.01user 0.20system 1:58.60elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 4 ==
+Sat Oct 14 02:50:23 BST 2006
+0.00user 0.17system 1:59.97elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 5 ==
+Sat Oct 14 02:52:26 BST 2006
+0.01user 0.19system 1:58.80elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 6 ==
+Sat Oct 14 02:54:28 BST 2006
+0.02user 0.23system 1:58.00elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 7 ==
+Sat Oct 14 02:56:30 BST 2006
+0.01user 0.27system 1:57.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 8 ==
+Sat Oct 14 02:58:31 BST 2006
+0.01user 0.22system 1:57.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar warm 9 ==
+Sat Oct 14 03:00:32 BST 2006
+0.01user 0.18system 1:58.15elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 0 ==
+Sat Oct 14 04:46:49 BST 2006
+0.03user 0.26system 1:22.95elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 1 ==
+Sat Oct 14 04:48:15 BST 2006
+0.00user 0.39system 1:23.40elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 2 ==
+Sat Oct 14 04:49:42 BST 2006
+0.03user 0.29system 1:23.24elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 3 ==
+Sat Oct 14 04:51:08 BST 2006
+0.02user 0.25system 1:23.08elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+272minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 4 ==
+Sat Oct 14 04:52:34 BST 2006
+0.02user 0.23system 1:22.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 5 ==
+Sat Oct 14 04:54:00 BST 2006
+0.02user 0.27system 1:23.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 6 ==
+Sat Oct 14 04:55:26 BST 2006
+0.00user 0.21system 1:22.92elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 7 ==
+Sat Oct 14 04:56:52 BST 2006
+0.02user 0.24system 1:23.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 8 ==
+Sat Oct 14 04:58:18 BST 2006
+0.03user 0.28system 1:23.16elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hot 9 ==
+Sat Oct 14 04:59:44 BST 2006
+0.03user 0.28system 1:23.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 0 ==
+Sat Oct 14 07:39:28 BST 2006
+0.09user 0.15system 3:35.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (3major+6317minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 1 ==
+Sat Oct 14 07:43:08 BST 2006
+0.09user 0.12system 3:33.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 2 ==
+Sat Oct 14 07:46:45 BST 2006
+0.10user 0.10system 3:36.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 3 ==
+Sat Oct 14 07:50:25 BST 2006
+0.07user 0.13system 3:37.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 4 ==
+Sat Oct 14 07:54:05 BST 2006
+0.07user 0.11system 3:36.34elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 5 ==
+Sat Oct 14 07:57:45 BST 2006
+0.09user 0.14system 3:35.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 6 ==
+Sat Oct 14 08:01:24 BST 2006
+0.10user 0.06system 3:36.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 7 ==
+Sat Oct 14 08:05:03 BST 2006
+0.06user 0.10system 3:36.00elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 8 ==
+Sat Oct 14 08:08:43 BST 2006
+0.08user 0.12system 3:34.27elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== skiing-1 : nfs rsync warm 9 ==
+Sat Oct 14 08:12:20 BST 2006
+0.07user 0.10system 3:34.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 0 ==
+Sat Oct 14 10:36:58 BST 2006
+0.10user 0.15system 2:48.49elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 1 ==
+Sat Oct 14 10:39:49 BST 2006
+0.11user 0.19system 2:48.34elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 2 ==
+Sat Oct 14 10:42:41 BST 2006
+0.09user 0.51system 2:47.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 3 ==
+Sat Oct 14 10:45:31 BST 2006
+0.09user 0.30system 2:47.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 4 ==
+Sat Oct 14 10:48:22 BST 2006
+0.08user 0.13system 2:47.45elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 5 ==
+Sat Oct 14 10:51:12 BST 2006
+0.10user 0.12system 2:47.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 6 ==
+Sat Oct 14 10:54:03 BST 2006
+0.08user 0.14system 2:47.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 7 ==
+Sat Oct 14 10:56:53 BST 2006
+0.08user 0.14system 2:47.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 8 ==
+Sat Oct 14 10:59:44 BST 2006
+0.07user 0.13system 2:48.53elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hot 9 ==
+Sat Oct 14 11:02:35 BST 2006
+0.08user 0.19system 2:48.30elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs bonnie reset 0 ==
+Sat Oct 14 22:39:15 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 14663 27.9 15357  1.9  6478  0.5 26801 58.6 34532  1.2  86.3  0.0
+== skiing-1 : nfs bonnie reset 1 ==
+Sat Oct 14 22:52:58 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 13932 28.1 15437  1.9  6547  0.5 29625 64.7 34660  0.9  96.6  0.0
+== skiing-1 : nfs bonnie reset 2 ==
+Sat Oct 14 23:06:26 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 15092 28.6 15650  1.9  7516  0.6 30532 67.0 35215  1.2  98.6  0.0
+== skiing-1 : nfs bonnie reset 3 ==
+Sat Oct 14 23:19:06 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 15503 29.3 15363  1.9  5897  0.4 24160 53.6 34134  0.9  95.9  0.0
+== skiing-1 : nfs bonnie reset 4 ==
+Sat Oct 14 23:33:15 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 12620 24.0 14044  1.7  6114  0.5 29316 65.2 32303  1.0  93.1  0.0
+== skiing-1 : nfs bonnie reset 5 ==
+Sat Oct 14 23:47:41 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 13623 24.7 15527  1.9  6401  0.5 25618 55.6 33146  1.0  93.8  0.0
+== skiing-1 : nfs bonnie reset 6 ==
+Sun Oct 15 00:01:44 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 14216 25.6 16450  2.0  6183  0.4 25759 56.5 34328  0.9  95.6  0.0
+== skiing-1 : nfs bonnie reset 7 ==
+Sun Oct 15 00:15:38 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 13874 26.3 14059  1.7  6618  0.6 26333 58.1 32782  0.9  92.4  0.0
+== skiing-1 : nfs bonnie reset 8 ==
+Sun Oct 15 00:29:40 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 13757 26.0 13609  1.6  5936  0.4 28723 63.5 33866  0.9  93.4  0.0
+== skiing-1 : nfs bonnie reset 9 ==
+Sun Oct 15 00:44:12 BST 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+skiing-1 2047 14294 28.7 13599  1.7  6726  0.5 29154 63.2 33979  0.9  94.6  0.0
+== druid-0 : nfs tar hothot 0 ==
+Sat Oct 21 19:33:31 BST 2006
+0.05user 0.52system 7:35.12elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 1 ==
+Sat Oct 21 19:41:08 BST 2006
+0.04user 0.61system 7:35.28elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 2 ==
+Sat Oct 21 19:48:45 BST 2006
+0.03user 0.48system 7:34.78elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 3 ==
+Sat Oct 21 19:56:22 BST 2006
+0.05user 0.50system 7:34.40elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 4 ==
+Sat Oct 21 20:03:58 BST 2006
+0.06user 0.39system 7:35.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 5 ==
+Sat Oct 21 20:11:36 BST 2006
+0.06user 0.56system 7:34.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 6 ==
+Sat Oct 21 20:19:12 BST 2006
+0.05user 0.53system 7:34.08elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 7 ==
+Sat Oct 21 20:26:48 BST 2006
+0.03user 0.44system 7:40.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 8 ==
+Sat Oct 21 20:34:31 BST 2006
+0.04user 0.52system 7:25.68elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs tar hothot 9 ==
+Sat Oct 21 20:41:59 BST 2006
+0.02user 0.43system 7:24.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 0 ==
+Sat Oct 21 21:45:35 BST 2006
+0.24user 0.39system 8:07.00elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 1 ==
+Sat Oct 21 21:53:44 BST 2006
+0.27user 0.66system 8:11.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 2 ==
+Sat Oct 21 22:01:58 BST 2006
+0.29user 0.82system 8:11.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 3 ==
+Sat Oct 21 22:10:12 BST 2006
+0.21user 0.84system 8:12.51elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 4 ==
+Sat Oct 21 22:18:27 BST 2006
+0.29user 0.86system 8:12.19elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 5 ==
+Sat Oct 21 22:26:41 BST 2006
+0.34user 0.93system 8:12.89elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 6 ==
+Sat Oct 21 22:34:56 BST 2006
+0.28user 0.89system 8:10.13elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 7 ==
+Sat Oct 21 22:43:08 BST 2006
+0.23user 0.64system 8:10.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 8 ==
+Sat Oct 21 22:51:21 BST 2006
+0.22user 0.62system 8:11.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-0 : nfs rsync hothot 9 ==
+Sat Oct 21 22:59:35 BST 2006
+0.19user 0.65system 8:11.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 0 ==
+Sat Oct 21 20:51:28 BST 2006
+0.05user 0.46system 2:01.74elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 1 ==
+Sat Oct 21 20:53:31 BST 2006
+0.03user 0.48system 2:02.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+272minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 2 ==
+Sat Oct 21 20:55:36 BST 2006
+0.04user 0.43system 2:01.89elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 3 ==
+Sat Oct 21 20:57:39 BST 2006
+0.06user 0.44system 2:02.49elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 4 ==
+Sat Oct 21 20:59:44 BST 2006
+0.05user 0.42system 2:01.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 5 ==
+Sat Oct 21 21:01:47 BST 2006
+0.04user 0.55system 2:02.59elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 6 ==
+Sat Oct 21 21:03:51 BST 2006
+0.02user 0.48system 2:02.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 7 ==
+Sat Oct 21 21:05:56 BST 2006
+0.06user 0.49system 2:01.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 8 ==
+Sat Oct 21 21:08:00 BST 2006
+0.07user 0.43system 2:02.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs tar hothot 9 ==
+Sat Oct 21 21:10:04 BST 2006
+0.03user 0.46system 2:01.78elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 0 ==
+Sat Oct 21 23:11:00 BST 2006
+0.36user 0.40system 2:45.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 1 ==
+Sat Oct 21 23:13:47 BST 2006
+0.39user 0.42system 2:42.75elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 2 ==
+Sat Oct 21 23:16:31 BST 2006
+0.38user 0.39system 2:41.87elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 3 ==
+Sat Oct 21 23:19:14 BST 2006
+0.35user 0.48system 2:43.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 4 ==
+Sat Oct 21 23:22:00 BST 2006
+0.37user 0.42system 2:44.74elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 5 ==
+Sat Oct 21 23:24:46 BST 2006
+0.30user 0.37system 2:43.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 6 ==
+Sat Oct 21 23:27:31 BST 2006
+0.46user 0.35system 2:41.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 7 ==
+Sat Oct 21 23:30:14 BST 2006
+0.39user 0.38system 2:40.98elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 8 ==
+Sat Oct 21 23:32:56 BST 2006
+0.39user 0.38system 2:42.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== druid-1 : nfs rsync hothot 9 ==
+Sat Oct 21 23:35:41 BST 2006
+0.32user 0.43system 2:44.81elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 0 ==
+Sat Oct 21 23:33:22 BST 2006
+0.16user 0.12system 0:23.40elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 1 ==
+Sat Oct 21 23:33:46 BST 2006
+0.20user 0.11system 0:23.48elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 2 ==
+Sat Oct 21 23:34:10 BST 2006
+0.13user 0.16system 0:23.46elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 3 ==
+Sat Oct 21 23:34:33 BST 2006
+0.15user 0.09system 0:23.43elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 4 ==
+Sat Oct 21 23:34:57 BST 2006
+0.14user 0.10system 0:23.48elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 5 ==
+Sat Oct 21 23:35:21 BST 2006
+0.15user 0.10system 0:23.53elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 6 ==
+Sat Oct 21 23:35:45 BST 2006
+0.17user 0.12system 0:23.46elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 7 ==
+Sat Oct 21 23:36:09 BST 2006
+0.16user 0.10system 0:23.52elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 8 ==
+Sat Oct 21 23:36:33 BST 2006
+0.11user 0.11system 0:23.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6319minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothothot 9 ==
+Sat Oct 21 23:36:57 BST 2006
+0.18user 0.09system 0:23.49elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 0 ==
+Sat Oct 21 21:14:18 BST 2006
+0.00user 0.28system 1:45.56elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 1 ==
+Sat Oct 21 21:16:04 BST 2006
+0.01user 0.32system 1:45.24elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 2 ==
+Sat Oct 21 21:17:50 BST 2006
+0.01user 0.34system 1:45.40elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 3 ==
+Sat Oct 21 21:19:36 BST 2006
+0.01user 0.32system 1:45.31elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 4 ==
+Sat Oct 21 21:21:23 BST 2006
+0.01user 0.28system 1:44.50elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 5 ==
+Sat Oct 21 21:23:08 BST 2006
+0.03user 0.33system 1:43.79elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 6 ==
+Sat Oct 21 21:24:53 BST 2006
+0.02user 0.30system 1:43.62elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 7 ==
+Sat Oct 21 21:26:38 BST 2006
+0.01user 0.30system 1:43.43elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 8 ==
+Sat Oct 21 21:28:23 BST 2006
+0.01user 0.28system 1:43.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs tar hothot 9 ==
+Sat Oct 21 21:30:07 BST 2006
+0.02user 0.31system 1:43.51elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 0 ==
+Sat Oct 21 23:39:53 BST 2006
+0.15user 0.20system 2:30.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 1 ==
+Sat Oct 21 23:42:25 BST 2006
+0.14user 0.13system 2:30.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 2 ==
+Sat Oct 21 23:44:56 BST 2006
+0.13user 0.16system 2:30.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 3 ==
+Sat Oct 21 23:47:28 BST 2006
+0.14user 0.12system 2:29.67elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6318minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 4 ==
+Sat Oct 21 23:49:58 BST 2006
+0.15user 0.12system 2:29.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 5 ==
+Sat Oct 21 23:52:29 BST 2006
+0.13user 0.19system 2:30.81elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 6 ==
+Sat Oct 21 23:55:01 BST 2006
+0.12user 0.19system 2:30.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 7 ==
+Sat Oct 21 23:57:33 BST 2006
+0.10user 0.16system 2:30.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 8 ==
+Sun Oct 22 00:00:04 BST 2006
+0.13user 0.35system 2:30.42elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-1 : nfs rsync hothot 9 ==
+Sun Oct 22 00:02:35 BST 2006
+0.14user 0.18system 2:30.28elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 0 ==
+Tue Oct 24 20:12:02 BST 2006
+0.00user 0.06system 0:43.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 1 ==
+Tue Oct 24 20:13:47 BST 2006
+0.00user 0.04system 0:44.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 2 ==
+Tue Oct 24 20:15:31 BST 2006
+0.01user 0.02system 0:43.95elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 3 ==
+Tue Oct 24 20:17:16 BST 2006
+0.01user 0.05system 0:44.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 4 ==
+Tue Oct 24 20:19:00 BST 2006
+0.00user 0.05system 0:43.94elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 5 ==
+Tue Oct 24 20:20:44 BST 2006
+0.00user 0.07system 0:44.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 6 ==
+Tue Oct 24 20:22:29 BST 2006
+0.00user 0.05system 0:43.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 7 ==
+Tue Oct 24 20:24:13 BST 2006
+0.00user 0.04system 0:44.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 8 ==
+Tue Oct 24 20:25:58 BST 2006
+0.00user 0.01system 0:43.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothot 9 ==
+Tue Oct 24 20:27:42 BST 2006
+0.00user 0.05system 0:44.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 0 ==
+Tue Oct 24 20:48:37 BST 2006
+0.10user 0.07system 0:45.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 1 ==
+Tue Oct 24 20:50:22 BST 2006
+0.13user 0.10system 0:45.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 2 ==
+Tue Oct 24 20:52:07 BST 2006
+0.15user 0.10system 0:45.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 3 ==
+Tue Oct 24 20:53:53 BST 2006
+0.12user 0.08system 0:45.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 4 ==
+Tue Oct 24 20:55:38 BST 2006
+0.21user 0.11system 0:44.85elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 5 ==
+Tue Oct 24 20:57:23 BST 2006
+0.16user 0.05system 0:44.74elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6317minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 6 ==
+Tue Oct 24 20:59:08 BST 2006
+0.18user 0.11system 0:44.96elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 7 ==
+Tue Oct 24 21:00:54 BST 2006
+0.13user 0.13system 0:44.94elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6316minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 8 ==
+Tue Oct 24 21:02:39 BST 2006
+0.14user 0.06system 0:44.98elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6320minor)pagefaults 0swaps
+== skiing-0 : nfs rsync hothot 9 ==
+Tue Oct 24 21:04:24 BST 2006
+0.14user 0.06system 0:44.94elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6315minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 0 ==
+Wed Oct 25 12:27:26 BST 2006
+0.00user 0.01system 0:22.16elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 1 ==
+Wed Oct 25 12:27:48 BST 2006
+0.00user 0.06system 0:22.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 2 ==
+Wed Oct 25 12:28:11 BST 2006
+0.00user 0.12system 0:22.43elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+271minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 3 ==
+Wed Oct 25 12:28:34 BST 2006
+0.00user 0.11system 0:22.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 4 ==
+Wed Oct 25 12:28:57 BST 2006
+0.00user 0.09system 0:22.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 5 ==
+Wed Oct 25 12:29:20 BST 2006
+0.01user 0.10system 0:22.22elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 6 ==
+Wed Oct 25 12:29:43 BST 2006
+0.01user 0.08system 0:22.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 7 ==
+Wed Oct 25 12:30:05 BST 2006
+0.00user 0.07system 0:22.22elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+270minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 8 ==
+Wed Oct 25 12:30:29 BST 2006
+0.00user 0.10system 0:22.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps
+== skiing-0 : nfs tar hothothot 9 ==
+Wed Oct 25 12:30:51 BST 2006
+0.00user 0.08system 0:22.43elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+269minor)pagefaults 0swaps

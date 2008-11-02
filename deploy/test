@@ -1,0 +1,85 @@
+#!/bin/sh
+
+case "$1" in
+    envoy | nocache | npfs | nfs) ;;
+    *)
+        echo usage: $0 \{envoy,nocache,npfs,nfs\} \{untar,tar,rsync,bonnie\}
+        exit
+        ;;
+esac
+
+if [ "$MACHINES" = "" ] ; then
+    MACHINES='druid skiing'
+fi
+if [ "$VMS" = "" ] ; then
+    VMS='0 1'
+fi
+if [ "$ITERS" = "" ] ; then
+    ITERS=`seq 0 9`
+fi
+
+if [ "$CACHES" = "" ] ; then
+    case "$2" in
+        untar | bonnie)
+            CACHES='reset'
+            ;;
+        tar | rsync)
+            CACHES='cold warm hot'
+            ;;
+    esac
+fi
+
+if [ `hostname` = 'donkeykong.cl.cam.ac.uk' ] ; then
+    for cache in $CACHES ; do
+        if [[ "$cache" = "cold" && "$1" != "envoy" ]] ; then
+            continue
+        fi
+
+        echo ===== $1 $2 $cache start =====
+        for machine in $MACHINES ; do
+            for vm in $VMS ; do
+                for iter in $ITERS ; do
+                    echo == setup ==
+                    ./setup $1 $cache
+                    echo == start test ==
+                    date
+                    echo $1 $2 $cache $iter on "$machine-$vm.xeno"
+                    ssh -x "root@$machine-$vm.xeno" ./envoy/test $1 $2 $cache $iter
+                done
+            done
+        done
+        echo ===== $1 $2 $cache finished =====
+    done
+else
+    sync && sync
+
+    echo == `hostname` : $@ == >> ~/log
+    date >> ~/log
+
+    case "$1" in
+        envoy | nocache | npfs) cd /mnt/9p ;;
+        nfs) cd /mnt/nfs ;;
+    esac
+
+    case "$2" in
+        untar)
+            zcat ~/envoy/linux-2.6.18.tar.gz > /dev/null
+            /usr/bin/time tar zxf ~/envoy/linux-2.6.18.tar.gz 2>> ~/log
+            #zcat ~/envoy/linux-fake.tar.gz > /dev/null
+            #/usr/bin/time tar zxf ~/envoy/linux-fake.tar.gz 2>> ~/log
+            ;;
+        tar)
+            /usr/bin/time tar cf - linux-2.6.18/ 2>> ~/log | cat > /dev/null
+            ;;
+        rsync)
+            mkdir -p ~/empty-dir
+            /usr/bin/time rsync -a "--only-write-batch=/dev/null" ./ ~/empty-dir/ 2>> ~/log
+            rm -f /dev/null.sh
+            rmdir ~/empty-dir
+            ;;
+        bonnie)
+            ~/envoy/Bonnie -m `hostname` -s 2047 >> ~/log
+            rm -f Bonnie.*
+            ;;
+    esac
+fi

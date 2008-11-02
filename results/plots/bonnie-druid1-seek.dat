@@ -1,0 +1,6 @@
+cluster	seek	stdev
+envoy	89.46	4.55
+envoy-ls	71.13	1.41
+nocache	132.38	2.64
+9p	65.4	2.55
+nfs	91.25	8.77

@@ -1,0 +1,98 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Time::HiRes qw( time sleep );
+
+my $fileslist = 'files.txt';
+my $listprefix = '/root/envoy/scripts';
+my $prefix = '/mnt/9p/linux-2.6.18';
+
+if (`hostname` =~ m/^donkeykong/) {
+    $listprefix = '/home/rgr22/Desktop/envoy/scripts';
+    $prefix = '/local/scratch/rgr22';
+}
+
+my $points = {};
+my @files = ();
+
+sub read_files {
+    open FP, "<$listprefix/$fileslist" or die $!;
+    while (my $line = <FP>) {
+        chomp $line;
+        push @files, $line;
+    }
+    close FP;
+}
+
+sub parse_input {
+    my $key;
+    my $rate;
+    my $point;
+    while (my $line = <>) {
+        chomp $line;
+        next if $line =~ m/^\s*#/;
+        next if $line =~ m/^\s*$/;
+
+        if ($line =~ m/^(\d+):\s*(\S+)\s*$/) {
+            $rate = $1;
+            $key = $2;
+            $point = {
+                'key' => $key,
+                'rate' => $rate,
+                'files' => [ grep /^$key\b/, @files ],
+            };
+            $points->{$key} = $point;
+            die "no files found: $key\n" unless scalar(@{$point->{'files'}}) > 0;
+        } elsif ($line =~ m/^-\s*(\S+)\s*$/) {
+            die "cannot start with -block entry\n" unless defined $key;
+            my $block = "$key/$1";
+            my $count = scalar(@{$point->{'files'}});
+            $point->{'files'} = [ grep(!/^$block\b/, @{$point->{'files'}}) ];
+            die "no files removed: $key - $block\n"
+                unless scalar(@{$point->{'files'}}) < $count;
+        } else {
+            die "unknown line: [$line]\n";
+        }
+    }
+}
+
+sub pick_file {
+    my $point = $_[0];
+    my $pool = $point->{'files'};
+    my $i = int(rand(scalar(@$pool)));
+    return $pool->[$i];
+}
+
+sub touch_file {
+    my $file = $_[0];
+    open FP, "<$prefix/$file" or die "openfile: $!\n";
+    close FP;
+}
+
+sub do_round {
+    foreach my $point (values %$points) {
+        for (my $i = 0; $i < $point->{'rate'}; $i++) {
+            my $file = pick_file($point);
+            print "$file\n";
+            touch_file($file);
+        }
+    }
+}
+
+read_files();
+parse_input();
+
+sleep(time() - int(time()));
+my $start = int(time() + 0.0001);
+
+for (;;) {
+    do_round();
+    $start++;
+    my $delay = $start - time();
+    print "sleep for $delay\n";
+    if ($delay > 0) {
+        sleep($delay);
+    } else {
+        $start = int(time() + 1);
+    }
+}

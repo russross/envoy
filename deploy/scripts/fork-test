@@ -1,0 +1,27 @@
+#!/bin/sh
+
+case `hostname` in
+    donkeykong.*)
+
+        for n in `seq 1 100` ; do
+            echo syncing
+            ssh root@druid-0.xeno sync
+            ssh root@skiing-0.xeno sync
+
+            ssh root@druid-0.xeno /root/envoy/scripts/fork-test $n
+        done
+        ;;
+
+    druid-0)
+
+        cd /mnt/9p
+        echo fork simple test $1
+        echo fork simple test $1 >> /tmp/stdout.log
+        date >> /tmp/stdout.log
+        /usr/bin/time bash -c "mkdir src$1 ; ln -s /linux/1 src$1/current ; touch src$1/current/foo" 2>> /tmp/stdout.log
+        ;;
+
+    *)
+        echo what do I do for `hostname`?
+        ;;
+esac

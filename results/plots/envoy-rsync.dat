@@ -1,0 +1,6 @@
+# envoy rsync, cold/warm/hot on druid-0,druid-1,skiing-0,skiing-1
+cluster	-	cold	stdev	warm	warm	stdev	hot	hot	stdev
+druid-0	cold	145.14	3.05	warm	111.32	3.1	hot	60.63	1.32
+druid-1	cold	177.29	2.81	warm	135.81	1.79	hot	84.98	1.46
+skiing-0	cold	223.15	3.94	warm	188.52	2.97	hot	136.35	2.33
+skiing-1	cold	243.6	2.16	warm	208.67	1.72	hot	157.61	0.96

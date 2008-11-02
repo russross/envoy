@@ -1,0 +1,61 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: moonraider.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 14:21:01 2006
+ */
+
+/* Connections:
+ *   moonraider.cl.cam.ac.uk:48395 CLIENT_IN:
+ *     messages/bytes in     : 820/12656
+ *     messages/bytes out    : 820/31836
+ *     new messages/bytes in : 374/5764
+ *     new messages/bytes out: 374/14464
+ *   moonraider.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 100/468036
+ *     messages/bytes out    : 100/2344
+ *     new messages/bytes in : 33/53223
+ *     new messages/bytes out: 33/719
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 105/499375
+ *     messages/bytes out    : 105/2339
+ *     new messages/bytes in : 32/58806
+ *     new messages/bytes out: 32/704
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 107/5094
+ *     messages/bytes out    : 107/3392
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   moonraider-1.xeno.cl.cam.ac.uk:43500 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 288/9200
+ *     messages/bytes out    : 288/13058
+ *     new messages/bytes in : 72/2322
+ *     new messages/bytes out: 73/3214
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 4/46
+ *     messages/bytes out    : 4/172
+ *     new messages/bytes in : 1/7
+ *     new messages/bytes out: 1/111
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 387/11504
+ *     messages/bytes out    : 387/17518
+ *     new messages/bytes in : 210/6278
+ *     new messages/bytes out: 210/9588
+ */
+
+/* lease root is /linux/current */
+digraph _linux_current {
+  _linux_current [shape=box];
+  _linux_current_linux_2_6_18_drivers_char [shape=box,label="char"];
+  _linux_current_linux_2_6_18_drivers -> _linux_current_linux_2_6_18_drivers_char [style=dotted];
+  _linux_current_linux_2_6_18_drivers_block [shape=box,label="block"];
+  _linux_current_linux_2_6_18_drivers -> _linux_current_linux_2_6_18_drivers_block [style=dotted];
+  _linux_current [label="current"];
+  _linux_current -> _linux_current_linux_2_6_18;
+  _linux_current_linux_2_6_18 [label="linux-2.6.18"];
+  _linux_current_linux_2_6_18 -> _linux_current_linux_2_6_18_drivers;
+  _linux_current_linux_2_6_18_drivers [label="drivers"];
+}

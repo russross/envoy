@@ -1,0 +1,1240 @@
+== druid-0 : envoy bonnie reset 0 ==
+Mon Dec 25 13:17:04 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 13366 29.2 18486  0.9  7276  0.7 21276 60.7 39466  1.8  86.1  0.0
+== druid-0 : envoy bonnie reset 1 ==
+Mon Dec 25 13:30:12 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 12924 29.4 16701  0.8  7195  0.8 22734 61.5 38804  2.5  86.6  0.0
+== druid-0 : envoy bonnie reset 2 ==
+Mon Dec 25 13:43:34 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 13079 30.4 17783  0.5  7070  0.7 22295 60.5 35414  2.0  80.6  0.0
+== druid-0 : envoy bonnie reset 3 ==
+Mon Dec 25 13:57:03 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 13348 30.8 17515  0.8  6940  0.7 22595 61.7 39772  1.2  91.1  0.0
+== druid-0 : envoy bonnie reset 4 ==
+Mon Dec 25 14:10:24 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 13548 28.1 17259  1.1  6793  0.7 20793 57.9 38664  1.8  93.4  0.0
+== druid-0 : envoy bonnie reset 5 ==
+Mon Dec 25 14:23:59 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 12878 31.9 18151  1.2  6000  0.7 22890 63.1 40620  1.7  91.9 -0.0
+== druid-0 : envoy bonnie reset 6 ==
+Mon Dec 25 14:38:07 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 13291 28.4 16794  0.9  6823  0.7 20913 59.2 38993  2.2  87.3  0.0
+== druid-0 : envoy bonnie reset 7 ==
+Mon Dec 25 14:51:47 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 13066 29.6 17411  1.0  6723  0.8 21571 60.4 40130  1.8  93.5 -0.0
+== druid-0 : envoy bonnie reset 8 ==
+Mon Dec 25 15:05:25 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 12840 29.2 16947  1.0  6887  0.7 20731 54.4 38400  1.9  93.7  0.0
+== druid-0 : envoy bonnie reset 9 ==
+Mon Dec 25 15:19:06 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-0  2047 12985 26.3 16956  1.0  6886  0.7 20940 60.1 39214  1.3  95.3  0.0
+== druid-1 : envoy bonnie reset 0 ==
+Mon Dec 25 15:32:44 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 11563 17.3 14708  0.1  6182  0.3 16595 41.0 32600  1.1  88.0  0.0
+== druid-1 : envoy bonnie reset 1 ==
+Mon Dec 25 15:48:14 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 11468 17.1 14797  0.1  5894  0.2 15771 39.0 30007  1.4  91.6  0.0
+== druid-1 : envoy bonnie reset 2 ==
+Mon Dec 25 16:04:11 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 11821 18.3 14550  0.1  6072  0.3 16599 41.5 33290  1.1  83.4  0.0
+== druid-1 : envoy bonnie reset 3 ==
+Mon Dec 25 16:19:45 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 12063 16.7 14660  0.1  6198  0.3 16436 40.5 31958  1.0  88.7  0.0
+== druid-1 : envoy bonnie reset 4 ==
+Mon Dec 25 16:35:09 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 11840 17.7 15080  0.1  6116  0.3 17110 43.7 33636  1.3  92.0  0.0
+== druid-1 : envoy bonnie reset 5 ==
+Mon Dec 25 16:50:25 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 12060 16.3 14212  0.1  5892  0.3 16719 41.8 32116  1.1  89.8  0.0
+== druid-1 : envoy bonnie reset 6 ==
+Mon Dec 25 17:06:07 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 12062 16.1 15003  0.2  6217  0.3 16784 41.0 31714  0.9  91.6  0.0
+== druid-1 : envoy bonnie reset 7 ==
+Mon Dec 25 17:21:21 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 11870 18.1 14878  0.2  5750  0.2 17186 42.1 34281  1.1  94.8  0.0
+== druid-1 : envoy bonnie reset 8 ==
+Mon Dec 25 17:36:59 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 11884 17.8 14872  0.1  6139  0.2 17043 42.8 32093  0.8  94.2  0.0
+== druid-1 : envoy bonnie reset 9 ==
+Mon Dec 25 17:52:20 GMT 2006
+              -------Sequential Output-------- ---Sequential Input-- --Random--
+              -Per Char- --Block--- -Rewrite-- -Per Char- --Block--- --Seeks---
+Machine    MB K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU K/sec %CPU  /sec %CPU
+druid-1  2047 11846 17.8 14535  0.1  6149  0.2 16883 41.7 33564  1.1  80.5  0.0
+== druid-0 : envoy untar reset 0 ==
+Tue Dec 26 17:27:16 GMT 2006
+1.26user 3.64system 3:39.77elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+485minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 1 ==
+Tue Dec 26 17:31:14 GMT 2006
+1.26user 4.94system 3:35.03elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 2 ==
+Tue Dec 26 17:35:07 GMT 2006
+1.58user 3.20system 3:34.16elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 3 ==
+Tue Dec 26 17:38:59 GMT 2006
+1.39user 5.12system 3:28.85elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 4 ==
+Tue Dec 26 17:42:46 GMT 2006
+1.70user 2.60system 3:38.54elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 5 ==
+Tue Dec 26 17:46:47 GMT 2006
+1.36user 4.29system 3:32.33elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 6 ==
+Tue Dec 26 17:50:37 GMT 2006
+1.62user 2.50system 3:34.07elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 7 ==
+Tue Dec 26 17:54:31 GMT 2006
+1.50user 2.29system 3:44.44elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 8 ==
+Tue Dec 26 17:58:34 GMT 2006
+1.47user 2.84system 3:39.21elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-0 : envoy untar reset 9 ==
+Tue Dec 26 18:02:32 GMT 2006
+1.47user 4.32system 3:30.64elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 0 ==
+Tue Dec 26 21:15:10 GMT 2006
+0.04user 2.20system 3:20.20elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 1 ==
+Tue Dec 26 21:18:43 GMT 2006
+0.06user 2.05system 3:20.90elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 2 ==
+Tue Dec 26 21:22:16 GMT 2006
+0.04user 2.11system 3:20.16elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 3 ==
+Tue Dec 26 21:25:48 GMT 2006
+0.06user 2.02system 3:23.15elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 4 ==
+Tue Dec 26 21:29:23 GMT 2006
+0.02user 1.04system 3:22.54elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 5 ==
+Tue Dec 26 21:32:57 GMT 2006
+0.04user 2.05system 3:21.73elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 6 ==
+Tue Dec 26 21:36:31 GMT 2006
+0.03user 1.82system 3:19.42elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 7 ==
+Tue Dec 26 21:40:02 GMT 2006
+0.04user 2.14system 3:21.09elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 8 ==
+Tue Dec 26 21:43:36 GMT 2006
+0.06user 2.28system 3:21.34elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar cold 9 ==
+Tue Dec 26 21:47:09 GMT 2006
+0.06user 1.98system 3:19.79elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 0 ==
+Wed Dec 27 00:30:56 GMT 2006
+0.09user 2.11system 2:07.61elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 1 ==
+Wed Dec 27 00:33:14 GMT 2006
+0.13user 2.70system 1:59.38elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 2 ==
+Wed Dec 27 00:35:25 GMT 2006
+0.09user 2.44system 1:58.70elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 3 ==
+Wed Dec 27 00:37:34 GMT 2006
+0.04user 1.52system 2:10.35elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 4 ==
+Wed Dec 27 00:39:58 GMT 2006
+0.10user 2.36system 2:01.13elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 5 ==
+Wed Dec 27 00:42:09 GMT 2006
+0.10user 2.51system 1:54.30elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 6 ==
+Wed Dec 27 00:44:15 GMT 2006
+0.11user 2.28system 2:02.27elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 7 ==
+Wed Dec 27 00:46:28 GMT 2006
+0.07user 1.64system 2:08.74elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 8 ==
+Wed Dec 27 00:48:48 GMT 2006
+0.10user 2.20system 2:08.02elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-0 : envoy tar warm 9 ==
+Wed Dec 27 00:51:07 GMT 2006
+0.09user 1.34system 2:10.17elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 0 ==
+Wed Dec 27 02:50:24 GMT 2006
+0.12user 2.48system 1:21.11elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 1 ==
+Wed Dec 27 02:51:56 GMT 2006
+0.06user 1.45system 1:19.70elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 2 ==
+Wed Dec 27 02:53:28 GMT 2006
+0.03user 1.70system 1:18.68elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 3 ==
+Wed Dec 27 02:54:57 GMT 2006
+0.16user 3.32system 1:20.76elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 4 ==
+Wed Dec 27 02:56:27 GMT 2006
+0.12user 2.07system 1:18.04elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 5 ==
+Wed Dec 27 02:57:57 GMT 2006
+0.08user 2.25system 1:18.58elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 6 ==
+Wed Dec 27 02:59:26 GMT 2006
+0.11user 3.37system 1:20.49elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 7 ==
+Wed Dec 27 03:00:55 GMT 2006
+0.12user 2.84system 1:21.45elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 8 ==
+Wed Dec 27 03:02:27 GMT 2006
+0.19user 4.06system 1:21.95elapsed 5%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-0 : envoy tar hot 9 ==
+Wed Dec 27 03:03:59 GMT 2006
+0.05user 1.27system 1:18.12elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 0 ==
+Wed Dec 27 04:41:14 GMT 2006
+0.76user 1.84system 2:25.47elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (3major+6329minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 1 ==
+Wed Dec 27 04:43:54 GMT 2006
+0.78user 1.93system 2:22.02elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 2 ==
+Wed Dec 27 04:46:33 GMT 2006
+0.82user 1.96system 2:24.27elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 3 ==
+Wed Dec 27 04:49:17 GMT 2006
+0.63user 1.54system 2:27.46elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6335minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 4 ==
+Wed Dec 27 04:51:59 GMT 2006
+0.77user 2.22system 2:23.19elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 5 ==
+Wed Dec 27 04:54:37 GMT 2006
+0.78user 2.57system 2:22.18elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 6 ==
+Wed Dec 27 04:57:19 GMT 2006
+0.78user 2.12system 2:23.71elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6335minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 7 ==
+Wed Dec 27 05:00:02 GMT 2006
+0.68user 1.93system 2:27.85elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 8 ==
+Wed Dec 27 05:02:53 GMT 2006
+0.79user 2.52system 2:23.53elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-0 : envoy rsync cold 9 ==
+Wed Dec 27 05:05:40 GMT 2006
+0.43user 1.28system 2:31.71elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 0 ==
+Wed Dec 27 07:02:22 GMT 2006
+0.80user 1.89system 1:52.74elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (3major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 1 ==
+Wed Dec 27 07:04:26 GMT 2006
+0.82user 2.04system 1:48.00elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 2 ==
+Wed Dec 27 07:06:26 GMT 2006
+0.76user 2.04system 1:47.75elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 3 ==
+Wed Dec 27 07:08:25 GMT 2006
+0.61user 1.31system 1:54.06elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 4 ==
+Wed Dec 27 07:10:30 GMT 2006
+0.71user 1.88system 1:49.14elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 5 ==
+Wed Dec 27 07:12:30 GMT 2006
+0.72user 1.98system 1:48.37elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 6 ==
+Wed Dec 27 07:14:29 GMT 2006
+0.82user 2.00system 1:53.11elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 7 ==
+Wed Dec 27 07:16:34 GMT 2006
+0.81user 2.08system 1:49.36elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 8 ==
+Wed Dec 27 07:18:34 GMT 2006
+0.68user 1.54system 1:55.90elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync warm 9 ==
+Wed Dec 27 07:20:41 GMT 2006
+0.90user 1.86system 1:54.76elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 0 ==
+Wed Dec 27 08:57:16 GMT 2006
+0.99user 1.44system 1:00.34elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 1 ==
+Wed Dec 27 08:58:29 GMT 2006
+0.98user 1.77system 0:59.84elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 2 ==
+Wed Dec 27 08:59:40 GMT 2006
+0.89user 1.35system 1:00.92elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 3 ==
+Wed Dec 27 09:00:52 GMT 2006
+1.04user 2.13system 0:58.95elapsed 5%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6336minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 4 ==
+Wed Dec 27 09:02:02 GMT 2006
+0.93user 1.48system 1:01.49elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 5 ==
+Wed Dec 27 09:03:12 GMT 2006
+1.20user 2.64system 0:59.23elapsed 6%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 6 ==
+Wed Dec 27 09:04:23 GMT 2006
+0.93user 1.47system 1:02.97elapsed 3%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 7 ==
+Wed Dec 27 09:05:38 GMT 2006
+1.01user 2.22system 0:59.94elapsed 5%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 8 ==
+Wed Dec 27 09:06:49 GMT 2006
+0.92user 1.72system 1:02.44elapsed 4%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-0 : envoy rsync hot 9 ==
+Wed Dec 27 09:08:10 GMT 2006
+1.21user 2.01system 1:00.15elapsed 5%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 0 ==
+Tue Dec 26 18:06:20 GMT 2006
+0.97user 1.78system 4:38.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+486minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 1 ==
+Tue Dec 26 18:11:17 GMT 2006
+1.15user 1.73system 4:34.46elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 2 ==
+Tue Dec 26 18:16:10 GMT 2006
+1.04user 1.78system 4:31.46elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 3 ==
+Tue Dec 26 18:20:59 GMT 2006
+1.13user 1.78system 4:37.65elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 4 ==
+Tue Dec 26 18:25:55 GMT 2006
+1.18user 1.72system 4:35.75elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 5 ==
+Tue Dec 26 18:30:49 GMT 2006
+1.14user 1.83system 4:38.93elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 6 ==
+Tue Dec 26 18:35:45 GMT 2006
+1.20user 1.68system 4:37.60elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 7 ==
+Tue Dec 26 18:40:40 GMT 2006
+1.06user 1.65system 4:37.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 8 ==
+Tue Dec 26 18:45:36 GMT 2006
+1.08user 1.84system 4:39.88elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : envoy untar reset 9 ==
+Tue Dec 26 18:50:34 GMT 2006
+1.04user 1.82system 4:32.96elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 0 ==
+Tue Dec 26 21:50:41 GMT 2006
+0.01user 0.80system 4:11.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 1 ==
+Tue Dec 26 21:55:03 GMT 2006
+0.02user 0.96system 4:07.19elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 2 ==
+Tue Dec 26 21:59:24 GMT 2006
+0.01user 0.98system 4:09.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 3 ==
+Tue Dec 26 22:03:45 GMT 2006
+0.03user 0.86system 4:18.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 4 ==
+Tue Dec 26 22:08:15 GMT 2006
+0.04user 0.96system 4:19.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 5 ==
+Tue Dec 26 22:12:45 GMT 2006
+0.03user 0.88system 4:10.90elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 6 ==
+Tue Dec 26 22:17:08 GMT 2006
+0.04user 0.84system 4:08.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 7 ==
+Tue Dec 26 22:21:28 GMT 2006
+0.03user 0.90system 4:11.37elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 8 ==
+Tue Dec 26 22:25:51 GMT 2006
+0.04user 0.92system 4:10.89elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar cold 9 ==
+Tue Dec 26 22:30:14 GMT 2006
+0.01user 0.89system 4:09.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 0 ==
+Wed Dec 27 00:53:28 GMT 2006
+0.08user 1.19system 2:33.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 1 ==
+Wed Dec 27 00:56:13 GMT 2006
+0.05user 1.28system 2:33.29elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 2 ==
+Wed Dec 27 00:58:56 GMT 2006
+0.10user 1.30system 2:35.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 3 ==
+Wed Dec 27 01:01:42 GMT 2006
+0.10user 1.16system 2:32.58elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 4 ==
+Wed Dec 27 01:04:25 GMT 2006
+0.10user 1.23system 2:32.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 5 ==
+Wed Dec 27 01:07:07 GMT 2006
+0.10user 1.22system 2:29.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 6 ==
+Wed Dec 27 01:09:47 GMT 2006
+0.12user 1.40system 2:29.78elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 7 ==
+Wed Dec 27 01:12:27 GMT 2006
+0.11user 1.28system 2:31.42elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 8 ==
+Wed Dec 27 01:15:10 GMT 2006
+0.07user 1.24system 2:31.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar warm 9 ==
+Wed Dec 27 01:17:52 GMT 2006
+0.11user 1.28system 2:30.68elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 0 ==
+Wed Dec 27 03:05:27 GMT 2006
+0.07user 1.17system 1:59.32elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 1 ==
+Wed Dec 27 03:07:37 GMT 2006
+0.12user 1.62system 2:00.46elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 2 ==
+Wed Dec 27 03:09:47 GMT 2006
+0.10user 1.31system 2:01.23elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 3 ==
+Wed Dec 27 03:11:58 GMT 2006
+0.07user 1.24system 1:58.61elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+279minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 4 ==
+Wed Dec 27 03:14:07 GMT 2006
+0.08user 1.22system 2:00.30elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 5 ==
+Wed Dec 27 03:16:17 GMT 2006
+0.08user 1.32system 1:58.78elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 6 ==
+Wed Dec 27 03:18:25 GMT 2006
+0.12user 1.43system 2:01.39elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 7 ==
+Wed Dec 27 03:20:35 GMT 2006
+0.09user 1.24system 2:02.19elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 8 ==
+Wed Dec 27 03:22:48 GMT 2006
+0.08user 1.28system 2:00.67elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy tar hot 9 ==
+Wed Dec 27 03:24:58 GMT 2006
+0.08user 1.52system 2:01.25elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 0 ==
+Wed Dec 27 05:08:39 GMT 2006
+0.39user 0.75system 3:03.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 1 ==
+Wed Dec 27 05:12:10 GMT 2006
+0.41user 0.73system 2:55.32elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 2 ==
+Wed Dec 27 05:15:17 GMT 2006
+0.35user 0.64system 2:55.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 3 ==
+Wed Dec 27 05:18:26 GMT 2006
+0.36user 0.62system 2:56.30elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 4 ==
+Wed Dec 27 05:21:34 GMT 2006
+0.44user 0.73system 2:57.79elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 5 ==
+Wed Dec 27 05:24:43 GMT 2006
+0.42user 0.84system 2:56.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 6 ==
+Wed Dec 27 05:27:51 GMT 2006
+0.37user 0.64system 3:00.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 7 ==
+Wed Dec 27 05:31:08 GMT 2006
+0.40user 0.81system 2:57.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 8 ==
+Wed Dec 27 05:34:26 GMT 2006
+0.46user 0.76system 2:55.45elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync cold 9 ==
+Wed Dec 27 05:37:36 GMT 2006
+0.44user 0.67system 2:54.33elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 0 ==
+Wed Dec 27 07:22:48 GMT 2006
+0.42user 0.89system 2:18.00elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 1 ==
+Wed Dec 27 07:25:31 GMT 2006
+0.49user 1.01system 2:18.19elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 2 ==
+Wed Dec 27 07:28:00 GMT 2006
+0.42user 0.89system 2:16.87elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 3 ==
+Wed Dec 27 07:30:28 GMT 2006
+0.47user 0.98system 2:15.23elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 4 ==
+Wed Dec 27 07:32:54 GMT 2006
+0.47user 1.05system 2:14.82elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 5 ==
+Wed Dec 27 07:35:19 GMT 2006
+0.56user 0.92system 2:14.14elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 6 ==
+Wed Dec 27 07:37:44 GMT 2006
+0.48user 0.96system 2:13.37elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 7 ==
+Wed Dec 27 07:40:08 GMT 2006
+0.51user 0.92system 2:14.09elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 8 ==
+Wed Dec 27 07:42:32 GMT 2006
+0.54user 0.96system 2:15.54elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync warm 9 ==
+Wed Dec 27 07:44:59 GMT 2006
+0.49user 1.08system 2:17.86elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 0 ==
+Wed Dec 27 09:09:20 GMT 2006
+0.69user 0.99system 1:23.04elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 1 ==
+Wed Dec 27 09:10:54 GMT 2006
+0.65user 1.00system 1:24.73elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 2 ==
+Wed Dec 27 09:12:28 GMT 2006
+0.68user 1.01system 1:27.23elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 3 ==
+Wed Dec 27 09:14:04 GMT 2006
+0.67user 1.02system 1:26.54elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6335minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 4 ==
+Wed Dec 27 09:15:40 GMT 2006
+0.65user 1.15system 1:23.71elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6335minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 5 ==
+Wed Dec 27 09:17:13 GMT 2006
+0.62user 0.98system 1:25.31elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 6 ==
+Wed Dec 27 09:18:47 GMT 2006
+0.50user 0.96system 1:25.54elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 7 ==
+Wed Dec 27 09:20:22 GMT 2006
+0.71user 1.00system 1:23.28elapsed 2%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6335minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 8 ==
+Wed Dec 27 09:21:57 GMT 2006
+0.58user 1.08system 1:26.39elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== druid-1 : envoy rsync hot 9 ==
+Wed Dec 27 09:23:33 GMT 2006
+0.62user 0.87system 1:24.04elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6335minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 0 ==
+Tue Dec 26 18:53:09 GMT 2006
+0.20user 0.25system 6:23.48elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+485minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 1 ==
+Tue Dec 26 18:59:48 GMT 2006
+0.30user 0.36system 6:31.55elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 2 ==
+Tue Dec 26 19:06:36 GMT 2006
+0.16user 0.45system 6:26.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 3 ==
+Tue Dec 26 19:13:20 GMT 2006
+0.30user 0.35system 6:21.78elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 4 ==
+Tue Dec 26 19:19:57 GMT 2006
+0.24user 0.26system 6:23.51elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 5 ==
+Tue Dec 26 19:26:37 GMT 2006
+0.21user 0.56system 6:22.35elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 6 ==
+Tue Dec 26 19:33:16 GMT 2006
+0.30user 0.36system 6:23.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 7 ==
+Tue Dec 26 19:39:55 GMT 2006
+0.23user 0.28system 6:22.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+486minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 8 ==
+Tue Dec 26 19:46:33 GMT 2006
+0.30user 0.30system 6:25.27elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-0 : envoy untar reset 9 ==
+Tue Dec 26 19:53:16 GMT 2006
+0.26user 0.64system 6:28.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 0 ==
+Tue Dec 26 22:32:19 GMT 2006
+0.02user 0.20system 5:20.40elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 1 ==
+Tue Dec 26 22:37:51 GMT 2006
+0.00user 0.40system 5:23.29elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 2 ==
+Tue Dec 26 22:43:28 GMT 2006
+0.00user 0.19system 5:23.35elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 3 ==
+Tue Dec 26 22:49:03 GMT 2006
+0.00user 0.13system 5:21.67elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 4 ==
+Tue Dec 26 22:54:36 GMT 2006
+0.00user 0.12system 5:20.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 5 ==
+Tue Dec 26 23:00:08 GMT 2006
+0.00user 0.20system 5:23.87elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 6 ==
+Tue Dec 26 23:05:45 GMT 2006
+0.01user 0.59system 5:24.66elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 7 ==
+Tue Dec 26 23:11:21 GMT 2006
+0.02user 0.82system 5:17.82elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 8 ==
+Tue Dec 26 23:16:50 GMT 2006
+0.01user 0.56system 5:19.66elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar cold 9 ==
+Tue Dec 26 23:22:22 GMT 2006
+0.00user 0.32system 5:20.04elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 0 ==
+Wed Dec 27 01:18:17 GMT 2006
+0.01user 0.19system 4:03.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 1 ==
+Wed Dec 27 01:22:32 GMT 2006
+0.00user 0.18system 4:03.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 2 ==
+Wed Dec 27 01:26:47 GMT 2006
+0.00user 0.31system 4:02.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 3 ==
+Wed Dec 27 01:31:00 GMT 2006
+0.01user 0.50system 4:01.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 4 ==
+Wed Dec 27 01:35:11 GMT 2006
+0.00user 0.16system 4:03.78elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 5 ==
+Wed Dec 27 01:39:25 GMT 2006
+0.00user 0.18system 4:02.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 6 ==
+Wed Dec 27 01:43:39 GMT 2006
+0.03user 0.72system 4:02.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 7 ==
+Wed Dec 27 01:47:51 GMT 2006
+0.01user 0.21system 4:06.53elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 8 ==
+Wed Dec 27 01:52:08 GMT 2006
+0.02user 0.56system 4:01.16elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar warm 9 ==
+Wed Dec 27 01:56:20 GMT 2006
+0.03user 0.84system 3:59.70elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 0 ==
+Wed Dec 27 03:24:54 GMT 2006
+0.04user 1.24system 3:08.54elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 1 ==
+Wed Dec 27 03:28:13 GMT 2006
+0.00user 0.26system 3:21.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 2 ==
+Wed Dec 27 03:31:45 GMT 2006
+0.02user 0.17system 3:21.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 3 ==
+Wed Dec 27 03:35:17 GMT 2006
+0.02user 0.46system 3:19.25elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 4 ==
+Wed Dec 27 03:38:47 GMT 2006
+0.01user 0.25system 3:22.57elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 5 ==
+Wed Dec 27 03:42:20 GMT 2006
+0.02user 0.29system 3:19.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 6 ==
+Wed Dec 27 03:45:49 GMT 2006
+0.00user 0.17system 3:17.85elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 7 ==
+Wed Dec 27 03:49:17 GMT 2006
+0.06user 0.87system 3:11.41elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 8 ==
+Wed Dec 27 03:52:38 GMT 2006
+0.00user 0.16system 3:18.66elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-0 : envoy tar hot 9 ==
+Wed Dec 27 03:56:07 GMT 2006
+0.00user 0.31system 3:20.71elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+276minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 0 ==
+Wed Dec 27 05:38:27 GMT 2006
+0.08user 0.15system 3:44.77elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 1 ==
+Wed Dec 27 05:42:23 GMT 2006
+0.17user 0.52system 3:44.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 2 ==
+Wed Dec 27 05:46:18 GMT 2006
+0.18user 0.45system 3:42.04elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 3 ==
+Wed Dec 27 05:50:11 GMT 2006
+0.12user 0.24system 3:47.74elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 4 ==
+Wed Dec 27 05:54:11 GMT 2006
+0.08user 0.19system 3:50.33elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 5 ==
+Wed Dec 27 05:58:13 GMT 2006
+0.10user 0.15system 3:43.03elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 6 ==
+Wed Dec 27 06:02:10 GMT 2006
+0.22user 0.48system 3:37.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 7 ==
+Wed Dec 27 06:05:58 GMT 2006
+0.17user 0.43system 3:38.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 8 ==
+Wed Dec 27 06:09:47 GMT 2006
+0.07user 0.16system 3:42.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync cold 9 ==
+Wed Dec 27 06:13:41 GMT 2006
+0.17user 0.41system 3:40.88elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 0 ==
+Wed Dec 27 07:45:14 GMT 2006
+0.13user 0.34system 3:09.09elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 1 ==
+Wed Dec 27 07:48:35 GMT 2006
+0.20user 0.45system 3:08.69elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 2 ==
+Wed Dec 27 07:51:55 GMT 2006
+0.18user 0.40system 3:08.75elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 3 ==
+Wed Dec 27 07:55:14 GMT 2006
+0.28user 0.79system 3:04.43elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 4 ==
+Wed Dec 27 07:58:29 GMT 2006
+0.22user 0.31system 3:08.37elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 5 ==
+Wed Dec 27 08:01:47 GMT 2006
+0.11user 0.39system 3:05.15elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 6 ==
+Wed Dec 27 08:05:02 GMT 2006
+0.17user 0.52system 3:06.66elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 7 ==
+Wed Dec 27 08:08:20 GMT 2006
+0.16user 0.44system 3:08.04elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 8 ==
+Wed Dec 27 08:11:39 GMT 2006
+0.11user 0.18system 3:14.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-0 : envoy rsync warm 9 ==
+Wed Dec 27 08:15:04 GMT 2006
+0.12user 0.24system 3:11.18elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 0 ==
+Wed Dec 27 09:22:52 GMT 2006
+0.16user 0.24system 2:19.50elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 1 ==
+Wed Dec 27 09:25:22 GMT 2006
+0.35user 0.65system 2:14.53elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 2 ==
+Wed Dec 27 09:27:47 GMT 2006
+0.18user 0.47system 2:14.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 3 ==
+Wed Dec 27 09:30:11 GMT 2006
+0.26user 0.60system 2:13.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 4 ==
+Wed Dec 27 09:32:35 GMT 2006
+0.12user 0.36system 2:18.20elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6335minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 5 ==
+Wed Dec 27 09:35:04 GMT 2006
+0.16user 0.65system 2:17.55elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 6 ==
+Wed Dec 27 09:37:31 GMT 2006
+0.14user 0.24system 2:18.79elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 7 ==
+Wed Dec 27 09:39:58 GMT 2006
+0.10user 0.21system 2:15.74elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 8 ==
+Wed Dec 27 09:42:21 GMT 2006
+0.36user 0.72system 2:12.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== skiing-0 : envoy rsync hot 9 ==
+Wed Dec 27 09:44:43 GMT 2006
+0.13user 0.16system 2:17.85elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 0 ==
+Tue Dec 26 19:59:59 GMT 2006
+0.20user 0.35system 7:03.81elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (1major+490minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 1 ==
+Tue Dec 26 20:07:22 GMT 2006
+0.25user 0.35system 6:59.53elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 2 ==
+Tue Dec 26 20:14:38 GMT 2006
+0.24user 0.32system 6:56.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 3 ==
+Tue Dec 26 20:21:50 GMT 2006
+0.21user 0.34system 7:05.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 4 ==
+Tue Dec 26 20:29:11 GMT 2006
+0.18user 0.38system 7:01.99elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 5 ==
+Tue Dec 26 20:36:29 GMT 2006
+0.28user 0.34system 7:04.92elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 6 ==
+Tue Dec 26 20:43:50 GMT 2006
+0.18user 0.34system 7:00.45elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+487minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 7 ==
+Tue Dec 26 20:51:06 GMT 2006
+0.20user 0.33system 7:02.47elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 8 ==
+Tue Dec 26 20:58:23 GMT 2006
+0.24user 0.32system 6:58.70elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+489minor)pagefaults 0swaps
+== skiing-1 : envoy untar reset 9 ==
+Tue Dec 26 21:05:38 GMT 2006
+0.21user 0.36system 7:02.30elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+488minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 0 ==
+Tue Dec 26 23:27:53 GMT 2006
+0.00user 0.16system 5:53.14elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 1 ==
+Tue Dec 26 23:33:57 GMT 2006
+0.00user 0.16system 5:55.46elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 2 ==
+Tue Dec 26 23:40:04 GMT 2006
+0.00user 0.21system 5:51.63elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 3 ==
+Tue Dec 26 23:46:08 GMT 2006
+0.00user 0.18system 5:53.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 4 ==
+Tue Dec 26 23:52:12 GMT 2006
+0.01user 0.15system 5:55.32elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 5 ==
+Tue Dec 26 23:58:18 GMT 2006
+0.00user 0.15system 5:54.76elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 6 ==
+Wed Dec 27 00:04:25 GMT 2006
+0.00user 0.22system 5:52.65elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 7 ==
+Wed Dec 27 00:10:29 GMT 2006
+0.01user 0.20system 5:51.38elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 8 ==
+Wed Dec 27 00:16:31 GMT 2006
+0.00user 0.16system 5:51.50elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar cold 9 ==
+Wed Dec 27 00:22:34 GMT 2006
+0.00user 0.24system 5:55.50elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 0 ==
+Wed Dec 27 02:00:30 GMT 2006
+0.01user 0.25system 4:41.88elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 1 ==
+Wed Dec 27 02:05:23 GMT 2006
+0.01user 0.21system 4:30.65elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 2 ==
+Wed Dec 27 02:10:04 GMT 2006
+0.01user 0.23system 4:34.37elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 3 ==
+Wed Dec 27 02:14:50 GMT 2006
+0.01user 0.27system 4:32.39elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 4 ==
+Wed Dec 27 02:19:33 GMT 2006
+0.01user 0.22system 4:34.24elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 5 ==
+Wed Dec 27 02:24:18 GMT 2006
+0.01user 0.21system 4:35.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 6 ==
+Wed Dec 27 02:29:04 GMT 2006
+0.01user 0.19system 4:43.11elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 7 ==
+Wed Dec 27 02:33:59 GMT 2006
+0.01user 0.20system 4:33.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 8 ==
+Wed Dec 27 02:38:43 GMT 2006
+0.00user 0.19system 4:34.27elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar warm 9 ==
+Wed Dec 27 02:43:28 GMT 2006
+0.01user 0.26system 4:31.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 0 ==
+Wed Dec 27 03:59:37 GMT 2006
+0.02user 0.25system 3:45.44elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 1 ==
+Wed Dec 27 04:03:33 GMT 2006
+0.00user 0.22system 3:45.15elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+279minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 2 ==
+Wed Dec 27 04:07:27 GMT 2006
+0.00user 0.20system 3:47.23elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 3 ==
+Wed Dec 27 04:11:23 GMT 2006
+0.00user 0.16system 3:48.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 4 ==
+Wed Dec 27 04:15:22 GMT 2006
+0.02user 0.18system 3:45.02elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 5 ==
+Wed Dec 27 04:19:16 GMT 2006
+0.01user 0.26system 3:46.49elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+278minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 6 ==
+Wed Dec 27 04:23:12 GMT 2006
+0.02user 0.27system 3:44.41elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 7 ==
+Wed Dec 27 04:27:07 GMT 2006
+0.02user 0.26system 3:49.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 8 ==
+Wed Dec 27 04:31:05 GMT 2006
+0.02user 0.22system 3:46.42elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy tar hot 9 ==
+Wed Dec 27 04:35:01 GMT 2006
+0.02user 0.24system 3:47.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+277minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 0 ==
+Wed Dec 27 06:17:33 GMT 2006
+0.13user 0.13system 4:02.93elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6334minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 1 ==
+Wed Dec 27 06:21:47 GMT 2006
+0.12user 0.18system 4:04.05elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 2 ==
+Wed Dec 27 06:26:04 GMT 2006
+0.12user 0.16system 4:03.49elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 3 ==
+Wed Dec 27 06:30:18 GMT 2006
+0.09user 0.16system 4:02.93elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 4 ==
+Wed Dec 27 06:34:33 GMT 2006
+0.10user 0.16system 3:59.37elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6336minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 5 ==
+Wed Dec 27 06:38:44 GMT 2006
+0.12user 0.16system 4:06.68elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 6 ==
+Wed Dec 27 06:43:04 GMT 2006
+0.11user 0.12system 4:04.50elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 7 ==
+Wed Dec 27 06:47:21 GMT 2006
+0.16user 0.15system 4:05.97elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 8 ==
+Wed Dec 27 06:51:38 GMT 2006
+0.14user 0.16system 4:04.84elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync cold 9 ==
+Wed Dec 27 06:55:55 GMT 2006
+0.14user 0.16system 4:01.21elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 0 ==
+Wed Dec 27 08:18:26 GMT 2006
+0.16user 0.17system 3:29.83elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 1 ==
+Wed Dec 27 08:22:07 GMT 2006
+0.12user 0.19system 3:28.72elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 2 ==
+Wed Dec 27 08:25:47 GMT 2006
+0.18user 0.16system 3:29.10elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 3 ==
+Wed Dec 27 08:29:26 GMT 2006
+0.12user 0.17system 3:26.85elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 4 ==
+Wed Dec 27 08:33:04 GMT 2006
+0.17user 0.18system 3:27.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 5 ==
+Wed Dec 27 08:36:43 GMT 2006
+0.12user 0.16system 3:26.50elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 6 ==
+Wed Dec 27 08:40:21 GMT 2006
+0.16user 0.15system 3:27.29elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 7 ==
+Wed Dec 27 08:43:59 GMT 2006
+0.11user 0.17system 3:27.94elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 8 ==
+Wed Dec 27 08:47:38 GMT 2006
+0.13user 0.21system 3:31.64elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync warm 9 ==
+Wed Dec 27 08:51:21 GMT 2006
+0.11user 0.17system 3:30.93elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 0 ==
+Wed Dec 27 09:47:11 GMT 2006
+0.19user 0.14system 2:38.08elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 1 ==
+Wed Dec 27 09:49:58 GMT 2006
+0.20user 0.21system 2:37.06elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6332minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 2 ==
+Wed Dec 27 09:52:46 GMT 2006
+0.09user 0.26system 2:37.91elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 3 ==
+Wed Dec 27 09:55:32 GMT 2006
+0.20user 0.20system 2:38.98elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 4 ==
+Wed Dec 27 09:58:20 GMT 2006
+0.14user 0.27system 2:37.00elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 5 ==
+Wed Dec 27 10:01:06 GMT 2006
+0.17user 0.19system 2:37.92elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 6 ==
+Wed Dec 27 10:03:54 GMT 2006
+0.21user 0.22system 2:36.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 7 ==
+Wed Dec 27 10:06:40 GMT 2006
+0.15user 0.18system 2:36.62elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6333minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 8 ==
+Wed Dec 27 10:09:26 GMT 2006
+0.17user 0.22system 2:38.95elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6331minor)pagefaults 0swaps
+== skiing-1 : envoy rsync hot 9 ==
+Wed Dec 27 10:12:13 GMT 2006
+0.17user 0.16system 2:37.52elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+6330minor)pagefaults 0swaps

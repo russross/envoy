@@ -1,0 +1,6 @@
+cluster	write	stdev
+envoy	14729.5	255.54
+envoy-ls	6456.9	179.22
+nocache	15289.4	83.8
+9p	15829.9	946.29
+nfs	15445.3	715.29

@@ -1,0 +1,49 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: moonraider.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 15:44:47 2006
+ */
+
+/* Connections:
+ *   moonraider.cl.cam.ac.uk:50996 CLIENT_IN:
+ *     messages/bytes in     : 5279/82329
+ *     messages/bytes out    : 5278/204544
+ *     new messages/bytes in : 1117/17415
+ *     new messages/bytes out: 1117/43186
+ *   moonraider.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 2/111
+ *     messages/bytes out    : 2/42
+ *     new messages/bytes in : 1/84
+ *     new messages/bytes out: 1/15
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 1/27
+ *     messages/bytes out    : 1/27
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 5114/231343
+ *     messages/bytes out    : 5114/143592
+ *     new messages/bytes in : 949/42820
+ *     new messages/bytes out: 948/27492
+ *   moonraider-1.xeno.cl.cam.ac.uk:42059 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 4/335
+ *     messages/bytes out    : 3/39
+ *     new messages/bytes in : 1/147
+ *     new messages/bytes out: 1/7
+ */
+
+/* lease root is /linux/current/linux-2.6.18/block/blktrace.c */
+digraph _linux_current_linux_2_6_18_block_blktrace_c {
+  _linux_current_linux_2_6_18_block_blktrace_c [shape=box];
+  _linux_current_linux_2_6_18_block_blktrace_c [label="blktrace.c"];
+}
+
+/* lease root is /linux/current/linux-2.6.18/block/cfq-iosched.c */
+digraph _linux_current_linux_2_6_18_block_cfq_iosched_c {
+  _linux_current_linux_2_6_18_block_cfq_iosched_c [shape=box];
+  _linux_current_linux_2_6_18_block_cfq_iosched_c [label="cfq-iosched.c"];
+}

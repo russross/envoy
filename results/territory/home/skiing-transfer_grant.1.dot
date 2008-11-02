@@ -1,0 +1,34 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: skiing-0.xeno.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 14:46:24 2006
+ */
+
+/* Connections:
+ *   skiing-0.xeno.cl.cam.ac.uk:54867 CLIENT_IN:
+ *     messages/bytes in     : 390/6034
+ *     messages/bytes out    : 389/15231
+ *   moonraider-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 1/27
+ *     messages/bytes out    : 1/27
+ *   skiing-0.xeno:9923 STORAGE_OUT:
+ *     messages/bytes in     : 1/27
+ *     messages/bytes out    : 1/27
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 9/599
+ *     messages/bytes out    : 9/181
+ *   skiing-1.xeno.cl.cam.ac.uk:54584 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 4/172
+ *     messages/bytes out    : 3/39
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 387/17518
+ *     messages/bytes out    : 387/11504
+ */
+
+/* lease root is /linux/current/linux-2.6.18/drivers/block */
+digraph _linux_current_linux_2_6_18_drivers_block {
+  _linux_current_linux_2_6_18_drivers_block [shape=box];
+  _linux_current_linux_2_6_18_drivers_block [label="block"];
+}

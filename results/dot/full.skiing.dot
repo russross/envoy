@@ -1,0 +1,3371 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: skiing-0.xeno:9922
+ * Time: Sat Dec 16 13:23:57 2006
+ */
+
+/* Connections:
+ *   skiing-0.xeno.cl.cam.ac.uk:54012 CLIENT_IN:
+ *     messages/bytes in     : 1613/82908
+ *     messages/bytes out    : 1612/35456
+ *     new messages/bytes in : 3/80
+ *     new messages/bytes out: 2/45
+ *   druid-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 254/184516
+ *     messages/bytes out    : 254/7262
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   skiing-0.xeno:9923 STORAGE_OUT:
+ *     messages/bytes in     : 235/147421
+ *     messages/bytes out    : 235/6465
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 1416/29510
+ *     messages/bytes out    : 1416/71245
+ *     new messages/bytes in : 2/60
+ *     new messages/bytes out: 2/70
+ *   skiing-1.xeno.cl.cam.ac.uk:47280 CLIENT_IN:
+ *     messages/bytes in     : 4/67
+ *     messages/bytes out    : 4/217
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   druid-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 184/13748
+ *     messages/bytes out    : 184/1306
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 202/1432
+ *     messages/bytes out    : 202/15552
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 241/17833
+ *     messages/bytes out    : 241/1705
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 1/7
+ */
+
+/* lease root is /src/1/linux-2.6.18/Documentation/x86_64 */
+digraph _src_1_linux_2_6_18_Documentation_x86_64 {
+  _src_1_linux_2_6_18_Documentation_x86_64 [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_x86_64 [label="x86_64"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-um */
+digraph _src_1_linux_2_6_18_include_asm_um {
+  _src_1_linux_2_6_18_include_asm_um [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_um [label="asm-um"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/misc */
+digraph _src_1_linux_2_6_18_drivers_misc {
+  _src_1_linux_2_6_18_drivers_misc [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_misc_ibmasm [shape=box,label="ibmasm"];
+  _src_1_linux_2_6_18_drivers_misc -> _src_1_linux_2_6_18_drivers_misc_ibmasm [style=dotted];
+  _src_1_linux_2_6_18_drivers_misc_hdpuftrs [shape=box,label="hdpuftrs"];
+  _src_1_linux_2_6_18_drivers_misc -> _src_1_linux_2_6_18_drivers_misc_hdpuftrs [style=dotted];
+  _src_1_linux_2_6_18_drivers_misc [label="misc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/h8300/platform/h8300h/generic */
+digraph _src_1_linux_2_6_18_arch_h8300_platform_h8300h_generic {
+  _src_1_linux_2_6_18_arch_h8300_platform_h8300h_generic [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_h8300_platform_h8300h_generic [label="generic"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/xtensa/boot/lib */
+digraph _src_1_linux_2_6_18_arch_xtensa_boot_lib {
+  _src_1_linux_2_6_18_arch_xtensa_boot_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_xtensa_boot_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-ep93xx */
+digraph _src_1_linux_2_6_18_arch_arm_mach_ep93xx {
+  _src_1_linux_2_6_18_arch_arm_mach_ep93xx [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_ep93xx [label="mach-ep93xx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/sh2000 */
+digraph _src_1_linux_2_6_18_arch_sh_boards_sh2000 {
+  _src_1_linux_2_6_18_arch_sh_boards_sh2000 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_sh2000 [label="sh2000"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh64/mach-romram */
+digraph _src_1_linux_2_6_18_arch_sh64_mach_romram {
+  _src_1_linux_2_6_18_arch_sh64_mach_romram [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh64_mach_romram [label="mach-romram"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/media/dvb */
+digraph _src_1_linux_2_6_18_drivers_media_dvb {
+  _src_1_linux_2_6_18_drivers_media_dvb [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_media_dvb_ttusb_dec [shape=box,label="ttusb-dec"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_ttusb_dec [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_ttusb_budget [shape=box,label="ttusb-budget"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_ttusb_budget [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_ttpci [shape=box,label="ttpci"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_ttpci [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_pluto2 [shape=box,label="pluto2"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_pluto2 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_frontends [shape=box,label="frontends"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_frontends [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_dvb_usb [shape=box,label="dvb-usb"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_dvb_usb [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_dvb_core [shape=box,label="dvb-core"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_dvb_core [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_cinergyT2 [shape=box,label="cinergyT2"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_cinergyT2 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_bt8xx [shape=box,label="bt8xx"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_bt8xx [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb_b2c2 [shape=box,label="b2c2"];
+  _src_1_linux_2_6_18_drivers_media_dvb -> _src_1_linux_2_6_18_drivers_media_dvb_b2c2 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_dvb [label="dvb"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/arm */
+digraph _src_1_linux_2_6_18_Documentation_arm {
+  _src_1_linux_2_6_18_Documentation_arm [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_arm_nwfpe [shape=box,label="nwfpe"];
+  _src_1_linux_2_6_18_Documentation_arm -> _src_1_linux_2_6_18_Documentation_arm_nwfpe [style=dotted];
+  _src_1_linux_2_6_18_Documentation_arm_empeg [shape=box,label="empeg"];
+  _src_1_linux_2_6_18_Documentation_arm -> _src_1_linux_2_6_18_Documentation_arm_empeg [style=dotted];
+  _src_1_linux_2_6_18_Documentation_arm_VFP [shape=box,label="VFP"];
+  _src_1_linux_2_6_18_Documentation_arm -> _src_1_linux_2_6_18_Documentation_arm_VFP [style=dotted];
+  _src_1_linux_2_6_18_Documentation_arm_Sharp_LH [shape=box,label="Sharp-LH"];
+  _src_1_linux_2_6_18_Documentation_arm -> _src_1_linux_2_6_18_Documentation_arm_Sharp_LH [style=dotted];
+  _src_1_linux_2_6_18_Documentation_arm_Samsung_S3C24XX [shape=box,label="Samsung-S3C24XX"];
+  _src_1_linux_2_6_18_Documentation_arm -> _src_1_linux_2_6_18_Documentation_arm_Samsung_S3C24XX [style=dotted];
+  _src_1_linux_2_6_18_Documentation_arm_SA1100 [shape=box,label="SA1100"];
+  _src_1_linux_2_6_18_Documentation_arm -> _src_1_linux_2_6_18_Documentation_arm_SA1100 [style=dotted];
+  _src_1_linux_2_6_18_Documentation_arm [label="arm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-m32r */
+digraph _src_1_linux_2_6_18_include_asm_m32r {
+  _src_1_linux_2_6_18_include_asm_m32r [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_m32r_opsput [shape=box,label="opsput"];
+  _src_1_linux_2_6_18_include_asm_m32r -> _src_1_linux_2_6_18_include_asm_m32r_opsput [style=dotted];
+  _src_1_linux_2_6_18_include_asm_m32r_mappi3 [shape=box,label="mappi3"];
+  _src_1_linux_2_6_18_include_asm_m32r -> _src_1_linux_2_6_18_include_asm_m32r_mappi3 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_m32r_mappi2 [shape=box,label="mappi2"];
+  _src_1_linux_2_6_18_include_asm_m32r -> _src_1_linux_2_6_18_include_asm_m32r_mappi2 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_m32r_m32700ut [shape=box,label="m32700ut"];
+  _src_1_linux_2_6_18_include_asm_m32r -> _src_1_linux_2_6_18_include_asm_m32r_m32700ut [style=dotted];
+  _src_1_linux_2_6_18_include_asm_m32r_m32104ut [shape=box,label="m32104ut"];
+  _src_1_linux_2_6_18_include_asm_m32r -> _src_1_linux_2_6_18_include_asm_m32r_m32104ut [style=dotted];
+  _src_1_linux_2_6_18_include_asm_m32r [label="asm-m32r"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sparc64/boot */
+digraph _src_1_linux_2_6_18_arch_sparc64_boot {
+  _src_1_linux_2_6_18_arch_sparc64_boot [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sparc64_boot [label="boot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/ite-boards */
+digraph _src_1_linux_2_6_18_arch_mips_ite_boards {
+  _src_1_linux_2_6_18_arch_mips_ite_boards [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_ite_boards_qed_4n_s01b [shape=box,label="qed-4n-s01b"];
+  _src_1_linux_2_6_18_arch_mips_ite_boards -> _src_1_linux_2_6_18_arch_mips_ite_boards_qed_4n_s01b [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_ite_boards_ivr [shape=box,label="ivr"];
+  _src_1_linux_2_6_18_arch_mips_ite_boards -> _src_1_linux_2_6_18_arch_mips_ite_boards_ivr [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_ite_boards_generic [shape=box,label="generic"];
+  _src_1_linux_2_6_18_arch_mips_ite_boards -> _src_1_linux_2_6_18_arch_mips_ite_boards_generic [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_ite_boards [label="ite-boards"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/openpromfs */
+digraph _src_1_linux_2_6_18_fs_openpromfs {
+  _src_1_linux_2_6_18_fs_openpromfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_openpromfs [label="openpromfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/xfrm */
+digraph _src_1_linux_2_6_18_net_xfrm {
+  _src_1_linux_2_6_18_net_xfrm [shape=box,color=green];
+  _src_1_linux_2_6_18_net_xfrm [label="xfrm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/atm */
+digraph _src_1_linux_2_6_18_net_atm {
+  _src_1_linux_2_6_18_net_atm [shape=box,color=green];
+  _src_1_linux_2_6_18_net_atm [label="atm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/accounting */
+digraph _src_1_linux_2_6_18_Documentation_accounting {
+  _src_1_linux_2_6_18_Documentation_accounting [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_accounting [label="accounting"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/video4linux */
+digraph _src_1_linux_2_6_18_Documentation_video4linux {
+  _src_1_linux_2_6_18_Documentation_video4linux [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_video4linux_cx88 [shape=box,label="cx88"];
+  _src_1_linux_2_6_18_Documentation_video4linux -> _src_1_linux_2_6_18_Documentation_video4linux_cx88 [style=dotted];
+  _src_1_linux_2_6_18_Documentation_video4linux_cx2341x [shape=box,label="cx2341x"];
+  _src_1_linux_2_6_18_Documentation_video4linux -> _src_1_linux_2_6_18_Documentation_video4linux_cx2341x [style=dotted];
+  _src_1_linux_2_6_18_Documentation_video4linux_bttv [shape=box,label="bttv"];
+  _src_1_linux_2_6_18_Documentation_video4linux -> _src_1_linux_2_6_18_Documentation_video4linux_bttv [style=dotted];
+  _src_1_linux_2_6_18_Documentation_video4linux [label="video4linux"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/ip32 */
+digraph _src_1_linux_2_6_18_include_asm_mips_ip32 {
+  _src_1_linux_2_6_18_include_asm_mips_ip32 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_ip32 [label="ip32"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/dig */
+digraph _src_1_linux_2_6_18_arch_ia64_dig {
+  _src_1_linux_2_6_18_arch_ia64_dig [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_dig [label="dig"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/ipx */
+digraph _src_1_linux_2_6_18_net_ipx {
+  _src_1_linux_2_6_18_net_ipx [shape=box,color=green];
+  _src_1_linux_2_6_18_net_ipx [label="ipx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/emma2rh/common */
+digraph _src_1_linux_2_6_18_arch_mips_emma2rh_common {
+  _src_1_linux_2_6_18_arch_mips_emma2rh_common [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_emma2rh_common [label="common"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/sk98lin */
+digraph _src_1_linux_2_6_18_drivers_net_sk98lin {
+  _src_1_linux_2_6_18_drivers_net_sk98lin [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_sk98lin_h [shape=box,label="h"];
+  _src_1_linux_2_6_18_drivers_net_sk98lin -> _src_1_linux_2_6_18_drivers_net_sk98lin_h [style=dotted];
+  _src_1_linux_2_6_18_drivers_net_sk98lin [label="sk98lin"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-ppc */
+digraph _src_1_linux_2_6_18_include_asm_ppc {
+  _src_1_linux_2_6_18_include_asm_ppc [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_ppc [label="asm-ppc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/ifpsp060/src */
+digraph _src_1_linux_2_6_18_arch_m68k_ifpsp060_src {
+  _src_1_linux_2_6_18_arch_m68k_ifpsp060_src [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_ifpsp060_src [label="src"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/oprofile */
+digraph _src_1_linux_2_6_18_arch_arm_oprofile {
+  _src_1_linux_2_6_18_arch_arm_oprofile [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_oprofile [label="oprofile"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/m68k */
+digraph _src_1_linux_2_6_18_Documentation_m68k {
+  _src_1_linux_2_6_18_Documentation_m68k [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_m68k [label="m68k"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/char/mwave */
+digraph _src_1_linux_2_6_18_drivers_char_mwave {
+  _src_1_linux_2_6_18_drivers_char_mwave [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_char_mwave [label="mwave"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/decnet */
+digraph _src_1_linux_2_6_18_net_decnet {
+  _src_1_linux_2_6_18_net_decnet [shape=box,color=green];
+  _src_1_linux_2_6_18_net_decnet_netfilter [shape=box,label="netfilter"];
+  _src_1_linux_2_6_18_net_decnet -> _src_1_linux_2_6_18_net_decnet_netfilter [style=dotted];
+  _src_1_linux_2_6_18_net_decnet [label="decnet"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/scripts */
+digraph _src_1_linux_2_6_18_arch_ia64_scripts {
+  _src_1_linux_2_6_18_arch_ia64_scripts [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_scripts [label="scripts"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/dio */
+digraph _src_1_linux_2_6_18_drivers_dio {
+  _src_1_linux_2_6_18_drivers_dio [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_dio [label="dio"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/cris */
+digraph _src_1_linux_2_6_18_drivers_net_cris {
+  _src_1_linux_2_6_18_drivers_net_cris [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_cris [label="cris"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sparc */
+digraph _src_1_linux_2_6_18_arch_sparc {
+  _src_1_linux_2_6_18_arch_sparc [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sparc_prom [shape=box,label="prom"];
+  _src_1_linux_2_6_18_arch_sparc -> _src_1_linux_2_6_18_arch_sparc_prom [style=dotted];
+  _src_1_linux_2_6_18_arch_sparc_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_sparc -> _src_1_linux_2_6_18_arch_sparc_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_sparc_math_emu [shape=box,label="math-emu"];
+  _src_1_linux_2_6_18_arch_sparc -> _src_1_linux_2_6_18_arch_sparc_math_emu [style=dotted];
+  _src_1_linux_2_6_18_arch_sparc_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_sparc -> _src_1_linux_2_6_18_arch_sparc_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_sparc_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_sparc -> _src_1_linux_2_6_18_arch_sparc_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_sparc_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_sparc -> _src_1_linux_2_6_18_arch_sparc_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_sparc [label="sparc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/boot */
+digraph _src_1_linux_2_6_18_arch_mips_boot {
+  _src_1_linux_2_6_18_arch_mips_boot [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_boot [label="boot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/x86_64 */
+digraph _src_1_linux_2_6_18_arch_x86_64 {
+  _src_1_linux_2_6_18_arch_x86_64 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_x86_64_pci [shape=box,label="pci"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_pci [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64_oprofile [shape=box,label="oprofile"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_oprofile [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64_ia32 [shape=box,label="ia32"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_ia32 [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64_crypto [shape=box,label="crypto"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_crypto [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_x86_64 -> _src_1_linux_2_6_18_arch_x86_64_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_x86_64 [label="x86_64"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/kernel/cpu/sh3 */
+digraph _src_1_linux_2_6_18_arch_sh_kernel_cpu_sh3 {
+  _src_1_linux_2_6_18_arch_sh_kernel_cpu_sh3 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_kernel_cpu_sh3 [label="sh3"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/frv */
+digraph _src_1_linux_2_6_18_arch_frv {
+  _src_1_linux_2_6_18_arch_frv [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_frv_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_frv -> _src_1_linux_2_6_18_arch_frv_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_frv_mb93090_mb00 [shape=box,label="mb93090-mb00"];
+  _src_1_linux_2_6_18_arch_frv -> _src_1_linux_2_6_18_arch_frv_mb93090_mb00 [style=dotted];
+  _src_1_linux_2_6_18_arch_frv_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_frv -> _src_1_linux_2_6_18_arch_frv_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_frv_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_frv -> _src_1_linux_2_6_18_arch_frv_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_frv_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_frv -> _src_1_linux_2_6_18_arch_frv_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_frv [label="frv"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/cris/arch-v32/boot/rescue */
+digraph _src_1_linux_2_6_18_arch_cris_arch_v32_boot_rescue {
+  _src_1_linux_2_6_18_arch_cris_arch_v32_boot_rescue [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_cris_arch_v32_boot_rescue [label="rescue"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/xtalk */
+digraph _src_1_linux_2_6_18_include_asm_mips_xtalk {
+  _src_1_linux_2_6_18_include_asm_mips_xtalk [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_xtalk [label="xtalk"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/h8300/lib */
+digraph _src_1_linux_2_6_18_arch_h8300_lib {
+  _src_1_linux_2_6_18_arch_h8300_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_h8300_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/um/include/sysdep-i386 */
+digraph _src_1_linux_2_6_18_arch_um_include_sysdep_i386 {
+  _src_1_linux_2_6_18_arch_um_include_sysdep_i386 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_um_include_sysdep_i386 [label="sysdep-i386"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/pci */
+digraph _src_1_linux_2_6_18_drivers_pci {
+  _src_1_linux_2_6_18_drivers_pci [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_pci_pcie [shape=box,label="pcie"];
+  _src_1_linux_2_6_18_drivers_pci -> _src_1_linux_2_6_18_drivers_pci_pcie [style=dotted];
+  _src_1_linux_2_6_18_drivers_pci_hotplug [shape=box,label="hotplug"];
+  _src_1_linux_2_6_18_drivers_pci -> _src_1_linux_2_6_18_drivers_pci_hotplug [style=dotted];
+  _src_1_linux_2_6_18_drivers_pci [label="pci"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-pnx4008 */
+digraph _src_1_linux_2_6_18_arch_arm_mach_pnx4008 {
+  _src_1_linux_2_6_18_arch_arm_mach_pnx4008 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_pnx4008 [label="mach-pnx4008"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/cris */
+digraph _src_1_linux_2_6_18_Documentation_cris {
+  _src_1_linux_2_6_18_Documentation_cris [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_cris [label="cris"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/dec */
+digraph _src_1_linux_2_6_18_arch_mips_dec {
+  _src_1_linux_2_6_18_arch_mips_dec [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_dec_prom [shape=box,label="prom"];
+  _src_1_linux_2_6_18_arch_mips_dec -> _src_1_linux_2_6_18_arch_mips_dec_prom [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_dec_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_mips_dec -> _src_1_linux_2_6_18_arch_mips_dec_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_dec [label="dec"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-clps7500 */
+digraph _src_1_linux_2_6_18_arch_arm_mach_clps7500 {
+  _src_1_linux_2_6_18_arch_arm_mach_clps7500 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_clps7500 [label="mach-clps7500"];
+}
+
+/* lease root is /src/1/linux-2.6.18/scripts/ksymoops */
+digraph _src_1_linux_2_6_18_scripts_ksymoops {
+  _src_1_linux_2_6_18_scripts_ksymoops [shape=box,color=green];
+  _src_1_linux_2_6_18_scripts_ksymoops [label="ksymoops"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/hwmon */
+digraph _src_1_linux_2_6_18_drivers_hwmon {
+  _src_1_linux_2_6_18_drivers_hwmon [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_hwmon [label="hwmon"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/acpi */
+digraph _src_1_linux_2_6_18_include_acpi {
+  _src_1_linux_2_6_18_include_acpi [shape=box,color=green];
+  _src_1_linux_2_6_18_include_acpi_platform [shape=box,label="platform"];
+  _src_1_linux_2_6_18_include_acpi -> _src_1_linux_2_6_18_include_acpi_platform [style=dotted];
+  _src_1_linux_2_6_18_include_acpi [label="acpi"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/sound/alsa */
+digraph _src_1_linux_2_6_18_Documentation_sound_alsa {
+  _src_1_linux_2_6_18_Documentation_sound_alsa [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_sound_alsa_DocBook [shape=box,label="DocBook"];
+  _src_1_linux_2_6_18_Documentation_sound_alsa -> _src_1_linux_2_6_18_Documentation_sound_alsa_DocBook [style=dotted];
+  _src_1_linux_2_6_18_Documentation_sound_alsa [label="alsa"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/parisc */
+digraph _src_1_linux_2_6_18_sound_parisc {
+  _src_1_linux_2_6_18_sound_parisc [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_parisc [label="parisc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/block */
+digraph _src_1_linux_2_6_18_drivers_block {
+  _src_1_linux_2_6_18_drivers_block [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_block_paride [shape=box,label="paride"];
+  _src_1_linux_2_6_18_drivers_block -> _src_1_linux_2_6_18_drivers_block_paride [style=dotted];
+  _src_1_linux_2_6_18_drivers_block_aoe [shape=box,label="aoe"];
+  _src_1_linux_2_6_18_drivers_block -> _src_1_linux_2_6_18_drivers_block_aoe [style=dotted];
+  _src_1_linux_2_6_18_drivers_block [label="block"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-sh */
+digraph _src_1_linux_2_6_18_include_asm_sh {
+  _src_1_linux_2_6_18_include_asm_sh [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_sh_systemh [shape=box,label="systemh"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_systemh [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_snapgear [shape=box,label="snapgear"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_snapgear [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_sh2000 [shape=box,label="sh2000"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_sh2000 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_sh03 [shape=box,label="sh03"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_sh03 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_se7751 [shape=box,label="se7751"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_se7751 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_se73180 [shape=box,label="se73180"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_se73180 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_se7300 [shape=box,label="se7300"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_se7300 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_se [shape=box,label="se"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_se [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_saturn [shape=box,label="saturn"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_saturn [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_rts7751r2d [shape=box,label="rts7751r2d"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_rts7751r2d [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_overdrive [shape=box,label="overdrive"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_overdrive [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_mpc1211 [shape=box,label="mpc1211"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_mpc1211 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_hs7751rvoip [shape=box,label="hs7751rvoip"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_hs7751rvoip [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_hp6xx [shape=box,label="hp6xx"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_hp6xx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_hd64465 [shape=box,label="hd64465"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_hd64465 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_hd64461 [shape=box,label="hd64461"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_hd64461 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_harp [shape=box,label="harp"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_harp [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_edosk7705 [shape=box,label="edosk7705"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_edosk7705 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_ec3104 [shape=box,label="ec3104"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_ec3104 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_dreamcast [shape=box,label="dreamcast"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_dreamcast [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_dmida [shape=box,label="dmida"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_dmida [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_cqreek [shape=box,label="cqreek"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_cqreek [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_cpu_sh4 [shape=box,label="cpu-sh4"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_cpu_sh4 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_cpu_sh3 [shape=box,label="cpu-sh3"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_cpu_sh3 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_cpu_sh2 [shape=box,label="cpu-sh2"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_cpu_sh2 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_cat68701 [shape=box,label="cat68701"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_cat68701 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_bigsur [shape=box,label="bigsur"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_bigsur [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh_adx [shape=box,label="adx"];
+  _src_1_linux_2_6_18_include_asm_sh -> _src_1_linux_2_6_18_include_asm_sh_adx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_sh [label="asm-sh"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/ieee80211/softmac */
+digraph _src_1_linux_2_6_18_net_ieee80211_softmac {
+  _src_1_linux_2_6_18_net_ieee80211_softmac [shape=box,color=green];
+  _src_1_linux_2_6_18_net_ieee80211_softmac [label="softmac"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/acorn/char */
+digraph _src_1_linux_2_6_18_drivers_acorn_char {
+  _src_1_linux_2_6_18_drivers_acorn_char [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_acorn_char [label="char"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/ia32 */
+digraph _src_1_linux_2_6_18_arch_ia64_ia32 {
+  _src_1_linux_2_6_18_arch_ia64_ia32 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_ia32 [label="ia32"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/cris/arch-v32/drivers */
+digraph _src_1_linux_2_6_18_arch_cris_arch_v32_drivers {
+  _src_1_linux_2_6_18_arch_cris_arch_v32_drivers [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_cris_arch_v32_drivers_pci [shape=box,label="pci"];
+  _src_1_linux_2_6_18_arch_cris_arch_v32_drivers -> _src_1_linux_2_6_18_arch_cris_arch_v32_drivers_pci [style=dotted];
+  _src_1_linux_2_6_18_arch_cris_arch_v32_drivers [label="drivers"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-atlas */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_atlas {
+  _src_1_linux_2_6_18_include_asm_mips_mach_atlas [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_atlas [label="mach-atlas"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/isdn */
+digraph _src_1_linux_2_6_18_drivers_isdn {
+  _src_1_linux_2_6_18_drivers_isdn [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_isdn_sc [shape=box,label="sc"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_sc [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_pcbit [shape=box,label="pcbit"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_pcbit [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_isdnloop [shape=box,label="isdnloop"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_isdnloop [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_icn [shape=box,label="icn"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_icn [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_i4l [shape=box,label="i4l"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_i4l [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_hysdn [shape=box,label="hysdn"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_hysdn [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_hisax [shape=box,label="hisax"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_hisax [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_hardware [shape=box,label="hardware"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_hardware [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_gigaset [shape=box,label="gigaset"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_gigaset [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_divert [shape=box,label="divert"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_divert [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_capi [shape=box,label="capi"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_capi [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn_act2000 [shape=box,label="act2000"];
+  _src_1_linux_2_6_18_drivers_isdn -> _src_1_linux_2_6_18_drivers_isdn_act2000 [style=dotted];
+  _src_1_linux_2_6_18_drivers_isdn [label="isdn"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/scsi/megaraid */
+digraph _src_1_linux_2_6_18_drivers_scsi_megaraid {
+  _src_1_linux_2_6_18_drivers_scsi_megaraid [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_scsi_megaraid [label="megaraid"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/pcmcia */
+digraph _src_1_linux_2_6_18_drivers_net_pcmcia {
+  _src_1_linux_2_6_18_drivers_net_pcmcia [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_pcmcia [label="pcmcia"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/gt64120/common */
+digraph _src_1_linux_2_6_18_arch_mips_gt64120_common {
+  _src_1_linux_2_6_18_arch_mips_gt64120_common [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_gt64120_common [label="common"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-lh7a40x */
+digraph _src_1_linux_2_6_18_arch_arm_mach_lh7a40x {
+  _src_1_linux_2_6_18_arch_arm_mach_lh7a40x [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_lh7a40x [label="mach-lh7a40x"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/sysctl */
+digraph _src_1_linux_2_6_18_Documentation_sysctl {
+  _src_1_linux_2_6_18_Documentation_sysctl [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_sysctl [label="sysctl"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/vr41xx */
+digraph _src_1_linux_2_6_18_arch_mips_vr41xx {
+  _src_1_linux_2_6_18_arch_mips_vr41xx [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_vr41xx_nec_cmbvr4133 [shape=box,label="nec-cmbvr4133"];
+  _src_1_linux_2_6_18_arch_mips_vr41xx -> _src_1_linux_2_6_18_arch_mips_vr41xx_nec_cmbvr4133 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_vr41xx_ibm_workpad [shape=box,label="ibm-workpad"];
+  _src_1_linux_2_6_18_arch_mips_vr41xx -> _src_1_linux_2_6_18_arch_mips_vr41xx_ibm_workpad [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_vr41xx_common [shape=box,label="common"];
+  _src_1_linux_2_6_18_arch_mips_vr41xx -> _src_1_linux_2_6_18_arch_mips_vr41xx_common [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_vr41xx_casio_e55 [shape=box,label="casio-e55"];
+  _src_1_linux_2_6_18_arch_mips_vr41xx -> _src_1_linux_2_6_18_arch_mips_vr41xx_casio_e55 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_vr41xx [label="vr41xx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/md */
+digraph _src_1_linux_2_6_18_drivers_md {
+  _src_1_linux_2_6_18_drivers_md [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_md_raid6test [shape=box,label="raid6test"];
+  _src_1_linux_2_6_18_drivers_md -> _src_1_linux_2_6_18_drivers_md_raid6test [style=dotted];
+  _src_1_linux_2_6_18_drivers_md [label="md"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/sn */
+digraph _src_1_linux_2_6_18_include_asm_mips_sn {
+  _src_1_linux_2_6_18_include_asm_mips_sn [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_sn_sn0 [shape=box,label="sn0"];
+  _src_1_linux_2_6_18_include_asm_mips_sn -> _src_1_linux_2_6_18_include_asm_mips_sn_sn0 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_mips_sn [label="sn"];
+}
+
+/* lease root is /src/1/linux-2.6.18/kernel/time */
+digraph _src_1_linux_2_6_18_kernel_time {
+  _src_1_linux_2_6_18_kernel_time [shape=box,color=green];
+  _src_1_linux_2_6_18_kernel_time [label="time"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh64/boot */
+digraph _src_1_linux_2_6_18_arch_sh64_boot {
+  _src_1_linux_2_6_18_arch_sh64_boot [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh64_boot_compressed [shape=box,label="compressed"];
+  _src_1_linux_2_6_18_arch_sh64_boot -> _src_1_linux_2_6_18_arch_sh64_boot_compressed [style=dotted];
+  _src_1_linux_2_6_18_arch_sh64_boot [label="boot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/fat */
+digraph _src_1_linux_2_6_18_fs_fat {
+  _src_1_linux_2_6_18_fs_fat [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_fat [label="fat"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/bluetooth */
+digraph _src_1_linux_2_6_18_net_bluetooth {
+  _src_1_linux_2_6_18_net_bluetooth [shape=box,color=green];
+  _src_1_linux_2_6_18_net_bluetooth_rfcomm [shape=box,label="rfcomm"];
+  _src_1_linux_2_6_18_net_bluetooth -> _src_1_linux_2_6_18_net_bluetooth_rfcomm [style=dotted];
+  _src_1_linux_2_6_18_net_bluetooth_hidp [shape=box,label="hidp"];
+  _src_1_linux_2_6_18_net_bluetooth -> _src_1_linux_2_6_18_net_bluetooth_hidp [style=dotted];
+  _src_1_linux_2_6_18_net_bluetooth_cmtp [shape=box,label="cmtp"];
+  _src_1_linux_2_6_18_net_bluetooth -> _src_1_linux_2_6_18_net_bluetooth_cmtp [style=dotted];
+  _src_1_linux_2_6_18_net_bluetooth_bnep [shape=box,label="bnep"];
+  _src_1_linux_2_6_18_net_bluetooth -> _src_1_linux_2_6_18_net_bluetooth_bnep [style=dotted];
+  _src_1_linux_2_6_18_net_bluetooth [label="bluetooth"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/scsi/qla2xxx */
+digraph _src_1_linux_2_6_18_drivers_scsi_qla2xxx {
+  _src_1_linux_2_6_18_drivers_scsi_qla2xxx [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_scsi_qla2xxx [label="qla2xxx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/nfsd */
+digraph _src_1_linux_2_6_18_fs_nfsd {
+  _src_1_linux_2_6_18_fs_nfsd [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_nfsd [label="nfsd"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/i386/kernel/acpi */
+digraph _src_1_linux_2_6_18_arch_i386_kernel_acpi {
+  _src_1_linux_2_6_18_arch_i386_kernel_acpi [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_i386_kernel_acpi [label="acpi"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/ABI/obsolete */
+digraph _src_1_linux_2_6_18_Documentation_ABI_obsolete {
+  _src_1_linux_2_6_18_Documentation_ABI_obsolete [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_ABI_obsolete [label="obsolete"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/um/include/sysdep-ppc */
+digraph _src_1_linux_2_6_18_arch_um_include_sysdep_ppc {
+  _src_1_linux_2_6_18_arch_um_include_sysdep_ppc [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_um_include_sysdep_ppc [label="sysdep-ppc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/tx4938/common */
+digraph _src_1_linux_2_6_18_arch_mips_tx4938_common {
+  _src_1_linux_2_6_18_arch_mips_tx4938_common [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_tx4938_common [label="common"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/isa/wavefront */
+digraph _src_1_linux_2_6_18_sound_isa_wavefront {
+  _src_1_linux_2_6_18_sound_isa_wavefront [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_isa_wavefront [label="wavefront"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/x86_64/kernel/cpufreq */
+digraph _src_1_linux_2_6_18_arch_x86_64_kernel_cpufreq {
+  _src_1_linux_2_6_18_arch_x86_64_kernel_cpufreq [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_x86_64_kernel_cpufreq [label="cpufreq"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ppc/boot/of1275 */
+digraph _src_1_linux_2_6_18_arch_ppc_boot_of1275 {
+  _src_1_linux_2_6_18_arch_ppc_boot_of1275 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ppc_boot_of1275 [label="of1275"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/xtensa/boot/boot-elf */
+digraph _src_1_linux_2_6_18_arch_xtensa_boot_boot_elf {
+  _src_1_linux_2_6_18_arch_xtensa_boot_boot_elf [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_xtensa_boot_boot_elf [label="boot-elf"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/core */
+digraph _src_1_linux_2_6_18_net_core {
+  _src_1_linux_2_6_18_net_core [shape=box,color=green];
+  _src_1_linux_2_6_18_net_core [label="core"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/infiniband */
+digraph _src_1_linux_2_6_18_drivers_infiniband {
+  _src_1_linux_2_6_18_drivers_infiniband [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_infiniband_ulp [shape=box,label="ulp"];
+  _src_1_linux_2_6_18_drivers_infiniband -> _src_1_linux_2_6_18_drivers_infiniband_ulp [style=dotted];
+  _src_1_linux_2_6_18_drivers_infiniband_hw [shape=box,label="hw"];
+  _src_1_linux_2_6_18_drivers_infiniband -> _src_1_linux_2_6_18_drivers_infiniband_hw [style=dotted];
+  _src_1_linux_2_6_18_drivers_infiniband_core [shape=box,label="core"];
+  _src_1_linux_2_6_18_drivers_infiniband -> _src_1_linux_2_6_18_drivers_infiniband_core [style=dotted];
+  _src_1_linux_2_6_18_drivers_infiniband [label="infiniband"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/scsi/ibmvscsi */
+digraph _src_1_linux_2_6_18_drivers_scsi_ibmvscsi {
+  _src_1_linux_2_6_18_drivers_scsi_ibmvscsi [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_scsi_ibmvscsi [label="ibmvscsi"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/tools */
+digraph _src_1_linux_2_6_18_arch_m68k_tools {
+  _src_1_linux_2_6_18_arch_m68k_tools [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_tools_amiga [shape=box,label="amiga"];
+  _src_1_linux_2_6_18_arch_m68k_tools -> _src_1_linux_2_6_18_arch_m68k_tools_amiga [style=dotted];
+  _src_1_linux_2_6_18_arch_m68k_tools [label="tools"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/hamradio */
+digraph _src_1_linux_2_6_18_drivers_net_hamradio {
+  _src_1_linux_2_6_18_drivers_net_hamradio [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_hamradio [label="hamradio"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm26 */
+digraph _src_1_linux_2_6_18_arch_arm26 {
+  _src_1_linux_2_6_18_arch_arm26 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm26_nwfpe [shape=box,label="nwfpe"];
+  _src_1_linux_2_6_18_arch_arm26 -> _src_1_linux_2_6_18_arch_arm26_nwfpe [style=dotted];
+  _src_1_linux_2_6_18_arch_arm26_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_arm26 -> _src_1_linux_2_6_18_arch_arm26_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_arm26_machine [shape=box,label="machine"];
+  _src_1_linux_2_6_18_arch_arm26 -> _src_1_linux_2_6_18_arch_arm26_machine [style=dotted];
+  _src_1_linux_2_6_18_arch_arm26_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_arm26 -> _src_1_linux_2_6_18_arch_arm26_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_arm26_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_arm26 -> _src_1_linux_2_6_18_arch_arm26_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_arm26_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_arm26 -> _src_1_linux_2_6_18_arch_arm26_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_arm26 [label="arm26"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/s390/lib */
+digraph _src_1_linux_2_6_18_arch_s390_lib {
+  _src_1_linux_2_6_18_arch_s390_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_s390_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-shark */
+digraph _src_1_linux_2_6_18_arch_arm_mach_shark {
+  _src_1_linux_2_6_18_arch_arm_mach_shark [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_shark [label="mach-shark"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/i2c */
+digraph _src_1_linux_2_6_18_sound_i2c {
+  _src_1_linux_2_6_18_sound_i2c [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_i2c_other [shape=box,label="other"];
+  _src_1_linux_2_6_18_sound_i2c -> _src_1_linux_2_6_18_sound_i2c_other [style=dotted];
+  _src_1_linux_2_6_18_sound_i2c_l3 [shape=box,label="l3"];
+  _src_1_linux_2_6_18_sound_i2c -> _src_1_linux_2_6_18_sound_i2c_l3 [style=dotted];
+  _src_1_linux_2_6_18_sound_i2c [label="i2c"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/superh */
+digraph _src_1_linux_2_6_18_arch_sh_boards_superh {
+  _src_1_linux_2_6_18_arch_sh_boards_superh [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_superh_microdev [shape=box,label="microdev"];
+  _src_1_linux_2_6_18_arch_sh_boards_superh -> _src_1_linux_2_6_18_arch_sh_boards_superh_microdev [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_superh [label="superh"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/macintosh */
+digraph _src_1_linux_2_6_18_drivers_macintosh {
+  _src_1_linux_2_6_18_drivers_macintosh [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_macintosh [label="macintosh"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/llc */
+digraph _src_1_linux_2_6_18_net_llc {
+  _src_1_linux_2_6_18_net_llc [shape=box,color=green];
+  _src_1_linux_2_6_18_net_llc [label="llc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/xtensa/lib */
+digraph _src_1_linux_2_6_18_arch_xtensa_lib {
+  _src_1_linux_2_6_18_arch_xtensa_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_xtensa_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/mm */
+digraph _src_1_linux_2_6_18_arch_mips_mm {
+  _src_1_linux_2_6_18_arch_mips_mm [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_mm [label="mm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/net/netfilter */
+digraph _src_1_linux_2_6_18_include_net_netfilter {
+  _src_1_linux_2_6_18_include_net_netfilter [shape=box,color=green];
+  _src_1_linux_2_6_18_include_net_netfilter_ipv6 [shape=box,label="ipv6"];
+  _src_1_linux_2_6_18_include_net_netfilter -> _src_1_linux_2_6_18_include_net_netfilter_ipv6 [style=dotted];
+  _src_1_linux_2_6_18_include_net_netfilter_ipv4 [shape=box,label="ipv4"];
+  _src_1_linux_2_6_18_include_net_netfilter -> _src_1_linux_2_6_18_include_net_netfilter_ipv4 [style=dotted];
+  _src_1_linux_2_6_18_include_net_netfilter [label="netfilter"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/v850/lib */
+digraph _src_1_linux_2_6_18_arch_v850_lib {
+  _src_1_linux_2_6_18_arch_v850_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_v850_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/romfs */
+digraph _src_1_linux_2_6_18_fs_romfs {
+  _src_1_linux_2_6_18_fs_romfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_romfs [label="romfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sparc64/mm */
+digraph _src_1_linux_2_6_18_arch_sparc64_mm {
+  _src_1_linux_2_6_18_arch_sparc64_mm [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sparc64_mm [label="mm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-integrator */
+digraph _src_1_linux_2_6_18_arch_arm_mach_integrator {
+  _src_1_linux_2_6_18_arch_arm_mach_integrator [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_integrator [label="mach-integrator"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/pnp */
+digraph _src_1_linux_2_6_18_drivers_pnp {
+  _src_1_linux_2_6_18_drivers_pnp [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_pnp_pnpbios [shape=box,label="pnpbios"];
+  _src_1_linux_2_6_18_drivers_pnp -> _src_1_linux_2_6_18_drivers_pnp_pnpbios [style=dotted];
+  _src_1_linux_2_6_18_drivers_pnp_pnpacpi [shape=box,label="pnpacpi"];
+  _src_1_linux_2_6_18_drivers_pnp -> _src_1_linux_2_6_18_drivers_pnp_pnpacpi [style=dotted];
+  _src_1_linux_2_6_18_drivers_pnp_isapnp [shape=box,label="isapnp"];
+  _src_1_linux_2_6_18_drivers_pnp -> _src_1_linux_2_6_18_drivers_pnp_isapnp [style=dotted];
+  _src_1_linux_2_6_18_drivers_pnp [label="pnp"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/serial */
+digraph _src_1_linux_2_6_18_drivers_serial {
+  _src_1_linux_2_6_18_drivers_serial [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_serial_jsm [shape=box,label="jsm"];
+  _src_1_linux_2_6_18_drivers_serial -> _src_1_linux_2_6_18_drivers_serial_jsm [style=dotted];
+  _src_1_linux_2_6_18_drivers_serial_cpm_uart [shape=box,label="cpm_uart"];
+  _src_1_linux_2_6_18_drivers_serial -> _src_1_linux_2_6_18_drivers_serial_cpm_uart [style=dotted];
+  _src_1_linux_2_6_18_drivers_serial [label="serial"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/renesas */
+digraph _src_1_linux_2_6_18_arch_sh_boards_renesas {
+  _src_1_linux_2_6_18_arch_sh_boards_renesas [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas_systemh [shape=box,label="systemh"];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas -> _src_1_linux_2_6_18_arch_sh_boards_renesas_systemh [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas_rts7751r2d [shape=box,label="rts7751r2d"];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas -> _src_1_linux_2_6_18_arch_sh_boards_renesas_rts7751r2d [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas_hs7751rvoip [shape=box,label="hs7751rvoip"];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas -> _src_1_linux_2_6_18_arch_sh_boards_renesas_hs7751rvoip [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas_edosk7705 [shape=box,label="edosk7705"];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas -> _src_1_linux_2_6_18_arch_sh_boards_renesas_edosk7705 [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_renesas [label="renesas"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/net/tc_act */
+digraph _src_1_linux_2_6_18_include_net_tc_act {
+  _src_1_linux_2_6_18_include_net_tc_act [shape=box,color=green];
+  _src_1_linux_2_6_18_include_net_tc_act [label="tc_act"];
+}
+
+/* lease root is /src/1/linux-2.6.18/scripts/genksyms */
+digraph _src_1_linux_2_6_18_scripts_genksyms {
+  _src_1_linux_2_6_18_scripts_genksyms [shape=box,color=green];
+  _src_1_linux_2_6_18_scripts_genksyms [label="genksyms"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/ac97 */
+digraph _src_1_linux_2_6_18_sound_pci_ac97 {
+  _src_1_linux_2_6_18_sound_pci_ac97 [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_ac97 [label="ac97"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/s390/hypfs */
+digraph _src_1_linux_2_6_18_arch_s390_hypfs {
+  _src_1_linux_2_6_18_arch_s390_hypfs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_s390_hypfs [label="hypfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-ixp4xx */
+digraph _src_1_linux_2_6_18_arch_arm_mach_ixp4xx {
+  _src_1_linux_2_6_18_arch_arm_mach_ixp4xx [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_ixp4xx [label="mach-ixp4xx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/dreamcast */
+digraph _src_1_linux_2_6_18_arch_sh_boards_dreamcast {
+  _src_1_linux_2_6_18_arch_sh_boards_dreamcast [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_dreamcast [label="dreamcast"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/video/geode */
+digraph _src_1_linux_2_6_18_drivers_video_geode {
+  _src_1_linux_2_6_18_drivers_video_geode [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_video_geode [label="geode"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/i386/boot/compressed */
+digraph _src_1_linux_2_6_18_arch_i386_boot_compressed {
+  _src_1_linux_2_6_18_arch_i386_boot_compressed [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_i386_boot_compressed [label="compressed"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/i2c/busses */
+digraph _src_1_linux_2_6_18_drivers_i2c_busses {
+  _src_1_linux_2_6_18_drivers_i2c_busses [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_i2c_busses [label="busses"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/sn/include */
+digraph _src_1_linux_2_6_18_arch_ia64_sn_include {
+  _src_1_linux_2_6_18_arch_ia64_sn_include [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_sn_include_xtalk [shape=box,label="xtalk"];
+  _src_1_linux_2_6_18_arch_ia64_sn_include -> _src_1_linux_2_6_18_arch_ia64_sn_include_xtalk [style=dotted];
+  _src_1_linux_2_6_18_arch_ia64_sn_include [label="include"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/cris/arch-v32/lib */
+digraph _src_1_linux_2_6_18_arch_cris_arch_v32_lib {
+  _src_1_linux_2_6_18_arch_cris_arch_v32_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_cris_arch_v32_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/cdrom */
+digraph _src_1_linux_2_6_18_drivers_cdrom {
+  _src_1_linux_2_6_18_drivers_cdrom [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_cdrom [label="cdrom"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/bridge/netfilter */
+digraph _src_1_linux_2_6_18_net_bridge_netfilter {
+  _src_1_linux_2_6_18_net_bridge_netfilter [shape=box,color=green];
+  _src_1_linux_2_6_18_net_bridge_netfilter [label="netfilter"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/tx4938 */
+digraph _src_1_linux_2_6_18_include_asm_mips_tx4938 {
+  _src_1_linux_2_6_18_include_asm_mips_tx4938 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_tx4938 [label="tx4938"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/se */
+digraph _src_1_linux_2_6_18_arch_sh_boards_se {
+  _src_1_linux_2_6_18_arch_sh_boards_se [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_se_7751 [shape=box,label="7751"];
+  _src_1_linux_2_6_18_arch_sh_boards_se -> _src_1_linux_2_6_18_arch_sh_boards_se_7751 [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_se_770x [shape=box,label="770x"];
+  _src_1_linux_2_6_18_arch_sh_boards_se -> _src_1_linux_2_6_18_arch_sh_boards_se_770x [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_se_73180 [shape=box,label="73180"];
+  _src_1_linux_2_6_18_arch_sh_boards_se -> _src_1_linux_2_6_18_arch_sh_boards_se_73180 [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_se_7300 [shape=box,label="7300"];
+  _src_1_linux_2_6_18_arch_sh_boards_se -> _src_1_linux_2_6_18_arch_sh_boards_se_7300 [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards_se [label="se"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/ide */
+digraph _src_1_linux_2_6_18_drivers_ide {
+  _src_1_linux_2_6_18_drivers_ide [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_ide_ppc [shape=box,label="ppc"];
+  _src_1_linux_2_6_18_drivers_ide -> _src_1_linux_2_6_18_drivers_ide_ppc [style=dotted];
+  _src_1_linux_2_6_18_drivers_ide_pci [shape=box,label="pci"];
+  _src_1_linux_2_6_18_drivers_ide -> _src_1_linux_2_6_18_drivers_ide_pci [style=dotted];
+  _src_1_linux_2_6_18_drivers_ide_mips [shape=box,label="mips"];
+  _src_1_linux_2_6_18_drivers_ide -> _src_1_linux_2_6_18_drivers_ide_mips [style=dotted];
+  _src_1_linux_2_6_18_drivers_ide_legacy [shape=box,label="legacy"];
+  _src_1_linux_2_6_18_drivers_ide -> _src_1_linux_2_6_18_drivers_ide_legacy [style=dotted];
+  _src_1_linux_2_6_18_drivers_ide_h8300 [shape=box,label="h8300"];
+  _src_1_linux_2_6_18_drivers_ide -> _src_1_linux_2_6_18_drivers_ide_h8300 [style=dotted];
+  _src_1_linux_2_6_18_drivers_ide_cris [shape=box,label="cris"];
+  _src_1_linux_2_6_18_drivers_ide -> _src_1_linux_2_6_18_drivers_ide_cris [style=dotted];
+  _src_1_linux_2_6_18_drivers_ide_arm [shape=box,label="arm"];
+  _src_1_linux_2_6_18_drivers_ide -> _src_1_linux_2_6_18_drivers_ide_arm [style=dotted];
+  _src_1_linux_2_6_18_drivers_ide [label="ide"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/isa/ad1848 */
+digraph _src_1_linux_2_6_18_sound_isa_ad1848 {
+  _src_1_linux_2_6_18_sound_isa_ad1848 [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_isa_ad1848 [label="ad1848"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh64/mach-cayman */
+digraph _src_1_linux_2_6_18_arch_sh64_mach_cayman {
+  _src_1_linux_2_6_18_arch_sh64_mach_cayman [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh64_mach_cayman [label="mach-cayman"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/console */
+digraph _src_1_linux_2_6_18_Documentation_console {
+  _src_1_linux_2_6_18_Documentation_console [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_console [label="console"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu */
+digraph _src_1_linux_2_6_18_arch_m68knommu {
+  _src_1_linux_2_6_18_arch_m68knommu [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform [shape=box,label="platform"];
+  _src_1_linux_2_6_18_arch_m68knommu -> _src_1_linux_2_6_18_arch_m68knommu_platform [style=dotted];
+  _src_1_linux_2_6_18_arch_m68knommu_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_m68knommu -> _src_1_linux_2_6_18_arch_m68knommu_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_m68knommu_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_m68knommu -> _src_1_linux_2_6_18_arch_m68knommu_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_m68knommu_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_m68knommu -> _src_1_linux_2_6_18_arch_m68knommu_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_m68knommu [label="m68knommu"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/netfilter */
+digraph _src_1_linux_2_6_18_include_linux_netfilter {
+  _src_1_linux_2_6_18_include_linux_netfilter [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_netfilter [label="netfilter"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/jmr3927 */
+digraph _src_1_linux_2_6_18_include_asm_mips_jmr3927 {
+  _src_1_linux_2_6_18_include_asm_mips_jmr3927 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_jmr3927 [label="jmr3927"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/tc_ematch */
+digraph _src_1_linux_2_6_18_include_linux_tc_ematch {
+  _src_1_linux_2_6_18_include_linux_tc_ematch [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_tc_ematch [label="tc_ematch"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/packet */
+digraph _src_1_linux_2_6_18_net_packet {
+  _src_1_linux_2_6_18_net_packet [shape=box,color=green];
+  _src_1_linux_2_6_18_net_packet [label="packet"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ppc/boot/include */
+digraph _src_1_linux_2_6_18_arch_ppc_boot_include {
+  _src_1_linux_2_6_18_arch_ppc_boot_include [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ppc_boot_include [label="include"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-ocelot */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_ocelot {
+  _src_1_linux_2_6_18_include_asm_mips_mach_ocelot [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_ocelot [label="mach-ocelot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/media/video */
+digraph _src_1_linux_2_6_18_drivers_media_video {
+  _src_1_linux_2_6_18_drivers_media_video [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_media_video_zc0301 [shape=box,label="zc0301"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_zc0301 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_usbvideo [shape=box,label="usbvideo"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_usbvideo [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_sn9c102 [shape=box,label="sn9c102"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_sn9c102 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_saa7134 [shape=box,label="saa7134"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_saa7134 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_pwc [shape=box,label="pwc"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_pwc [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_pvrusb2 [shape=box,label="pvrusb2"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_pvrusb2 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_ovcamchip [shape=box,label="ovcamchip"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_ovcamchip [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_et61x251 [shape=box,label="et61x251"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_et61x251 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_em28xx [shape=box,label="em28xx"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_em28xx [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_cx88 [shape=box,label="cx88"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_cx88 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_cx25840 [shape=box,label="cx25840"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_cx25840 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_cpia2 [shape=box,label="cpia2"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_cpia2 [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video_bt8xx [shape=box,label="bt8xx"];
+  _src_1_linux_2_6_18_drivers_media_video -> _src_1_linux_2_6_18_drivers_media_video_bt8xx [style=dotted];
+  _src_1_linux_2_6_18_drivers_media_video [label="video"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/edac */
+digraph _src_1_linux_2_6_18_drivers_edac {
+  _src_1_linux_2_6_18_drivers_edac [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_edac [label="edac"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/hp/common */
+digraph _src_1_linux_2_6_18_arch_ia64_hp_common {
+  _src_1_linux_2_6_18_arch_ia64_hp_common [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_hp_common [label="common"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/x86_64/boot/compressed */
+digraph _src_1_linux_2_6_18_arch_x86_64_boot_compressed {
+  _src_1_linux_2_6_18_arch_x86_64_boot_compressed [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_x86_64_boot_compressed [label="compressed"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/ipv4 */
+digraph _src_1_linux_2_6_18_net_ipv4 {
+  _src_1_linux_2_6_18_net_ipv4 [shape=box,color=green];
+  _src_1_linux_2_6_18_net_ipv4_netfilter [shape=box,label="netfilter"];
+  _src_1_linux_2_6_18_net_ipv4 -> _src_1_linux_2_6_18_net_ipv4_netfilter [style=dotted];
+  _src_1_linux_2_6_18_net_ipv4_ipvs [shape=box,label="ipvs"];
+  _src_1_linux_2_6_18_net_ipv4 -> _src_1_linux_2_6_18_net_ipv4_ipvs [style=dotted];
+  _src_1_linux_2_6_18_net_ipv4 [label="ipv4"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/math-emu */
+digraph _src_1_linux_2_6_18_arch_mips_math_emu {
+  _src_1_linux_2_6_18_arch_mips_math_emu [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_math_emu [label="math-emu"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/DocBook */
+digraph _src_1_linux_2_6_18_Documentation_DocBook {
+  _src_1_linux_2_6_18_Documentation_DocBook [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_DocBook_man [shape=box,label="man"];
+  _src_1_linux_2_6_18_Documentation_DocBook -> _src_1_linux_2_6_18_Documentation_DocBook_man [style=dotted];
+  _src_1_linux_2_6_18_Documentation_DocBook [label="DocBook"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/powerpc/configs */
+digraph _src_1_linux_2_6_18_arch_powerpc_configs {
+  _src_1_linux_2_6_18_arch_powerpc_configs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_powerpc_configs [label="configs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/input/keyboard */
+digraph _src_1_linux_2_6_18_drivers_input_keyboard {
+  _src_1_linux_2_6_18_drivers_input_keyboard [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_input_keyboard [label="keyboard"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/atm */
+digraph _src_1_linux_2_6_18_drivers_atm {
+  _src_1_linux_2_6_18_drivers_atm [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_atm [label="atm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh64/kernel */
+digraph _src_1_linux_2_6_18_arch_sh64_kernel {
+  _src_1_linux_2_6_18_arch_sh64_kernel [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh64_kernel [label="kernel"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/scsi */
+digraph _src_1_linux_2_6_18_Documentation_scsi {
+  _src_1_linux_2_6_18_Documentation_scsi [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_scsi [label="scsi"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-cris/arch-v32/hwregs */
+digraph _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs {
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs_iop [shape=box,label="iop"];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs -> _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs_iop [style=dotted];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs_asm [shape=box,label="asm"];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs -> _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs_asm [style=dotted];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs [label="hwregs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-sparc */
+digraph _src_1_linux_2_6_18_include_asm_sparc {
+  _src_1_linux_2_6_18_include_asm_sparc [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_sparc [label="asm-sparc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/philips/pnx8550/jbs */
+digraph _src_1_linux_2_6_18_arch_mips_philips_pnx8550_jbs {
+  _src_1_linux_2_6_18_arch_mips_philips_pnx8550_jbs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_philips_pnx8550_jbs [label="jbs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/mm */
+digraph _src_1_linux_2_6_18_arch_m68k_mm {
+  _src_1_linux_2_6_18_arch_m68k_mm [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_mm [label="mm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/device-mapper */
+digraph _src_1_linux_2_6_18_Documentation_device_mapper {
+  _src_1_linux_2_6_18_Documentation_device_mapper [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_device_mapper [label="device-mapper"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/hda */
+digraph _src_1_linux_2_6_18_sound_pci_hda {
+  _src_1_linux_2_6_18_sound_pci_hda [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_hda [label="hda"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/core */
+digraph _src_1_linux_2_6_18_sound_core {
+  _src_1_linux_2_6_18_sound_core [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_core_seq [shape=box,label="seq"];
+  _src_1_linux_2_6_18_sound_core -> _src_1_linux_2_6_18_sound_core_seq [style=dotted];
+  _src_1_linux_2_6_18_sound_core_oss [shape=box,label="oss"];
+  _src_1_linux_2_6_18_sound_core -> _src_1_linux_2_6_18_sound_core_oss [style=dotted];
+  _src_1_linux_2_6_18_sound_core [label="core"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/netlink */
+digraph _src_1_linux_2_6_18_net_netlink {
+  _src_1_linux_2_6_18_net_netlink [shape=box,color=green];
+  _src_1_linux_2_6_18_net_netlink [label="netlink"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/befs */
+digraph _src_1_linux_2_6_18_fs_befs {
+  _src_1_linux_2_6_18_fs_befs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_befs [label="befs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/tools */
+digraph _src_1_linux_2_6_18_arch_arm_tools {
+  _src_1_linux_2_6_18_arch_arm_tools [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_tools [label="tools"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/galileo-boards */
+digraph _src_1_linux_2_6_18_arch_mips_galileo_boards {
+  _src_1_linux_2_6_18_arch_mips_galileo_boards [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_galileo_boards_ev96100 [shape=box,label="ev96100"];
+  _src_1_linux_2_6_18_arch_mips_galileo_boards -> _src_1_linux_2_6_18_arch_mips_galileo_boards_ev96100 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_galileo_boards [label="galileo-boards"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ppc/platforms/83xx */
+digraph _src_1_linux_2_6_18_arch_ppc_platforms_83xx {
+  _src_1_linux_2_6_18_arch_ppc_platforms_83xx [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ppc_platforms_83xx [label="83xx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/um/kernel/tt */
+digraph _src_1_linux_2_6_18_arch_um_kernel_tt {
+  _src_1_linux_2_6_18_arch_um_kernel_tt [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_um_kernel_tt_ptproxy [shape=box,label="ptproxy"];
+  _src_1_linux_2_6_18_arch_um_kernel_tt -> _src_1_linux_2_6_18_arch_um_kernel_tt_ptproxy [style=dotted];
+  _src_1_linux_2_6_18_arch_um_kernel_tt_include [shape=box,label="include"];
+  _src_1_linux_2_6_18_arch_um_kernel_tt -> _src_1_linux_2_6_18_arch_um_kernel_tt_include [style=dotted];
+  _src_1_linux_2_6_18_arch_um_kernel_tt [label="tt"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/powerpc/lib */
+digraph _src_1_linux_2_6_18_arch_powerpc_lib {
+  _src_1_linux_2_6_18_arch_powerpc_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_powerpc_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/s390/char */
+digraph _src_1_linux_2_6_18_drivers_s390_char {
+  _src_1_linux_2_6_18_drivers_s390_char [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_s390_char [label="char"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/networking */
+digraph _src_1_linux_2_6_18_Documentation_networking {
+  _src_1_linux_2_6_18_Documentation_networking [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_networking [label="networking"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/wireless/hostap */
+digraph _src_1_linux_2_6_18_drivers_net_wireless_hostap {
+  _src_1_linux_2_6_18_drivers_net_wireless_hostap [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_wireless_hostap [label="hostap"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/netfilter_bridge */
+digraph _src_1_linux_2_6_18_include_linux_netfilter_bridge {
+  _src_1_linux_2_6_18_include_linux_netfilter_bridge [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_netfilter_bridge [label="netfilter_bridge"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/ymfpci */
+digraph _src_1_linux_2_6_18_sound_pci_ymfpci {
+  _src_1_linux_2_6_18_sound_pci_ymfpci [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_ymfpci [label="ymfpci"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/sn/kernel/sn2 */
+digraph _src_1_linux_2_6_18_arch_ia64_sn_kernel_sn2 {
+  _src_1_linux_2_6_18_arch_ia64_sn_kernel_sn2 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_sn_kernel_sn2 [label="sn2"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/hpfs */
+digraph _src_1_linux_2_6_18_fs_hpfs {
+  _src_1_linux_2_6_18_fs_hpfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_hpfs [label="hpfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/keys */
+digraph _src_1_linux_2_6_18_include_keys {
+  _src_1_linux_2_6_18_include_keys [shape=box,color=green];
+  _src_1_linux_2_6_18_include_keys [label="keys"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/hp/zx1 */
+digraph _src_1_linux_2_6_18_arch_ia64_hp_zx1 {
+  _src_1_linux_2_6_18_arch_ia64_hp_zx1 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_hp_zx1 [label="zx1"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/kbuild */
+digraph _src_1_linux_2_6_18_Documentation_kbuild {
+  _src_1_linux_2_6_18_Documentation_kbuild [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_kbuild [label="kbuild"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/sparc */
+digraph _src_1_linux_2_6_18_Documentation_sparc {
+  _src_1_linux_2_6_18_Documentation_sparc [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_sparc [label="sparc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/pcmcia */
+digraph _src_1_linux_2_6_18_Documentation_pcmcia {
+  _src_1_linux_2_6_18_Documentation_pcmcia [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_pcmcia [label="pcmcia"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-arm */
+digraph _src_1_linux_2_6_18_include_asm_arm {
+  _src_1_linux_2_6_18_include_asm_arm [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_arm_mach [shape=box,label="mach"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_mach [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_hardware [shape=box,label="hardware"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_hardware [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_versatile [shape=box,label="arch-versatile"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_versatile [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_shark [shape=box,label="arch-shark"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_shark [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_sa1100 [shape=box,label="arch-sa1100"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_sa1100 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_s3c2410 [shape=box,label="arch-s3c2410"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_s3c2410 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_rpc [shape=box,label="arch-rpc"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_rpc [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_realview [shape=box,label="arch-realview"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_realview [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_pxa [shape=box,label="arch-pxa"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_pxa [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_pnx4008 [shape=box,label="arch-pnx4008"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_pnx4008 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_omap [shape=box,label="arch-omap"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_omap [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_netx [shape=box,label="arch-netx"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_netx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_lh7a40x [shape=box,label="arch-lh7a40x"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_lh7a40x [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_l7200 [shape=box,label="arch-l7200"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_l7200 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_ixp4xx [shape=box,label="arch-ixp4xx"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_ixp4xx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_ixp23xx [shape=box,label="arch-ixp23xx"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_ixp23xx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_ixp2000 [shape=box,label="arch-ixp2000"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_ixp2000 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_iop3xx [shape=box,label="arch-iop3xx"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_iop3xx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_integrator [shape=box,label="arch-integrator"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_integrator [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_imx [shape=box,label="arch-imx"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_imx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_h720x [shape=box,label="arch-h720x"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_h720x [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_ep93xx [shape=box,label="arch-ep93xx"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_ep93xx [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_ebsa285 [shape=box,label="arch-ebsa285"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_ebsa285 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_ebsa110 [shape=box,label="arch-ebsa110"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_ebsa110 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_clps711x [shape=box,label="arch-clps711x"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_clps711x [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_cl7500 [shape=box,label="arch-cl7500"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_cl7500 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_at91rm9200 [shape=box,label="arch-at91rm9200"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_at91rm9200 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm_arch_aaec2000 [shape=box,label="arch-aaec2000"];
+  _src_1_linux_2_6_18_include_asm_arm -> _src_1_linux_2_6_18_include_asm_arm_arch_aaec2000 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_arm [label="asm-arm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/oss/dmasound */
+digraph _src_1_linux_2_6_18_sound_oss_dmasound {
+  _src_1_linux_2_6_18_sound_oss_dmasound [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_oss_dmasound [label="dmasound"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/fuse */
+digraph _src_1_linux_2_6_18_fs_fuse {
+  _src_1_linux_2_6_18_fs_fuse [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_fuse [label="fuse"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/mips-boards/sim */
+digraph _src_1_linux_2_6_18_arch_mips_mips_boards_sim {
+  _src_1_linux_2_6_18_arch_mips_mips_boards_sim [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_mips_boards_sim [label="sim"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/udf */
+digraph _src_1_linux_2_6_18_fs_udf {
+  _src_1_linux_2_6_18_fs_udf [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_udf [label="udf"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/kernel/timers */
+digraph _src_1_linux_2_6_18_arch_sh_kernel_timers {
+  _src_1_linux_2_6_18_arch_sh_kernel_timers [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_kernel_timers [label="timers"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/lib */
+digraph _src_1_linux_2_6_18_arch_arm_lib {
+  _src_1_linux_2_6_18_arch_arm_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/w1 */
+digraph _src_1_linux_2_6_18_drivers_w1 {
+  _src_1_linux_2_6_18_drivers_w1 [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_w1_slaves [shape=box,label="slaves"];
+  _src_1_linux_2_6_18_drivers_w1 -> _src_1_linux_2_6_18_drivers_w1_slaves [style=dotted];
+  _src_1_linux_2_6_18_drivers_w1_masters [shape=box,label="masters"];
+  _src_1_linux_2_6_18_drivers_w1 -> _src_1_linux_2_6_18_drivers_w1_masters [style=dotted];
+  _src_1_linux_2_6_18_drivers_w1 [label="w1"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/tipc */
+digraph _src_1_linux_2_6_18_net_tipc {
+  _src_1_linux_2_6_18_net_tipc [shape=box,color=green];
+  _src_1_linux_2_6_18_net_tipc [label="tipc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-parisc */
+digraph _src_1_linux_2_6_18_include_asm_parisc {
+  _src_1_linux_2_6_18_include_asm_parisc [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_parisc [label="asm-parisc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/powerpc */
+digraph _src_1_linux_2_6_18_Documentation_powerpc {
+  _src_1_linux_2_6_18_Documentation_powerpc [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_powerpc [label="powerpc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/amiga */
+digraph _src_1_linux_2_6_18_arch_m68k_amiga {
+  _src_1_linux_2_6_18_arch_m68k_amiga [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_amiga [label="amiga"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/sound */
+digraph _src_1_linux_2_6_18_include_sound {
+  _src_1_linux_2_6_18_include_sound [shape=box,color=green];
+  _src_1_linux_2_6_18_include_sound [label="sound"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-ip32 */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_ip32 {
+  _src_1_linux_2_6_18_include_asm_mips_mach_ip32 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_ip32 [label="mach-ip32"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/momentum/ocelot_g */
+digraph _src_1_linux_2_6_18_arch_mips_momentum_ocelot_g {
+  _src_1_linux_2_6_18_arch_mips_momentum_ocelot_g [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_momentum_ocelot_g [label="ocelot_g"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/video/backlight */
+digraph _src_1_linux_2_6_18_drivers_video_backlight {
+  _src_1_linux_2_6_18_drivers_video_backlight [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_video_backlight [label="backlight"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/sysfs */
+digraph _src_1_linux_2_6_18_fs_sysfs {
+  _src_1_linux_2_6_18_fs_sysfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_sysfs [label="sysfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/i386/kernel/cpu/mtrr */
+digraph _src_1_linux_2_6_18_arch_i386_kernel_cpu_mtrr {
+  _src_1_linux_2_6_18_arch_i386_kernel_cpu_mtrr [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_i386_kernel_cpu_mtrr [label="mtrr"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/sibyte */
+digraph _src_1_linux_2_6_18_arch_mips_sibyte {
+  _src_1_linux_2_6_18_arch_mips_sibyte [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_sibyte_swarm [shape=box,label="swarm"];
+  _src_1_linux_2_6_18_arch_mips_sibyte -> _src_1_linux_2_6_18_arch_mips_sibyte_swarm [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_sibyte_sb1250 [shape=box,label="sb1250"];
+  _src_1_linux_2_6_18_arch_mips_sibyte -> _src_1_linux_2_6_18_arch_mips_sibyte_sb1250 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_sibyte_cfe [shape=box,label="cfe"];
+  _src_1_linux_2_6_18_arch_mips_sibyte -> _src_1_linux_2_6_18_arch_mips_sibyte_cfe [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_sibyte_bcm1480 [shape=box,label="bcm1480"];
+  _src_1_linux_2_6_18_arch_mips_sibyte -> _src_1_linux_2_6_18_arch_mips_sibyte_bcm1480 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_sibyte [label="sibyte"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/video/mbx */
+digraph _src_1_linux_2_6_18_drivers_video_mbx {
+  _src_1_linux_2_6_18_drivers_video_mbx [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_video_mbx [label="mbx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/fc4 */
+digraph _src_1_linux_2_6_18_drivers_fc4 {
+  _src_1_linux_2_6_18_drivers_fc4 [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_fc4 [label="fc4"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/char/watchdog */
+digraph _src_1_linux_2_6_18_drivers_char_watchdog {
+  _src_1_linux_2_6_18_drivers_char_watchdog [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_char_watchdog [label="watchdog"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/momentum/ocelot_3 */
+digraph _src_1_linux_2_6_18_arch_mips_momentum_ocelot_3 {
+  _src_1_linux_2_6_18_arch_mips_momentum_ocelot_3 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_momentum_ocelot_3 [label="ocelot_3"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/ddb5xxx */
+digraph _src_1_linux_2_6_18_include_asm_mips_ddb5xxx {
+  _src_1_linux_2_6_18_include_asm_mips_ddb5xxx [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_ddb5xxx [label="ddb5xxx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/configfs */
+digraph _src_1_linux_2_6_18_fs_configfs {
+  _src_1_linux_2_6_18_fs_configfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_configfs [label="configfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/sbus */
+digraph _src_1_linux_2_6_18_drivers_sbus {
+  _src_1_linux_2_6_18_drivers_sbus [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_sbus_char [shape=box,label="char"];
+  _src_1_linux_2_6_18_drivers_sbus -> _src_1_linux_2_6_18_drivers_sbus_char [style=dotted];
+  _src_1_linux_2_6_18_drivers_sbus [label="sbus"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/sparc */
+digraph _src_1_linux_2_6_18_sound_sparc {
+  _src_1_linux_2_6_18_sound_sparc [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_sparc [label="sparc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-cris */
+digraph _src_1_linux_2_6_18_include_asm_cris {
+  _src_1_linux_2_6_18_include_asm_cris [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32 [shape=box,label="arch-v32"];
+  _src_1_linux_2_6_18_include_asm_cris -> _src_1_linux_2_6_18_include_asm_cris_arch_v32 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v10 [shape=box,label="arch-v10"];
+  _src_1_linux_2_6_18_include_asm_cris -> _src_1_linux_2_6_18_include_asm_cris_arch_v10 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_cris [label="asm-cris"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/powerpc/kernel/vdso64 */
+digraph _src_1_linux_2_6_18_arch_powerpc_kernel_vdso64 {
+  _src_1_linux_2_6_18_arch_powerpc_kernel_vdso64 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_powerpc_kernel_vdso64 [label="vdso64"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/sun3 */
+digraph _src_1_linux_2_6_18_arch_m68k_sun3 {
+  _src_1_linux_2_6_18_arch_m68k_sun3 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_sun3_prom [shape=box,label="prom"];
+  _src_1_linux_2_6_18_arch_m68k_sun3 -> _src_1_linux_2_6_18_arch_m68k_sun3_prom [style=dotted];
+  _src_1_linux_2_6_18_arch_m68k_sun3 [label="sun3"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-cris/arch-v32/hwregs/iop/asm */
+digraph _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs_iop_asm {
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs_iop_asm [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_cris_arch_v32_hwregs_iop_asm [label="asm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/mips-boards/malta */
+digraph _src_1_linux_2_6_18_arch_mips_mips_boards_malta {
+  _src_1_linux_2_6_18_arch_mips_mips_boards_malta [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_mips_boards_malta [label="malta"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/kernel */
+digraph _src_1_linux_2_6_18_arch_m68k_kernel {
+  _src_1_linux_2_6_18_arch_m68k_kernel [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_kernel [label="kernel"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/trident */
+digraph _src_1_linux_2_6_18_sound_pci_trident {
+  _src_1_linux_2_6_18_sound_pci_trident [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_trident [label="trident"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/aoa/soundbus/i2sbus */
+digraph _src_1_linux_2_6_18_sound_aoa_soundbus_i2sbus {
+  _src_1_linux_2_6_18_sound_aoa_soundbus_i2sbus [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_aoa_soundbus_i2sbus [label="i2sbus"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/nfs */
+digraph _src_1_linux_2_6_18_fs_nfs {
+  _src_1_linux_2_6_18_fs_nfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_nfs [label="nfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sparc64/lib */
+digraph _src_1_linux_2_6_18_arch_sparc64_lib {
+  _src_1_linux_2_6_18_arch_sparc64_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sparc64_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/msdos */
+digraph _src_1_linux_2_6_18_fs_msdos {
+  _src_1_linux_2_6_18_fs_msdos [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_msdos [label="msdos"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu/platform/528x */
+digraph _src_1_linux_2_6_18_arch_m68knommu_platform_528x {
+  _src_1_linux_2_6_18_arch_m68knommu_platform_528x [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform_528x [label="528x"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/video/intelfb */
+digraph _src_1_linux_2_6_18_drivers_video_intelfb {
+  _src_1_linux_2_6_18_drivers_video_intelfb [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_video_intelfb [label="intelfb"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/char/ftape */
+digraph _src_1_linux_2_6_18_drivers_char_ftape {
+  _src_1_linux_2_6_18_drivers_char_ftape [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_char_ftape_zftape [shape=box,label="zftape"];
+  _src_1_linux_2_6_18_drivers_char_ftape -> _src_1_linux_2_6_18_drivers_char_ftape_zftape [style=dotted];
+  _src_1_linux_2_6_18_drivers_char_ftape_lowlevel [shape=box,label="lowlevel"];
+  _src_1_linux_2_6_18_drivers_char_ftape -> _src_1_linux_2_6_18_drivers_char_ftape_lowlevel [style=dotted];
+  _src_1_linux_2_6_18_drivers_char_ftape_compressor [shape=box,label="compressor"];
+  _src_1_linux_2_6_18_drivers_char_ftape -> _src_1_linux_2_6_18_drivers_char_ftape_compressor [style=dotted];
+  _src_1_linux_2_6_18_drivers_char_ftape [label="ftape"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/ethernet */
+digraph _src_1_linux_2_6_18_net_ethernet {
+  _src_1_linux_2_6_18_net_ethernet [shape=box,color=green];
+  _src_1_linux_2_6_18_net_ethernet [label="ethernet"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/math-emu */
+digraph _src_1_linux_2_6_18_include_math_emu {
+  _src_1_linux_2_6_18_include_math_emu [shape=box,color=green];
+  _src_1_linux_2_6_18_include_math_emu [label="math-emu"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/cs46xx */
+digraph _src_1_linux_2_6_18_sound_pci_cs46xx {
+  _src_1_linux_2_6_18_sound_pci_cs46xx [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_cs46xx_imgs [shape=box,label="imgs"];
+  _src_1_linux_2_6_18_sound_pci_cs46xx -> _src_1_linux_2_6_18_sound_pci_cs46xx_imgs [style=dotted];
+  _src_1_linux_2_6_18_sound_pci_cs46xx [label="cs46xx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/configs */
+digraph _src_1_linux_2_6_18_arch_mips_configs {
+  _src_1_linux_2_6_18_arch_mips_configs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_configs [label="configs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/um */
+digraph _src_1_linux_2_6_18_arch_um {
+  _src_1_linux_2_6_18_arch_um [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_um_sys_x86_64 [shape=box,label="sys-x86_64"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_sys_x86_64 [style=dotted];
+  _src_1_linux_2_6_18_arch_um_sys_ppc [shape=box,label="sys-ppc"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_sys_ppc [style=dotted];
+  _src_1_linux_2_6_18_arch_um_sys_ia64 [shape=box,label="sys-ia64"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_sys_ia64 [style=dotted];
+  _src_1_linux_2_6_18_arch_um_sys_i386 [shape=box,label="sys-i386"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_sys_i386 [style=dotted];
+  _src_1_linux_2_6_18_arch_um_scripts [shape=box,label="scripts"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_scripts [style=dotted];
+  _src_1_linux_2_6_18_arch_um_os_Linux [shape=box,label="os-Linux"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_os_Linux [style=dotted];
+  _src_1_linux_2_6_18_arch_um_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_um_include [shape=box,label="include"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_include [style=dotted];
+  _src_1_linux_2_6_18_arch_um_drivers [shape=box,label="drivers"];
+  _src_1_linux_2_6_18_arch_um -> _src_1_linux_2_6_18_arch_um_drivers [style=dotted];
+  _src_1_linux_2_6_18_arch_um [label="um"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/alpha */
+digraph _src_1_linux_2_6_18_arch_alpha {
+  _src_1_linux_2_6_18_arch_alpha [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_alpha_oprofile [shape=box,label="oprofile"];
+  _src_1_linux_2_6_18_arch_alpha -> _src_1_linux_2_6_18_arch_alpha_oprofile [style=dotted];
+  _src_1_linux_2_6_18_arch_alpha_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_alpha -> _src_1_linux_2_6_18_arch_alpha_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_alpha_math_emu [shape=box,label="math-emu"];
+  _src_1_linux_2_6_18_arch_alpha -> _src_1_linux_2_6_18_arch_alpha_math_emu [style=dotted];
+  _src_1_linux_2_6_18_arch_alpha_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_alpha -> _src_1_linux_2_6_18_arch_alpha_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_alpha_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_alpha -> _src_1_linux_2_6_18_arch_alpha_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_alpha_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_alpha -> _src_1_linux_2_6_18_arch_alpha_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_alpha [label="alpha"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-ip22 */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_ip22 {
+  _src_1_linux_2_6_18_include_asm_mips_mach_ip22 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_ip22 [label="mach-ip22"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/mvme16x */
+digraph _src_1_linux_2_6_18_arch_m68k_mvme16x {
+  _src_1_linux_2_6_18_arch_m68k_mvme16x [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_mvme16x [label="mvme16x"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-ixp2000 */
+digraph _src_1_linux_2_6_18_arch_arm_mach_ixp2000 {
+  _src_1_linux_2_6_18_arch_arm_mach_ixp2000 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_ixp2000 [label="mach-ixp2000"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh64/mm */
+digraph _src_1_linux_2_6_18_arch_sh64_mm {
+  _src_1_linux_2_6_18_arch_sh64_mm [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh64_mm [label="mm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm26/boot/compressed */
+digraph _src_1_linux_2_6_18_arch_arm26_boot_compressed {
+  _src_1_linux_2_6_18_arch_arm26_boot_compressed [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm26_boot_compressed [label="compressed"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/cris/arch-v10/boot/compressed */
+digraph _src_1_linux_2_6_18_arch_cris_arch_v10_boot_compressed {
+  _src_1_linux_2_6_18_arch_cris_arch_v10_boot_compressed [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_cris_arch_v10_boot_compressed [label="compressed"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sparc64/prom */
+digraph _src_1_linux_2_6_18_arch_sparc64_prom {
+  _src_1_linux_2_6_18_arch_sparc64_prom [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sparc64_prom [label="prom"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/filesystems */
+digraph _src_1_linux_2_6_18_Documentation_filesystems {
+  _src_1_linux_2_6_18_Documentation_filesystems [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_filesystems_configfs [shape=box,label="configfs"];
+  _src_1_linux_2_6_18_Documentation_filesystems -> _src_1_linux_2_6_18_Documentation_filesystems_configfs [style=dotted];
+  _src_1_linux_2_6_18_Documentation_filesystems [label="filesystems"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-sibyte */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_sibyte {
+  _src_1_linux_2_6_18_include_asm_mips_mach_sibyte [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_sibyte [label="mach-sibyte"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/drivers/superhyway */
+digraph _src_1_linux_2_6_18_arch_sh_drivers_superhyway {
+  _src_1_linux_2_6_18_arch_sh_drivers_superhyway [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_drivers_superhyway [label="superhyway"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/harp */
+digraph _src_1_linux_2_6_18_arch_sh_boards_harp {
+  _src_1_linux_2_6_18_arch_sh_boards_harp [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_harp [label="harp"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/i386 */
+digraph _src_1_linux_2_6_18_Documentation_i386 {
+  _src_1_linux_2_6_18_Documentation_i386 [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_i386 [label="i386"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-wrppmc */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_wrppmc {
+  _src_1_linux_2_6_18_include_asm_mips_mach_wrppmc [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_wrppmc [label="mach-wrppmc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/dvb */
+digraph _src_1_linux_2_6_18_include_linux_dvb {
+  _src_1_linux_2_6_18_include_linux_dvb [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_dvb [label="dvb"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/isa/opti9xx */
+digraph _src_1_linux_2_6_18_sound_isa_opti9xx {
+  _src_1_linux_2_6_18_sound_isa_opti9xx [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_isa_opti9xx [label="opti9xx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/nm256 */
+digraph _src_1_linux_2_6_18_sound_pci_nm256 {
+  _src_1_linux_2_6_18_sound_pci_nm256 [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_nm256 [label="nm256"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/i386/kernel/cpu/cpufreq */
+digraph _src_1_linux_2_6_18_arch_i386_kernel_cpu_cpufreq {
+  _src_1_linux_2_6_18_arch_i386_kernel_cpu_cpufreq [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_i386_kernel_cpu_cpufreq [label="cpufreq"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/philips */
+digraph _src_1_linux_2_6_18_arch_mips_philips {
+  _src_1_linux_2_6_18_arch_mips_philips [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_philips_pnx8550 [shape=box,label="pnx8550"];
+  _src_1_linux_2_6_18_arch_mips_philips -> _src_1_linux_2_6_18_arch_mips_philips_pnx8550 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_philips [label="philips"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/wan */
+digraph _src_1_linux_2_6_18_drivers_net_wan {
+  _src_1_linux_2_6_18_drivers_net_wan [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_wan_lmc [shape=box,label="lmc"];
+  _src_1_linux_2_6_18_drivers_net_wan -> _src_1_linux_2_6_18_drivers_net_wan_lmc [style=dotted];
+  _src_1_linux_2_6_18_drivers_net_wan [label="wan"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/mac */
+digraph _src_1_linux_2_6_18_arch_m68k_mac {
+  _src_1_linux_2_6_18_arch_m68k_mac [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_mac [label="mac"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/acpi */
+digraph _src_1_linux_2_6_18_drivers_acpi {
+  _src_1_linux_2_6_18_drivers_acpi [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_acpi_utilities [shape=box,label="utilities"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_utilities [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_tables [shape=box,label="tables"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_tables [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_sleep [shape=box,label="sleep"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_sleep [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_resources [shape=box,label="resources"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_resources [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_parser [shape=box,label="parser"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_parser [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_namespace [shape=box,label="namespace"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_namespace [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_hardware [shape=box,label="hardware"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_hardware [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_executer [shape=box,label="executer"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_executer [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_events [shape=box,label="events"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_events [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi_dispatcher [shape=box,label="dispatcher"];
+  _src_1_linux_2_6_18_drivers_acpi -> _src_1_linux_2_6_18_drivers_acpi_dispatcher [style=dotted];
+  _src_1_linux_2_6_18_drivers_acpi [label="acpi"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/echoaudio */
+digraph _src_1_linux_2_6_18_sound_pci_echoaudio {
+  _src_1_linux_2_6_18_sound_pci_echoaudio [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_echoaudio [label="echoaudio"];
+}
+
+/* lease root is /src/1/linux-2.6.18 */
+digraph _src_1_linux_2_6_18 {
+  _src_1_linux_2_6_18 [shape=box,color=green];
+  _src_1_linux_2_6_18_usr [shape=box,label="usr"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_usr [style=dotted];
+  _src_1_linux_2_6_18_sound [shape=box,label="sound"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_sound [style=dotted];
+  _src_1_linux_2_6_18_security [shape=box,label="security"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_security [style=dotted];
+  _src_1_linux_2_6_18_scripts [shape=box,label="scripts"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_scripts [style=dotted];
+  _src_1_linux_2_6_18_net [shape=box,label="net"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_net [style=dotted];
+  _src_1_linux_2_6_18_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_mm [style=dotted];
+  _src_1_linux_2_6_18_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_lib [style=dotted];
+  _src_1_linux_2_6_18_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_kernel [style=dotted];
+  _src_1_linux_2_6_18_ipc [shape=box,label="ipc"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_ipc [style=dotted];
+  _src_1_linux_2_6_18_init [shape=box,label="init"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_init [style=dotted];
+  _src_1_linux_2_6_18_include [shape=box,label="include"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_include [style=dotted];
+  _src_1_linux_2_6_18_fs [shape=box,label="fs"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_fs [style=dotted];
+  _src_1_linux_2_6_18_drivers [shape=box,label="drivers"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_drivers [style=dotted];
+  _src_1_linux_2_6_18_crypto [shape=box,label="crypto"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_crypto [style=dotted];
+  _src_1_linux_2_6_18_block [shape=box,label="block"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_block [style=dotted];
+  _src_1_linux_2_6_18_arch [shape=box,label="arch"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_arch [style=dotted];
+  _src_1_linux_2_6_18_Documentation [shape=box,label="Documentation"];
+  _src_1_linux_2_6_18 -> _src_1_linux_2_6_18_Documentation [style=dotted];
+  _src_1_linux_2_6_18 [label="linux-2.6.18"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ppc/boot/simple/rw4 */
+digraph _src_1_linux_2_6_18_arch_ppc_boot_simple_rw4 {
+  _src_1_linux_2_6_18_arch_ppc_boot_simple_rw4 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ppc_boot_simple_rw4 [label="rw4"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/ramfs */
+digraph _src_1_linux_2_6_18_fs_ramfs {
+  _src_1_linux_2_6_18_fs_ramfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_ramfs [label="ramfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-qemu */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_qemu {
+  _src_1_linux_2_6_18_include_asm_mips_mach_qemu [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_qemu [label="mach-qemu"];
+}
+
+/* lease root is /src/1/linux-2.6.18/lib/zlib_inflate */
+digraph _src_1_linux_2_6_18_lib_zlib_inflate {
+  _src_1_linux_2_6_18_lib_zlib_inflate [shape=box,color=green];
+  _src_1_linux_2_6_18_lib_zlib_inflate [label="zlib_inflate"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-lasat */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_lasat {
+  _src_1_linux_2_6_18_include_asm_mips_mach_lasat [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_lasat [label="mach-lasat"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/h8300/boot */
+digraph _src_1_linux_2_6_18_arch_h8300_boot {
+  _src_1_linux_2_6_18_arch_h8300_boot [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_h8300_boot [label="boot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-dec */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_dec {
+  _src_1_linux_2_6_18_include_asm_mips_mach_dec [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_dec [label="mach-dec"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/hp300 */
+digraph _src_1_linux_2_6_18_arch_m68k_hp300 {
+  _src_1_linux_2_6_18_arch_m68k_hp300 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_hp300 [label="hp300"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/lib-64 */
+digraph _src_1_linux_2_6_18_arch_mips_lib_64 {
+  _src_1_linux_2_6_18_arch_mips_lib_64 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_lib_64 [label="lib-64"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/w1 */
+digraph _src_1_linux_2_6_18_Documentation_w1 {
+  _src_1_linux_2_6_18_Documentation_w1 [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_w1_masters [shape=box,label="masters"];
+  _src_1_linux_2_6_18_Documentation_w1 -> _src_1_linux_2_6_18_Documentation_w1_masters [style=dotted];
+  _src_1_linux_2_6_18_Documentation_w1 [label="w1"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu/platform/5272 */
+digraph _src_1_linux_2_6_18_arch_m68knommu_platform_5272 {
+  _src_1_linux_2_6_18_arch_m68knommu_platform_5272 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform_5272 [label="5272"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/irda/irnet */
+digraph _src_1_linux_2_6_18_net_irda_irnet {
+  _src_1_linux_2_6_18_net_irda_irnet [shape=box,color=green];
+  _src_1_linux_2_6_18_net_irda_irnet [label="irnet"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/nubus */
+digraph _src_1_linux_2_6_18_drivers_nubus {
+  _src_1_linux_2_6_18_drivers_nubus [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_nubus [label="nubus"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/cifs */
+digraph _src_1_linux_2_6_18_fs_cifs {
+  _src_1_linux_2_6_18_fs_cifs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_cifs [label="cifs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/i2c */
+digraph _src_1_linux_2_6_18_Documentation_i2c {
+  _src_1_linux_2_6_18_Documentation_i2c [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_i2c_chips [shape=box,label="chips"];
+  _src_1_linux_2_6_18_Documentation_i2c -> _src_1_linux_2_6_18_Documentation_i2c_chips [style=dotted];
+  _src_1_linux_2_6_18_Documentation_i2c_busses [shape=box,label="busses"];
+  _src_1_linux_2_6_18_Documentation_i2c -> _src_1_linux_2_6_18_Documentation_i2c_busses [style=dotted];
+  _src_1_linux_2_6_18_Documentation_i2c [label="i2c"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-ia64/sn */
+digraph _src_1_linux_2_6_18_include_asm_ia64_sn {
+  _src_1_linux_2_6_18_include_asm_ia64_sn [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_ia64_sn_sn2 [shape=box,label="sn2"];
+  _src_1_linux_2_6_18_include_asm_ia64_sn -> _src_1_linux_2_6_18_include_asm_ia64_sn_sn2 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_ia64_sn [label="sn"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/video/logo */
+digraph _src_1_linux_2_6_18_drivers_video_logo {
+  _src_1_linux_2_6_18_drivers_video_logo [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_video_logo [label="logo"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/ABI/testing */
+digraph _src_1_linux_2_6_18_Documentation_ABI_testing {
+  _src_1_linux_2_6_18_Documentation_ABI_testing [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_ABI_testing [label="testing"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/tc */
+digraph _src_1_linux_2_6_18_drivers_tc {
+  _src_1_linux_2_6_18_drivers_tc [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_tc [label="tc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/s390/scsi */
+digraph _src_1_linux_2_6_18_drivers_s390_scsi {
+  _src_1_linux_2_6_18_drivers_s390_scsi [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_s390_scsi [label="scsi"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/drivers/opl3 */
+digraph _src_1_linux_2_6_18_sound_drivers_opl3 {
+  _src_1_linux_2_6_18_sound_drivers_opl3 [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_drivers_opl3 [label="opl3"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/rxrpc */
+digraph _src_1_linux_2_6_18_include_rxrpc {
+  _src_1_linux_2_6_18_include_rxrpc [shape=box,color=green];
+  _src_1_linux_2_6_18_include_rxrpc [label="rxrpc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/ocfs2/dlm */
+digraph _src_1_linux_2_6_18_fs_ocfs2_dlm {
+  _src_1_linux_2_6_18_fs_ocfs2_dlm [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_ocfs2_dlm [label="dlm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/qemu */
+digraph _src_1_linux_2_6_18_arch_mips_qemu {
+  _src_1_linux_2_6_18_arch_mips_qemu [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_qemu [label="qemu"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/sgi-ip27 */
+digraph _src_1_linux_2_6_18_arch_mips_sgi_ip27 {
+  _src_1_linux_2_6_18_arch_mips_sgi_ip27 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_sgi_ip27 [label="sgi-ip27"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/kernel/cpu/irq */
+digraph _src_1_linux_2_6_18_arch_sh_kernel_cpu_irq {
+  _src_1_linux_2_6_18_arch_sh_kernel_cpu_irq [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_kernel_cpu_irq [label="irq"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/powerpc/mm */
+digraph _src_1_linux_2_6_18_arch_powerpc_mm {
+  _src_1_linux_2_6_18_arch_powerpc_mm [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_powerpc_mm [label="mm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/oprofile */
+digraph _src_1_linux_2_6_18_arch_mips_oprofile {
+  _src_1_linux_2_6_18_arch_mips_oprofile [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_oprofile [label="oprofile"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/net/bluetooth */
+digraph _src_1_linux_2_6_18_include_net_bluetooth {
+  _src_1_linux_2_6_18_include_net_bluetooth [shape=box,color=green];
+  _src_1_linux_2_6_18_include_net_bluetooth [label="bluetooth"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-xtensa/xtensa/config-linux_be */
+digraph _src_1_linux_2_6_18_include_asm_xtensa_xtensa_config_linux_be {
+  _src_1_linux_2_6_18_include_asm_xtensa_xtensa_config_linux_be [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_xtensa_xtensa_config_linux_be [label="config-linux_be"];
+}
+
+/* lease root is /src/1/linux-2.6.18/kernel/irq */
+digraph _src_1_linux_2_6_18_kernel_irq {
+  _src_1_linux_2_6_18_kernel_irq [shape=box,color=green];
+  _src_1_linux_2_6_18_kernel_irq [label="irq"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/drivers/dma */
+digraph _src_1_linux_2_6_18_arch_sh_drivers_dma {
+  _src_1_linux_2_6_18_arch_sh_drivers_dma [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_drivers_dma [label="dma"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/sh/superhyway */
+digraph _src_1_linux_2_6_18_drivers_sh_superhyway {
+  _src_1_linux_2_6_18_drivers_sh_superhyway [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_sh_superhyway [label="superhyway"];
+}
+
+/* lease root is /src/1/linux-2.6.18/lib/reed_solomon */
+digraph _src_1_linux_2_6_18_lib_reed_solomon {
+  _src_1_linux_2_6_18_lib_reed_solomon [shape=box,color=green];
+  _src_1_linux_2_6_18_lib_reed_solomon [label="reed_solomon"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/fec_8xx */
+digraph _src_1_linux_2_6_18_drivers_net_fec_8xx {
+  _src_1_linux_2_6_18_drivers_net_fec_8xx [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_fec_8xx [label="fec_8xx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boot/compressed */
+digraph _src_1_linux_2_6_18_arch_sh_boot_compressed {
+  _src_1_linux_2_6_18_arch_sh_boot_compressed [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boot_compressed [label="compressed"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/uml */
+digraph _src_1_linux_2_6_18_Documentation_uml {
+  _src_1_linux_2_6_18_Documentation_uml [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_uml [label="uml"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-s3c2410 */
+digraph _src_1_linux_2_6_18_arch_arm_mach_s3c2410 {
+  _src_1_linux_2_6_18_arch_arm_mach_s3c2410 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_s3c2410 [label="mach-s3c2410"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/8021q */
+digraph _src_1_linux_2_6_18_net_8021q {
+  _src_1_linux_2_6_18_net_8021q [shape=box,color=green];
+  _src_1_linux_2_6_18_net_8021q [label="8021q"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/bonding */
+digraph _src_1_linux_2_6_18_drivers_net_bonding {
+  _src_1_linux_2_6_18_drivers_net_bonding [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_bonding [label="bonding"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/drivers/vx */
+digraph _src_1_linux_2_6_18_sound_drivers_vx {
+  _src_1_linux_2_6_18_sound_drivers_vx [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_drivers_vx [label="vx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/ntfs */
+digraph _src_1_linux_2_6_18_fs_ntfs {
+  _src_1_linux_2_6_18_fs_ntfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_ntfs [label="ntfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ppc/boot/utils */
+digraph _src_1_linux_2_6_18_arch_ppc_boot_utils {
+  _src_1_linux_2_6_18_arch_ppc_boot_utils [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ppc_boot_utils [label="utils"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu/platform/5206e */
+digraph _src_1_linux_2_6_18_arch_m68knommu_platform_5206e {
+  _src_1_linux_2_6_18_arch_m68knommu_platform_5206e [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform_5206e [label="5206e"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/s390/crypto */
+digraph _src_1_linux_2_6_18_drivers_s390_crypto {
+  _src_1_linux_2_6_18_drivers_s390_crypto [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_s390_crypto [label="crypto"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh */
+digraph _src_1_linux_2_6_18_arch_sh {
+  _src_1_linux_2_6_18_arch_sh [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_tools [shape=box,label="tools"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_tools [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_oprofile [shape=box,label="oprofile"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_oprofile [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_drivers [shape=box,label="drivers"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_drivers [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_configs [shape=box,label="configs"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_configs [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_cchips [shape=box,label="cchips"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_cchips [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_boards [shape=box,label="boards"];
+  _src_1_linux_2_6_18_arch_sh -> _src_1_linux_2_6_18_arch_sh_boards [style=dotted];
+  _src_1_linux_2_6_18_arch_sh [label="sh"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/wanrouter */
+digraph _src_1_linux_2_6_18_net_wanrouter {
+  _src_1_linux_2_6_18_net_wanrouter [shape=box,color=green];
+  _src_1_linux_2_6_18_net_wanrouter [label="wanrouter"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/korg1212 */
+digraph _src_1_linux_2_6_18_sound_pci_korg1212 {
+  _src_1_linux_2_6_18_sound_pci_korg1212 [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_korg1212 [label="korg1212"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/infiniband/ulp/iser */
+digraph _src_1_linux_2_6_18_drivers_infiniband_ulp_iser {
+  _src_1_linux_2_6_18_drivers_infiniband_ulp_iser [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_infiniband_ulp_iser [label="iser"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-ev64120 */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_ev64120 {
+  _src_1_linux_2_6_18_include_asm_mips_mach_ev64120 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_ev64120 [label="mach-ev64120"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/usb */
+digraph _src_1_linux_2_6_18_drivers_usb {
+  _src_1_linux_2_6_18_drivers_usb [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_usb_storage [shape=box,label="storage"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_storage [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_serial [shape=box,label="serial"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_serial [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_net [shape=box,label="net"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_net [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_mon [shape=box,label="mon"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_mon [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_misc [shape=box,label="misc"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_misc [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_input [shape=box,label="input"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_input [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_image [shape=box,label="image"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_image [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_host [shape=box,label="host"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_host [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_gadget [shape=box,label="gadget"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_gadget [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_core [shape=box,label="core"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_core [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_class [shape=box,label="class"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_class [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb_atm [shape=box,label="atm"];
+  _src_1_linux_2_6_18_drivers_usb -> _src_1_linux_2_6_18_drivers_usb_atm [style=dotted];
+  _src_1_linux_2_6_18_drivers_usb [label="usb"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/video/savage */
+digraph _src_1_linux_2_6_18_drivers_video_savage {
+  _src_1_linux_2_6_18_drivers_video_savage [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_video_savage [label="savage"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/mips/pci */
+digraph _src_1_linux_2_6_18_Documentation_mips_pci {
+  _src_1_linux_2_6_18_Documentation_mips_pci [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_mips_pci [label="pci"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/au1000 */
+digraph _src_1_linux_2_6_18_arch_mips_au1000 {
+  _src_1_linux_2_6_18_arch_mips_au1000 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_au1000_xxs1500 [shape=box,label="xxs1500"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_xxs1500 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_pb1550 [shape=box,label="pb1550"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_pb1550 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_pb1500 [shape=box,label="pb1500"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_pb1500 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_pb1200 [shape=box,label="pb1200"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_pb1200 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_pb1100 [shape=box,label="pb1100"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_pb1100 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_pb1000 [shape=box,label="pb1000"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_pb1000 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_mtx_1 [shape=box,label="mtx-1"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_mtx_1 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_db1x00 [shape=box,label="db1x00"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_db1x00 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000_common [shape=box,label="common"];
+  _src_1_linux_2_6_18_arch_mips_au1000 -> _src_1_linux_2_6_18_arch_mips_au1000_common [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_au1000 [label="au1000"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/irda/ircomm */
+digraph _src_1_linux_2_6_18_net_irda_ircomm {
+  _src_1_linux_2_6_18_net_irda_ircomm [shape=box,color=green];
+  _src_1_linux_2_6_18_net_irda_ircomm [label="ircomm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/sn */
+digraph _src_1_linux_2_6_18_drivers_sn {
+  _src_1_linux_2_6_18_drivers_sn [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_sn [label="sn"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/rapidio/switches */
+digraph _src_1_linux_2_6_18_drivers_rapidio_switches {
+  _src_1_linux_2_6_18_drivers_rapidio_switches [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_rapidio_switches [label="switches"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/char/agp */
+digraph _src_1_linux_2_6_18_drivers_char_agp {
+  _src_1_linux_2_6_18_drivers_char_agp [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_char_agp [label="agp"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/raid */
+digraph _src_1_linux_2_6_18_include_linux_raid {
+  _src_1_linux_2_6_18_include_linux_raid [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_raid [label="raid"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/tx4927 */
+digraph _src_1_linux_2_6_18_arch_mips_tx4927 {
+  _src_1_linux_2_6_18_arch_mips_tx4927 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_tx4927_toshiba_rbtx4927 [shape=box,label="toshiba_rbtx4927"];
+  _src_1_linux_2_6_18_arch_mips_tx4927 -> _src_1_linux_2_6_18_arch_mips_tx4927_toshiba_rbtx4927 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_tx4927_common [shape=box,label="common"];
+  _src_1_linux_2_6_18_arch_mips_tx4927 -> _src_1_linux_2_6_18_arch_mips_tx4927_common [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_tx4927 [label="tx4927"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/atari */
+digraph _src_1_linux_2_6_18_arch_m68k_atari {
+  _src_1_linux_2_6_18_arch_m68k_atari [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_atari [label="atari"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/jmr3927 */
+digraph _src_1_linux_2_6_18_arch_mips_jmr3927 {
+  _src_1_linux_2_6_18_arch_mips_jmr3927 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_jmr3927_rbhma3100 [shape=box,label="rbhma3100"];
+  _src_1_linux_2_6_18_arch_mips_jmr3927 -> _src_1_linux_2_6_18_arch_mips_jmr3927_rbhma3100 [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_jmr3927_common [shape=box,label="common"];
+  _src_1_linux_2_6_18_arch_mips_jmr3927 -> _src_1_linux_2_6_18_arch_mips_jmr3927_common [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_jmr3927 [label="jmr3927"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/jffs2 */
+digraph _src_1_linux_2_6_18_fs_jffs2 {
+  _src_1_linux_2_6_18_fs_jffs2 [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_jffs2 [label="jffs2"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/rxrpc */
+digraph _src_1_linux_2_6_18_net_rxrpc {
+  _src_1_linux_2_6_18_net_rxrpc [shape=box,color=green];
+  _src_1_linux_2_6_18_net_rxrpc [label="rxrpc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/scripts/kconfig/lxdialog */
+digraph _src_1_linux_2_6_18_scripts_kconfig_lxdialog {
+  _src_1_linux_2_6_18_scripts_kconfig_lxdialog [shape=box,color=green];
+  _src_1_linux_2_6_18_scripts_kconfig_lxdialog [label="lxdialog"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu/platform/68328 */
+digraph _src_1_linux_2_6_18_arch_m68knommu_platform_68328 {
+  _src_1_linux_2_6_18_arch_m68knommu_platform_68328 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform_68328 [label="68328"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/infiniband */
+digraph _src_1_linux_2_6_18_Documentation_infiniband {
+  _src_1_linux_2_6_18_Documentation_infiniband [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_infiniband [label="infiniband"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/powerpc/xmon */
+digraph _src_1_linux_2_6_18_arch_powerpc_xmon {
+  _src_1_linux_2_6_18_arch_powerpc_xmon [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_powerpc_xmon [label="xmon"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mips-boards */
+digraph _src_1_linux_2_6_18_include_asm_mips_mips_boards {
+  _src_1_linux_2_6_18_include_asm_mips_mips_boards [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mips_boards [label="mips-boards"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/rtc */
+digraph _src_1_linux_2_6_18_drivers_rtc {
+  _src_1_linux_2_6_18_drivers_rtc [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_rtc [label="rtc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-realview */
+digraph _src_1_linux_2_6_18_arch_arm_mach_realview {
+  _src_1_linux_2_6_18_arch_arm_mach_realview [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_realview [label="mach-realview"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/sunrpc */
+digraph _src_1_linux_2_6_18_include_linux_sunrpc {
+  _src_1_linux_2_6_18_include_linux_sunrpc [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_sunrpc [label="sunrpc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/lib */
+digraph _src_1_linux_2_6_18_arch_ia64_lib {
+  _src_1_linux_2_6_18_arch_ia64_lib [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_lib [label="lib"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/boot */
+digraph _src_1_linux_2_6_18_arch_arm_boot {
+  _src_1_linux_2_6_18_arch_arm_boot [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_boot_compressed [shape=box,label="compressed"];
+  _src_1_linux_2_6_18_arch_arm_boot -> _src_1_linux_2_6_18_arch_arm_boot_compressed [style=dotted];
+  _src_1_linux_2_6_18_arch_arm_boot_bootp [shape=box,label="bootp"];
+  _src_1_linux_2_6_18_arch_arm_boot -> _src_1_linux_2_6_18_arch_arm_boot_bootp [style=dotted];
+  _src_1_linux_2_6_18_arch_arm_boot [label="boot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/ixp2000 */
+digraph _src_1_linux_2_6_18_drivers_net_ixp2000 {
+  _src_1_linux_2_6_18_drivers_net_ixp2000 [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_ixp2000 [label="ixp2000"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/parisc */
+digraph _src_1_linux_2_6_18_arch_parisc {
+  _src_1_linux_2_6_18_arch_parisc [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_parisc_oprofile [shape=box,label="oprofile"];
+  _src_1_linux_2_6_18_arch_parisc -> _src_1_linux_2_6_18_arch_parisc_oprofile [style=dotted];
+  _src_1_linux_2_6_18_arch_parisc_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_parisc -> _src_1_linux_2_6_18_arch_parisc_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_parisc_math_emu [shape=box,label="math-emu"];
+  _src_1_linux_2_6_18_arch_parisc -> _src_1_linux_2_6_18_arch_parisc_math_emu [style=dotted];
+  _src_1_linux_2_6_18_arch_parisc_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_parisc -> _src_1_linux_2_6_18_arch_parisc_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_parisc_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_parisc -> _src_1_linux_2_6_18_arch_parisc_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_parisc_hpux [shape=box,label="hpux"];
+  _src_1_linux_2_6_18_arch_parisc -> _src_1_linux_2_6_18_arch_parisc_hpux [style=dotted];
+  _src_1_linux_2_6_18_arch_parisc_configs [shape=box,label="configs"];
+  _src_1_linux_2_6_18_arch_parisc -> _src_1_linux_2_6_18_arch_parisc_configs [style=dotted];
+  _src_1_linux_2_6_18_arch_parisc [label="parisc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/sgi */
+digraph _src_1_linux_2_6_18_include_asm_mips_sgi {
+  _src_1_linux_2_6_18_include_asm_mips_sgi [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_sgi [label="sgi"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68k/configs */
+digraph _src_1_linux_2_6_18_arch_m68k_configs {
+  _src_1_linux_2_6_18_arch_m68k_configs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68k_configs [label="configs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/cchips/hd6446x */
+digraph _src_1_linux_2_6_18_arch_sh_cchips_hd6446x {
+  _src_1_linux_2_6_18_arch_sh_cchips_hd6446x [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_cchips_hd6446x_hd64465 [shape=box,label="hd64465"];
+  _src_1_linux_2_6_18_arch_sh_cchips_hd6446x -> _src_1_linux_2_6_18_arch_sh_cchips_hd6446x_hd64465 [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_cchips_hd6446x_hd64461 [shape=box,label="hd64461"];
+  _src_1_linux_2_6_18_arch_sh_cchips_hd6446x -> _src_1_linux_2_6_18_arch_sh_cchips_hd6446x_hd64461 [style=dotted];
+  _src_1_linux_2_6_18_arch_sh_cchips_hd6446x [label="hd6446x"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/early-userspace */
+digraph _src_1_linux_2_6_18_Documentation_early_userspace {
+  _src_1_linux_2_6_18_Documentation_early_userspace [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_early_userspace [label="early-userspace"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/mips */
+digraph _src_1_linux_2_6_18_sound_mips {
+  _src_1_linux_2_6_18_sound_mips [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_mips [label="mips"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-cobalt */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_cobalt {
+  _src_1_linux_2_6_18_include_asm_mips_mach_cobalt [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_cobalt [label="mach-cobalt"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/cpufreq */
+digraph _src_1_linux_2_6_18_drivers_cpufreq {
+  _src_1_linux_2_6_18_drivers_cpufreq [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_cpufreq [label="cpufreq"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/debugfs */
+digraph _src_1_linux_2_6_18_fs_debugfs {
+  _src_1_linux_2_6_18_fs_debugfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_debugfs [label="debugfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/scsi/aic7xxx */
+digraph _src_1_linux_2_6_18_drivers_scsi_aic7xxx {
+  _src_1_linux_2_6_18_drivers_scsi_aic7xxx [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_scsi_aic7xxx_aicasm [shape=box,label="aicasm"];
+  _src_1_linux_2_6_18_drivers_scsi_aic7xxx -> _src_1_linux_2_6_18_drivers_scsi_aic7xxx_aicasm [style=dotted];
+  _src_1_linux_2_6_18_drivers_scsi_aic7xxx [label="aic7xxx"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/xtensa/configs */
+digraph _src_1_linux_2_6_18_arch_xtensa_configs {
+  _src_1_linux_2_6_18_arch_xtensa_configs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_xtensa_configs [label="configs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/h8300/platform */
+digraph _src_1_linux_2_6_18_arch_h8300_platform {
+  _src_1_linux_2_6_18_arch_h8300_platform [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_h8300_platform_h8s [shape=box,label="h8s"];
+  _src_1_linux_2_6_18_arch_h8300_platform -> _src_1_linux_2_6_18_arch_h8300_platform_h8s [style=dotted];
+  _src_1_linux_2_6_18_arch_h8300_platform_h8300h [shape=box,label="h8300h"];
+  _src_1_linux_2_6_18_arch_h8300_platform -> _src_1_linux_2_6_18_arch_h8300_platform_h8300h [style=dotted];
+  _src_1_linux_2_6_18_arch_h8300_platform [label="platform"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/char/ip2 */
+digraph _src_1_linux_2_6_18_drivers_char_ip2 {
+  _src_1_linux_2_6_18_drivers_char_ip2 [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_char_ip2 [label="ip2"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/autofs */
+digraph _src_1_linux_2_6_18_fs_autofs {
+  _src_1_linux_2_6_18_fs_autofs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_autofs [label="autofs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-x86_64 */
+digraph _src_1_linux_2_6_18_include_asm_x86_64 {
+  _src_1_linux_2_6_18_include_asm_x86_64 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_x86_64 [label="asm-x86_64"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/pcmcia */
+digraph _src_1_linux_2_6_18_include_pcmcia {
+  _src_1_linux_2_6_18_include_pcmcia [shape=box,color=green];
+  _src_1_linux_2_6_18_include_pcmcia [label="pcmcia"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/vfat */
+digraph _src_1_linux_2_6_18_fs_vfat {
+  _src_1_linux_2_6_18_fs_vfat [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_vfat [label="vfat"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/clocksource */
+digraph _src_1_linux_2_6_18_drivers_clocksource {
+  _src_1_linux_2_6_18_drivers_clocksource [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_clocksource [label="clocksource"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/s390/mm */
+digraph _src_1_linux_2_6_18_arch_s390_mm {
+  _src_1_linux_2_6_18_arch_s390_mm [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_s390_mm [label="mm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/ioctl */
+digraph _src_1_linux_2_6_18_Documentation_ioctl {
+  _src_1_linux_2_6_18_Documentation_ioctl [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_ioctl [label="ioctl"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-h720x */
+digraph _src_1_linux_2_6_18_arch_arm_mach_h720x {
+  _src_1_linux_2_6_18_arch_arm_mach_h720x [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_h720x [label="mach-h720x"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/cqreek */
+digraph _src_1_linux_2_6_18_arch_sh_boards_cqreek {
+  _src_1_linux_2_6_18_arch_sh_boards_cqreek [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_cqreek [label="cqreek"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/um/os-Linux/sys-i386 */
+digraph _src_1_linux_2_6_18_arch_um_os_Linux_sys_i386 {
+  _src_1_linux_2_6_18_arch_um_os_Linux_sys_i386 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_um_os_Linux_sys_i386 [label="sys-i386"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/key */
+digraph _src_1_linux_2_6_18_net_key {
+  _src_1_linux_2_6_18_net_key [shape=box,color=green];
+  _src_1_linux_2_6_18_net_key [label="key"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/input/touchscreen */
+digraph _src_1_linux_2_6_18_drivers_input_touchscreen {
+  _src_1_linux_2_6_18_drivers_input_touchscreen [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_input_touchscreen [label="touchscreen"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/sn/pci */
+digraph _src_1_linux_2_6_18_arch_ia64_sn_pci {
+  _src_1_linux_2_6_18_arch_ia64_sn_pci [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_sn_pci_pcibr [shape=box,label="pcibr"];
+  _src_1_linux_2_6_18_arch_ia64_sn_pci -> _src_1_linux_2_6_18_arch_ia64_sn_pci_pcibr [style=dotted];
+  _src_1_linux_2_6_18_arch_ia64_sn_pci [label="pci"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-m68knommu */
+digraph _src_1_linux_2_6_18_include_asm_m68knommu {
+  _src_1_linux_2_6_18_include_asm_m68knommu [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_m68knommu [label="asm-m68knommu"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/v850/configs */
+digraph _src_1_linux_2_6_18_arch_v850_configs {
+  _src_1_linux_2_6_18_arch_v850_configs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_v850_configs [label="configs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-excite */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_excite {
+  _src_1_linux_2_6_18_include_asm_mips_mach_excite [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_excite [label="mach-excite"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/9p */
+digraph _src_1_linux_2_6_18_fs_9p {
+  _src_1_linux_2_6_18_fs_9p [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_9p [label="9p"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/cdrom */
+digraph _src_1_linux_2_6_18_Documentation_cdrom {
+  _src_1_linux_2_6_18_Documentation_cdrom [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_cdrom [label="cdrom"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/cris/arch-v10/boot/tools */
+digraph _src_1_linux_2_6_18_arch_cris_arch_v10_boot_tools {
+  _src_1_linux_2_6_18_arch_cris_arch_v10_boot_tools [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_cris_arch_v10_boot_tools [label="tools"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/um/os-Linux/include */
+digraph _src_1_linux_2_6_18_arch_um_os_Linux_include {
+  _src_1_linux_2_6_18_arch_um_os_Linux_include [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_um_os_Linux_include [label="include"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/xtensa/platform-iss */
+digraph _src_1_linux_2_6_18_arch_xtensa_platform_iss {
+  _src_1_linux_2_6_18_arch_xtensa_platform_iss [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_xtensa_platform_iss [label="platform-iss"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/isdn */
+digraph _src_1_linux_2_6_18_include_linux_isdn {
+  _src_1_linux_2_6_18_include_linux_isdn [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_isdn [label="isdn"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/usb */
+digraph _src_1_linux_2_6_18_sound_usb {
+  _src_1_linux_2_6_18_sound_usb [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_usb_usx2y [shape=box,label="usx2y"];
+  _src_1_linux_2_6_18_sound_usb -> _src_1_linux_2_6_18_sound_usb_usx2y [style=dotted];
+  _src_1_linux_2_6_18_sound_usb [label="usb"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-pb1x00 */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_pb1x00 {
+  _src_1_linux_2_6_18_include_asm_mips_mach_pb1x00 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_pb1x00 [label="mach-pb1x00"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/arcnet */
+digraph _src_1_linux_2_6_18_drivers_net_arcnet {
+  _src_1_linux_2_6_18_drivers_net_arcnet [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_arcnet [label="arcnet"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/efs */
+digraph _src_1_linux_2_6_18_fs_efs {
+  _src_1_linux_2_6_18_fs_efs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_efs [label="efs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-omap1 */
+digraph _src_1_linux_2_6_18_arch_arm_mach_omap1 {
+  _src_1_linux_2_6_18_arch_arm_mach_omap1 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_omap1 [label="mach-omap1"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/aoa */
+digraph _src_1_linux_2_6_18_sound_aoa {
+  _src_1_linux_2_6_18_sound_aoa [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_aoa_soundbus [shape=box,label="soundbus"];
+  _src_1_linux_2_6_18_sound_aoa -> _src_1_linux_2_6_18_sound_aoa_soundbus [style=dotted];
+  _src_1_linux_2_6_18_sound_aoa_fabrics [shape=box,label="fabrics"];
+  _src_1_linux_2_6_18_sound_aoa -> _src_1_linux_2_6_18_sound_aoa_fabrics [style=dotted];
+  _src_1_linux_2_6_18_sound_aoa_core [shape=box,label="core"];
+  _src_1_linux_2_6_18_sound_aoa -> _src_1_linux_2_6_18_sound_aoa_core [style=dotted];
+  _src_1_linux_2_6_18_sound_aoa_codecs [shape=box,label="codecs"];
+  _src_1_linux_2_6_18_sound_aoa -> _src_1_linux_2_6_18_sound_aoa_codecs [style=dotted];
+  _src_1_linux_2_6_18_sound_aoa [label="aoa"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mm */
+digraph _src_1_linux_2_6_18_arch_arm_mm {
+  _src_1_linux_2_6_18_arch_arm_mm [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mm [label="mm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ppc/boot/common */
+digraph _src_1_linux_2_6_18_arch_ppc_boot_common {
+  _src_1_linux_2_6_18_arch_ppc_boot_common [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ppc_boot_common [label="common"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/mips-boards/atlas */
+digraph _src_1_linux_2_6_18_arch_mips_mips_boards_atlas {
+  _src_1_linux_2_6_18_arch_mips_mips_boards_atlas [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_mips_boards_atlas [label="atlas"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/lockd */
+digraph _src_1_linux_2_6_18_fs_lockd {
+  _src_1_linux_2_6_18_fs_lockd [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_lockd [label="lockd"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/hugetlbfs */
+digraph _src_1_linux_2_6_18_fs_hugetlbfs {
+  _src_1_linux_2_6_18_fs_hugetlbfs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_hugetlbfs [label="hugetlbfs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/parisc */
+digraph _src_1_linux_2_6_18_drivers_parisc {
+  _src_1_linux_2_6_18_drivers_parisc [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_parisc [label="parisc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/ext2 */
+digraph _src_1_linux_2_6_18_fs_ext2 {
+  _src_1_linux_2_6_18_fs_ext2 [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_ext2 [label="ext2"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/hfsplus */
+digraph _src_1_linux_2_6_18_fs_hfsplus {
+  _src_1_linux_2_6_18_fs_hfsplus [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_hfsplus [label="hfsplus"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/xfs/quota */
+digraph _src_1_linux_2_6_18_fs_xfs_quota {
+  _src_1_linux_2_6_18_fs_xfs_quota [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_xfs_quota [label="quota"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/input/mouse */
+digraph _src_1_linux_2_6_18_drivers_input_mouse {
+  _src_1_linux_2_6_18_drivers_input_mouse [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_input_mouse [label="mouse"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/proc */
+digraph _src_1_linux_2_6_18_fs_proc {
+  _src_1_linux_2_6_18_fs_proc [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_proc [label="proc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/mach-at91rm9200 */
+digraph _src_1_linux_2_6_18_arch_arm_mach_at91rm9200 {
+  _src_1_linux_2_6_18_arch_arm_mach_at91rm9200 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_mach_at91rm9200 [label="mach-at91rm9200"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/drivers */
+digraph _src_1_linux_2_6_18_Documentation_drivers {
+  _src_1_linux_2_6_18_Documentation_drivers [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_drivers_edac [shape=box,label="edac"];
+  _src_1_linux_2_6_18_Documentation_drivers -> _src_1_linux_2_6_18_Documentation_drivers_edac [style=dotted];
+  _src_1_linux_2_6_18_Documentation_drivers [label="drivers"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/isdn/hardware/avm */
+digraph _src_1_linux_2_6_18_drivers_isdn_hardware_avm {
+  _src_1_linux_2_6_18_drivers_isdn_hardware_avm [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_isdn_hardware_avm [label="avm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/i386 */
+digraph _src_1_linux_2_6_18_arch_i386 {
+  _src_1_linux_2_6_18_arch_i386 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_i386_power [shape=box,label="power"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_power [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_pci [shape=box,label="pci"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_pci [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_oprofile [shape=box,label="oprofile"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_oprofile [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_math_emu [shape=box,label="math-emu"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_math_emu [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_mach_voyager [shape=box,label="mach-voyager"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_mach_voyager [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_mach_visws [shape=box,label="mach-visws"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_mach_visws [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_mach_generic [shape=box,label="mach-generic"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_mach_generic [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_mach_es7000 [shape=box,label="mach-es7000"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_mach_es7000 [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_mach_default [shape=box,label="mach-default"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_mach_default [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_crypto [shape=box,label="crypto"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_crypto [style=dotted];
+  _src_1_linux_2_6_18_arch_i386_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_i386 -> _src_1_linux_2_6_18_arch_i386_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_i386 [label="i386"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/mtd */
+digraph _src_1_linux_2_6_18_include_mtd {
+  _src_1_linux_2_6_18_include_mtd [shape=box,color=green];
+  _src_1_linux_2_6_18_include_mtd [label="mtd"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/irda */
+digraph _src_1_linux_2_6_18_drivers_net_irda {
+  _src_1_linux_2_6_18_drivers_net_irda [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_irda [label="irda"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pcmcia */
+digraph _src_1_linux_2_6_18_sound_pcmcia {
+  _src_1_linux_2_6_18_sound_pcmcia [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pcmcia_vx [shape=box,label="vx"];
+  _src_1_linux_2_6_18_sound_pcmcia -> _src_1_linux_2_6_18_sound_pcmcia_vx [style=dotted];
+  _src_1_linux_2_6_18_sound_pcmcia_pdaudiocf [shape=box,label="pdaudiocf"];
+  _src_1_linux_2_6_18_sound_pcmcia -> _src_1_linux_2_6_18_sound_pcmcia_pdaudiocf [style=dotted];
+  _src_1_linux_2_6_18_sound_pcmcia [label="pcmcia"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ppc */
+digraph _src_1_linux_2_6_18_arch_ppc {
+  _src_1_linux_2_6_18_arch_ppc [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ppc_xmon [shape=box,label="xmon"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_xmon [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_syslib [shape=box,label="syslib"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_syslib [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_platforms [shape=box,label="platforms"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_platforms [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_configs [shape=box,label="configs"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_configs [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_amiga [shape=box,label="amiga"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_amiga [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_8xx_io [shape=box,label="8xx_io"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_8xx_io [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_8260_io [shape=box,label="8260_io"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_8260_io [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc_4xx_io [shape=box,label="4xx_io"];
+  _src_1_linux_2_6_18_arch_ppc -> _src_1_linux_2_6_18_arch_ppc_4xx_io [style=dotted];
+  _src_1_linux_2_6_18_arch_ppc [label="ppc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-generic */
+digraph _src_1_linux_2_6_18_include_asm_generic {
+  _src_1_linux_2_6_18_include_asm_generic [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_generic_bitops [shape=box,label="bitops"];
+  _src_1_linux_2_6_18_include_asm_generic -> _src_1_linux_2_6_18_include_asm_generic_bitops [style=dotted];
+  _src_1_linux_2_6_18_include_asm_generic [label="asm-generic"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu/platform/523x */
+digraph _src_1_linux_2_6_18_arch_m68knommu_platform_523x {
+  _src_1_linux_2_6_18_arch_m68knommu_platform_523x [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform_523x [label="523x"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/lasat */
+digraph _src_1_linux_2_6_18_arch_mips_lasat {
+  _src_1_linux_2_6_18_arch_mips_lasat [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_lasat_image [shape=box,label="image"];
+  _src_1_linux_2_6_18_arch_mips_lasat -> _src_1_linux_2_6_18_arch_mips_lasat_image [style=dotted];
+  _src_1_linux_2_6_18_arch_mips_lasat [label="lasat"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/input/gameport */
+digraph _src_1_linux_2_6_18_drivers_input_gameport {
+  _src_1_linux_2_6_18_drivers_input_gameport [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_input_gameport [label="gameport"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/gt64120/momenco_ocelot */
+digraph _src_1_linux_2_6_18_arch_mips_gt64120_momenco_ocelot {
+  _src_1_linux_2_6_18_arch_mips_gt64120_momenco_ocelot [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_gt64120_momenco_ocelot [label="momenco_ocelot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/um/include/tt */
+digraph _src_1_linux_2_6_18_arch_um_include_tt {
+  _src_1_linux_2_6_18_arch_um_include_tt [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_um_include_tt [label="tt"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/sh */
+digraph _src_1_linux_2_6_18_Documentation_sh {
+  _src_1_linux_2_6_18_Documentation_sh [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_sh [label="sh"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/mtd */
+digraph _src_1_linux_2_6_18_drivers_mtd {
+  _src_1_linux_2_6_18_drivers_mtd [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_mtd_onenand [shape=box,label="onenand"];
+  _src_1_linux_2_6_18_drivers_mtd -> _src_1_linux_2_6_18_drivers_mtd_onenand [style=dotted];
+  _src_1_linux_2_6_18_drivers_mtd_nand [shape=box,label="nand"];
+  _src_1_linux_2_6_18_drivers_mtd -> _src_1_linux_2_6_18_drivers_mtd_nand [style=dotted];
+  _src_1_linux_2_6_18_drivers_mtd_maps [shape=box,label="maps"];
+  _src_1_linux_2_6_18_drivers_mtd -> _src_1_linux_2_6_18_drivers_mtd_maps [style=dotted];
+  _src_1_linux_2_6_18_drivers_mtd_devices [shape=box,label="devices"];
+  _src_1_linux_2_6_18_drivers_mtd -> _src_1_linux_2_6_18_drivers_mtd_devices [style=dotted];
+  _src_1_linux_2_6_18_drivers_mtd_chips [shape=box,label="chips"];
+  _src_1_linux_2_6_18_drivers_mtd -> _src_1_linux_2_6_18_drivers_mtd_chips [style=dotted];
+  _src_1_linux_2_6_18_drivers_mtd [label="mtd"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/cris/arch-v10 */
+digraph _src_1_linux_2_6_18_arch_cris_arch_v10 {
+  _src_1_linux_2_6_18_arch_cris_arch_v10 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_cris_arch_v10_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_cris_arch_v10 -> _src_1_linux_2_6_18_arch_cris_arch_v10_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_cris_arch_v10_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_cris_arch_v10 -> _src_1_linux_2_6_18_arch_cris_arch_v10_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_cris_arch_v10_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_cris_arch_v10 -> _src_1_linux_2_6_18_arch_cris_arch_v10_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_cris_arch_v10_drivers [shape=box,label="drivers"];
+  _src_1_linux_2_6_18_arch_cris_arch_v10 -> _src_1_linux_2_6_18_arch_cris_arch_v10_drivers [style=dotted];
+  _src_1_linux_2_6_18_arch_cris_arch_v10_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_cris_arch_v10 -> _src_1_linux_2_6_18_arch_cris_arch_v10_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_cris_arch_v10 [label="arch-v10"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/message */
+digraph _src_1_linux_2_6_18_drivers_message {
+  _src_1_linux_2_6_18_drivers_message [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_message_i2o [shape=box,label="i2o"];
+  _src_1_linux_2_6_18_drivers_message -> _src_1_linux_2_6_18_drivers_message_i2o [style=dotted];
+  _src_1_linux_2_6_18_drivers_message_fusion [shape=box,label="fusion"];
+  _src_1_linux_2_6_18_drivers_message -> _src_1_linux_2_6_18_drivers_message_fusion [style=dotted];
+  _src_1_linux_2_6_18_drivers_message [label="message"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/tokenring */
+digraph _src_1_linux_2_6_18_drivers_net_tokenring {
+  _src_1_linux_2_6_18_drivers_net_tokenring [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_tokenring [label="tokenring"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/mpc1211 */
+digraph _src_1_linux_2_6_18_arch_sh_boards_mpc1211 {
+  _src_1_linux_2_6_18_arch_sh_boards_mpc1211 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_mpc1211 [label="mpc1211"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/cris/kernel */
+digraph _src_1_linux_2_6_18_arch_cris_kernel {
+  _src_1_linux_2_6_18_arch_cris_kernel [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_cris_kernel [label="kernel"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/mach-jazz */
+digraph _src_1_linux_2_6_18_include_asm_mips_mach_jazz {
+  _src_1_linux_2_6_18_include_asm_mips_mach_jazz [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_mach_jazz [label="mach-jazz"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m32r */
+digraph _src_1_linux_2_6_18_arch_m32r {
+  _src_1_linux_2_6_18_arch_m32r [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m32r_opsput [shape=box,label="opsput"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_opsput [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_oprofile [shape=box,label="oprofile"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_oprofile [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_oaks32r [shape=box,label="oaks32r"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_oaks32r [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_mm [shape=box,label="mm"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_mm [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_mappi3 [shape=box,label="mappi3"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_mappi3 [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_mappi2 [shape=box,label="mappi2"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_mappi2 [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_mappi [shape=box,label="mappi"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_mappi [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_m32700ut [shape=box,label="m32700ut"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_m32700ut [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_m32104ut [shape=box,label="m32104ut"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_m32104ut [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_lib [shape=box,label="lib"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_lib [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_kernel [shape=box,label="kernel"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_kernel [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r_boot [shape=box,label="boot"];
+  _src_1_linux_2_6_18_arch_m32r -> _src_1_linux_2_6_18_arch_m32r_boot [style=dotted];
+  _src_1_linux_2_6_18_arch_m32r [label="m32r"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/affs */
+digraph _src_1_linux_2_6_18_fs_affs {
+  _src_1_linux_2_6_18_fs_affs [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_affs [label="affs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/isa/es1688 */
+digraph _src_1_linux_2_6_18_sound_isa_es1688 {
+  _src_1_linux_2_6_18_sound_isa_es1688 [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_isa_es1688 [label="es1688"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/wireless/zd1211rw */
+digraph _src_1_linux_2_6_18_drivers_net_wireless_zd1211rw {
+  _src_1_linux_2_6_18_drivers_net_wireless_zd1211rw [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_wireless_zd1211rw [label="zd1211rw"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/ia64/oprofile */
+digraph _src_1_linux_2_6_18_arch_ia64_oprofile {
+  _src_1_linux_2_6_18_arch_ia64_oprofile [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_ia64_oprofile [label="oprofile"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/s390/boot */
+digraph _src_1_linux_2_6_18_arch_s390_boot {
+  _src_1_linux_2_6_18_arch_s390_boot [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_s390_boot [label="boot"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/net/skfp/h */
+digraph _src_1_linux_2_6_18_drivers_net_skfp_h {
+  _src_1_linux_2_6_18_drivers_net_skfp_h [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_net_skfp_h [label="h"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/infiniband/hw/ipath */
+digraph _src_1_linux_2_6_18_drivers_infiniband_hw_ipath {
+  _src_1_linux_2_6_18_drivers_infiniband_hw_ipath [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_infiniband_hw_ipath [label="ipath"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/h8300/platform/h8s/generic */
+digraph _src_1_linux_2_6_18_arch_h8300_platform_h8s_generic {
+  _src_1_linux_2_6_18_arch_h8300_platform_h8s_generic [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_h8300_platform_h8s_generic [label="generic"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/mmc */
+digraph _src_1_linux_2_6_18_include_linux_mmc {
+  _src_1_linux_2_6_18_include_linux_mmc [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_mmc [label="mmc"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu/platform/532x */
+digraph _src_1_linux_2_6_18_arch_m68knommu_platform_532x {
+  _src_1_linux_2_6_18_arch_m68knommu_platform_532x [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform_532x [label="532x"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/m68knommu/platform/68EZ328 */
+digraph _src_1_linux_2_6_18_arch_m68knommu_platform_68EZ328 {
+  _src_1_linux_2_6_18_arch_m68knommu_platform_68EZ328 [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_m68knommu_platform_68EZ328 [label="68EZ328"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/arm/configs */
+digraph _src_1_linux_2_6_18_arch_arm_configs {
+  _src_1_linux_2_6_18_arch_arm_configs [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_arm_configs [label="configs"];
+}
+
+/* lease root is /src/1/linux-2.6.18/net/sctp */
+digraph _src_1_linux_2_6_18_net_sctp {
+  _src_1_linux_2_6_18_net_sctp [shape=box,color=green];
+  _src_1_linux_2_6_18_net_sctp [label="sctp"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/au88x0 */
+digraph _src_1_linux_2_6_18_sound_pci_au88x0 {
+  _src_1_linux_2_6_18_sound_pci_au88x0 [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_au88x0 [label="au88x0"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/fujitsu */
+digraph _src_1_linux_2_6_18_Documentation_fujitsu {
+  _src_1_linux_2_6_18_Documentation_fujitsu [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_fujitsu_frv [shape=box,label="frv"];
+  _src_1_linux_2_6_18_Documentation_fujitsu -> _src_1_linux_2_6_18_Documentation_fujitsu_frv [style=dotted];
+  _src_1_linux_2_6_18_Documentation_fujitsu [label="fujitsu"];
+}
+
+/* lease root is /src/1/linux-2.6.18/Documentation/watchdog/src */
+digraph _src_1_linux_2_6_18_Documentation_watchdog_src {
+  _src_1_linux_2_6_18_Documentation_watchdog_src [shape=box,color=green];
+  _src_1_linux_2_6_18_Documentation_watchdog_src [label="src"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-mips/emma2rh */
+digraph _src_1_linux_2_6_18_include_asm_mips_emma2rh {
+  _src_1_linux_2_6_18_include_asm_mips_emma2rh [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_mips_emma2rh [label="emma2rh"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/mips/ddb5xxx/common */
+digraph _src_1_linux_2_6_18_arch_mips_ddb5xxx_common {
+  _src_1_linux_2_6_18_arch_mips_ddb5xxx_common [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_mips_ddb5xxx_common [label="common"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/char/rio */
+digraph _src_1_linux_2_6_18_drivers_char_rio {
+  _src_1_linux_2_6_18_drivers_char_rio [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_char_rio [label="rio"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-i386 */
+digraph _src_1_linux_2_6_18_include_asm_i386 {
+  _src_1_linux_2_6_18_include_asm_i386 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_i386_mach_voyager [shape=box,label="mach-voyager"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_voyager [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386_mach_visws [shape=box,label="mach-visws"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_visws [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386_mach_summit [shape=box,label="mach-summit"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_summit [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386_mach_numaq [shape=box,label="mach-numaq"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_numaq [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386_mach_generic [shape=box,label="mach-generic"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_generic [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386_mach_es7000 [shape=box,label="mach-es7000"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_es7000 [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386_mach_default [shape=box,label="mach-default"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_default [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386_mach_bigsmp [shape=box,label="mach-bigsmp"];
+  _src_1_linux_2_6_18_include_asm_i386 -> _src_1_linux_2_6_18_include_asm_i386_mach_bigsmp [style=dotted];
+  _src_1_linux_2_6_18_include_asm_i386 [label="asm-i386"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/powerpc/platforms */
+digraph _src_1_linux_2_6_18_arch_powerpc_platforms {
+  _src_1_linux_2_6_18_arch_powerpc_platforms [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_pseries [shape=box,label="pseries"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_pseries [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_prep [shape=box,label="prep"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_prep [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_powermac [shape=box,label="powermac"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_powermac [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_maple [shape=box,label="maple"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_maple [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_iseries [shape=box,label="iseries"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_iseries [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_embedded6xx [shape=box,label="embedded6xx"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_embedded6xx [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_chrp [shape=box,label="chrp"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_chrp [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_cell [shape=box,label="cell"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_cell [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_apus [shape=box,label="apus"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_apus [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_8xx [shape=box,label="8xx"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_8xx [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_86xx [shape=box,label="86xx"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_86xx [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_85xx [shape=box,label="85xx"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_85xx [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_83xx [shape=box,label="83xx"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_83xx [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms_4xx [shape=box,label="4xx"];
+  _src_1_linux_2_6_18_arch_powerpc_platforms -> _src_1_linux_2_6_18_arch_powerpc_platforms_4xx [style=dotted];
+  _src_1_linux_2_6_18_arch_powerpc_platforms [label="platforms"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/asm-xtensa/platform-iss */
+digraph _src_1_linux_2_6_18_include_asm_xtensa_platform_iss {
+  _src_1_linux_2_6_18_include_asm_xtensa_platform_iss [shape=box,color=green];
+  _src_1_linux_2_6_18_include_asm_xtensa_platform_iss [label="platform-iss"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/amba */
+digraph _src_1_linux_2_6_18_include_linux_amba {
+  _src_1_linux_2_6_18_include_linux_amba [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_amba [label="amba"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/sh/boards/bigsur */
+digraph _src_1_linux_2_6_18_arch_sh_boards_bigsur {
+  _src_1_linux_2_6_18_arch_sh_boards_bigsur [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_sh_boards_bigsur [label="bigsur"];
+}
+
+/* lease root is /src/1/linux-2.6.18/security/selinux */
+digraph _src_1_linux_2_6_18_security_selinux {
+  _src_1_linux_2_6_18_security_selinux [shape=box,color=green];
+  _src_1_linux_2_6_18_security_selinux_ss [shape=box,label="ss"];
+  _src_1_linux_2_6_18_security_selinux -> _src_1_linux_2_6_18_security_selinux_ss [style=dotted];
+  _src_1_linux_2_6_18_security_selinux_include [shape=box,label="include"];
+  _src_1_linux_2_6_18_security_selinux -> _src_1_linux_2_6_18_security_selinux_include [style=dotted];
+  _src_1_linux_2_6_18_security_selinux [label="selinux"];
+}
+
+/* lease root is /src/1/linux-2.6.18/arch/powerpc/boot/dts */
+digraph _src_1_linux_2_6_18_arch_powerpc_boot_dts {
+  _src_1_linux_2_6_18_arch_powerpc_boot_dts [shape=box,color=green];
+  _src_1_linux_2_6_18_arch_powerpc_boot_dts [label="dts"];
+}
+
+/* lease root is /src/1/linux-2.6.18/include/linux/netfilter_ipv6 */
+digraph _src_1_linux_2_6_18_include_linux_netfilter_ipv6 {
+  _src_1_linux_2_6_18_include_linux_netfilter_ipv6 [shape=box,color=green];
+  _src_1_linux_2_6_18_include_linux_netfilter_ipv6 [label="netfilter_ipv6"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/core/seq/oss */
+digraph _src_1_linux_2_6_18_sound_core_seq_oss {
+  _src_1_linux_2_6_18_sound_core_seq_oss [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_core_seq_oss [label="oss"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/input/joystick/iforce */
+digraph _src_1_linux_2_6_18_drivers_input_joystick_iforce {
+  _src_1_linux_2_6_18_drivers_input_joystick_iforce [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_input_joystick_iforce [label="iforce"];
+}
+
+/* lease root is /src/1/linux-2.6.18/fs/jbd */
+digraph _src_1_linux_2_6_18_fs_jbd {
+  _src_1_linux_2_6_18_fs_jbd [shape=box,color=green];
+  _src_1_linux_2_6_18_fs_jbd [label="jbd"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/video/pnx4008 */
+digraph _src_1_linux_2_6_18_drivers_video_pnx4008 {
+  _src_1_linux_2_6_18_drivers_video_pnx4008 [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_video_pnx4008 [label="pnx4008"];
+}
+
+/* lease root is /src/1/linux-2.6.18/scripts/package */
+digraph _src_1_linux_2_6_18_scripts_package {
+  _src_1_linux_2_6_18_scripts_package [shape=box,color=green];
+  _src_1_linux_2_6_18_scripts_package [label="package"];
+}
+
+/* lease root is /src/1/linux-2.6.18/drivers/scsi/arm */
+digraph _src_1_linux_2_6_18_drivers_scsi_arm {
+  _src_1_linux_2_6_18_drivers_scsi_arm [shape=box,color=green];
+  _src_1_linux_2_6_18_drivers_scsi_arm [label="arm"];
+}
+
+/* lease root is /src/1/linux-2.6.18/sound/pci/riptide */
+digraph _src_1_linux_2_6_18_sound_pci_riptide {
+  _src_1_linux_2_6_18_sound_pci_riptide [shape=box,color=green];
+  _src_1_linux_2_6_18_sound_pci_riptide [label="riptide"];
+}

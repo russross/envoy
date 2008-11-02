@@ -1,0 +1,5 @@
+add 9p.ko to /lib/modules/2.6.16-*/kernel/fs/9p/
+depmod
+add 9p to INITRD_MODULES in /etc/sysconfig/kernel
+backup old initrd file
+./mkinitrd -I eth0 -d 128.232.39.40

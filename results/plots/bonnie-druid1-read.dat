@@ -1,0 +1,6 @@
+cluster	read	stdev
+envoy	32525.9	1232.06
+envoy-ls	30617.7	427.58
+nocache	13441.9	1150.02
+9p	29873.3	746.42
+nfs	28891.6	497.25

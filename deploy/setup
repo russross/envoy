@@ -1,0 +1,92 @@
+#!/bin/sh
+
+MACHINES='druid skiing moonraider'
+VMS='0 1'
+
+case "$1" in
+    envoy | nocache | npfs | nfs | shutdown) ;;
+    *)
+        echo usage: $0 \{envoy,npfs,nfs,shutdown\} \{reset,cold,warm,hot\}
+        exit
+        ;;
+esac
+
+if [ `hostname` = 'donkeykong.cl.cam.ac.uk' ] ; then
+    # umount clients
+    echo unmounting clients
+    for mm in $MACHINES ; do
+        for v in $VMS ; do
+            ssh -x "root@$mm-$v.xeno" ./envoy/mount-client $1 shutdown
+        done
+    done
+
+    # restart servers
+    echo setup $1 $2 on servers
+    for mm in $MACHINES ; do
+        ssh -x "root@$mm-0.xeno" ./envoy/setup $1 $2
+    done
+
+    # setup envoy image mount point (requires running server)
+    if [[ ( "$1" = "envoy" || "$1" = "nocache" ) && "$2" = "reset" ]] ; then
+        ssh -x "root@druid-0.xeno" ./envoy/mount-client $1 $2
+    fi
+
+    # restart clients
+    if [ "$1" != "shutdown" ] ; then
+        echo mounting clients
+        for mm in $MACHINES ; do
+            for v in $VMS ; do
+                ssh -x "root@$mm-$v.xeno" ./envoy/mount-client $1
+            done
+        done
+    fi
+else
+    date >> ~/server-log
+
+    killall -q -w envoy storage npfs
+    /etc/init.d/nfsserver status > /dev/null && /etc/init.d/nfsserver stop
+
+    case "$2" in
+        reset)
+            echo reset start >> ~/server-log
+            echo clearing file system
+
+            rm -rf /mnt/objectstore/0
+            rm -rf /mnt/cache/0
+            rm -rf /mnt/cache/npfsroot
+            rm -rf /mnt/cache/nfsroot
+
+            mkdir /mnt/cache/npfsroot
+            mkdir /mnt/cache/nfsroot
+
+            mkdir -p /mnt/objectstore/0/00/00/00/00/00/00/00
+            touch    /mnt/objectstore/0/00/00/00/00/00/00/00/00\ 800001ed\ \ \ \ \ root\ \ \ \ \ root
+            ;;
+        cold)
+            echo cold start >> ~/server-log
+            echo clearing cache
+
+            rm -rf /mnt/cache/0
+            ;;
+        warm)
+            echo warm start >> ~/server-log
+            ;;
+        hot)
+            echo hot start >> ~/server-log
+            ;;
+    esac
+
+    if [ "$2" != "hot" ] ; then
+        echo remounting objectstore and cache
+        umount /mnt/objectstore
+        mount /mnt/objectstore
+
+        umount /mnt/cache
+        mount /mnt/cache
+    fi
+
+    if [ "$1" != "shutdown" ] ; then
+        echo starting server
+        ~/envoy/start-server $1 >> ~/server-log
+    fi
+fi

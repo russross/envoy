@@ -1,0 +1,60 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: druid-0.xeno.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 14:48:23 2006
+ */
+
+/* Connections:
+ *   druid-0.xeno.cl.cam.ac.uk:48738 CLIENT_IN:
+ *     messages/bytes in     : 218/3415
+ *     messages/bytes out    : 217/8670
+ *     new messages/bytes in : 213/3324
+ *     new messages/bytes out: 212/8356
+ *   moonraider-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 11/867
+ *     messages/bytes out    : 11/177
+ *     new messages/bytes in : 2/168
+ *     new messages/bytes out: 2/30
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 10/727
+ *     messages/bytes out    : 10/178
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   druid-1.xeno.cl.cam.ac.uk:60131 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 9/181
+ *     messages/bytes out    : 9/599
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 107/3392
+ *     messages/bytes out    : 106/5087
+ *     new messages/bytes in : 1/240
+ *     new messages/bytes out: 1/30
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 215/9844
+ *     messages/bytes out    : 216/6878
+ *     new messages/bytes in : 212/9805
+ *     new messages/bytes out: 213/6493
+ */
+
+/* lease root is / */
+digraph _ {
+  _ [shape=box];
+  _linux_current [shape=box,label="current"];
+  _linux -> _linux_current [style=dotted];
+  _ [label="/"];
+}
+
+/* lease root is /linux/current/linux-2.6.18/drivers/char */
+digraph _linux_current_linux_2_6_18_drivers_char {
+  _linux_current_linux_2_6_18_drivers_char [shape=box];
+  _linux_current_linux_2_6_18_drivers_char [label="char"];
+  _linux_current_linux_2_6_18_drivers_char -> _linux_current_linux_2_6_18_drivers_char_mwave;
+  _linux_current_linux_2_6_18_drivers_char_mwave [label="mwave"];
+  _linux_current_linux_2_6_18_drivers_char_mwave -> _linux_current_linux_2_6_18_drivers_char_mwave_smapi_c;
+  _linux_current_linux_2_6_18_drivers_char_mwave_smapi_c [label="smapi.c"];
+}

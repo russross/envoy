@@ -1,0 +1,71 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: druid-0.xeno.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 16:12:15 2006
+ */
+
+/* Connections:
+ *   druid-0.xeno.cl.cam.ac.uk:39956 CLIENT_IN:
+ *     messages/bytes in     : 5543/86205
+ *     messages/bytes out    : 5543/214290
+ *     new messages/bytes in : 1092/17012
+ *     new messages/bytes out: 1092/42256
+ *   moonraider-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 24/278744
+ *     messages/bytes out    : 24/628
+ *     new messages/bytes in : 4/29069
+ *     new messages/bytes out: 4/124
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 26/208165
+ *     messages/bytes out    : 26/690
+ *     new messages/bytes in : 2/33123
+ *     new messages/bytes out: 2/62
+ *   druid-1.xeno.cl.cam.ac.uk:40468 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 3873/117473
+ *     messages/bytes out    : 3873/174565
+ *     new messages/bytes in : 588/19628
+ *     new messages/bytes out: 588/26460
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 5114/143592
+ *     messages/bytes out    : 5114/231343
+ *     new messages/bytes in : 948/27492
+ *     new messages/bytes out: 949/42820
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 5/53
+ *     messages/bytes out    : 5/484
+ *     new messages/bytes in : 0/0
+ *     new messages/bytes out: 0/0
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 4/46
+ *     messages/bytes out    : 4/335
+ *     new messages/bytes in : 1/7
+ *     new messages/bytes out: 1/147
+ */
+
+/* lease root is / */
+digraph _ {
+  _ [shape=box];
+  _linux_current_linux_2_6_18_block_genhd_c [shape=box,label="genhd.c"];
+  _linux_current_linux_2_6_18_block -> _linux_current_linux_2_6_18_block_genhd_c [style=dotted];
+  _linux_current_linux_2_6_18_block_elevator_c [shape=box,label="elevator.c"];
+  _linux_current_linux_2_6_18_block -> _linux_current_linux_2_6_18_block_elevator_c [style=dotted];
+  _linux_current_linux_2_6_18_block_deadline_iosched_c [shape=box,label="deadline-iosched.c"];
+  _linux_current_linux_2_6_18_block -> _linux_current_linux_2_6_18_block_deadline_iosched_c [style=dotted];
+  _linux_current_linux_2_6_18_block_cfq_iosched_c [shape=box,label="cfq-iosched.c"];
+  _linux_current_linux_2_6_18_block -> _linux_current_linux_2_6_18_block_cfq_iosched_c [style=dotted];
+  _linux_current_linux_2_6_18_block_blktrace_c [shape=box,label="blktrace.c"];
+  _linux_current_linux_2_6_18_block -> _linux_current_linux_2_6_18_block_blktrace_c [style=dotted];
+  _ [label="/"];
+  _ -> _linux;
+  _linux [label="linux"];
+  _linux -> _linux_current;
+  _linux_current [label="current"];
+  _linux_current -> _linux_current_linux_2_6_18;
+  _linux_current_linux_2_6_18 [label="linux-2.6.18"];
+  _linux_current_linux_2_6_18 -> _linux_current_linux_2_6_18_block;
+  _linux_current_linux_2_6_18_block [label="block"];
+}

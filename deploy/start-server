@@ -1,0 +1,84 @@
+#!/bin/sh
+
+case "$1" in
+    envoy | nocache | npfs | nfs) ;;
+    *)
+        echo usage: $0 \{envoy,npfs,nfs\}
+        exit
+        ;;
+esac
+
+rm -f /tmp/error.log /tmp/stdout.log /tmp/*.dot
+case `hostname` in
+    druid-0)                    IP=128.232.39.40 ;;
+    skiing-0)                   IP=128.232.39.100 ;;
+    moonraider-0 | moonraider)  IP=128.232.38.190 ;;
+    *)                          echo Unknown host: `hostname` ; exit ;;
+esac
+
+case "$1" in
+    envoy)
+        case `hostname` in
+            druid-0)
+                echo starting envoy on druid as root server
+                /root/envoy/envoy -s moonraider-0.xeno,skiing-0.xeno -i $IP \
+                                  -dvt \
+                                  -c /mnt/cache \
+                                  2>>/tmp/error.log >>/tmp/stdout.log
+                /root/envoy/storage -r /mnt/objectstore/ 2>>/tmp/error.log >>/tmp/stdout.log
+                ;;
+            skiing-0 | moonraider-0 | moonraider)
+                echo starting envoy on `hostname` with druid as root server
+                /root/envoy/envoy -s moonraider-0.xeno,skiing-0.xeno -i $IP \
+                                  -dvt \
+                                  -r druid-0.xeno -c /mnt/cache \
+                                  2>>/tmp/error.log >>/tmp/stdout.log
+                /root/envoy/storage -r /mnt/objectstore/ 2>>/tmp/error.log >>/tmp/stdout.log
+                ;;
+        esac
+        ;;
+
+    nocache)
+        case `hostname` in
+            druid-0)
+                echo starting nocache on druid as root server
+                /root/envoy/envoy -s moonraider-0.xeno,skiing-0.xeno -i $IP --noauto \
+                                  -dvt \
+                                  2>>/tmp/error.log >>/tmp/stdout.log
+                /root/envoy/storage -r /mnt/objectstore/ 2>>/tmp/error.log >>/tmp/stdout.log
+                ;;
+            skiing-0 | moonraider-0 | moonraider)
+                echo starting nocache on `hostname` with druid as root server
+                /root/envoy/envoy -s moonraider-0.xeno,skiing-0.xeno -i $IP --noauto \
+                                  -dvt \
+                                  -r druid-0.xeno \
+                                  2>>/tmp/error.log >>/tmp/stdout.log
+                /root/envoy/storage -r /mnt/objectstore/ 2>>/tmp/error.log >>/tmp/stdout.log
+                ;;
+        esac
+        ;;
+
+    npfs)
+        case `hostname` in
+            druid-0)
+                echo starting npfs on druid-0
+                /root/envoy/npfs -s -w 5 -p 9922
+                ;;
+            skiing-0 | moonraider-0 | moonraider)
+                # do nothing
+                ;;
+        esac
+        ;;
+
+    nfs)
+        case `hostname` in
+            druid-0)
+                echo starting nfs on druid-0
+                /etc/init.d/nfsserver start
+                ;;
+            skiing-0 | moonraider-0 | moonraider)
+                # do nothing
+                ;;
+        esac
+        ;;
+esac

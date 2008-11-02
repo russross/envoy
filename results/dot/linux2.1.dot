@@ -1,0 +1,152 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: druid-0.xeno:9922
+ * Time: Thu Dec 14 19:17:30 2006
+ */
+
+/* Connections:
+ *   druid-0.xeno.cl.cam.ac.uk:49989 CLIENT_IN:
+ *     messages/bytes in     : 10/197
+ *     messages/bytes out    : 9/546
+ *   druid-0.xeno:9923 STORAGE_OUT:
+ *     messages/bytes in     : 1032/403746
+ *     messages/bytes out    : 1032/142860
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 1027/271450
+ *     messages/bytes out    : 1027/142569
+ *   druid-1.xeno.cl.cam.ac.uk:53928 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/225
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 9/181
+ *     messages/bytes out    : 9/604
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 9/181
+ *     messages/bytes out    : 9/604
+ *   druid-2.xeno.cl.cam.ac.uk:35651 CLIENT_IN:
+ *     messages/bytes in     : 71648/1296578
+ *     messages/bytes out    : 71648/81323281
+ */
+
+/* lease root is / */
+digraph _ {
+  _ [shape=box];
+  _ [label="/"];
+  _ -> _linux;
+  _linux [label="linux"];
+  _linux -> _linux_current;
+  _linux_current [label="current"];
+  _ -> _linux2;
+  _linux2 [label="linux2"];
+  _linux2 -> _linux2_current;
+  _linux2_current [label="current"];
+  _linux2_current -> _linux2_current_dev;
+  _linux2_current_dev [label="dev"];
+  _linux2_current -> _linux2_current_etc;
+  _linux2_current_etc [label="etc"];
+  _linux2_current_etc -> _linux2_current_etc_slp_conf;
+  _linux2_current_etc_slp_conf [label="slp.conf"];
+  _linux2_current_etc -> _linux2_current_etc_slp_reg;
+  _linux2_current_etc_slp_reg [label="slp.reg"];
+  _linux2_current_etc -> _linux2_current_etc_slp_reg_d;
+  _linux2_current_etc_slp_reg_d [label="slp.reg.d"];
+  _linux2_current -> _linux2_current_lib;
+  _linux2_current_lib [label="lib"];
+  _linux2_current_lib -> _linux2_current_lib_ld_2_4_so;
+  _linux2_current_lib_ld_2_4_so [label="ld-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libc_2_4_so;
+  _linux2_current_lib_libc_2_4_so [label="libc-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libcom_err_so_2_1;
+  _linux2_current_lib_libcom_err_so_2_1 [label="libcom_err.so.2.1"];
+  _linux2_current_lib -> _linux2_current_lib_libcrypt_2_4_so;
+  _linux2_current_lib_libcrypt_2_4_so [label="libcrypt-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libdl_2_4_so;
+  _linux2_current_lib_libdl_2_4_so [label="libdl-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libm_2_4_so;
+  _linux2_current_lib_libm_2_4_so [label="libm-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libnsl_2_4_so;
+  _linux2_current_lib_libnsl_2_4_so [label="libnsl-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libnss_compat_2_4_so;
+  _linux2_current_lib_libnss_compat_2_4_so [label="libnss_compat-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libnss_files_2_4_so;
+  _linux2_current_lib_libnss_files_2_4_so [label="libnss_files-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libnss_nis_2_4_so;
+  _linux2_current_lib_libnss_nis_2_4_so [label="libnss_nis-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libpam_so_0_81_2;
+  _linux2_current_lib_libpam_so_0_81_2 [label="libpam.so.0.81.2"];
+  _linux2_current_lib -> _linux2_current_lib_libpam_misc_so_0_81_2;
+  _linux2_current_lib_libpam_misc_so_0_81_2 [label="libpam_misc.so.0.81.2"];
+  _linux2_current_lib -> _linux2_current_lib_libpthread_2_4_so;
+  _linux2_current_lib_libpthread_2_4_so [label="libpthread-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libresolv_2_4_so;
+  _linux2_current_lib_libresolv_2_4_so [label="libresolv-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libutil_2_4_so;
+  _linux2_current_lib_libutil_2_4_so [label="libutil-2.4.so"];
+  _linux2_current_lib -> _linux2_current_lib_libwrap_so_0_7_6;
+  _linux2_current_lib_libwrap_so_0_7_6 [label="libwrap.so.0.7.6"];
+  _linux2_current_lib -> _linux2_current_lib_libz_so_1_2_3;
+  _linux2_current_lib_libz_so_1_2_3 [label="libz.so.1.2.3"];
+  _linux2_current -> _linux2_current_proc;
+  _linux2_current_proc [label="proc"];
+  _linux2_current -> _linux2_current_sbin;
+  _linux2_current_sbin [label="sbin"];
+  _linux2_current_sbin -> _linux2_current_sbin_init;
+  _linux2_current_sbin_init [label="init"];
+  _linux2_current_sbin -> _linux2_current_sbin_klogd;
+  _linux2_current_sbin_klogd [label="klogd"];
+  _linux2_current_sbin -> _linux2_current_sbin_mingetty;
+  _linux2_current_sbin_mingetty [label="mingetty"];
+  _linux2_current_sbin -> _linux2_current_sbin_portmap;
+  _linux2_current_sbin_portmap [label="portmap"];
+  _linux2_current_sbin -> _linux2_current_sbin_syslog_ng;
+  _linux2_current_sbin_syslog_ng [label="syslog-ng"];
+  _linux2_current_sbin -> _linux2_current_sbin_udevd;
+  _linux2_current_sbin_udevd [label="udevd"];
+  _linux2_current -> _linux2_current_sys;
+  _linux2_current_sys [label="sys"];
+  _linux2_current -> _linux2_current_usr;
+  _linux2_current_usr [label="usr"];
+  _linux2_current_usr -> _linux2_current_usr_lib;
+  _linux2_current_usr_lib [label="lib"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libcrypto_so_0_9_8;
+  _linux2_current_usr_lib_libcrypto_so_0_9_8 [label="libcrypto.so.0.9.8"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libgssapi_krb5_so_2_2;
+  _linux2_current_usr_lib_libgssapi_krb5_so_2_2 [label="libgssapi_krb5.so.2.2"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libk5crypto_so_3_0;
+  _linux2_current_usr_lib_libk5crypto_so_3_0 [label="libk5crypto.so.3.0"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libkrb5_so_3_2;
+  _linux2_current_usr_lib_libkrb5_so_3_2 [label="libkrb5.so.3.2"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libkrb5support_so_0_0;
+  _linux2_current_usr_lib_libkrb5support_so_0_0 [label="libkrb5support.so.0.0"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libopenct_so_1_0_0;
+  _linux2_current_usr_lib_libopenct_so_1_0_0 [label="libopenct.so.1.0.0"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libopensc_so_1_0_0;
+  _linux2_current_usr_lib_libopensc_so_1_0_0 [label="libopensc.so.1.0.0"];
+  _linux2_current_usr_lib -> _linux2_current_usr_lib_libscconf_so_1_0_0;
+  _linux2_current_usr_lib_libscconf_so_1_0_0 [label="libscconf.so.1.0.0"];
+  _linux2_current_usr -> _linux2_current_usr_sbin;
+  _linux2_current_usr_sbin [label="sbin"];
+  _linux2_current_usr_sbin -> _linux2_current_usr_sbin_cron;
+  _linux2_current_usr_sbin_cron [label="cron"];
+  _linux2_current_usr_sbin -> _linux2_current_usr_sbin_slpd;
+  _linux2_current_usr_sbin_slpd [label="slpd"];
+  _linux2_current_usr_sbin -> _linux2_current_usr_sbin_sshd;
+  _linux2_current_usr_sbin_sshd [label="sshd"];
+  _linux2_current -> _linux2_current_var;
+  _linux2_current_var [label="var"];
+  _linux2_current_var -> _linux2_current_var_log;
+  _linux2_current_var_log [label="log"];
+  _linux2_current_var_log -> _linux2_current_var_log_messages;
+  _linux2_current_var_log_messages [label="messages"];
+  _linux2_current_var_log -> _linux2_current_var_log_slpd_log;
+  _linux2_current_var_log_slpd_log [label="slpd.log"];
+  _linux2_current_var_log -> _linux2_current_var_log_warn;
+  _linux2_current_var_log_warn [label="warn"];
+  _linux2_current_var -> _linux2_current_var_run;
+  _linux2_current_var_run [label="run"];
+  _linux2_current_var_run -> _linux2_current_var_run_cron_pid;
+  _linux2_current_var_run_cron_pid [label="cron.pid"];
+  _linux2_current_var -> _linux2_current_var_spool;
+  _linux2_current_var_spool [label="spool"];
+  _linux2_current_var_spool -> _linux2_current_var_spool_cron;
+  _linux2_current_var_spool_cron [label="cron"];
+}

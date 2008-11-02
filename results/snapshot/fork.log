@@ -1,0 +1,502 @@
+# fork test: sync, mkdir/ln/touch
+fork simple test 1
+Tue Dec 19 16:52:47 GMT 2006
+fork: /src1/current from /linux/1 (0.000316 seconds)
+0.00user 0.00system 0:00.09elapsed 8%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (2major+1080minor)pagefaults 0swaps
+fork simple test 2
+Tue Dec 19 16:52:49 GMT 2006
+fork: /src2/current from /linux/1 (0.000351 seconds)
+0.00user 0.00system 0:00.01elapsed 47%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 3
+Tue Dec 19 16:52:50 GMT 2006
+fork: /src3/current from /linux/1 (0.000321 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1088minor)pagefaults 0swaps
+fork simple test 4
+Tue Dec 19 16:52:51 GMT 2006
+fork: /src4/current from /linux/1 (0.000311 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1086minor)pagefaults 0swaps
+fork simple test 5
+Tue Dec 19 16:52:53 GMT 2006
+fork: /src5/current from /linux/1 (0.000312 seconds)
+0.00user 0.00system 0:00.01elapsed 47%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 6
+Tue Dec 19 16:52:54 GMT 2006
+fork: /src6/current from /linux/1 (0.000322 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1085minor)pagefaults 0swaps
+fork simple test 7
+Tue Dec 19 16:52:55 GMT 2006
+fork: /src7/current from /linux/1 (0.000327 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1085minor)pagefaults 0swaps
+fork simple test 8
+Tue Dec 19 16:52:57 GMT 2006
+fork: /src8/current from /linux/1 (0.000337 seconds)
+0.00user 0.00system 0:00.01elapsed 70%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 9
+Tue Dec 19 16:52:58 GMT 2006
+fork: /src9/current from /linux/1 (0.000333 seconds)
+0.00user 0.00system 0:00.01elapsed 88%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 10
+Tue Dec 19 16:52:59 GMT 2006
+fork: /src10/current from /linux/1 (0.000537 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 11
+Tue Dec 19 16:53:01 GMT 2006
+fork: /src11/current from /linux/1 (0.000334 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 12
+Tue Dec 19 16:53:02 GMT 2006
+fork: /src12/current from /linux/1 (0.000321 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 13
+Tue Dec 19 16:53:03 GMT 2006
+fork: /src13/current from /linux/1 (0.000322 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1078minor)pagefaults 0swaps
+fork simple test 14
+Tue Dec 19 16:53:04 GMT 2006
+fork: /src14/current from /linux/1 (0.000323 seconds)
+0.01user 0.00system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 15
+Tue Dec 19 16:53:06 GMT 2006
+fork: /src15/current from /linux/1 (0.000325 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 16
+Tue Dec 19 16:53:07 GMT 2006
+fork: /src16/current from /linux/1 (0.000315 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 17
+Tue Dec 19 16:53:08 GMT 2006
+fork: /src17/current from /linux/1 (0.000329 seconds)
+0.00user 0.00system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1085minor)pagefaults 0swaps
+fork simple test 18
+Tue Dec 19 16:53:09 GMT 2006
+fork: /src18/current from /linux/1 (0.000337 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1083minor)pagefaults 0swaps
+fork simple test 19
+Tue Dec 19 16:53:11 GMT 2006
+fork: /src19/current from /linux/1 (0.000324 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 20
+Tue Dec 19 16:53:12 GMT 2006
+fork: /src20/current from /linux/1 (0.000342 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1079minor)pagefaults 0swaps
+fork simple test 21
+Tue Dec 19 16:53:13 GMT 2006
+hash_size_double: new size = 128 buckets
+fork: /src21/current from /linux/1 (0.00037 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 22
+Tue Dec 19 16:53:15 GMT 2006
+fork: /src22/current from /linux/1 (0.000301 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1083minor)pagefaults 0swaps
+fork simple test 23
+Tue Dec 19 16:53:16 GMT 2006
+fork: /src23/current from /linux/1 (0.00033 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1086minor)pagefaults 0swaps
+fork simple test 24
+Tue Dec 19 16:53:17 GMT 2006
+fork: /src24/current from /linux/1 (0.00034 seconds)
+0.00user 0.00system 0:00.01elapsed 47%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 25
+Tue Dec 19 16:53:18 GMT 2006
+fork: /src25/current from /linux/1 (0.000342 seconds)
+0.00user 0.01system 0:00.01elapsed 94%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 26
+Tue Dec 19 16:53:20 GMT 2006
+fork: /src26/current from /linux/1 (0.000319 seconds)
+0.00user 0.00system 0:00.01elapsed 23%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 27
+Tue Dec 19 16:53:21 GMT 2006
+fork: /src27/current from /linux/1 (0.000326 seconds)
+0.00user 0.00system 0:00.01elapsed 21%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1083minor)pagefaults 0swaps
+fork simple test 28
+Tue Dec 19 16:53:22 GMT 2006
+fork: /src28/current from /linux/1 (0.000339 seconds)
+0.00user 0.00system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1086minor)pagefaults 0swaps
+fork simple test 29
+Tue Dec 19 16:53:24 GMT 2006
+fork: /src29/current from /linux/1 (0.000327 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 30
+Tue Dec 19 16:53:25 GMT 2006
+fork: /src30/current from /linux/1 (0.000339 seconds)
+0.00user 0.00system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 31
+Tue Dec 19 16:53:26 GMT 2006
+fork: /src31/current from /linux/1 (0.000324 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1089minor)pagefaults 0swaps
+fork simple test 32
+Tue Dec 19 16:53:27 GMT 2006
+fork: /src32/current from /linux/1 (0.000342 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 33
+Tue Dec 19 16:53:29 GMT 2006
+fork: /src33/current from /linux/1 (0.000329 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1079minor)pagefaults 0swaps
+fork simple test 34
+Tue Dec 19 16:53:30 GMT 2006
+fork: /src34/current from /linux/1 (0.000329 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 35
+Tue Dec 19 16:53:31 GMT 2006
+fork: /src35/current from /linux/1 (0.000345 seconds)
+0.00user 0.00system 0:00.01elapsed 23%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1087minor)pagefaults 0swaps
+fork simple test 36
+Tue Dec 19 16:53:32 GMT 2006
+fork: /src36/current from /linux/1 (0.000341 seconds)
+0.00user 0.00system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 37
+Tue Dec 19 16:53:34 GMT 2006
+fork: /src37/current from /linux/1 (0.000342 seconds)
+0.00user 0.00system 0:00.01elapsed 23%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 38
+Tue Dec 19 16:53:35 GMT 2006
+fork: /src38/current from /linux/1 (0.000336 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 39
+Tue Dec 19 16:53:36 GMT 2006
+fork: /src39/current from /linux/1 (0.000354 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 40
+Tue Dec 19 16:53:37 GMT 2006
+fork: /src40/current from /linux/1 (0.000341 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 41
+Tue Dec 19 16:53:39 GMT 2006
+fork: /src41/current from /linux/1 (0.000355 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 42
+Tue Dec 19 16:53:40 GMT 2006
+fork: /src42/current from /linux/1 (0.000345 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1087minor)pagefaults 0swaps
+fork simple test 43
+Tue Dec 19 16:53:41 GMT 2006
+fork: /src43/current from /linux/1 (0.000333 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 44
+Tue Dec 19 16:53:43 GMT 2006
+fork: /src44/current from /linux/1 (0.000341 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1089minor)pagefaults 0swaps
+fork simple test 45
+Tue Dec 19 16:53:44 GMT 2006
+fork: /src45/current from /linux/1 (0.000359 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1083minor)pagefaults 0swaps
+fork simple test 46
+Tue Dec 19 16:53:45 GMT 2006
+fork: /src46/current from /linux/1 (0.000354 seconds)
+0.00user 0.01system 0:00.01elapsed 88%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 47
+Tue Dec 19 16:53:46 GMT 2006
+fork: /src47/current from /linux/1 (0.000346 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 48
+Tue Dec 19 16:53:48 GMT 2006
+fork: /src48/current from /linux/1 (0.000358 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 49
+Tue Dec 19 16:53:49 GMT 2006
+fork: /src49/current from /linux/1 (0.00035 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1083minor)pagefaults 0swaps
+fork simple test 50
+Tue Dec 19 16:53:50 GMT 2006
+fork: /src50/current from /linux/1 (0.000348 seconds)
+0.00user 0.00system 0:00.01elapsed 88%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1088minor)pagefaults 0swaps
+fork simple test 51
+Tue Dec 19 16:53:52 GMT 2006
+fork: /src51/current from /linux/1 (0.000377 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1086minor)pagefaults 0swaps
+fork simple test 52
+Tue Dec 19 16:53:53 GMT 2006
+fork: /src52/current from /linux/1 (0.000348 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1086minor)pagefaults 0swaps
+fork simple test 53
+Tue Dec 19 16:53:54 GMT 2006
+fork: /src53/current from /linux/1 (0.000347 seconds)
+0.00user 0.00system 0:00.01elapsed 63%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1089minor)pagefaults 0swaps
+fork simple test 54
+Tue Dec 19 16:53:55 GMT 2006
+fork: /src54/current from /linux/1 (0.000384 seconds)
+0.00user 0.01system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 55
+Tue Dec 19 16:53:57 GMT 2006
+fork: /src55/current from /linux/1 (0.000372 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1083minor)pagefaults 0swaps
+fork simple test 56
+Tue Dec 19 16:53:58 GMT 2006
+fork: /src56/current from /linux/1 (0.000361 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 57
+Tue Dec 19 16:53:59 GMT 2006
+fork: /src57/current from /linux/1 (0.000355 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 58
+Tue Dec 19 16:54:01 GMT 2006
+fork: /src58/current from /linux/1 (0.000336 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 59
+Tue Dec 19 16:54:02 GMT 2006
+fork: /src59/current from /linux/1 (0.000361 seconds)
+0.00user 0.00system 0:00.01elapsed 23%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 60
+Tue Dec 19 16:54:03 GMT 2006
+fork: /src60/current from /linux/1 (0.000339 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 61
+Tue Dec 19 16:54:04 GMT 2006
+fork: /src61/current from /linux/1 (0.000356 seconds)
+0.00user 0.01system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 62
+Tue Dec 19 16:54:06 GMT 2006
+fork: /src62/current from /linux/1 (0.000379 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1079minor)pagefaults 0swaps
+fork simple test 63
+Tue Dec 19 16:54:07 GMT 2006
+fork: /src63/current from /linux/1 (0.000337 seconds)
+0.00user 0.00system 0:00.01elapsed 47%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1088minor)pagefaults 0swaps
+fork simple test 64
+Tue Dec 19 16:54:08 GMT 2006
+fork: /src64/current from /linux/1 (0.000602 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1085minor)pagefaults 0swaps
+fork simple test 65
+Tue Dec 19 16:54:10 GMT 2006
+fork: /src65/current from /linux/1 (0.000342 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1079minor)pagefaults 0swaps
+fork simple test 66
+Tue Dec 19 16:54:11 GMT 2006
+fork: /src66/current from /linux/1 (0.000341 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 67
+Tue Dec 19 16:54:12 GMT 2006
+fork: /src67/current from /linux/1 (0.000343 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 68
+Tue Dec 19 16:54:14 GMT 2006
+fork: /src68/current from /linux/1 (0.000358 seconds)
+0.00user 0.01system 0:00.01elapsed 88%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 69
+Tue Dec 19 16:54:15 GMT 2006
+fork: /src69/current from /linux/1 (0.000381 seconds)
+0.00user 0.01system 0:00.01elapsed 94%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 70
+Tue Dec 19 16:54:16 GMT 2006
+fork: /src70/current from /linux/1 (0.000361 seconds)
+0.00user 0.00system 0:00.01elapsed 21%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1087minor)pagefaults 0swaps
+fork simple test 71
+Tue Dec 19 16:54:17 GMT 2006
+fork: /src71/current from /linux/1 (0.000394 seconds)
+0.00user 0.01system 0:00.01elapsed 88%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1087minor)pagefaults 0swaps
+fork simple test 72
+Tue Dec 19 16:54:19 GMT 2006
+fork: /src72/current from /linux/1 (0.000341 seconds)
+0.00user 0.01system 0:00.01elapsed 70%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 73
+Tue Dec 19 16:54:20 GMT 2006
+fork: /src73/current from /linux/1 (0.000347 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 74
+Tue Dec 19 16:54:22 GMT 2006
+fork: /src74/current from /linux/1 (0.000356 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1079minor)pagefaults 0swaps
+fork simple test 75
+Tue Dec 19 16:54:23 GMT 2006
+fork: /src75/current from /linux/1 (0.000388 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 76
+Tue Dec 19 16:54:24 GMT 2006
+fork: /src76/current from /linux/1 (0.00037 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 77
+Tue Dec 19 16:54:26 GMT 2006
+fork: /src77/current from /linux/1 (0.000373 seconds)
+0.00user 0.00system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 78
+Tue Dec 19 16:54:27 GMT 2006
+fork: /src78/current from /linux/1 (0.000399 seconds)
+0.00user 0.01system 0:00.01elapsed 88%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 79
+Tue Dec 19 16:54:28 GMT 2006
+fork: /src79/current from /linux/1 (0.000775 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 80
+Tue Dec 19 16:54:30 GMT 2006
+fork: /src80/current from /linux/1 (0.000356 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 81
+Tue Dec 19 16:54:31 GMT 2006
+fork: /src81/current from /linux/1 (0.000384 seconds)
+0.00user 0.01system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1088minor)pagefaults 0swaps
+fork simple test 82
+Tue Dec 19 16:54:32 GMT 2006
+fork: /src82/current from /linux/1 (0.000364 seconds)
+0.00user 0.00system 0:00.01elapsed 42%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1083minor)pagefaults 0swaps
+fork simple test 83
+Tue Dec 19 16:54:34 GMT 2006
+fork: /src83/current from /linux/1 (0.000352 seconds)
+0.00user 0.00system 0:00.01elapsed 94%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 84
+Tue Dec 19 16:54:35 GMT 2006
+fork: /src84/current from /linux/1 (0.000365 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 85
+Tue Dec 19 16:54:36 GMT 2006
+fork: /src85/current from /linux/1 (0.00034 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 86
+Tue Dec 19 16:54:37 GMT 2006
+fork: /src86/current from /linux/1 (0.000338 seconds)
+0.00user 0.01system 0:00.02elapsed 80%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1085minor)pagefaults 0swaps
+fork simple test 87
+Tue Dec 19 16:54:39 GMT 2006
+fork: /src87/current from /linux/1 (0.000338 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 88
+Tue Dec 19 16:54:40 GMT 2006
+fork: /src88/current from /linux/1 (0.000343 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1081minor)pagefaults 0swaps
+fork simple test 89
+Tue Dec 19 16:54:41 GMT 2006
+fork: /src89/current from /linux/1 (0.000334 seconds)
+0.00user 0.00system 0:00.01elapsed 63%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1086minor)pagefaults 0swaps
+fork simple test 90
+Tue Dec 19 16:54:43 GMT 2006
+fork: /src90/current from /linux/1 (0.000526 seconds)
+0.00user 0.01system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 91
+Tue Dec 19 16:54:44 GMT 2006
+fork: /src91/current from /linux/1 (0.000336 seconds)
+0.00user 0.00system 0:00.01elapsed 70%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1079minor)pagefaults 0swaps
+fork simple test 92
+Tue Dec 19 16:54:45 GMT 2006
+fork: /src92/current from /linux/1 (0.000323 seconds)
+0.00user 0.00system 0:00.01elapsed 22%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1088minor)pagefaults 0swaps
+fork simple test 93
+Tue Dec 19 16:54:47 GMT 2006
+fork: /src93/current from /linux/1 (0.000335 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1084minor)pagefaults 0swaps
+fork simple test 94
+Tue Dec 19 16:54:48 GMT 2006
+fork: /src94/current from /linux/1 (0.000626 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 95
+Tue Dec 19 16:54:49 GMT 2006
+fork: /src95/current from /linux/1 (0.000319 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1087minor)pagefaults 0swaps
+fork simple test 96
+Tue Dec 19 16:54:51 GMT 2006
+fork: /src96/current from /linux/1 (0.000347 seconds)
+0.00user 0.00system 0:00.01elapsed 21%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps
+fork simple test 97
+Tue Dec 19 16:54:52 GMT 2006
+fork: /src97/current from /linux/1 (0.000346 seconds)
+0.00user 0.00system 0:00.01elapsed 0%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1085minor)pagefaults 0swaps
+fork simple test 98
+Tue Dec 19 16:54:53 GMT 2006
+fork: /src98/current from /linux/1 (0.000364 seconds)
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1088minor)pagefaults 0swaps
+fork simple test 99
+Tue Dec 19 16:54:54 GMT 2006
+fork: /src99/current from /linux/1 (0.00032 seconds)
+0.00user 0.00system 0:00.01elapsed 23%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1080minor)pagefaults 0swaps
+fork simple test 100
+Tue Dec 19 16:54:56 GMT 2006
+fork: /src100/current from /linux/1 (0.000378 seconds)
+0.00user 0.01system 0:00.01elapsed 66%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+1082minor)pagefaults 0swaps

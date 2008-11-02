@@ -1,0 +1,6 @@
+# envoy tar, cold/warm/hot on druid-0,druid-1,skiing-0,skiing-1
+cluster	-	cold	stdev	warm	warm	stdev	hot	hot	stdev
+druid-0	cold	201.03	1.2	warm	124.07	5.62	hot	79.89	1.46
+druid-1	cold	251.69	3.99	warm	151.97	1.85	hot	120.42	1.19
+skiing-0	cold	321.5	2.21	warm	242.67	1.86	hot	198.12	4.59
+skiing-1	cold	353.44	1.69	warm	275.1	4.21	hot	226.57	1.63

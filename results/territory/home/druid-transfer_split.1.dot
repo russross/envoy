@@ -1,0 +1,38 @@
+/* Envoy connection bytecounts and claim trees
+ * Host: druid-0.xeno.cl.cam.ac.uk:9922
+ * Time: Sat Dec 30 14:48:18 2006
+ */
+
+/* Connections:
+ *   druid-0.xeno.cl.cam.ac.uk:48738 CLIENT_IN:
+ *     messages/bytes in     : 5/91
+ *     messages/bytes out    : 5/314
+ *   moonraider-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 9/699
+ *     messages/bytes out    : 9/147
+ *   skiing-0.xeno.cl.cam.ac.uk:9923 STORAGE_OUT:
+ *     messages/bytes in     : 10/727
+ *     messages/bytes out    : 10/178
+ *   druid-1.xeno.cl.cam.ac.uk:60131 CLIENT_IN:
+ *     messages/bytes in     : 4/80
+ *     messages/bytes out    : 4/223
+ *   skiing-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 9/181
+ *     messages/bytes out    : 9/599
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_IN:
+ *     messages/bytes in     : 106/3152
+ *     messages/bytes out    : 105/5057
+ *   moonraider-0.xeno.cl.cam.ac.uk:9922 ENVOY_OUT:
+ *     messages/bytes in     : 3/39
+ *     messages/bytes out    : 3/385
+ */
+
+/* lease root is / */
+digraph _ {
+  _ [shape=box];
+  _linux_current [shape=box,label="current"];
+  _linux -> _linux_current [style=dotted];
+  _ [label="/"];
+  _ -> _linux;
+  _linux [label="linux"];
+}
