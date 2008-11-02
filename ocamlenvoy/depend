@@ -1,0 +1,21 @@
+config.cmo: config.cmi 
+config.cmx: config.cmi 
+parseHelpers.cmo: parseHelpers.cmi 
+parseHelpers.cmx: parseHelpers.cmi 
+u9P2000u.cmo: parseHelpers.cmi u9P2000u.cmi 
+u9P2000u.cmx: parseHelpers.cmx u9P2000u.cmi 
+state.cmo: config.cmi state.cmi 
+state.cmx: config.cmx state.cmi 
+transport.cmo: state.cmi parseHelpers.cmi config.cmi transport.cmi 
+transport.cmx: state.cmx parseHelpers.cmx config.cmx transport.cmi 
+responder.cmo: u9P2000u.cmi responder.cmi 
+responder.cmx: u9P2000u.cmx responder.cmi 
+fs.cmo: u9P2000u.cmi state.cmi parseHelpers.cmi config.cmi fs.cmi 
+fs.cmx: u9P2000u.cmx state.cmx parseHelpers.cmx config.cmx fs.cmi 
+debug.cmo: u9P2000u.cmi parseHelpers.cmi fs.cmi 
+debug.cmx: u9P2000u.cmx parseHelpers.cmx fs.cmx 
+transport.cmi: state.cmi 
+responder.cmi: u9P2000u.cmi 
+fs.cmi: u9P2000u.cmi state.cmi 
+envoy.cmo: u9P2000u.cmi transport.cmi state.cmi debug.cmo config.cmi 
+envoy.cmx: u9P2000u.cmx transport.cmx state.cmx debug.cmx config.cmx 
