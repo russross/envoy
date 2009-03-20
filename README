@@ -1,0 +1,37 @@
+This is the Envoy file system, a project I did for my PhD dissertation:
+
+  http://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-690.html
+
+The disseration contains the most complete description of the system.
+
+To build it, you need OCaml and perl (both used in the build process,
+but not in the end product), and you need the Boehm-Demers-Weiser
+conservative garbage collector.  In Ubuntu, install this package:
+
+  libgc-dev
+
+With those installed it should build cleanly.
+
+It also relies on the 9p2000.u file system client in Linux.  Most modern
+distributions include it as a module, but you may need to load it:
+
+  sudo modprobe 9p
+
+Note that this is only necessary for client machines.
+
+The deploy/ directory contains the scripts I used when testing it for
+my dissertation.  They are coded for a specific environment, but they
+should be a good starting point for figuring out how to use it.
+
+The results/ directory contains raw data I gathered and graphs that are
+in the dissertation.  It's probably not of much use to anyone.
+
+Finally, ocamlenvoy/ contains OCaml code for some of the protocol.
+I started the project in OCaml initially, then switched to C.  I still
+used OCaml for some debugging and testing (it was much easier to create
+packets by hand with the OCaml interactive prompt), so I've included
+that code as well.  It doesn't have any of the file system functionality,
+but there is code code creating and decoding network messages.
+
+I don't guarantee any support for this code, but I'd be happy to discuss
+it and help if you are interested in playing with it.
